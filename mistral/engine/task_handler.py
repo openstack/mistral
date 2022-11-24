@@ -87,6 +87,18 @@ def run_task(wf_cmd):
     _check_affected_tasks(task)
 
 
+@profiler.trace('task-handler-skip-task', hide_args=True)
+def skip_task(wf_cmd):
+    """Skip workflow task.
+
+    :param wf_cmd: Workflow command.
+    """
+    task = _build_task_from_command(wf_cmd)
+    task.complete(states.SKIPPED, "Task was skipped.", skip=True)
+    _check_affected_tasks(task)
+    return
+
+
 def mark_task_running(task_ex, wf_spec):
     task = build_task_from_execution(wf_spec, task_ex)
 
@@ -363,6 +375,19 @@ def _build_task_from_command(cmd):
             unique_key=cmd.unique_key,
             waiting=cmd.is_waiting(),
             triggered_by=cmd.triggered_by
+        )
+
+        return task
+
+    if isinstance(cmd, wf_cmds.SkipTask):
+        task = _create_task(
+            cmd.wf_ex,
+            cmd.wf_spec,
+            spec_parser.get_task_spec(cmd.task_ex.spec),
+            cmd.ctx,
+            task_ex=cmd.task_ex,
+            unique_key=cmd.task_ex.unique_key,
+            triggered_by=cmd.triggered_by,
         )
 
         return task

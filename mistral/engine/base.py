@@ -101,12 +101,14 @@ class Engine(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def rerun_workflow(self, task_ex_id, reset=True, env=None):
+    def rerun_workflow(self, task_ex_id, reset=True, skip=False, env=None):
         """Rerun workflow from the specified task.
 
         :param task_ex_id: Task execution id.
         :param reset: If True, reset task state including deleting its action
             executions.
+        :param skip: If True, then skip failed task and continue workflow
+            execution.
         :param env: Workflow environment.
         :return: Workflow execution object.
         """

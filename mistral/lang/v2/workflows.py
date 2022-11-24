@@ -287,6 +287,9 @@ class DirectWorkflowSpec(WorkflowSpec):
         for tup in self.get_on_complete_clause(task_name):
             t_names.add(tup[0])
 
+        for tup in self.get_on_skip_clause(task_name):
+            t_names.add(tup[0])
+
         return t_names
 
     def transition_exists(self, from_task_name, to_task_name):
@@ -308,6 +311,25 @@ class DirectWorkflowSpec(WorkflowSpec):
             if t_defaults and t_defaults.get_on_error():
                 result = self._remove_task_from_clause(
                     t_defaults.get_on_error().get_next(),
+                    t_name
+                )
+
+        return result
+
+    def get_on_skip_clause(self, t_name):
+        result = []
+
+        on_clause = self.get_tasks()[t_name].get_on_skip()
+
+        if on_clause:
+            result = on_clause.get_next()
+
+        if not result:
+            t_defaults = self.get_task_defaults()
+
+            if t_defaults and t_defaults.get_on_skip():
+                result = self._remove_task_from_clause(
+                    t_defaults.get_on_skip().get_next(),
                     t_name
                 )
 

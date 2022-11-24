@@ -238,13 +238,15 @@ class Workflow(object, metaclass=abc.ABCMeta):
             self.wf_spec.__class__.__name__
         )
 
-    def rerun(self, task, reset=True, env=None):
+    def rerun(self, task, reset=True, skip=False, env=None):
         """Rerun workflow from the given task.
 
         :param task: An engine task associated with the task the workflow
             needs to rerun from.
         :param reset: If True, reset task state including deleting its action
             executions.
+        :param skip: If True, then skip failed task and continue workflow
+            execution.
         :param env: Environment.
         """
 
@@ -257,7 +259,10 @@ class Workflow(object, metaclass=abc.ABCMeta):
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.rerun_tasks([task.task_ex], reset=reset)
+        if skip:
+            cmds = wf_ctrl.skip_tasks([task.task_ex])
+        else:
+            cmds = wf_ctrl.rerun_tasks([task.task_ex], reset=reset)
 
         if cmds:
             task.cleanup_runtime_context()

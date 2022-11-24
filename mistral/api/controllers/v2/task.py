@@ -19,6 +19,7 @@ import json
 from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
+from wsme import Unset
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
@@ -329,7 +330,7 @@ class TasksController(rest.RestController):
                 task_ex = db_api.get_task_execution(id)
                 task_spec = spec_parser.get_task_spec(task_ex.spec)
                 task_name = task.name or None
-                reset = task.reset
+                reset = task.reset or None
                 env = task.env or None
 
                 if task_name and task_name != task_ex.name:
@@ -348,10 +349,10 @@ class TasksController(rest.RestController):
         if wf_name and wf_name != wf_ex.name:
             raise exc.WorkflowException('Workflow name does not match.')
 
-        if task.state != states.RUNNING:
+        if task.state != states.RUNNING and task.state != states.SKIPPED:
             raise exc.WorkflowException(
                 'Invalid task state. '
-                'Only updating task to rerun is supported.'
+                'Only updating task to RUNNING or SKIPPED is supported.'
             )
 
         if task_ex.state != states.ERROR:
@@ -360,14 +361,21 @@ class TasksController(rest.RestController):
                 ' Only updating task to rerun is supported.'
             )
 
-        if not task_spec.get_with_items() and not reset:
-            raise exc.WorkflowException(
-                'Only with-items task has the option to not reset.'
-            )
+        if task.state == states.RUNNING:
+            if task.reset is Unset:
+                raise exc.WorkflowException(
+                    'Reset field is mandatory to rerun task.'
+                )
+
+            if not task_spec.get_with_items() and not reset:
+                raise exc.WorkflowException(
+                    'Only with-items task has the option to not reset.'
+                )
 
         rpc.get_engine_client().rerun_workflow(
             task_ex.id,
             reset=reset,
+            skip=(task.state == states.SKIPPED),
             env=env
         )
 

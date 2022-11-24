@@ -206,7 +206,7 @@ def pause_workflow(wf_ex, msg=None):
     wf.pause(msg=msg)
 
 
-def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
+def rerun_workflow(wf_ex, task_ex, reset=True, skip=False, env=None):
     if wf_ex.state == states.PAUSED:
         return wf_ex.get_clone()
 
@@ -217,7 +217,7 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
 
     task = task_handler.build_task_from_execution(wf.wf_spec, task_ex)
 
-    wf.rerun(task, reset=reset, env=env)
+    wf.rerun(task, reset=reset, skip=skip, env=env)
 
     _schedule_check_and_fix_integrity(
         wf_ex,

@@ -1188,6 +1188,7 @@ def _get_completed_task_executions_query(kwargs):
         models.TaskExecution.state.in_(
             [states.ERROR,
              states.CANCELLED,
+             states.SKIPPED,
              states.SUCCESS]
         )
     )

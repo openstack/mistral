@@ -132,6 +132,33 @@ class RunExistingTask(WorkflowCommand):
         return d
 
 
+class SkipTask(WorkflowCommand):
+    """Command to skip an existing workflow task."""
+
+    def __init__(self, wf_ex, wf_spec, task_ex, triggered_by=None,
+                 handles_error=False):
+        super(SkipTask, self).__init__(
+            wf_ex,
+            wf_spec,
+            spec_parser.get_task_spec(task_ex.spec),
+            task_ex.in_context,
+            triggered_by=triggered_by,
+            handles_error=handles_error
+        )
+
+        self.task_ex = task_ex
+        self.unique_key = task_ex.unique_key
+
+    def to_dict(self):
+        d = super(SkipTask, self).to_dict()
+
+        d['cmd_name'] = 'skip_task'
+        d['task_ex_id'] = self.task_ex.id
+        d['unique_key'] = self.unique_key
+
+        return d
+
+
 class SetWorkflowState(WorkflowCommand):
     """Instruction to change a workflow state."""
 

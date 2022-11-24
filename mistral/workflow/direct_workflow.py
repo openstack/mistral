@@ -298,14 +298,27 @@ class DirectWorkflowController(base.WorkflowController):
 
                     result.append((name, params, 'on-error'))
 
-        if t_s == states.SUCCESS:
+        skip_is_empty = False
+        if t_s == states.SKIPPED:
+            for name, cond, params in self.wf_spec.get_on_skip_clause(t_n):
+                if not cond or expr.evaluate(cond, ctx_view):
+                    params = expr.evaluate_recursively(params, ctx_view)
+                    result.append((name, params, 'on-skip'))
+
+            # We should go to 'on-success' branch in case of
+            # skipping task with no 'on-skip' specified.
+            if len(result) == 0:
+                skip_is_empty = True
+
+        if t_s == states.SUCCESS or skip_is_empty:
             for name, cond, params in self.wf_spec.get_on_success_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)
 
                     result.append((name, params, 'on-success'))
 
-        if states.is_completed(t_s) and not states.is_cancelled(t_s):
+        if states.is_completed(t_s) \
+                and not states.is_cancelled_or_skipped(t_s):
             for name, cond, params in self.wf_spec.get_on_complete_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)

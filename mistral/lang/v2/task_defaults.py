@@ -40,6 +40,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             "on-complete": on_clause.OnClauseSpec.get_schema(),
             "on-success": on_clause.OnClauseSpec.get_schema(),
             "on-error": on_clause.OnClauseSpec.get_schema(),
+            "on-skip": on_clause.OnClauseSpec.get_schema(),
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
@@ -71,6 +72,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_complete = self._spec_property('on-complete', on_spec_cls)
         self._on_success = self._spec_property('on-success', on_spec_cls)
         self._on_error = self._spec_property('on-error', on_spec_cls)
+        self._on_skip = self._spec_property('on-skip', on_spec_cls)
 
         self._safe_rerun = data.get('safe-rerun')
 
@@ -88,6 +90,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._validate_transitions(self._on_complete)
         self._validate_transitions(self._on_success)
         self._validate_transitions(self._on_error)
+        self._validate_transitions(self._on_skip)
 
     def _validate_transitions(self, on_clause_spec):
         val = on_clause_spec.get_next() if on_clause_spec else []
@@ -109,6 +112,9 @@ class TaskDefaultsSpec(base.BaseSpec):
 
     def get_on_error(self):
         return self._on_error
+
+    def get_on_skip(self):
+        return self._on_skip
 
     def get_safe_rerun(self):
         return self._safe_rerun

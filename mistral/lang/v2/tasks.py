@@ -75,6 +75,7 @@ class TaskSpec(base.BaseSpec):
             },
             "publish": types.NONEMPTY_DICT,
             "publish-on-error": types.NONEMPTY_DICT,
+            "publish-on-skip": types.NONEMPTY_DICT,
             "retry": retry_policy.RetrySpec.get_schema(),
             "wait-before": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "wait-after": types.EXPRESSION_OR_POSITIVE_INTEGER,
@@ -121,6 +122,7 @@ class TaskSpec(base.BaseSpec):
         self._with_items = self._get_with_items_as_dict()
         self._publish = data.get('publish', {})
         self._publish_on_error = data.get('publish-on-error', {})
+        self._publish_on_skip = data.get('publish-on-skip', {})
         self._policies = self._group_spec(
             policies.PoliciesSpec,
             'retry',
@@ -153,6 +155,7 @@ class TaskSpec(base.BaseSpec):
         self.validate_expr(self._data.get('input', {}))
         self.validate_expr(self._data.get('publish', {}))
         self.validate_expr(self._data.get('publish-on-error', {}))
+        self.validate_expr(self._data.get('publish-on-skip', {}))
         self.validate_expr(self._data.get('keep-result', {}))
         self.validate_expr(self._data.get('safe-rerun', {}))
 
@@ -260,6 +263,11 @@ class TaskSpec(base.BaseSpec):
                 {'branch': self._publish_on_error},
                 validate=self._validate
             )
+        elif state == states.SKIPPED and self._publish_on_skip:
+            spec = publish.PublishSpec(
+                {'branch': self._publish_on_skip},
+                validate=self._validate
+            )
         return spec
 
     def get_keep_result(self):
@@ -288,7 +296,8 @@ class DirectWorkflowTaskSpec(TaskSpec):
             },
             "on-complete": on_clause.OnClauseSpec.get_schema(),
             "on-success": on_clause.OnClauseSpec.get_schema(),
-            "on-error": on_clause.OnClauseSpec.get_schema()
+            "on-error": on_clause.OnClauseSpec.get_schema(),
+            "on-skip": on_clause.OnClauseSpec.get_schema()
         }
     }
 
@@ -307,12 +316,14 @@ class DirectWorkflowTaskSpec(TaskSpec):
         self._on_complete = self._spec_property('on-complete', on_spec_cls)
         self._on_success = self._spec_property('on-success', on_spec_cls)
         self._on_error = self._spec_property('on-error', on_spec_cls)
+        self._on_skip = self._spec_property('on-skip', on_spec_cls)
 
     def validate_semantics(self):
         # Validate YAQL expressions.
         self._validate_transitions(self._on_complete)
         self._validate_transitions(self._on_success)
         self._validate_transitions(self._on_error)
+        self._validate_transitions(self._on_skip)
 
         if self._join:
             join_task_name = self.get_name()
@@ -345,6 +356,8 @@ class DirectWorkflowTaskSpec(TaskSpec):
             on_clause = self._on_success
         elif state == states.ERROR:
             on_clause = self._on_error
+        elif state == states.SKIPPED:
+            on_clause = self._on_skip
 
         if on_clause and on_clause.get_publish():
             if spec:
@@ -365,6 +378,9 @@ class DirectWorkflowTaskSpec(TaskSpec):
 
     def get_on_error(self):
         return self._on_error
+
+    def get_on_skip(self):
+        return self._on_skip
 
 
 class ReverseWorkflowTaskSpec(TaskSpec):

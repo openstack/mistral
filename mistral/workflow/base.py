@@ -158,6 +158,24 @@ class WorkflowController(object):
 
         return cmds
 
+    def skip_tasks(self, task_execs):
+        """Gets commands to skip existing task executions.
+
+        :param task_execs: List of task executions.
+        :return: List of workflow commands.
+        """
+        if self._is_paused_or_completed():
+            return []
+
+        cmds = [
+            commands.SkipTask(self.wf_ex, self.wf_spec, t_e)
+            for t_e in task_execs
+        ]
+
+        LOG.debug("Commands to skip workflow tasks: %s", cmds)
+
+        return cmds
+
     @abc.abstractmethod
     def get_logical_task_state(self, task_ex):
         """Determines a logical state of the given task.

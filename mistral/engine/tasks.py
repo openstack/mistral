@@ -351,7 +351,7 @@ class Task(object, metaclass=abc.ABCMeta):
         return True
 
     @profiler.trace('task-complete')
-    def complete(self, state, state_info=None):
+    def complete(self, state, state_info=None, skip=False):
         """Complete task and set specified state.
 
         Method sets specified task state and runs all necessary post
@@ -365,7 +365,7 @@ class Task(object, metaclass=abc.ABCMeta):
         assert self.task_ex
 
         # Ignore if task already completed.
-        if self.is_completed():
+        if self.is_completed() and not states.is_skipped(state):
             return
 
         # If we were unable to change the task state it means that it was
@@ -383,7 +383,8 @@ class Task(object, metaclass=abc.ABCMeta):
                 if hasattr(ex, 'output'):
                     ex.output = {}
 
-        self._after_task_complete()
+        if not states.is_skipped(state):
+            self._after_task_complete()
 
         # Ignore DELAYED state.
         if self.task_ex.state == states.RUNNING_DELAYED:
