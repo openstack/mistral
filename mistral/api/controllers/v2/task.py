@@ -28,6 +28,7 @@ from mistral.api.controllers.v2 import sub_execution
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
@@ -439,6 +440,12 @@ class ExecutionTasksController(rest.RestController):
                            update time and date.
         """
         acl.enforce('tasks:list', context.ctx())
+
+        with db_api.transaction():
+            db_api.get_workflow_execution(
+                workflow_execution_id,
+                fields=(db_models.WorkflowExecution.id,)
+            )
 
         filters = filter_utils.create_filters_from_request_params(
             workflow_execution_id=workflow_execution_id,
