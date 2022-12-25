@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
@@ -27,6 +28,7 @@ from mistral_lib import utils
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 MAX_SEARCH_DEPTH = 5
 
@@ -196,10 +198,16 @@ class DirectWorkflowController(base.WorkflowController):
         ctx = {}
 
         for batch in self._find_end_task_executions_as_batches():
-            for t_ex in batch:
-                ctx = utils.merge_dicts(
-                    ctx,
-                    data_flow.evaluate_task_outbound_context(t_ex)
+            if not cfg.CONF.context_versioning.enabled:
+                for t_ex in batch:
+                    ctx = utils.merge_dicts(
+                        ctx,
+                        data_flow.evaluate_task_outbound_context(t_ex)
+                    )
+            else:
+                ctx = data_flow.evaluate_upstream_context(
+                    batch,
+                    additive_context=ctx
                 )
 
         return ctx

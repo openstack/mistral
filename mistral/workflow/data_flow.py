@@ -22,6 +22,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
+from mistral.workflow import context_versioning as ctx_versioning
 from mistral.workflow import states
 from mistral_lib import utils
 
@@ -135,23 +136,47 @@ class ContextView(dict):
         )
 
 
-def evaluate_upstream_context(upstream_task_execs):
-    published_vars = {}
-    ctx = {}
+def evaluate_upstream_context(upstream_task_execs, additive_context=None):
+    if not cfg.CONF.context_versioning.enabled:
+        published_vars = {}
+        ctx = {}
+
+        for t_ex in upstream_task_execs:
+            # TODO(rakhmerov): These two merges look confusing. So it's a
+            # temporary solution. There's still the bug
+            # https://bugs.launchpad.net/mistral/+bug/1424461 that needs to be
+            # fixed using context variable versioning.
+            published_vars = utils.merge_dicts(
+                published_vars,
+                t_ex.published
+            )
+
+            utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
+
+        return utils.merge_dicts(ctx, published_vars)
+
+    if not upstream_task_execs:
+        return {}
+
+    if not isinstance(upstream_task_execs, list):
+        upstream_task_execs = [upstream_task_execs]
+
+    if len(upstream_task_execs) == 0:
+        return {}
+
+    if additive_context:
+        ctx = additive_context
+    else:
+        t_ex = upstream_task_execs.pop()
+        ctx = evaluate_task_outbound_context(t_ex)
 
     for t_ex in upstream_task_execs:
-        # TODO(rakhmerov): These two merges look confusing. So it's a
-        # temporary solution. There's still the bug
-        # https://bugs.launchpad.net/mistral/+bug/1424461 that needs to be
-        # fixed using context variable versioning.
-        published_vars = utils.merge_dicts(
-            published_vars,
-            t_ex.published
+        ctx_versioning.merge_context_by_version(
+            ctx,
+            evaluate_task_outbound_context(t_ex)
         )
 
-        utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
-
-    return utils.merge_dicts(ctx, published_vars)
+    return ctx
 
 
 def _extract_execution_result(ex):
@@ -247,10 +272,7 @@ def evaluate_task_outbound_context(task_ex):
     # It's better to avoid using the method copy.deepcopy() because on
     # dictionaries with many entries it significantly increases memory
     # footprint and reduces performance.
-    in_context = (
-        dict(task_ex.in_context)
-        if getattr(task_ex, 'in_context', None) is not None else {}
-    )
+    in_context = ctx_versioning.get_in_context_with_versions(task_ex)
 
     if CONF.engine.merge_strategy == 'merge':
         return utils.merge_dicts(in_context, getattr(task_ex, 'published', {}))
@@ -278,6 +300,7 @@ def evaluate_workflow_output(wf_ex, wf_output, ctx):
 
     # TODO(rakhmerov): Many don't like that we return the whole context
     # if 'output' is not explicitly defined.
+    ctx_versioning.clear_versions(ctx)
     return output or ctx
 
 

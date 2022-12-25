@@ -570,6 +570,30 @@ action_logging_opts = [
     )
 ]
 
+context_versioning_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=True,
+        help=(
+            'If this value is set to True then Mistral will use '
+            'versioning of context to improve results of context '
+            'merging. This feature fixes some bugs with context merging '
+            'but also slows down Mistral performance.'
+        )
+    ),
+    cfg.BoolOpt(
+        'hash_version_keys',
+        default=True,
+        help=(
+            'If this value is set to True then Mistral will use '
+            'md5 hashing for version keys to ensure this keys will be '
+            'the same size. Disabling hashing could be useful for debug '
+            'purposes, but avoid this in production, because it leads to '
+            'excessive memory consumption.'
+        )
+    )
+]
+
 coordination_opts = [
     cfg.StrOpt(
         'backend_url',
@@ -746,6 +770,7 @@ COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
 ACTION_LOGGING_GROUP = 'action_logging'
+CONTEXT_VERSIONING_GROUP = 'context_versioning'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
@@ -780,6 +805,7 @@ CONF.register_opts(
     group=ACTION_HEARTBEAT_GROUP
 )
 CONF.register_opts(action_logging_opts, group=ACTION_LOGGING_GROUP)
+CONF.register_opts(context_versioning_opts, group=CONTEXT_VERSIONING_GROUP)
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
@@ -838,6 +864,7 @@ def list_opts():
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),
+        (CONTEXT_VERSIONING_GROUP, context_versioning_opts),
         (None, default_group_opts)
     ]
 

@@ -32,6 +32,10 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
+    def setUp(self):
+        super(DirectWorkflowEngineTest, self).setUp()
+        self.override_config('hash_version_keys', False, 'context_versioning')
+
     def _run_workflow(self, wf_text, expected_state=states.ERROR):
         wf_service.create_workflows(wf_text)
 
@@ -989,19 +993,47 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         task2_2_ex = self._assert_single_item(tasks_execs, name='task2_2')
 
         self.assertDictEqual({}, task0_ex.in_context)
-        self.assertDictEqual({'var0': 'val0'}, task1_1_ex.in_context)
         self.assertDictEqual(
             {
                 'var0': 'val0',
-                'var1': 'val1'
+                '__versions':
+                {
+                    'var0': 1
+                }
+            },
+            task1_1_ex.in_context
+        )
+        self.assertDictEqual(
+            {
+                'var0': 'val0',
+                'var1': 'val1',
+                '__versions':
+                {
+                    'var0': 1,
+                    'var1': 1
+                }
             },
             task1_2_ex.in_context
         )
-        self.assertDictEqual({'var0': 'val0'}, task2_1_ex.in_context)
         self.assertDictEqual(
             {
                 'var0': 'val0',
-                'var2': 'val2'
+                '__versions':
+                {
+                    'var0': 1
+                }
+            },
+            task2_1_ex.in_context
+        )
+        self.assertDictEqual(
+            {
+                'var0': 'val0',
+                'var2': 'val2',
+                '__versions':
+                {
+                    'var0': 1,
+                    'var2': 1
+                }
             },
             task2_2_ex.in_context
         )
@@ -1266,3 +1298,144 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         }
 
         self.assertDictContainsSubset(expected_context, output)
+
+    def test_context_versioning(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+          output:
+            a: <% $.a %>
+            b: <% $.b %>
+
+          tasks:
+            task_start:
+              action: std.noop
+              publish:
+                a: 0
+                b: 0
+              on-success:
+                - task1_left
+                - task1_right
+
+            task1_left:
+              action: std.noop
+              publish:
+                a: 1
+              on-success: task2_left
+
+            task1_right:
+              action: std.noop
+              publish:
+                b: 1
+              on-success: task2_right
+
+            task2_left:
+              action: std.noop
+              on-success: task_final
+
+            task2_right:
+              action: std.noop
+              on-success: task_final
+
+            task_final:
+              action: std.noop
+              join: all
+
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+            wf_output = wf_ex.output
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+
+        task_start = self._assert_single_item(tasks, name='task_start')
+        task1_left = self._assert_single_item(tasks, name='task1_left')
+        task1_right = self._assert_single_item(tasks, name='task1_right')
+        task2_left = self._assert_single_item(tasks, name='task2_left')
+        task2_right = self._assert_single_item(tasks, name='task2_right')
+        task_final = self._assert_single_item(tasks, name='task_final')
+
+        self.assertDictEqual({'a': 0, 'b': 0}, task_start.published)
+
+        self.assertDictEqual(
+            {
+                'a': 0,
+                'b': 0,
+                '__versions':
+                {
+                    'a': 1,
+                    'b': 1
+                }
+            },
+            task1_left.in_context
+        )
+        self.assertDictEqual({'a': 1}, task1_left.published)
+
+        self.assertDictEqual(
+            {
+                'a': 0,
+                'b': 0,
+                '__versions':
+                {
+                    'a': 1,
+                    'b': 1
+                }
+            },
+            task1_right.in_context
+        )
+        self.assertDictEqual({'b': 1}, task1_right.published)
+
+        self.assertDictEqual(
+            {
+                'a': 1,
+                'b': 0,
+                '__versions':
+                {
+                    'a': 2,
+                    'b': 1
+                }
+            },
+            task2_left.in_context
+        )
+
+        self.assertDictEqual(
+            {
+                'a': 0,
+                'b': 1,
+                '__versions':
+                {
+                    'a': 1,
+                    'b': 2
+                }
+            },
+            task2_right.in_context
+        )
+
+        self.assertDictEqual(
+            {
+                'a': 1,
+                'b': 1,
+                '__versions':
+                {
+                    'a': 2,
+                    'b': 2
+                }
+            },
+            task_final.in_context
+        )
+
+        self.assertDictEqual({'a': 1, 'b': 1}, wf_output)
