@@ -105,6 +105,74 @@ directory.
    of OpenStack projects in your deployment. Please find more detailed
    information in ``tools/get_action_list.py`` script.
 
+#. Configure merge strategy feature if needed, It is needed to change default
+   Mistral variable interaction behavior of replacing one variable with another
+   inside own context.
+   For eg::
+
+      version: '2.0'
+      wf:
+      input:
+      - aa:
+            bb: wf_ex_input
+            cc: wf_ex_input
+            zz: wf_ex_input
+      output:
+         aa: <% $.aa %>
+      tasks:
+         task1:
+            action: std.echo
+            # emulate some action result
+            input:
+            output:
+               cc: task1_res
+               dd: task1_res
+            on-success: [task2]
+            publish:
+            aa:
+               cc: <% task().result["cc"] %>
+               dd: <% task().result["dd"] %>
+         task2:
+            action: std.echo
+            # emulate some action result
+            input:
+            output:
+               bb: task2_res
+            publish:
+            aa:
+               bb: <% task().result["bb"] %>
+
+   Default result of execution is::
+
+      {
+         "aa": {
+            "bb": "task2_res"
+         }
+      }
+
+   To merge results of tasks, we need to use flat data structure or the yaql
+   merge function.
+   merge_strategy config has following options:
+
+   * `replace` - It is the default value. It is an old behavior when variable replace each other in context.
+   * `merge` - If you set this value, variable is merged with other context.
+
+   Consider `merge` strategy with the same workflow as above. The result is::
+
+      {
+         "aa" : {
+            "bb": "task2_res",
+            "cc": "task1_res",
+            "dd": "task1_res",
+            "zz": "wf_ex_input",
+         }
+      }
+
+   merge_strategy can be configured as the following::
+
+      [engine]
+      merge_strategy = replace
+
 #. Configure Task affinity feature if needed. It is needed for distinguishing
    either single task executor or one task executor from group of task
    executors::

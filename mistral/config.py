@@ -250,6 +250,13 @@ engine_opts = [
             'to start subworkflow via RPC to improve load balancing '
             'in case of several engine instances.'
         )
+    ),
+    cfg.StrOpt(
+        'merge_strategy',
+        choices=['replace', 'merge'],
+        default="replace",
+        help=_('Merge strategy of data inside workflow execution. '
+               '(replace, merge)')
     )
 ]
 

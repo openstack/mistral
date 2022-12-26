@@ -46,8 +46,14 @@ class ContextView(dict):
 
     def __init__(self, *dicts):
         super(ContextView, self).__init__()
+        if CONF.engine.merge_strategy == 'merge':
+            res = {}
+            for d in reversed(dicts):
+                res = utils.merge_dicts(res, d)
 
-        self.dicts = [d for d in dicts if d is not None]
+            self.dicts = [res]
+        else:
+            self.dicts = [d for d in dicts if d is not None]
 
     def __getitem__(self, key):
         for d in self.dicts:
@@ -246,7 +252,10 @@ def evaluate_task_outbound_context(task_ex):
         if getattr(task_ex, 'in_context', None) is not None else {}
     )
 
-    return utils.update_dict(in_context, getattr(task_ex, 'published', {}))
+    if CONF.engine.merge_strategy == 'merge':
+        return utils.merge_dicts(in_context, getattr(task_ex, 'published', {}))
+    else:
+        return utils.update_dict(in_context, getattr(task_ex, 'published', {}))
 
 
 def evaluate_workflow_output(wf_ex, wf_output, ctx):
