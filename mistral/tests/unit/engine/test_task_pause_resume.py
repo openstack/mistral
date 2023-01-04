@@ -53,6 +53,18 @@ class TaskPauseResumeTest(base.EngineTestCase):
                 wf_ex.task_executions,
                 name='task1'
             )
+        self.await_task_running(task_1_ex.id)
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
+
+            task_execs = wf_ex.task_executions
+
+            task_1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
 
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
@@ -162,6 +174,18 @@ class TaskPauseResumeTest(base.EngineTestCase):
 
         self.await_workflow_state(wf_ex.id, states.RUNNING)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
+
+            task_execs = wf_ex.task_executions
+
+            task_1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(task_1_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 

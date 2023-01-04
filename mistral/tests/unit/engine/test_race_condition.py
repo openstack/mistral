@@ -146,7 +146,12 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_execs = wf_ex.task_executions
+        self.await_task_running(task_execs[0].id)
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual(states.RUNNING, task_execs[0].state)
 

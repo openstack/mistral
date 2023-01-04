@@ -167,6 +167,26 @@ class EngineServer(service_base.MistralService):
             **params
         )
 
+    def start_task(self, rpc_ctx, task_ex_id, first_run, waiting,
+                   triggered_by, rerun, **params):
+        """Receives calls over RPC to start tasks on engine.
+
+        """
+        LOG.info(
+            "Received RPC request 'start_task'[task_ex_id=%s, first_run=%s]",
+            task_ex_id,
+            first_run
+        )
+
+        return self.engine.start_task(
+            task_ex_id,
+            first_run,
+            waiting,
+            triggered_by,
+            rerun,
+            **params
+        )
+
     def start_action(self, rpc_ctx, action_name,
                      action_input, description, namespace, params):
         """Receives calls over RPC to start actions on engine.

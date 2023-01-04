@@ -114,15 +114,15 @@ class TaskStartedFinishedAtTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf')
 
+        task_ex = self._extract_task_ex(wf_ex.id)
+        created_at_before_retry = task_ex.created_at
+
         self.await_workflow_error(wf_ex.id)
 
         task_ex = self._extract_task_ex(wf_ex.id)
+        created_at_after_retry = task_ex.created_at
 
-        created_at = task_ex.created_at
-        started_at = self._get_started_finished(task_ex)[0]
-        delta = int((started_at - created_at).total_seconds())
-
-        self.assertLessEqual(delta, 1)
+        self.assertEqual(created_at_before_retry, created_at_after_retry)
 
     def test_wait_before_after_are_included_to_duration(self):
         wf_text = """

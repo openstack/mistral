@@ -202,6 +202,15 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wb.wf')
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='taskx')
+        self.engine.start_task(task_ex.id, True, False, None, False, False)
+        self.await_task_running(task_ex.id)
+
         self.engine.stop_workflow(
             wf_ex.id,
             states.CANCELLED,
@@ -261,13 +270,22 @@ class WorkflowCancelTest(base.EngineTestCase):
 
                 task2:
                   action: std.echo output="foo"
-                  wait-before: 3
+                  wait-before: 10
         """
 
         wb_service.create_workbook_v2(workbook)
 
         self.engine.start_workflow('wb.wf')
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='taskx'
+            )
+        self.await_task_running(task_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -329,12 +347,19 @@ class WorkflowCancelTest(base.EngineTestCase):
 
                 task2:
                   action: std.echo output="foo"
-                  wait-before: 1
+                  wait-before: 10
         """
         wb_service.create_workbook_v2(workbook)
 
         wf_ex = self.engine.start_workflow('wb.wf')
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='taskx')
+        self.await_task_running(task_ex.id)
         self.engine.stop_workflow(
             wf_ex.id,
             states.CANCELLED,
@@ -398,13 +423,23 @@ class WorkflowCancelTest(base.EngineTestCase):
 
                 task2:
                   action: std.echo output="foo"
-                  wait-before: 1
+                  wait-before: 10
         """
 
         wb_service.create_workbook_v2(workbook)
 
         self.engine.start_workflow('wb.wf')
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='taskx'
+            )
+
+        self.await_task_running(task_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -477,13 +512,23 @@ class WorkflowCancelTest(base.EngineTestCase):
 
                 task2:
                   action: std.echo output="foo"
-                  wait-before: 1
+                  wait-before: 10
         """
 
         wb_service.create_workbook_v2(workbook)
 
         self.engine.start_workflow('wb.wf')
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='taskx'
+            )
+
+        self.await_task_running(task_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -562,7 +607,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
                 task2:
                   action: std.echo output="foo"
-                  wait-before: 1
+                  wait-before: 10
         """
 
         wb_service.create_workbook_v2(workbook)
@@ -577,6 +622,13 @@ class WorkflowCancelTest(base.EngineTestCase):
                 wf_ex.task_executions,
                 name='taskx'
             )
+        self.await_task_running(task_ex.id)
+
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
+
             subwf_exs = self._assert_multiple_items(
                 wf_execs,
                 2,

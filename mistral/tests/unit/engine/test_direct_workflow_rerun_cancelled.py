@@ -68,7 +68,15 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         wf1_ex = self.engine.start_workflow('wb1.wf1')
 
         self.await_workflow_state(wf1_ex.id, states.RUNNING)
+        with db_api.transaction():
+            wf1_execs = db_api.get_workflow_executions()
 
+            wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
+            wf1_t1_ex = self._assert_single_item(
+                wf1_ex.task_executions,
+                name='t1'
+            )
+        self.await_task_running(wf1_t1_ex.id)
         with db_api.transaction():
             wf1_execs = db_api.get_workflow_executions()
 
@@ -109,6 +117,14 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Resume workflow and re-run cancelled task.
         self.engine.rerun_workflow(wf1_t1_ex.id)
+
+        with db_api.transaction():
+            wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
+
+            wf1_task_execs = wf1_ex.task_executions
+
+            wf1_t1_ex = self._assert_single_item(wf1_task_execs, name='t1')
+        self.await_task_running(wf1_t1_ex.id)
 
         with db_api.transaction():
             wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
@@ -581,6 +597,16 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
                 wf1_ex.task_executions,
                 name='t1'
             )
+        self.await_task_running(wf1_t1_ex.id)
+
+        with db_api.transaction():
+            wf1_execs = db_api.get_workflow_executions()
+
+            wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
+            wf1_t1_ex = self._assert_single_item(
+                wf1_ex.task_executions,
+                name='t1'
+            )
 
         wf1_t1_action_exs = db_api.get_action_executions(
             task_execution_id=wf1_t1_ex.id
@@ -620,7 +646,15 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
                 wf1_ex.task_executions,
                 name='t1'
             )
+        self.await_task_running(wf1_t1_ex.id)
+        with db_api.transaction():
+            wf1_execs = db_api.get_workflow_executions()
 
+            wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
+            wf1_t1_ex = self._assert_single_item(
+                wf1_ex.task_executions,
+                name='t1'
+            )
         self.await_workflow_state(wf1_ex.id, states.RUNNING)
 
         wf1_t1_action_exs = db_api.get_action_executions(

@@ -16,7 +16,9 @@
 import functools
 from osprofiler import profiler
 
+from mistral.engine import post_tx_queue
 from mistral import exceptions as exc
+from mistral.rpc import clients as rpc
 from mistral.workflow import commands
 from mistral.workflow import states
 
@@ -146,7 +148,28 @@ def _process_commands(wf_ex, cmds):
             continue
 
         if isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
-            task_handler.run_task(cmd)
+            if isinstance(cmd, commands.RunExistingTask):
+                first_run = False
+                reset = cmd.reset
+            else:
+                first_run = True
+                reset = False
+
+            task = task_handler.create_task(cmd, first_run)
+
+            def _start_task(_task=task, _first_run=first_run, _reset=reset):
+                rpc.get_engine_client().start_task(
+                    wf_spec=_task.wf_spec,
+                    task_ex_id=_task.task_ex.id,
+                    first_run=_first_run,
+                    waiting=_task.waiting,
+                    triggered_by=_task.triggered_by,
+                    rerun=_task.rerun,
+                    reset=_reset
+                )
+
+            post_tx_queue.register_operation(_start_task)
+
         elif isinstance(cmd, commands.SkipTask):
             task_handler.skip_task(cmd)
         elif isinstance(cmd, commands.SetWorkflowState):

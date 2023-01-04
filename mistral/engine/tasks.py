@@ -289,7 +289,7 @@ class Task(object, metaclass=abc.ABCMeta):
         self.reset_flag = True
 
     @profiler.trace('task-set-state')
-    def set_state(self, state, state_info, processed=None):
+    def set_state(self, state, state_info, processed=None, first_run=False):
         """Sets task state without executing post completion logic.
 
         :param state: New task state.
@@ -323,8 +323,8 @@ class Task(object, metaclass=abc.ABCMeta):
             # was WAITING (all preconditions are satisfied and it's
             # ready to start) or IDLE, or the task is being rerun. So
             # we treat all iterations of "retry" policy as one run.
-            if state == states.RUNNING and \
-                    (cur_state in (None, states.WAITING) or self.rerun):
+            if state == states.RUNNING and (cur_state in (
+                    None, states.WAITING, states.IDLE) or self.rerun):
                 self.task_ex.started_at = utils.utc_now_sec()
 
             if states.is_completed(state):
@@ -336,7 +336,10 @@ class Task(object, metaclass=abc.ABCMeta):
             if processed is not None:
                 self.task_ex.processed = processed
 
-            self._notify(cur_state, state)
+            if first_run:
+                self._notify(None, state)
+            else:
+                self._notify(cur_state, state)
 
             wf_trace.info(
                 self.task_ex.workflow_execution,
@@ -569,8 +572,8 @@ class RegularTask(Task):
         self.update(action_ex.state)
 
     @profiler.trace('task-run')
-    def run(self):
-        if not self.task_ex:
+    def run(self, first_run=False):
+        if first_run:
             self._run_new()
         else:
             self._run_existing()
@@ -578,32 +581,38 @@ class RegularTask(Task):
     @profiler.trace('task-run-new')
     def _run_new(self):
         if self.waiting:
+            return
+
+        if states.is_idle(self.task_ex.state):
+            # Set the RUNNING state and trigger all operations
+            # related to the state change.
+            self.set_state(
+                states.RUNNING, self.task_ex.state_info, first_run=True)
+
+            LOG.debug(
+                'Starting task [name=%s, init_state=%s, workflow_name=%s,'
+                ' execution_id=%s]',
+                self.task_spec.get_name(),
+                self.task_ex.state,
+                self.wf_ex.name,
+                self.wf_ex.id
+            )
+
+            self._before_task_start()
+
+            # Policies could possibly change task state.
+            if self.task_ex.state != states.RUNNING:
+                return
+
+            self._schedule_actions()
+
+    @profiler.trace('task-create-new')
+    def create_new(self):
+        if self.waiting:
             self.defer()
-
             return
 
-        self._create_task_execution()
-
-        # Set the initial state and trigger all operations
-        # related to the state change.
-        self.set_state(states.RUNNING, None)
-
-        LOG.debug(
-            'Starting task [name=%s, init_state=%s, workflow_name=%s,'
-            ' execution_id=%s]',
-            self.task_spec.get_name(),
-            self.task_ex.state,
-            self.wf_ex.name,
-            self.wf_ex.id
-        )
-
-        self._before_task_start()
-
-        # Policies could possibly change task state.
-        if self.task_ex.state != states.RUNNING:
-            return
-
-        self._schedule_actions()
+        self._create_task_execution(state=states.IDLE)
 
     @profiler.trace('task-run-existing')
     def _run_existing(self):

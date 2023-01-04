@@ -159,6 +159,25 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
+    def start_task(self, task_ex_id, first_run, waiting,
+                   triggered_by, rerun, reset, **params):
+        """Starts task sending a request to engine over RPC.
+
+        """
+
+        return self._client.async_call(
+            auth_ctx.ctx(),
+            'start_task',
+            task_ex_id=task_ex_id,
+            first_run=first_run,
+            waiting=waiting,
+            triggered_by=triggered_by,
+            rerun=rerun,
+            reset=reset,
+            params=params
+        )
+
+    @base.wrap_messaging_exception
     def start_action(self, action_name, action_input,
                      description=None, namespace='', **params):
         """Starts action sending a request to engine over RPC.
