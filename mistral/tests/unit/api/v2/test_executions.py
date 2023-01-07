@@ -994,3 +994,17 @@ class TestExecutionsController(base.APITest):
             "The field 'id' can't hold None value.",
             resp.body.decode()
         )
+
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
+    def test_get_all_tasks_within_execution(self):
+        fake_execution_id = "00000000-0000-0000-0000-000000000000"
+        resp = self.app.get(
+            '/v2/executions/%s/tasks' % fake_execution_id,
+            expect_errors=True
+        )
+
+        self.assertEqual(404, resp.status_int)
+        self.assertIn(
+            "Object not found",
+            resp.body.decode()
+        )
