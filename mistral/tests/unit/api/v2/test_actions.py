@@ -452,7 +452,8 @@ class TestActionsController(base.APITest):
         # Create an adhoc action for the purpose of the test.
         adhoc_actions.create_actions(ADHOC_ACTION_YAML)
 
-        resp = self.app.get('/v2/actions?limit=1&sort_keys=id,name')
+        resp = self.app.get(
+            '/v2/actions?limit=1&sort_keys=created_at&sort_dirs=desc')
 
         self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
@@ -472,13 +473,24 @@ class TestActionsController(base.APITest):
         expected_dict = {
             'marker': action_def.id,
             'limit': 1,
-            'sort_keys': 'id,name',
-            'sort_dirs': 'asc,asc'
+            'sort_keys': 'created_at,id',
+            'sort_dirs': 'desc,asc'
         }
 
         self.assertTrue(
             set(expected_dict.items()).issubset(set(param_dict.items()))
         )
+
+    def test_get_all_sort_date_asc(self):
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+        resp = self.app.get('/v2/actions?sort_keys=created_at&sort_dirs=asc')
+        self.assertEqual(200, resp.status_int)
+
+    def test_get_all_sort_date_desc(self):
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_A)
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)
+        resp = self.app.get('/v2/actions?sort_keys=created_at&sort_dirs=desc')
+        self.assertEqual(200, resp.status_int)
 
     def test_get_all_pagination_marker(self):
         adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)
