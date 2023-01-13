@@ -330,8 +330,8 @@ class ActionsController(rest.RestController, hooks.HookController):
         def action_descriptor_sort(a_ds, keys, dirs):
             def compare_(a_d1, a_d2):
                 for key, dir in zip(keys, dirs):
-                    a_d1 = getattr(a_d1, key, a_d1.name)
-                    a_d2 = getattr(a_d2, key, a_d2.name)
+                    a_d1 = getattr(a_d1, key, None)
+                    a_d2 = getattr(a_d2, key, None)
 
                     if a_d1 is None and a_d2 is None:
                         ret = 0
@@ -340,7 +340,10 @@ class ActionsController(rest.RestController, hooks.HookController):
                     elif a_d1 is not None and a_d2 is None:
                         ret = 1
                     else:
-                        ret = (a_d1 > a_d2) - (a_d1 < a_d2)
+                        if type(a_d1) is type(a_d2):
+                            ret = (a_d1 > a_d2) - (a_d1 < a_d2)
+                        else:
+                            ret = 1
                     if ret:
                         return ret * (1 if dir == 'asc' else -1)
                 return 0
