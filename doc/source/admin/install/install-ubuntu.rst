@@ -23,7 +23,7 @@ Installation
 ------------
 
 **NOTE**: For instructions on how to install Mistral using devstack, refer to
-:doc:`Mistral Devstack Installation </developer/contributor/devstack>`
+:doc:`Mistral Devstack Installation <../../contributor/devstack>`
 
 Clone the repo and go to the repo directory:
 

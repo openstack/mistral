@@ -6,8 +6,8 @@ Contributor Documentation
    :maxdepth: 3
 
    contributing
+   devstack
    coding_guidelines
    debugging_and_testing
    profiling
-   troubleshooting
-   devstack
+   extensions/index

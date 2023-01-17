@@ -28,7 +28,7 @@ System actions are provided by Mistral out of the box and are available to all
 users. Additional actions can be added via the custom action plugin mechanism.
 
 :doc:`How to create a custom action
-</developer/extensions/creating_custom_action>`
+<../../contributor/extensions/creating_custom_action>`
 
 
 Ad-hoc actions

@@ -57,13 +57,8 @@ For Administrators and Operators
 For Developers
 ==============
 
-* :doc:`developer/contributor/coding_guidelines`: No matter what you're
-  going to develop regarding Mistral, please read the coding guidelines
-  we accept in our project.
-* :doc:`developer/index`: If you want to contribute to the project or
+* :doc:`contributor/index`: If you want to contribute to the project or
   write Mistral extensions, please start here.
-* :doc:`developer/extensions/index`: Read this section if you want to write
-  custom Mistral actions and other extensions.
 
 Workflow Visualization (CloudFlow)
 ==================================
@@ -81,12 +76,7 @@ Main Chapters
 
     user/index
     admin/index
-    developer/index
-
-.. toctree::
-   :hidden:
-
-   contributor/contributing
+    contributor/index
 
 .. only:: html
 

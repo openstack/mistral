@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Mistral'
-copyright = '2020, Mistral Contributors'
+copyright = '2023, Mistral Contributors'
 
 policy_generator_config_file = \
     '../../tools/config/policy-generator.mistral.conf'
