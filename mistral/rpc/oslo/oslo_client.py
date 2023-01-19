@@ -25,7 +25,7 @@ class OsloRPCClient(rpc.RPCClient):
 
         serializer = auth_ctx.RpcContextSerializer()
 
-        self._client = messaging.RPCClient(
+        self._client = messaging.get_rpc_client(
             rpc.get_transport(),
             messaging.Target(topic=self.topic),
             serializer=serializer
