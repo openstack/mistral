@@ -18,6 +18,7 @@ import eventlet
 from mistral import context as auth_ctx
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import post_tx_queue
 from mistral_lib import actions as mistral_lib
@@ -61,8 +62,28 @@ def handle_expired_actions():
             )
 
             for action_ex in action_exs:
+                task_ex = db_api.get_task_execution(
+                    action_ex.task_execution_id
+                )
+                wf_ex = db_api.get_workflow_execution(
+                    task_ex.workflow_execution_id,
+                    fields=(db_models.WorkflowExecution.id,
+                            db_models.WorkflowExecution.root_execution_id)
+                )
+
+                if wf_ex.root_execution_id:
+                    root_execution_id = wf_ex.root_execution_id
+                else:
+                    root_execution_id = wf_ex.id
+
                 result = mistral_lib.Result(
                     error="Heartbeat wasn't received."
+                )
+
+                auth_ctx.set_ctx(
+                    auth_ctx.MistralContext(
+                        root_execution_id=root_execution_id
+                    )
                 )
 
                 action_handler.on_action_complete(action_ex, result)

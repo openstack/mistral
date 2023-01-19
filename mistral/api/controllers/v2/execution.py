@@ -124,16 +124,22 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:update', context.ctx())
 
-        LOG.debug('Update execution [id=%s, execution=%s]', id, wf_ex)
+        LOG.info('Update execution [id=%s, execution=%s]', id, wf_ex)
 
         @rest_utils.rest_retry_on_db_error
         def _compute_delta(wf_ex):
             with db_api.transaction():
                 # ensure that workflow execution exists
-                db_api.get_workflow_execution(
+                wf_ex_old = db_api.get_workflow_execution(
                     id,
-                    fields=(db_models.WorkflowExecution.id,)
+                    fields=(db_models.WorkflowExecution.id,
+                            db_models.WorkflowExecution.root_execution_id)
                 )
+                root_execution_id = wf_ex_old.root_execution_id
+                if not root_execution_id:
+                    root_execution_id = wf_ex_old.id
+
+                context.ctx(root_execution_id=root_execution_id)
 
                 delta = {}
 
@@ -234,7 +240,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:create', context.ctx())
 
-        LOG.debug("Create execution [execution=%s]", wf_ex)
+        LOG.info("Create execution [execution=%s]", wf_ex)
 
         exec_dict = wf_ex.to_dict()
 
@@ -242,6 +248,7 @@ class ExecutionsController(rest.RestController):
 
         if not exec_id:
             exec_id = uuidutils.generate_uuid()
+            context.ctx(root_execution_id=exec_id)
 
             LOG.debug("Generated execution id [exec_id=%s]", exec_id)
 
@@ -253,6 +260,7 @@ class ExecutionsController(rest.RestController):
             # If yes, the method just returns the object. If not, the ID
             # will be used to create a new execution.
             wf_ex = _get_workflow_execution(exec_id, must_exist=False)
+            context.ctx(root_execution_id=exec_id)
 
             if wf_ex:
                 return resources.Execution.from_db_model(wf_ex)
