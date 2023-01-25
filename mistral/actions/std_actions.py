@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2014 - StackStorm, Inc.
+# Copyright 2022 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import requests
 from mistral import exceptions as exc
 from mistral import utils
 from mistral.utils import javascript
+from mistral.utils import rest_utils
 from mistral.utils import ssh_utils
 from mistral_lib import actions
 
@@ -213,9 +215,9 @@ class HTTPAction(actions.Action):
             self.url,
             self.method,
             self.params,
-            self.body,
+            rest_utils.prepare_request_body_log(self.body),
             self.json,
-            self.headers,
+            rest_utils.clear_sensitive_headers(self.headers),
             self.cookies,
             self.auth,
             self.timeout,
@@ -255,7 +257,7 @@ class HTTPAction(actions.Action):
         LOG.info(
             "HTTP action response:\n%s\n%s",
             resp.status_code,
-            resp.content
+            rest_utils.prepare_response_body_log(resp.content)
         )
 
         # Represent important resp data as a dictionary.

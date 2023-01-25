@@ -33,6 +33,8 @@ DATA = {
     }
 }
 
+ACTION_LOGGER = 'mistral.actions.std_actions'
+
 
 def get_fake_response(content, code, **kwargs):
     return base.FakeHTTPResponse(
@@ -187,3 +189,86 @@ class HTTPActionTest(base.BaseTest):
         result = action.run(mock_ctx)
 
         self.assertIsNone(result['encoding'])
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_request_body_if_needed(self, mocked_method):
+        self.override_config(
+            'hide_request_body',
+            True,
+            group='action_logging'
+        )
+
+        sensitive_data = 'I actually love anime.'
+
+        action = std.HTTPAction(url=URL, method='POST', body=sensitive_data)
+
+        mocked_method.return_value = get_fake_response(
+            content='', code=201
+        )
+        mock_ctx = mock.Mock()
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock_ctx)
+
+        self.assertEqual(2, len(logs.output))  # Request and response loglines
+
+        log = logs.output[0]  # Request log
+        msg = "Request body hidden due to action_logging configuration."
+        self.assertNotIn(sensitive_data, log)
+        self.assertIn(msg, log)
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_request_headers_if_needed(self, mocked_method):
+        sensitive_header = 'Authorization'
+        self.override_config(
+            'sensitive_headers',
+            [sensitive_header],
+            group='action_logging'
+        )
+
+        headers = {
+            sensitive_header: 'Bearer 13e7aa3fc23e50bc1529dc136791d34d'
+        }
+
+        action = std.HTTPAction(url=URL, method='GET', headers=headers)
+
+        mocked_method.return_value = get_fake_response(
+            content='', code=200
+        )
+        mock_ctx = mock.Mock()
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock_ctx)
+
+        self.assertEqual(2, len(logs.output))  # Request and response loglines
+
+        log = logs.output[0]  # Request log
+        self.assertNotIn(headers[sensitive_header], log)
+        self.assertIn('headers={}', log)
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_response_body_if_needed(self, mocked_method):
+        self.override_config(
+            'hide_response_body',
+            True,
+            group='action_logging'
+        )
+
+        action = std.HTTPAction(url=URL, method='GET')
+
+        sensitive_data = 'I actually love anime.'
+
+        mocked_method.return_value = get_fake_response(
+            content=sensitive_data, code=200
+        )
+        mock_ctx = mock.Mock()
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock_ctx)
+
+        self.assertEqual(2, len(logs.output))  # Request and response loglines
+
+        log = logs.output[1]  # Response log
+        msg = "Response body hidden due to action_logging configuration."
+        self.assertNotIn(sensitive_data, log)
+        self.assertIn(msg, log)

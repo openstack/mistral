@@ -168,6 +168,32 @@ directory.
 
     The grace period for the first heartbeat (in seconds).
 
+#. By default Mistral logs information about requests in HTTP action.
+   To hide request headers and endpoint response in logs apply
+   configuration like following::
+
+      [action_logging]
+      hide_response_body = True
+      hide_request_body = True
+      sensitive_headers = Header1, Header2
+
+   Example above will make Mistral hide all response's bodies and hide
+   Header1 and Header2 from requests in Mistral executor logs.
+
+   - **hide_response_body**
+
+    If this value is set to *True* then HTTP action response
+    body will be hidden in logs. Default is *False*
+
+   - **hide_request_body**
+
+    If this value is set to *True* then HTTP action request
+    body will be hidden in logs. Default is *False*
+
+   - **sensitive_headers**
+
+    List of sensitive headers that should be hidden in logs. Default is empty.
+
 #. Configure event publishers. Event publishers are plugins that are
    optionally installed in the same virtual environment as Mistral.
    Event notification can be configured for all workflow execution for one or
