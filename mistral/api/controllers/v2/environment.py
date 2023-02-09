@@ -59,7 +59,7 @@ class EnvironmentController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param description: Optional. Keep only resources with a specific
@@ -101,21 +101,28 @@ class EnvironmentController(rest.RestController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Environment, wtypes.text)
-    def get(self, name):
+    @wsme_pecan.wsexpose(resources.Environment, wtypes.text, types.uniquelist)
+    def get(self, name, fields=''):
         """Return the named environment.
 
         :param name: Name of environment to retrieve
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('environments:get', context.ctx())
 
         LOG.debug("Fetch environment [name=%s]", name)
 
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
+
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
-        db_model = r.call(db_api.get_environment, name)
-
-        return resources.Environment.from_db_model(db_model)
+        db_model = r.call(db_api.get_environment, name, fields=fields)
+        if fields:
+            return resources.Environment.from_tuples(zip(fields, db_model))
+        return resources.Environment.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(

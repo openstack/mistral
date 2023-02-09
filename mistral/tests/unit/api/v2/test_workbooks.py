@@ -169,6 +169,18 @@ class TestWorkbooksController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WORKBOOK, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_workbook')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (WORKBOOK['id'], WORKBOOK['name'],)
+        resp = self.app.get('/v2/workbooks/123?fields=name')
+        expected = {
+            'id': WORKBOOK['id'],
+            'name': WORKBOOK['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, "get_workbook", MOCK_WB_WITH_NAMESPACE)
     def test_get_with_namespace(self):
         resp = self.app.get('/v2/workbooks/123?namespace=xyz')

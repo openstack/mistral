@@ -188,6 +188,20 @@ class TestEnvironmentController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self._assert_dict_equal(ENVIRONMENT, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_environment')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (
+            ENVIRONMENT['id'], ENVIRONMENT['name'],
+        )
+        resp = self.app.get('/v2/environments/123?fields=name')
+        expected = {
+            'id': ENVIRONMENT['id'],
+            'name': ENVIRONMENT['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_environment')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

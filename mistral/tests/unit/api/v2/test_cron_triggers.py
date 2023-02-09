@@ -79,6 +79,18 @@ class TestCronTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_cron_trigger')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (TRIGGER['id'], TRIGGER['name'],)
+        resp = self.app.get('/v2/cron_triggers/my_cron_trigger?fields=name')
+        expected = {
+            'id': TRIGGER['id'],
+            'name': TRIGGER['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_cron_trigger')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

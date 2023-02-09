@@ -264,6 +264,18 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WF, resp_json)
 
+    @mock.patch('mistral.db.v2.api.get_workflow_definition')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (WF['id'], WF['name'],)
+        resp = self.app.get('/v2/workflows/123?fields=name')
+        expected = {
+            'id': WF['id'],
+            'name': WF['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_workflow_definition')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [
@@ -886,4 +898,4 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.get(
             '/v2/workflows/123e4567-e89b-12d3-a456-426655440000')
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)

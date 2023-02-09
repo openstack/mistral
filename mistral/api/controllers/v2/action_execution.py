@@ -52,25 +52,40 @@ def _load_deferred_output_field(action_ex):
 
 # Use retries to prevent possible failures.
 @rest_utils.rest_retry_on_db_error
-def _get_action_execution(id):
+def _get_action_execution(id, fields=()):
+    if fields and 'id' not in fields:
+        fields.insert(0, 'id')
+
     with db_api.transaction():
-        return _get_action_execution_resource(db_api.get_action_execution(id))
+        return _get_action_execution_resource(
+            db_api.get_action_execution(id),
+            fields=fields
+        )
 
 
-def _get_action_execution_resource(action_ex):
+def _get_action_execution_resource(action_ex, fields=()):
     _load_deferred_output_field(action_ex)
 
-    return _get_action_execution_resource_for_list(action_ex)
+    if fields and 'id' not in fields:
+        fields.insert(0, 'id')
+
+    return _get_action_execution_resource_for_list(action_ex, fields=fields)
 
 
-def _get_action_execution_resource_for_list(action_ex):
+def _get_action_execution_resource_for_list(action_ex, fields=()):
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
-    res = resources.ActionExecution.from_db_model(action_ex)
 
-    task_name = (action_ex.task_execution.name
-                 if action_ex.task_execution else None)
-    setattr(res, 'task_name', task_name)
+    # field_task_name_needed = 'task_name' in fields
+    # if field_task_name_needed:
+    #     fields.remove('task_name')
+
+    res = resources.ActionExecution.from_db_model(action_ex, fields=fields)
+
+    # if not fields or field_task_name_needed:
+    #     task_name = (action_ex.task_execution.name
+    #                  if action_ex.task_execution else None)
+    #     setattr(res, 'task_name', task_name)
 
     return res
 
@@ -95,7 +110,7 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
                       or less than that of sort_keys.
     :param fields: Optional. A specified list of fields of the resource to
                    be returned. 'id' will be included automatically in
-                   fields if it's provided, since it will be used when
+                   fields if it's not provided, since it will be used when
                    constructing 'next' link.
     :param filters: Optional. A list of filters to apply to the result.
     """
@@ -124,17 +139,21 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
 
 class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text)
-    def get(self, id):
+    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text,
+                         types.uniquelist)
+    def get(self, id, fields=None):
         """Return the specified action_execution.
 
         :param id: UUID of action execution to retrieve
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('action_executions:get', context.ctx())
 
         LOG.debug("Fetch action_execution [id=%s]", id)
 
-        return _get_action_execution(id)
+        return _get_action_execution(id, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.ActionExecution,
@@ -248,7 +267,7 @@ class ActionExecutionsController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param workflow_name: Optional. Keep only resources with a specific
@@ -379,7 +398,7 @@ class TasksActionExecutionController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param workflow_name: Optional. Keep only resources with a specific
@@ -444,15 +463,19 @@ class TasksActionExecutionController(rest.RestController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text, wtypes.text)
-    def get(self, task_execution_id, action_ex_id):
+    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text, wtypes.text,
+                         types.uniquelist)
+    def get(self, task_execution_id, action_ex_id, fields=()):
         """Return the specified action_execution.
 
         :param task_execution_id: Task execution UUID
         :param action_ex_id: Action execution UUID
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('action_executions:get', context.ctx())
 
         LOG.debug("Fetch action_execution [id=%s]", action_ex_id)
 
-        return _get_action_execution(action_ex_id)
+        return _get_action_execution(action_ex_id, fields=fields)

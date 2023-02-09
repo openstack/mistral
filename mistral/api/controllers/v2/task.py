@@ -50,19 +50,22 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
-def _get_task_resource_with_result(task_ex):
-    task = resources.Task.from_db_model(task_ex)
-
-    task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
+def _get_task_resource_with_result(task_ex, fields=()):
+    task = resources.Task.from_db_model(task_ex, fields=fields)
+    if 'result' in fields or not fields:
+        task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
 
     return task
 
 
 # Use retries to prevent possible failures.
 @rest_utils.rest_retry_on_db_error
-def _get_task_execution(id):
+def _get_task_execution(id, fields=()):
+    if fields and 'id' not in fields:
+        fields.insert(0, 'id')
+
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(id)
+        task_ex = db_api.get_task_execution(id, fields=fields)
 
         rest_utils.load_deferred_fields(task_ex, ['workflow_execution'])
         rest_utils.load_deferred_fields(
@@ -75,7 +78,7 @@ def _get_task_execution(id):
             ['params']
         )
 
-        return _get_task_resource_with_result(task_ex), task_ex
+        return _get_task_resource_with_result(task_ex, fields), task_ex
 
 
 def get_published_global(task_ex, wf_ex=None):
@@ -142,7 +145,7 @@ class TaskExecutionsController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param workflow_name: Optional. Keep only resources with a specific
                               workflow name.
@@ -205,18 +208,26 @@ class TasksController(rest.RestController):
     executions = sub_execution.SubExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Task, wtypes.text)
-    def get(self, id):
+    @wsme_pecan.wsexpose(resources.Task, wtypes.text, types.uniquelist)
+    def get(self, id, fields=''):
         """Return the specified task.
 
         :param id: UUID of task to retrieve
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('tasks:get', context.ctx())
         LOG.debug("Fetch task [id=%s]", id)
 
-        task, task_ex = _get_task_execution(id)
-
-        return _task_with_published_global(task, task_ex)
+        task, task_ex = _get_task_execution(id, ())
+        task = _task_with_published_global(task, task_ex)
+        if fields:
+            if 'id' not in fields:
+                fields.insert(0, 'id')
+            task_dict = {field: task.to_dict()[field] for field in fields}
+            task = resources.Task.from_dict(task_dict)
+        return task
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,
@@ -250,7 +261,7 @@ class TasksController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param workflow_name: Optional. Keep only resources with a specific
@@ -413,7 +424,7 @@ class ExecutionTasksController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param workflow_name: Optional. Keep only resources with a specific

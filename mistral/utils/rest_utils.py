@@ -123,6 +123,14 @@ def validate_fields(fields, object_fields):
         )
 
 
+def fields_list_to_cls_fields_tuple(model, f):
+    if not f:
+        return ()
+    return tuple(
+        [getattr(model, str(field)) for field in f]
+    )
+
+
 def filters_to_dict(**kwargs):
     """Return only non-null values
 
@@ -159,7 +167,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
                       Default: ['asc'].
     :param fields: Optional. A specified list of fields of the resource to
                    be returned. 'id' will be included automatically in
-                   fields if it's provided, since it will be used when
+                   fields if it's not provided, since it will be used when
                    constructing 'next' link.
     :param filters: Optional. A specified dictionary of filters to match.
     :param all_projects: Optional. Get resources of all projects.

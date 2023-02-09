@@ -68,12 +68,20 @@ def _get_workflow_execution_resource(wf_ex):
 
 # Use retries to prevent possible failures.
 @rest_utils.rest_retry_on_db_error
-def _get_workflow_execution(id, must_exist=True):
+def _get_workflow_execution(id, must_exist=True, fields=None):
+    if fields and 'id' not in fields:
+        fields.insert(0, 'id')
+
+    fields_tuple = rest_utils.fields_list_to_cls_fields_tuple(
+        db_models.WorkflowExecution,
+        fields
+    )
+
     with db_api.transaction():
         if must_exist:
-            wf_ex = db_api.get_workflow_execution(id)
+            wf_ex = db_api.get_workflow_execution(id, fields=fields_tuple)
         else:
-            wf_ex = db_api.load_workflow_execution(id)
+            wf_ex = db_api.load_workflow_execution(id, fields=fields_tuple)
 
         return rest_utils.load_deferred_fields(
             wf_ex,
@@ -90,19 +98,25 @@ class ExecutionsController(rest.RestController):
     executions = sub_execution.SubExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Execution, wtypes.text)
-    def get(self, id):
+    @wsme_pecan.wsexpose(resources.Execution, wtypes.text, types.uniquelist)
+    def get(self, id, fields=None):
         """Return the specified Execution.
 
         :param id: UUID of execution to retrieve.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce("executions:get", context.ctx())
 
         LOG.debug("Fetch execution [id=%s]", id)
 
-        wf_ex = _get_workflow_execution(id)
+        wf_ex = _get_workflow_execution(id, fields=fields)
 
-        resource = resources.Execution.from_db_model(wf_ex)
+        if fields:
+            return resources.Execution.from_tuples(zip(fields, wf_ex))
+
+        resource = resources.Execution.from_db_model(wf_ex, fields=fields)
 
         resource.published_global = (
             data_flow.get_workflow_execution_published_global(wf_ex)
@@ -363,7 +377,7 @@ class ExecutionsController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param workflow_name: Optional. Keep only resources with a specific
                               workflow name.

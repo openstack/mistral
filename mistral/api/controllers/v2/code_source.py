@@ -187,8 +187,9 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.CodeSource, wtypes.text, wtypes.text)
-    def get(self, identifier, namespace=''):
+    @wsme_pecan.wsexpose(resources.CodeSource, wtypes.text,
+                         wtypes.text, types.uniquelist)
+    def get(self, identifier, namespace='', fields=''):
         """Return a code source.
 
         :param identifier: Name or UUID of the code source to retrieve.
@@ -202,13 +203,17 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             identifier,
             namespace
         )
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
 
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.get_code_source)(
             identifier=identifier,
-            namespace=namespace
+            namespace=namespace,
+            fields=fields
         )
-
+        if fields:
+            return resources.CodeSource.from_tuples(zip(fields, db_model))
         return resources.CodeSource.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception

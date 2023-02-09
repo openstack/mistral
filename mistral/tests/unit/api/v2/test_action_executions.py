@@ -226,9 +226,22 @@ class TestActionExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
     def test_get(self):
         resp = self.app.get('/v2/action_executions/123')
+        action_exec = copy.deepcopy(ACTION_EX)
+        del action_exec['task_name']
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(action_exec, resp.json)
+
+    @mock.patch('mistral.db.v2.api.get_action_execution')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (ACTION_EX['id'], ACTION_EX['name'],)
+        resp = self.app.get('/v2/action_executions/123?fields=name')
+        expected = {
+            'id': ACTION_EX['id'],
+            'name': ACTION_EX['name'],
+        }
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(ACTION_EX, resp.json)
+        self.assertDictEqual(expected, resp.json)
 
     @mock.patch.object(db_api, 'get_action_execution')
     def test_get_operational_error(self, mocked_get):
@@ -239,9 +252,10 @@ class TestActionExecutionsController(base.APITest):
         ]
 
         resp = self.app.get('/v2/action_executions/123')
-
+        action_exec = copy.deepcopy(ACTION_EX)
+        del action_exec['task_name']
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(ACTION_EX, resp.json)
+        self.assertDictEqual(action_exec, resp.json)
 
     def test_basic_get(self):
         resp = self.app.get('/v2/action_executions/')
@@ -259,7 +273,7 @@ class TestActionExecutionsController(base.APITest):
         resp = self.app.get('/v2/action_executions/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)
 
     @mock.patch.object(oslo_client.OsloRPCClient, 'sync_call',
                        mock.MagicMock(side_effect=oslo_exc.MessagingTimeout))
@@ -561,11 +575,12 @@ class TestActionExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_action_executions', MOCK_ACTIONS)
     def test_get_all(self):
         resp = self.app.get('/v2/action_executions')
-
+        action_exec = copy.deepcopy(ACTION_EX)
+        del action_exec['task_name']
         self.assertEqual(200, resp.status_int)
 
         self.assertEqual(1, len(resp.json['action_executions']))
-        self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
+        self.assertDictEqual(action_exec, resp.json['action_executions'][0])
 
     @mock.patch.object(db_api, 'get_action_executions')
     def test_get_all_operational_error(self, mocked_get_all):
@@ -576,11 +591,13 @@ class TestActionExecutionsController(base.APITest):
         ]
 
         resp = self.app.get('/v2/action_executions')
+        action_exec = copy.deepcopy(ACTION_EX)
+        del action_exec['task_name']
 
         self.assertEqual(200, resp.status_int)
 
         self.assertEqual(1, len(resp.json['action_executions']))
-        self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
+        self.assertDictEqual(action_exec, resp.json['action_executions'][0])
 
     @mock.patch.object(rest_utils, 'get_all',
                        return_value=resources.ActionExecutions())

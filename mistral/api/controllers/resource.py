@@ -51,8 +51,13 @@ class Resource(wtypes.Base):
         return cls.from_tuples(d.items())
 
     @classmethod
-    def from_db_model(cls, db_model):
-        return cls.from_tuples(db_model.iter_columns())
+    def from_db_model(cls, db_model, fields=()):
+        if isinstance(db_model, tuple):
+            db_tuples = zip(fields, db_model)
+        else:
+            db_tuples = db_model.iter_columns(fields=fields)
+
+        return cls.from_tuples(db_tuples)
 
     def __str__(self):
         """WSME based implementation of __str__."""
