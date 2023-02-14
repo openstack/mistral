@@ -483,9 +483,11 @@ class Task(object, metaclass=abc.ABCMeta):
 
     @profiler.trace('task-create-task-execution')
     def _create_task_execution(self, state=None, state_info=None):
+        task_id = utils.generate_unicode_uuid()
+        task_name = self.task_spec.get_name()
         values = {
-            'id': utils.generate_unicode_uuid(),
-            'name': self.task_spec.get_name(),
+            'id': task_id,
+            'name': task_name,
             'workflow_execution_id': self.wf_ex.id,
             'workflow_name': self.wf_ex.workflow_name,
             'workflow_namespace': self.wf_ex.workflow_namespace,
@@ -504,6 +506,9 @@ class Task(object, metaclass=abc.ABCMeta):
 
         if self.triggered_by:
             values['runtime_context']['triggered_by'] = self.triggered_by
+
+        LOG.info("Create task execution [task_name=%s, task_ex_id=%s, "
+                 "wf_ex_id=%s]", task_name, task_id, self.wf_ex.id)
 
         self.task_ex = db_api.create_task_execution(values)
 

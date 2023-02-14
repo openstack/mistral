@@ -199,6 +199,17 @@ directory.
    For more details see `policy.yaml file
    <https://docs.openstack.org/oslo.policy/latest/admin/policy-yaml-file.html>`_.
 
+#. Modify logging Configuration if needed
+
+   The default log format is compatible with Graylog, however, it is possible
+   to configure the log format. Mistral uses the library `oslo.log` for
+   logging. For configuration information, refer to Official oslo.log
+   Configuration at
+   https://docs.openstack.org/oslo.log/latest/configuration/index.html.
+   You can use the `root_execution_id` as follows::
+
+      logging_context_format_string = [%(asctime)s,%(msecs)03d][%(levelname)-5s][category=%(name)s][pid=%(process)d][root_execution_id=%(root_execution_id)s] %(message)s
+
 #. Modify the action execution reporting configuration if needed.
 
    It is possible that actions stuck in *"RUNNING"* state, for example if the

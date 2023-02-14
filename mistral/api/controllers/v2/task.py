@@ -333,7 +333,7 @@ class TasksController(rest.RestController):
         """
         acl.enforce('tasks:update', context.ctx())
 
-        LOG.debug("Update task execution [id=%s, task=%s]", id, task)
+        LOG.info("Update task execution [id=%s, task=%s]", id, task)
 
         @rest_utils.rest_retry_on_db_error
         def _read_task_params(id, task):
@@ -350,6 +350,12 @@ class TasksController(rest.RestController):
                 wf_ex = db_api.get_workflow_execution(
                     task_ex.workflow_execution_id
                 )
+
+                root_execution_id = wf_ex.root_execution_id
+                if not root_execution_id:
+                    root_execution_id = wf_ex.id
+
+                context.ctx(root_execution_id=root_execution_id)
 
                 return env, reset, task_ex, task_spec, wf_ex
 

@@ -138,6 +138,15 @@ class EngineClient(eng.Engine):
 
         call = self._client.async_call if async_ else self._client.sync_call
 
+        LOG.info(
+            "Send RPC request 'start_workflow'[workflow_identifier=%s, "
+            "workflow_input=%s, description=%s, params=%s]",
+            wf_identifier,
+            wf_input,
+            description,
+            params
+        )
+
         return call(
             auth_ctx.ctx(),
             'start_workflow',
@@ -199,6 +208,13 @@ class EngineClient(eng.Engine):
 
         call = self._client.async_call if async_ else self._client.sync_call
 
+        LOG.info(
+            "Send RPC request 'on_action_complete'[action_ex_id=%s, "
+            "result=%s]",
+            action_ex_id,
+            result.cut_repr() if result else None
+        )
+
         return call(
             auth_ctx.ctx(),
             'on_action_complete',
@@ -233,6 +249,13 @@ class EngineClient(eng.Engine):
 
         call = self._client.async_call if async_ else self._client.sync_call
 
+        LOG.info(
+            "Send RPC request 'on_action_update'"
+            "[action_ex_id=%s, state=%s]",
+            action_ex_id,
+            state
+        )
+
         return call(
             auth_ctx.ctx(),
             'on_action_update',
@@ -248,6 +271,11 @@ class EngineClient(eng.Engine):
         :param wf_ex_id: Workflow execution id.
         :return: Workflow execution.
         """
+
+        LOG.info(
+            "Send RPC request 'pause_workflow'[execution_id=%s]",
+            wf_ex_id
+        )
 
         return self._client.sync_call(
             auth_ctx.ctx(),
@@ -269,6 +297,11 @@ class EngineClient(eng.Engine):
         :return: Workflow execution.
         """
 
+        LOG.info(
+            "Send RPC request 'rerun_workflow'[task_ex_id=%s]",
+            task_ex_id
+        )
+
         return self._client.sync_call(
             auth_ctx.ctx(),
             'rerun_workflow',
@@ -285,6 +318,11 @@ class EngineClient(eng.Engine):
         :param env: Environment variables to update.
         :return: Workflow execution.
         """
+
+        LOG.info(
+            "Send RPC request 'resume_workflow'[wf_ex_id=%s]",
+            wf_ex_id
+        )
 
         return self._client.sync_call(
             auth_ctx.ctx(),
@@ -307,6 +345,14 @@ class EngineClient(eng.Engine):
         :return: Workflow execution, model.Execution
         """
 
+        LOG.info(
+            "Send RPC request 'stop_workflow'[execution_id=%s,"
+            " state=%s, message=%s]",
+            wf_ex_id,
+            state,
+            message
+        )
+
         return self._client.sync_call(
             auth_ctx.ctx(),
             'stop_workflow',
@@ -324,6 +370,11 @@ class EngineClient(eng.Engine):
         :return: Workflow execution.
         """
 
+        LOG.info(
+            "Send RPC request 'rollback_workflow'[execution_id=%s]",
+            wf_ex_id
+        )
+
         return self._client.sync_call(
             auth_ctx.ctx(),
             'rollback_workflow',
@@ -336,6 +387,12 @@ class EngineClient(eng.Engine):
 
         :param action_ex_ids: Action execution ids.
         """
+
+        LOG.info(
+            "Send RPC request 'report_running_actions'[action_ex_ids=%s]",
+            action_ex_ids
+        )
+
         return self._client.async_call(
             auth_ctx.ctx(),
             'report_running_actions',
@@ -385,8 +442,8 @@ class ExecutorClient(exe.Executor):
             else self._client.sync_call
         )
 
-        LOG.debug(
-            'Sending an action to executor [action=%s, action_ex_id=%s]',
+        LOG.info(
+            "Send RPC request 'run_action' [action=%s, action_ex_id=%s]",
             action,
             action_ex_id
         )
@@ -402,6 +459,10 @@ class EventEngineClient(evt_eng.EventEngine):
         self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     def create_event_trigger(self, trigger, events):
+        LOG.info(
+            "Send RPC request 'create_event_trigger'[trigger=%s, "
+            "events=%s", trigger, events
+        )
         return self._client.async_call(
             auth_ctx.ctx(),
             'create_event_trigger',
@@ -411,6 +472,10 @@ class EventEngineClient(evt_eng.EventEngine):
         )
 
     def delete_event_trigger(self, trigger, events):
+        LOG.info(
+            "Send RPC request 'delete_event_trigger'[trigger=%s, "
+            "events=%s", trigger, events
+        )
         return self._client.async_call(
             auth_ctx.ctx(),
             'delete_event_trigger',
@@ -420,6 +485,10 @@ class EventEngineClient(evt_eng.EventEngine):
         )
 
     def update_event_trigger(self, trigger):
+        LOG.info(
+            "Send RPC request 'update_event_trigger'[rpc_ctx=%s,"
+            " trigger=%s", trigger
+        )
         return self._client.async_call(
             auth_ctx.ctx(),
             'update_event_trigger',

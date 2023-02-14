@@ -367,6 +367,11 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         self.wf_ex = db_api.create_workflow_execution(values)
 
+        LOG.info("Created workflow execution [workflow_name=%s, wf_ex_id=%s, "
+                 "task_execution_id=%s, root_execution_id=%s]", wf_def.name,
+                 self.wf_ex.id, params.get('task_execution_id'),
+                 params.get('root_execution_id'))
+
         self.wf_ex.input = input_dict or {}
 
         params['env'] = _get_environment(params)

@@ -29,6 +29,7 @@ from webtest import app as webtest_app
 
 from mistral.api.controllers.v2 import execution
 from mistral.api.controllers.v2 import resources
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
@@ -228,7 +229,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(
         rpc_clients.EngineClient,
@@ -252,7 +253,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_error(self, mock_stop_wf):
@@ -280,7 +281,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_cancelled(self, mock_stop_wf):
@@ -313,7 +314,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'resume_workflow')
     def test_put_state_resume(self, mock_resume_wf):
@@ -340,7 +341,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     def test_put_invalid_state(self):
         invalid_states = [states.IDLE, states.WAITING, states.RUNNING_DELAYED]
@@ -367,7 +368,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_info_unset(self, mock_stop_wf):
@@ -405,7 +406,8 @@ class TestExecutionsController(base.APITest):
 
         mock_ensure.assert_called_once_with(
             '123',
-            fields=(models.WorkflowExecution.id,)
+            fields=(models.WorkflowExecution.id,
+                    models.WorkflowExecution.root_execution_id)
         )
         mock_update.assert_called_once_with('123', update_params)
 
@@ -441,7 +443,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     def test_put_empty(self):
         resp = self.app.put_json('/v2/executions/123', {}, expect_errors=True)
@@ -455,7 +457,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     def test_put_state_and_description(self):
         resp = self.app.put_json(
@@ -501,7 +503,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=None)
+        mock.MagicMock(return_value=WF_EX)
     )
     def test_put_env_wrong_state(self):
         update_exec = {
@@ -1024,3 +1026,23 @@ class TestExecutionsController(base.APITest):
             "Object not found",
             resp.body.decode()
         )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_root_execution_id_present_in_logging_values(self, start_wf_func):
+        # NOTE: In fact, we use "white box" testing here to understand
+        # if the REST controller calls other APIs as expected. This is
+        # the only way of testing available with the current testing
+        # infrastructure.
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+        exp_root_execution_id = WF_EX_JSON["id"]
+
+        with mock.patch("mistral.context.set_ctx") as mocked_set_cxt:
+            self.app.post_json('/v2/executions', json_body)
+            calls = mocked_set_cxt.call_args_list
+            ctx = calls[0][0][0]
+            self.assertIsInstance(ctx, context.MistralContext)
+            logging_values = ctx.get_logging_values()
+            self.assertEqual(exp_root_execution_id,
+                             logging_values["root_execution_id"])

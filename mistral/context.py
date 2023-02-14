@@ -40,10 +40,13 @@ ALLOWED_WITHOUT_AUTH = ['/', '/v2/', '/workflowv2/', '/workflowv2/v2/']
 
 
 class MistralContext(oslo_context.RequestContext):
+
+    FROM_DICT_EXTRA_KEYS = ['root_execution_id']
+
     def __init__(self, auth_uri=None, auth_cacert=None, insecure=False,
                  service_catalog=None, region_name=None, is_trust_scoped=False,
                  redelivered=False, expires_at=None, trust_id=None,
-                 is_target=False, **kwargs):
+                 is_target=False, root_execution_id=None, **kwargs):
         self.auth_uri = auth_uri
         self.auth_cacert = auth_cacert
         self.insecure = insecure
@@ -54,10 +57,24 @@ class MistralContext(oslo_context.RequestContext):
         self.expires_at = expires_at
         self.trust_id = trust_id
         self.is_target = is_target
+        self.root_execution_id = root_execution_id
 
         # We still use Mistral thread local variable. Maybe could consider
         # using the variable provided by oslo_context in future.
         super(MistralContext, self).__init__(overwrite=False, **kwargs)
+
+    def get_logging_values(self):
+        ctx_dict = super(MistralContext, self).get_logging_values()
+        ctx_dict.update(
+            {
+                'root_execution_id': self.root_execution_id,
+            }
+        )
+
+        return ctx_dict
+
+    def update_store(self):
+        super(MistralContext, self).update_store()
 
     def to_dict(self):
         """Return a dictionary of context attributes."""
@@ -79,6 +96,7 @@ class MistralContext(oslo_context.RequestContext):
                 'expires_at': self.expires_at,
                 'trust_id': self.trust_id,
                 'is_target': self.is_target,
+                'root_execution_id': self.root_execution_id,
             }
         )
 
@@ -99,6 +117,7 @@ class MistralContext(oslo_context.RequestContext):
         kwargs.setdefault('expires_at', values.get('expires_at'))
         kwargs.setdefault('trust_id', values.get('trust_id'))
         kwargs.setdefault('is_target', values.get('is_target', False))
+        kwargs.setdefault('root_execution_id', values.get('root_execution_id'))
 
         return super(MistralContext, cls).from_dict(values, **kwargs)
 
@@ -122,14 +141,22 @@ def has_ctx():
     return utils.has_thread_local(_CTX_THREAD_LOCAL_NAME)
 
 
-def ctx():
+def ctx(root_execution_id=None):
     if not has_ctx():
         raise exc.ApplicationContextNotFoundException()
 
-    return utils.get_thread_local(_CTX_THREAD_LOCAL_NAME)
+    context = utils.get_thread_local(_CTX_THREAD_LOCAL_NAME)
+
+    if root_execution_id:
+        context.root_execution_id = root_execution_id
+        set_ctx(context)
+
+    return context
 
 
 def set_ctx(new_ctx):
+    if new_ctx:
+        new_ctx.update_store()
     utils.set_thread_local(_CTX_THREAD_LOCAL_NAME, new_ctx)
 
 

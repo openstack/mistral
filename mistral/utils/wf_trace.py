@@ -36,9 +36,11 @@ def info(obj, msg, *args, **kvargs):
     if type(obj) is models.TaskExecution:
         exec_id = obj.workflow_execution_id
         task_id = obj.id
-        debug_info = '(execution_id=%s task_id=%s)' % (exec_id, task_id)
+        debug_info = '(wf_ex_id=%s, task_ex_id=%s)' % (exec_id, task_id)
+
     elif type(obj) is models.WorkflowExecution:
-        debug_info = '(execution_id=%s)' % obj.id
+        debug_info = '(execution_id=%s,' \
+                     'task_ex_id=%s)' % (obj.id, obj.task_execution_id)
 
     if debug_info:
         msg = '%s %s' % (msg, debug_info)
