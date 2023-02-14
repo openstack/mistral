@@ -147,6 +147,8 @@ def _process_commands(wf_ex, cmds):
 
         if isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
             task_handler.run_task(cmd)
+        elif isinstance(cmd, commands.SkipTask):
+            task_handler.skip_task(cmd)
         elif isinstance(cmd, commands.SetWorkflowState):
             wf_handler.set_workflow_state(wf_ex, cmd.new_state, cmd.msg)
         else:

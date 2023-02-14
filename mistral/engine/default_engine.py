@@ -197,13 +197,19 @@ class DefaultEngine(base.Engine):
 
     @db_utils.retry_on_db_error
     @post_tx_queue.run
-    def rerun_workflow(self, task_ex_id, reset=True, env=None):
+    def rerun_workflow(self, task_ex_id, reset=True, skip=False, env=None):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
 
             wf_ex = task_ex.workflow_execution
 
-            wf_handler.rerun_workflow(wf_ex, task_ex, reset=reset, env=env)
+            wf_handler.rerun_workflow(
+                wf_ex,
+                task_ex,
+                reset=reset,
+                skip=skip,
+                env=env
+            )
 
             return wf_ex.get_clone()
 

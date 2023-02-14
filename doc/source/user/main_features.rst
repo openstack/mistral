@@ -350,3 +350,33 @@ create many workflows with the same name as long as they are in different
 namespaces.
 
 See more at :doc:`Workflow namespaces </user/wf_namespaces>`
+
+
+Task skip
+---------
+
+Mistral has an ability to skip tasks in ERROR state.
+The task moves from ERROR state to SKIPPED state, publish variables from
+publish-on-skip section, and the workflow continues from tasks specified in
+on-skip section.
+To configure task's behavior on skip, fill the following attributes in
+the task definition:
+
+* *on-skip* - Optional. This parameter specifies which tasks should be started
+  after skipping this task.
+* *publish-on-skip* - Optional. This parameter specifies which variables should
+  be published after skipping this task.
+
+It is also possible to skip task which does not have predefined parameters
+described above, in this case task will not publish anything and will continue
+by *on-success* branch. It could be not safe for next tasks, because they
+probably would not have some inputs, so think twice before skipping such tasks.
+
+Task skip could be performed by following request::
+
+    PUT /v2/tasks
+
+    {
+      "id": "<task-id>",
+      "state": "SKIPPED"
+    }

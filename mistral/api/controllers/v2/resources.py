@@ -557,7 +557,7 @@ class Task(resource.Resource):
     finished_at = wtypes.text
 
     # Add this param to make Mistral API work with WSME 0.8.0 or higher version
-    reset = wsme.wsattr(bool, mandatory=True)
+    reset = wsme.wsattr(bool)
 
     env = types.jsontype
 

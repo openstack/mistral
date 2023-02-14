@@ -44,6 +44,9 @@ CANCELLED = 'CANCELLED'
 ERROR = 'ERROR'
 """Task, action or workflow has finished with an error."""
 
+SKIPPED = 'SKIPPED'
+"""Task has been skipped."""
+
 _ALL = [
     IDLE,
     WAITING,
@@ -52,7 +55,8 @@ _ALL = [
     PAUSED,
     SUCCESS,
     CANCELLED,
-    ERROR
+    ERROR,
+    SKIPPED
 ]
 
 _VALID_TRANSITIONS = {
@@ -63,7 +67,7 @@ _VALID_TRANSITIONS = {
     PAUSED: [RUNNING, ERROR, CANCELLED],
     SUCCESS: [],
     CANCELLED: [RUNNING],
-    ERROR: [RUNNING]
+    ERROR: [RUNNING, SKIPPED]
 }
 
 TERMINAL_STATES = {SUCCESS, ERROR, CANCELLED}
@@ -78,11 +82,15 @@ def is_invalid(state):
 
 
 def is_completed(state):
-    return state in [SUCCESS, ERROR, CANCELLED]
+    return state in [SUCCESS, ERROR, CANCELLED, SKIPPED]
 
 
 def is_cancelled(state):
     return state == CANCELLED
+
+
+def is_skipped(state):
+    return state == SKIPPED
 
 
 def is_running(state):
@@ -103,6 +111,10 @@ def is_paused(state):
 
 def is_paused_or_completed(state):
     return is_paused(state) or is_completed(state)
+
+
+def is_cancelled_or_skipped(state):
+    return is_cancelled(state) or is_skipped(state)
 
 
 def is_paused_or_idle(state):

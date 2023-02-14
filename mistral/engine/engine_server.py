@@ -246,12 +246,15 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.pause_workflow(wf_ex_id)
 
-    def rerun_workflow(self, rpc_ctx, task_ex_id, reset=True, env=None):
+    def rerun_workflow(self, rpc_ctx, task_ex_id, reset=True,
+                       skip=False, env=None):
         """Receives calls over RPC to rerun workflows on engine.
 
         :param rpc_ctx: RPC request context.
         :param task_ex_id: Task execution id.
         :param reset: If true, then purge action execution for the task.
+        :param skip: If True, then skip failed task and continue workflow
+            execution.
         :param env: Environment variables to update.
         :return: Workflow execution.
         """
@@ -260,7 +263,7 @@ class EngineServer(service_base.MistralService):
             task_ex_id
         )
 
-        return self.engine.rerun_workflow(task_ex_id, reset, env)
+        return self.engine.rerun_workflow(task_ex_id, reset, skip, env)
 
     def resume_workflow(self, rpc_ctx, wf_ex_id, env=None):
         """Receives calls over RPC to resume workflows on engine.

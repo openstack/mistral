@@ -181,7 +181,7 @@ def get_task_execution_result(task_ex):
 
 
 def publish_variables(task_ex, task_spec):
-    if task_ex.state not in [states.SUCCESS, states.ERROR]:
+    if task_ex.state not in [states.SUCCESS, states.ERROR, states.SKIPPED]:
         return
 
     wf_ex = task_ex.workflow_execution

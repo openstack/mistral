@@ -284,7 +284,7 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
-    def rerun_workflow(self, task_ex_id, reset=True, env=None):
+    def rerun_workflow(self, task_ex_id, reset=True, skip=False, env=None):
         """Rerun the workflow.
 
         This method reruns workflow with the given execution id
@@ -293,6 +293,8 @@ class EngineClient(eng.Engine):
         :param task_ex_id: Task execution id.
         :param reset: If true, then reset task execution state and purge
             action execution for the task.
+        :param skip: If True, then skip failed task and continue workflow
+            execution.
         :param env: Environment variables to update.
         :return: Workflow execution.
         """
@@ -307,6 +309,7 @@ class EngineClient(eng.Engine):
             'rerun_workflow',
             task_ex_id=task_ex_id,
             reset=reset,
+            skip=skip,
             env=env
         )
 
