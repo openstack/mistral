@@ -561,6 +561,7 @@ action_logging_opts = [
 coordination_opts = [
     cfg.StrOpt(
         'backend_url',
+        secret=True,
         help=_('The backend URL to be used for coordination')
     ),
     cfg.FloatOpt(
