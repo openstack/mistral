@@ -579,6 +579,8 @@ coordination_opts = [
     cfg.FloatOpt(
         'heartbeat_interval',
         default=5.0,
+        deprecated_for_removal=True,
+        deprecated_reason='This option has been unused and has had no effect',
         help=_('Number of seconds between heartbeats for coordination.')
     )
 ]
