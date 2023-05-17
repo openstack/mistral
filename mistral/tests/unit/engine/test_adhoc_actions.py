@@ -208,7 +208,9 @@ class AdhocActionsTest(base.EngineTestCase):
             'my_wb.wf3',
             wf_input={'str1': 'a', 'str2': 'b'}
         )
-
+        self.await_workflow_error(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn("Invalid input", wf_ex.state_info)
         self.assertEqual(states.ERROR, wf_ex.state)
 
@@ -306,11 +308,16 @@ class AdhocActionsTest(base.EngineTestCase):
 
         self.await_workflow_running(wf_ex.id, timeout=4)
 
-        with db_api.transaction(read_only=True):
+        with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             wf_ex_id = wf_ex.id
-
-            a_ex_id = wf_ex.task_executions[0].action_executions[0].id
+            task_execs = wf_ex.task_executions
+            task1_ex = task_execs[0]
+        self.engine.start_task(task1_ex.id, True, False, None, False, False)
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
+        )
+        a_ex_id = action_execs[0].id
 
         self.engine.on_action_complete(a_ex_id, ml_actions.Result(data='Hi!'))
 

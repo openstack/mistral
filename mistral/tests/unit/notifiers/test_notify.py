@@ -729,6 +729,11 @@ class NotifyEventsTest(base.NotifierTestCase):
             task_exs = wf_ex.task_executions
 
         t1_ex = self._assert_single_item(task_exs, name='t1')
+        self.await_task_running(t1_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+        t1_ex = self._assert_single_item(task_exs, name='t1')
         t1_act_exs = db_api.get_action_executions(task_execution_id=t1_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -859,6 +864,12 @@ class NotifyEventsTest(base.NotifierTestCase):
             task_exs = wf_ex.task_executions
 
         t1_ex = self._assert_single_item(task_exs, name='t1')
+        self.await_task_running(t1_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+        t1_ex = self._assert_single_item(task_exs, name='t1')
         t1_act_exs = db_api.get_action_executions(task_execution_id=t1_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -983,6 +994,12 @@ class NotifyEventsTest(base.NotifierTestCase):
             task_exs = wf_ex.task_executions
 
         t1_ex = self._assert_single_item(task_exs, name='t1')
+        self.await_task_running(t1_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+        t1_ex = self._assert_single_item(task_exs, name='t1')
         t1_act_exs = db_api.get_action_executions(task_execution_id=t1_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -1076,6 +1093,12 @@ class NotifyEventsTest(base.NotifierTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             task_exs = wf_ex.task_executions
 
+        t1_ex = self._assert_single_item(task_exs, name='t1')
+        self.await_task_running(t1_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
         t1_ex = self._assert_single_item(task_exs, name='t1')
         t1_act_exs = db_api.get_action_executions(task_execution_id=t1_ex.id)
 

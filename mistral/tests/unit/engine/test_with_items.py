@@ -394,6 +394,12 @@ class WithItemsEngineTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
+        self.await_task_running(task_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
             act_exs = task_ex.executions
 
         self.engine.on_action_complete(
@@ -629,6 +635,11 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.await_task_running(task_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             # Also initialize lazy collections.
             task_ex = wf_ex.task_executions[0]
@@ -763,8 +774,24 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_with_concurrency_yaql)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', wf_input={'concurrency': '2'})
+        self.engine.start_workflow('wf', wf_input={'concurrency': '2'})
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+        self.await_task_error(task_ex.id)
+
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
         self.assertIn(
             'Invalid data type in ConcurrencyPolicy',
             wf_ex.state_info
@@ -793,6 +820,12 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.await_task_running(task_ex.id)
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -947,7 +980,12 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = wf_ex.task_executions[0]
+        self.await_task_running(task_ex.id)
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
         self.assertEqual(3, self._get_running_actions_count(task_ex.id))
 
         # 1st iteration complete.

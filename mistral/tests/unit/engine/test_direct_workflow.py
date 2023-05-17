@@ -282,7 +282,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf')
-
+        self.await_workflow_error(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn(
             "Failed to find action [action_name=wrong.task, namespace=]",
             wf_ex.state_info
@@ -372,13 +374,11 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_execs = wf_ex.task_executions
+            task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual(1, len(task_execs))
-
-        task_1_ex = self._assert_single_item(task_execs, name='task1')
-
-        self.assertEqual(states.RUNNING, task_1_ex.state)
+        self.await_task_running(task_1_ex.id)
 
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
@@ -392,6 +392,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task_1_action_exs[0].id,
             ml_actions.Result(data='foobar')
         )
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+            task_2_ex = self._assert_single_item(task_execs, name='task2')
+        self.await_task_error(task_2_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -546,6 +553,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf')
+        self.await_workflow_error(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertIn(
             "Can not evaluate YAQL expression [expression=wrong(yaql)",
@@ -569,6 +579,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf', wf_input={'var': 2})
+        self.await_workflow_error(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertIn("Can not evaluate YAQL expression", wf_ex.state_info)
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -676,10 +689,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_execs = wf_ex.task_executions
+            task_1_ex = self._assert_single_item(task_execs, name='task1')
 
+        self.await_task_running(task_1_ex.id)
         self.assertEqual(1, len(task_execs))
 
-        task_1_ex = self._assert_single_item(task_execs, name='task1')
+        task_1_ex = db_api.get_task_execution(task_1_ex.id)
 
         self.assertEqual(states.RUNNING, task_1_ex.state)
 
@@ -1177,6 +1192,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task_execs,
             name='branch2'
         )
+        self.engine.start_task(t_ex.id, True, False, None, False, False)
 
         t_action_exs = db_api.get_action_executions(
             task_execution_id=t_ex.id

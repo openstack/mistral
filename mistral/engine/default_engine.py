@@ -28,6 +28,7 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import post_tx_queue
+from mistral.engine import task_handler
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions
 from mistral.workflow import states
@@ -80,6 +81,13 @@ class DefaultEngine(base.Engine):
                 wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
                 return wf_ex.get_clone()
+
+    @post_tx_queue.run
+    def start_task(self, task_ex_id, first_run, waiting,
+                   triggered_by, rerun, reset, **params):
+        with db_api.transaction():
+            task_handler.run_task(task_ex_id, waiting,
+                                  triggered_by, rerun, reset, first_run)
 
     @db_utils.retry_on_db_error
     @post_tx_queue.run

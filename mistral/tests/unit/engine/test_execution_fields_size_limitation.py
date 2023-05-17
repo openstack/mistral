@@ -169,7 +169,9 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
 
-        self.assertEqual(states.ERROR, wf_ex.state)
+        self.await_workflow_error(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn(
             "Field size limit exceeded"
             " [class=TaskExecution, field=input, size=1KB, limit=0KB]",

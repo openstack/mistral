@@ -223,4 +223,4 @@ class ErrorResultTest(base.EngineTestCase):
             self.assertEqual(1, len(tasks))
 
             task1 = self._assert_single_item(tasks, name='task1')
-            self.assertEqual(states.RUNNING, task1.state)
+            self.assertEqual(states.IDLE, task1.state)

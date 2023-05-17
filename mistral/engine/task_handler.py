@@ -56,13 +56,23 @@ _SCHEDULED_ON_ACTION_UPDATE_PATH = (
 
 
 @profiler.trace('task-handler-run-task', hide_args=True)
-def run_task(wf_cmd):
+def run_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run=False):
     """Runs workflow task.
 
-    :param wf_cmd: Workflow command.
+    :param task_ex_id: Task Execution id
+    :param waiting: Task waiting param
+    :param triggered_by:
+    :param rerun:
+    :param reset:
+    :param first_run:
     """
 
-    task = _build_task_from_command(wf_cmd)
+    task_ex = db_api.get_task_execution(task_ex_id)
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+        task_ex.workflow_execution_id
+    )
+    task = _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by,
+                                 rerun, reset)
 
     try:
         if task.waiting and task.rerun:
@@ -70,18 +80,16 @@ def run_task(wf_cmd):
 
             _schedule_refresh_task_state(task.task_ex.id)
 
-        task.run()
+        task.run(first_run)
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
-        wf_ex = wf_cmd.wf_ex
-        task_spec = wf_cmd.task_spec
+        wf_ex = task_ex.workflow_execution
 
         msg = (
             "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex.name, task_spec.get_name(), tb.format_exc())
+            (e, wf_ex.name, task_ex.name, tb.format_exc())
         )
 
-        force_fail_task(task.task_ex, msg, task=task)
-
+        force_fail_task(task_ex, msg, task=task)
         return
 
     _check_affected_tasks(task)
@@ -97,6 +105,26 @@ def skip_task(wf_cmd):
     task.complete(states.SKIPPED, "Task was skipped.", skip=True)
     _check_affected_tasks(task)
     return
+
+
+@profiler.trace('task-handler-create-task', hide_args=True)
+def create_task(wf_cmd, first_run):
+    """Creates workflow task.
+
+    :param wf_cmd: Workflow command.
+    """
+
+    task = _build_task_from_command(wf_cmd)
+
+    if task.waiting and task.rerun:
+        task.set_state(states.WAITING, 'Task is waiting.')
+
+        _schedule_refresh_task_state(task.task_ex.id)
+
+    if first_run:
+        task.create_new()
+
+    return task
 
 
 def mark_task_running(task_ex, wf_spec):
@@ -240,9 +268,9 @@ def continue_task(task_ex):
     task = build_task_from_execution(wf_spec, task_ex)
 
     try:
-        task.set_state(states.RUNNING, None)
-
-        task.run()
+        with db_api.named_lock('continue-task-%s' % task_ex.id):
+            task.set_state(states.RUNNING, None)
+            task.run()
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
 
@@ -344,6 +372,25 @@ def build_task_from_execution(wf_spec, task_ex):
         task_ex.in_context,
         task_ex
     )
+
+
+def _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by, rerun,
+                          reset):
+    task = _create_task(
+        task_ex.workflow_execution,
+        wf_spec,
+        wf_spec.get_task(task_ex.name),
+        task_ex.in_context,
+        task_ex,
+        waiting=waiting == states.WAITING,
+        triggered_by=triggered_by,
+        rerun=rerun
+    )
+
+    if reset:
+        task.reset()
+
+    return task
 
 
 @profiler.trace('task-handler-build-task-from-command', hide_args=True)

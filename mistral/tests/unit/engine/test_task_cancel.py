@@ -65,6 +65,16 @@ class TaskCancelTest(base.EngineTestCase):
                 wf_ex.task_executions,
                 name='task1'
             )
+        self.await_task_running(task_1_ex.id)
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
+
+            task_1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
 
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
@@ -155,6 +165,15 @@ class TaskCancelTest(base.EngineTestCase):
                 wf_ex.task_executions,
                 name='taskx'
             )
+        self.await_task_running(task_ex.id)
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='taskx'
+            )
             subwf_ex = self._assert_single_item(wf_execs, name='wb.subwf')
 
             task_1_ex = self._assert_single_item(
@@ -223,6 +242,16 @@ class TaskCancelTest(base.EngineTestCase):
 
         self.await_workflow_state(wf_ex.id, states.RUNNING)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            wf_ex = self._assert_single_item(wf_execs, name='wf')
+
+            task_1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(task_1_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 

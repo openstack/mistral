@@ -47,6 +47,14 @@ class Engine(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def start_task(self, task_ex_id, first_run, waiting,
+                   triggered_by, rerun, reset, **params):
+        """Starts task sending a request to engine over RPC.
+
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def start_action(self, action_name, action_input,
                      description=None, namespace='', **params):
         """Starts the specific action.

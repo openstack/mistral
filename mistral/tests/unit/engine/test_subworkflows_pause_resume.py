@@ -79,6 +79,19 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf_1_ex.task_executions,
                 name='task1'
             )
+        self.await_task_running(wf_1_task_1_ex.id)
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            # Get objects for the parent workflow execution.
+            wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+
+            wf_1_task_execs = wf_1_ex.task_executions
+
+            wf_1_task_1_ex = self._assert_single_item(
+                wf_1_ex.task_executions,
+                name='task1'
+            )
 
             wf_1_task_1_action_exs = wf_1_task_1_ex.executions
 
@@ -394,6 +407,19 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
         self.await_workflow_state(wf_1_ex.id, states.RUNNING)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            # Get objects for the parent workflow execution.
+            wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+
+            wf_1_task_execs = wf_1_ex.task_executions
+
+            wf_1_task_1_ex = self._assert_single_item(
+                wf_1_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(wf_1_task_1_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -836,6 +862,19 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
         self.await_workflow_state(wf_1_ex.id, states.RUNNING)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            # Get objects for the parent workflow execution.
+            wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+
+            wf_1_task_execs = wf_1_ex.task_executions
+
+            wf_1_task_1_ex = self._assert_single_item(
+                wf_1_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(wf_1_task_1_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -1373,6 +1412,19 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
         self.await_workflow_state(wf_1_ex.id, states.RUNNING)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            # Get objects for the parent workflow execution.
+            wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+
+            wf_1_task_execs = wf_1_ex.task_executions
+
+            wf_1_task_1_ex = self._assert_single_item(
+                wf_1_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(wf_1_task_1_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 
@@ -2020,6 +2072,18 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.await_workflow_running(wf_2_ex.id)
         self.await_workflow_running(wf_3_ex.id)
 
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            # Get objects for the parent workflow execution.
+            wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+
+            wf_1_task_1_ex = self._assert_single_item(
+                wf_1_ex.task_executions,
+                name='task1'
+            )
+        self.await_task_running(wf_1_task_1_ex.id)
+        self.await_task_running(wf_2_task_2_ex.id)
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 

@@ -75,7 +75,16 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
                 wf1_ex.task_executions,
                 name='t1'
             )
+        self.await_task_running(wf1_t1_ex.id)
 
+        with db_api.transaction():
+            wf1_execs = db_api.get_workflow_executions()
+
+            wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
+            wf1_t1_ex = self._assert_single_item(
+                wf1_ex.task_executions,
+                name='t1'
+            )
         wf1_t1_action_exs = db_api.get_action_executions(
             task_execution_id=wf1_t1_ex.id
         )
@@ -128,12 +137,12 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Mark async action execution complete.
         wf1_t1_ex = self._assert_single_item(wf1_task_execs, name='t1')
+        self.await_task_running(wf1_t1_ex.id)
 
         wf1_t1_action_exs = db_api.get_action_executions(
             task_execution_id=wf1_t1_ex.id
         )
 
-        self.assertEqual(states.RUNNING, wf1_t1_ex.state)
         self.assertEqual(2, len(wf1_t1_action_exs))
         # Check there is exactly 1 action in Running and 1 in Cancelled state.
         # Order doesn't matter.

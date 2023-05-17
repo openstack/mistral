@@ -133,9 +133,10 @@ class DefaultEngineTest(base.DbTestCase):
 
             self.assertEqual('wb.wf', task_ex.workflow_name)
             self.assertEqual('task1', task_ex.name)
-            self.assertEqual(states.RUNNING, task_ex.state)
+            self.assertEqual(states.IDLE, task_ex.state)
             self.assertIsNotNone(task_ex.spec)
             self.assertDictEqual({}, task_ex.runtime_context)
+        self.engine.start_task(task_ex.id, True, False, None, False, False)
 
         # Data Flow properties.
         action_execs = db_api.get_action_executions(
@@ -202,9 +203,10 @@ class DefaultEngineTest(base.DbTestCase):
 
             self.assertEqual('wb.wf', task_ex.workflow_name)
             self.assertEqual('task1', task_ex.name)
-            self.assertEqual(states.RUNNING, task_ex.state)
+            self.assertEqual(states.IDLE, task_ex.state)
             self.assertIsNotNone(task_ex.spec)
             self.assertDictEqual({}, task_ex.runtime_context)
+        self.engine.start_task(task_ex.id, True, False, None, False, False)
 
         # Data Flow properties.
         action_execs = db_api.get_action_executions(
@@ -353,9 +355,8 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(1, len(task_execs))
 
         task1_ex = task_execs[0]
-
+        self.engine.start_task(task1_ex.id, True, False, None, False, False)
         self.assertEqual('task1', task1_ex.name)
-        self.assertEqual(states.RUNNING, task1_ex.state)
 
         action_execs = db_api.get_action_executions(
             task_execution_id=task1_ex.id
@@ -427,6 +428,9 @@ class DefaultEngineTest(base.DbTestCase):
 
         task1_ex = task_execs[0]
 
+        self.engine.start_task(task1_ex.id, True, False, None, False, False)
+        task1_ex = db_api.get_task_execution(task1_ex.id)
+
         self.assertEqual('task1', task1_ex.name)
         self.assertEqual(states.RUNNING, task1_ex.state)
 
@@ -459,6 +463,19 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+            self.assertEqual(1, len(task_execs))
+
+            task1_ex = task_execs[0]
+
+        self.engine.start_task(
+            task1_ex.id, True, False, None, False, False)
 
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
@@ -515,6 +532,8 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(2, len(task_execs))
 
         task2_ex = self._assert_single_item(task_execs, name='task2')
+        self.engine.start_task(task2_ex.id, True, False, None, False, False)
+        task2_ex = db_api.get_task_execution(task2_ex.id)
 
         self.assertEqual(states.RUNNING, task2_ex.state)
 
@@ -650,6 +669,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(1, len(task_execs))
 
         task_ex = task_execs[0]
+        self.engine.start_task(task_ex.id, True, False, None, False, False)
 
         action_execs = db_api.get_action_executions(
             task_execution_id=task_ex.id
