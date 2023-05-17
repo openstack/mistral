@@ -129,7 +129,19 @@ api_opts = [
                "turned off in the API request. 'disabled' disables validation "
                "for all API requests. 'mandatory' enables validation for all "
                "API requests.")
-    )
+    ),
+    cfg.BoolOpt(
+        'enable_info_endpoint',
+        default=False,
+        help=_('Enable API for exposing info json about '
+               'current Mistral build.')
+    ),
+    cfg.StrOpt(
+        'info_json_file_path',
+        default='info.json',
+        help=_("Specify the path to info json file which will be "
+               "exposed via /info endpoint.")
+    ),
 ]
 
 js_impl_opt = cfg.StrOpt(

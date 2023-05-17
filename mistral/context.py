@@ -36,7 +36,13 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
-ALLOWED_WITHOUT_AUTH = ['/', '/v2/', '/workflowv2/', '/workflowv2/v2/']
+ALLOWED_WITHOUT_AUTH = [
+    '/',
+    '/info',
+    '/v2/',
+    '/workflowv2/',
+    '/workflowv2/v2/'
+]
 
 
 class MistralContext(oslo_context.RequestContext):
