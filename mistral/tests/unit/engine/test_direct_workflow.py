@@ -1204,3 +1204,65 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         )
 
         self.await_workflow_error(wf_ex.id)
+
+    def test_join_task_has_correct_incoming_context(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            b1:
+              action: std.noop
+              publish:
+                b1: 1
+              on-success: join_task
+            join_task:
+              action: std.noop
+              join: all
+              publish:
+                join_task: 2
+              publish-on-error:
+                join_task: 1
+            bs:
+              action: std.noop
+              publish:
+                bs: 1
+              on-success:
+                - b2
+                - b3
+            b2:
+              action: std.noop
+              publish:
+                b2: 1
+              on-success: join_task
+            b3:
+              action: std.fail
+              publish-on-error:
+                b3: 1
+              on-success: join_task
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+            output = wf_ex.output
+
+        self.assertEqual(5, len(task_execs))
+
+        expected_context = {
+            "bs": 1,
+            "b3": 1,
+            "b1": 1,
+            "b2": 1,
+            "join_task": 1
+        }
+
+        self.assertDictContainsSubset(expected_context, output)

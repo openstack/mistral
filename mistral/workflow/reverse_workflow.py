@@ -81,7 +81,7 @@ class ReverseWorkflowController(base.WorkflowController):
 
         return task_spec
 
-    def _get_upstream_task_executions(self, task_spec):
+    def _get_upstream_task_executions(self, task_spec, triggered_by=None):
         t_specs_names = self.wf_spec.get_task_requires(task_spec) or []
         t_execs = self._get_task_executions(name={'in': t_specs_names})
 
