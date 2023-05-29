@@ -205,3 +205,7 @@ class KombuException(Exception):
 class InvalidStateTransitionException(MistralException):
     http_code = 400
     message = 'Invalid state transition'
+
+
+class MaintenanceException(MistralException):
+    http_code = 500

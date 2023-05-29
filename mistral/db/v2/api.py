@@ -460,6 +460,10 @@ def get_delayed_calls_to_start(time, batch_size=None):
     return IMPL.get_delayed_calls_to_start(time, batch_size)
 
 
+def get_overdue_calls(time):
+    return IMPL.get_overdue_calls(time)
+
+
 def create_delayed_call(values):
     return IMPL.create_delayed_call(values)
 
@@ -722,3 +726,11 @@ def delete_named_lock(lock_id):
 def named_lock(name):
     with IMPL.named_lock(name):
         yield
+
+
+def get_maintenance_status():
+    return IMPL.get_maintenance_status()
+
+
+def update_maintenance_status(status):
+    return IMPL.update_maintenance_status(status)

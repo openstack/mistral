@@ -2128,3 +2128,30 @@ def named_lock(name):
     yield
 
     delete_named_lock(lock_id)
+
+
+def get_maintenance_status():
+    query = b.get_engine().execute('SELECT status FROM mistral_metrics '
+                                   'WHERE name = %s', ("maintenance_status",))
+    rows = query.fetchall()
+
+    return rows[0][0] if rows else None
+
+
+def update_maintenance_status(status):
+    b.get_engine().execute(
+        "INSERT into mistral_metrics (id, name, value)"
+        "VALUES (1, %s, %s)"
+        "ON CONFLICT (name) DO UPDATE"
+        "SET value = EXCLUDED.value",
+        ("maintenance_status", status,))
+
+
+@b.session_aware()
+def get_overdue_calls(time, session=None):
+    query = b.model_query(models.DelayedCall)
+
+    query = query.filter(models.DelayedCall.execution_time < time)
+    query = query.filter_by(processing=True)
+
+    return query.all()
