@@ -46,7 +46,7 @@ class DirectWorkflowController(base.WorkflowController):
 
     __workflow_type__ = "direct"
 
-    def _get_upstream_task_executions(self, task_spec):
+    def _get_upstream_task_executions(self, task_spec, triggered_by=None):
         t_specs_names = [t_spec.get_name() for t_spec in
                          self.wf_spec.find_inbound_task_specs(task_spec)]
 
@@ -54,6 +54,14 @@ class DirectWorkflowController(base.WorkflowController):
             return []
 
         if not task_spec.get_join():
+            if triggered_by and len(triggered_by) > 0:
+                return self._get_task_executions(
+                    name=t_specs_names[0],  # not a join, has just one parent
+                    state={'in': (states.SUCCESS, states.ERROR,
+                                  states.CANCELLED)},
+                    id={'in': triggered_by},
+                    processed=True
+                )
             return self._get_task_executions(
                 name=t_specs_names[0],  # not a join, has just one parent
                 state={'in': (states.SUCCESS, states.ERROR, states.CANCELLED)},

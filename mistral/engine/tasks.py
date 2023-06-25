@@ -378,6 +378,8 @@ class Task(object, metaclass=abc.ABCMeta):
         if not self.set_state(state, state_info):
             return
 
+        self._update_inbound_context()
+
         data_flow.publish_variables(self.task_ex, self.task_spec)
 
         if not self.task_spec.get_keep_result():
@@ -518,6 +520,29 @@ class Task(object, metaclass=abc.ABCMeta):
 
         self.created = True
 
+    def _update_inbound_context(self):
+        assert self.task_ex
+
+        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+
+        triggered_by = self._get_triggered_by_ids()
+
+        self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec,
+                                                    triggered_by=triggered_by)
+
+        utils.update_dict(self.task_ex.in_context, self.ctx)
+
+    def _get_triggered_by_ids(self):
+        ids = []
+
+        if "triggered_by" not in self.task_ex.runtime_context:
+            return ids
+
+        for trigger in self.task_ex.runtime_context["triggered_by"]:
+            ids.append(trigger["task_id"])
+
+        return ids
+
     def _get_safe_rerun(self):
         safe_rerun = self.task_spec.get_safe_rerun()
 
@@ -639,15 +664,6 @@ class RegularTask(Task):
         self._update_triggered_by()
         self._reset_actions()
         self._schedule_actions()
-
-    def _update_inbound_context(self):
-        assert self.task_ex
-
-        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
-
-        self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
-
-        utils.update_dict(self.task_ex.in_context, self.ctx)
 
     def _update_triggered_by(self):
         assert self.task_ex

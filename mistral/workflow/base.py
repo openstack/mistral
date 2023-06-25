@@ -238,15 +238,18 @@ class WorkflowController(object):
         """
         raise NotImplementedError
 
-    def get_task_inbound_context(self, task_spec):
+    def get_task_inbound_context(self, task_spec, triggered_by=None):
         # TODO(rakhmerov): This method should also be able to work with task_ex
         # to cover 'split' (aka 'merge') use case.
-        upstream_task_execs = self._get_upstream_task_executions(task_spec)
+        upstream_task_execs = self._get_upstream_task_executions(
+            task_spec,
+            triggered_by=triggered_by
+        )
 
         return data_flow.evaluate_upstream_context(upstream_task_execs)
 
     @abc.abstractmethod
-    def _get_upstream_task_executions(self, task_spec):
+    def _get_upstream_task_executions(self, task_spec, triggered_by=None):
         """Gets workflow upstream tasks for the given task.
 
         :param task_spec: Task specification.
