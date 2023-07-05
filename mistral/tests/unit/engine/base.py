@@ -199,6 +199,11 @@ class EngineTestCase(base.DbTestCase):
     def is_action_in_state(self, ex_id, state):
         return db_api.get_action_execution(ex_id).state == state
 
+    def is_action_created(self, task_ex_id):
+        return bool(db_api.get_action_executions(
+            task_execution_id=task_ex_id
+        ))
+
     def await_action_state(self, ex_id, state, delay=DEFAULT_DELAY,
                            timeout=DEFAULT_TIMEOUT):
         self._await(
@@ -273,6 +278,14 @@ class EngineTestCase(base.DbTestCase):
     def await_task_processed(self, ex_id, delay=DEFAULT_DELAY,
                              timeout=DEFAULT_TIMEOUT):
         self._await(lambda: self.is_task_processed(ex_id), delay, timeout)
+
+    def await_task_creates_action(self, ex_id, delay=DEFAULT_DELAY,
+                                  timeout=DEFAULT_TIMEOUT):
+        self._await(
+            lambda: self.is_action_created(ex_id),
+            delay,
+            timeout
+        )
 
     # Various methods for workflow execution objects.
 

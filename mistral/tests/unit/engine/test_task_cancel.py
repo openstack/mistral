@@ -181,6 +181,7 @@ class TaskCancelTest(base.EngineTestCase):
                 name='task1'
             )
 
+        self.await_task_creates_action(task_1_ex.id)
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
         )
