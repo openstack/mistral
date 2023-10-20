@@ -17,7 +17,9 @@ import decorator
 import functools
 import inspect
 
+from alembic import op
 from sqlalchemy import exc as sqla_exc
+from sqlalchemy import inspect as ins
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -211,3 +213,10 @@ def tx_cached(use_args=None, ignore_args=None):
         return result
 
     return _decorator
+
+
+def column_exists(table_name, column_name):
+    bind = op.get_context().bind
+    insp = ins(bind)
+    columns = insp.get_columns(table_name)
+    return any(c["name"] == column_name for c in columns)
