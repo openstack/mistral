@@ -21,6 +21,10 @@ else
     MISTRAL_BIN_DIR=$(get_python_exec_prefix)
 fi
 
+# By default, mistral is installed in DEVSTACK_VENV
+# NOTE(arnaud) maybe check if PROJECT_VENV should be used here
+MISTRAL_ENV_DIR=${DEVSTACK_VENV}
+
 # Toggle for deploying Mistral API under HTTPD + mod_wsgi
 MISTRAL_USE_MOD_WSGI=${MISTRAL_USE_MOD_WSGI:-True}
 
@@ -249,23 +253,16 @@ function _mistral_cleanup_apache_wsgi {
 function _config_mistral_apache_wsgi {
     local mistral_apache_conf
     mistral_apache_conf=$(apache_site_config_for mistral-api)
-    local mistral_ssl=""
-    local mistral_certfile=""
-    local mistral_keyfile=""
     local mistral_api_port=$MISTRAL_SERVICE_PORT
-    local venv_path=""
 
     sudo cp $MISTRAL_FILES_DIR/apache-mistral-api.template $mistral_apache_conf
     sudo sed -e "
         s|%PUBLICPORT%|$mistral_api_port|g;
         s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%MISTRAL_BIN_DIR%|$MISTRAL_BIN_DIR|g;
+        s|%MISTRAL_DIR%|$MISTRAL_DIR|g;
+        s|%MISTRAL_ENV_DIR%|$MISTRAL_ENV_DIR|g;
         s|%API_WORKERS%|$API_WORKERS|g;
-        s|%SSLENGINE%|$mistral_ssl|g;
-        s|%SSLCERTFILE%|$mistral_certfile|g;
-        s|%SSLKEYFILE%|$mistral_keyfile|g;
         s|%USER%|$STACK_USER|g;
-        s|%VIRTUALENV%|$venv_path|g
     " -i $mistral_apache_conf
 }
 
