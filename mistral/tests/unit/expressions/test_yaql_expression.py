@@ -163,7 +163,7 @@ class YaqlEvaluatorTest(base.BaseTest):
     def test_function_json_pp_deprecation(self):
         with warnings.catch_warnings(record=True) as w:
             # Ensure warnings aren't suppressed from other tests.
-            for name, mod in list(sys.modules.items()):
+            for name, mod in list(sys.modules.copy().items()):
                 getattr(mod, '__warningregistry__', dict()).clear()
 
             warnings.simplefilter('always')
