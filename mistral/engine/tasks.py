@@ -698,12 +698,16 @@ class RegularTask(Task):
 
         action = self._build_action()
 
-        action.schedule(
-            input_dict,
-            target,
-            safe_rerun=self._get_safe_rerun(),
-            timeout=self._get_timeout()
-        )
+        try:
+            action.schedule(
+                input_dict,
+                target,
+                safe_rerun=self._get_safe_rerun(),
+                timeout=self._get_timeout()
+            )
+        except exc.MistralException as e:
+            self.complete(states.ERROR, e.message)
+            return
 
     @profiler.trace('regular-task-get-target', hide_args=True)
     def _get_target(self, input_dict):
@@ -894,20 +898,24 @@ class WithItemsTask(RegularTask):
 
             return
 
-        for i, input_dict in input_dicts:
-            target = self._get_target(input_dict)
+        try:
+            for i, input_dict in input_dicts:
+                target = self._get_target(input_dict)
 
-            action = self._build_action()
+                action = self._build_action()
 
-            action.schedule(
-                input_dict,
-                target,
-                index=i,
-                safe_rerun=self._get_safe_rerun(),
-                timeout=self._get_timeout()
-            )
+                action.schedule(
+                    input_dict,
+                    target,
+                    index=i,
+                    safe_rerun=self._get_safe_rerun(),
+                    timeout=self._get_timeout()
+                )
 
-            self._decrease_capacity(1)
+                self._decrease_capacity(1)
+        except exc.MistralException as e:
+            self.complete(states.ERROR, e.message)
+            return
 
     def _get_with_items_values(self):
         """Returns all values evaluated from 'with-items' expression.
