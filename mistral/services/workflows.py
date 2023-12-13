@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 
+import hashlib
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
@@ -183,12 +184,17 @@ def update_workflow_execution_env(wf_ex, env):
     return wf_ex
 
 
+def get_workflow_definition_checksum(definition):
+    return hashlib.md5(definition.encode('utf-8')).hexdigest()
+
+
 def _get_workflow_values(wf_spec, definition, scope, namespace=None,
                          is_system=False):
     values = {
         'name': wf_spec.get_name(),
         'tags': wf_spec.get_tags(),
         'definition': definition,
+        'checksum': get_workflow_definition_checksum(definition),
         'spec': wf_spec.to_dict(),
         'scope': scope,
         'namespace': namespace,

@@ -95,6 +95,7 @@ class Workflow(resource.Resource, ScopedResource):
     interface = types.jsontype
     "input and output of the workflow"
     definition = wtypes.text
+    checksum = wtypes.text
     "workflow text written in Mistral v2 language"
     tags = [wtypes.text]
     scope = SCOPE_TYPES

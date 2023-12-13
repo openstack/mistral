@@ -156,6 +156,7 @@ class WorkflowDefinition(Definition):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
     __tablename__ = 'workflow_definitions_v2'
+    checksum = sa.Column(sa.String(32), nullable=True)
     __table_args__ = (
         sa.UniqueConstraint(
             'name',

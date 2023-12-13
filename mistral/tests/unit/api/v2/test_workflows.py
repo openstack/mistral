@@ -15,6 +15,7 @@
 
 import copy
 import datetime
+import hashlib
 from unittest import mock
 
 import json
@@ -42,7 +43,20 @@ flow:
     task1:
       action: std.echo output="Hi"
 """
+WF_DEFINITION_UPDATED = """
+---
+version: '2.0'
 
+flow:
+  type: direct
+  input:
+    - param1
+    - param2
+
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+"""
 WF_DB = models.WorkflowDefinition(
     id='123e4567-e89b-12d3-a456-426655440000',
     name='flow',
@@ -217,6 +231,7 @@ FIRST_WF = {
     'spec': FIRST_WF_DICT,
     'scope': 'private',
     'namespace': '',
+    'checksum': '1b786ecb96b9358f67718a407c274885',
     'is_system': False
 }
 
@@ -239,6 +254,7 @@ SECOND_WF = {
     'spec': SECOND_WF_DICT,
     'scope': 'private',
     'namespace': '',
+    'checksum': '5803661ccfdf226c95254b2a8a295226',
     'is_system': False
 }
 
@@ -899,3 +915,47 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows/123e4567-e89b-12d3-a456-426655440000')
         self.assertEqual(200, resp.status_int)
         self.assertIn('project_id', resp.json)
+
+    def test_post_checksum_workflow_added(self):
+        resp = self.app.post(
+            '/v2/workflows',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+        body = resp.json
+        checksum = body['workflows'][0]['checksum']
+        self.assertIsNotNone(checksum)
+
+    def test_put_checksum_workflow_updated(self):
+        resp = self.app.post(
+            '/v2/workflows',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+        body = resp.json
+        checksum_old = body['workflows'][0]['checksum']
+        resp = self.app.put(
+            '/v2/workflows',
+            WF_DEFINITION_UPDATED,
+            headers={'Content-Type': 'text/plain'}
+        )
+        body = resp.json
+        checksum = body['workflows'][0]['checksum']
+        self.assertTrue(checksum != checksum_old)
+
+    def test_checksum_has_md5_format(self):
+        resp = self.app.post(
+            '/v2/workflows',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+        body = resp.json
+        checksum = body['workflows'][0]['checksum']
+        self.assertTrue(self.is_valid_checksum(checksum))
+
+    def is_valid_checksum(self, checksum):
+        try:
+            hashlib.md5(checksum.encode())
+            return True
+        except Exception:
+            return False
