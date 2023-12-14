@@ -15,7 +15,8 @@
 
 from oslo_config import cfg
 import oslo_middleware.cors as cors_middleware
-import oslo_middleware.http_proxy_to_wsgi as http_proxy_to_wsgi_middleware
+from oslo_middleware import healthcheck
+from oslo_middleware import http_proxy_to_wsgi
 import osprofiler.web
 import pecan
 
@@ -85,7 +86,11 @@ def setup_app(config=None):
         )
 
     # Create HTTPProxyToWSGI wrapper
-    app = http_proxy_to_wsgi_middleware.HTTPProxyToWSGI(app, cfg.CONF)
+    app = http_proxy_to_wsgi.HTTPProxyToWSGI(app, cfg.CONF)
+
+    # Create a healthcheck wrapper
+    if cfg.CONF.healthcheck.enabled:
+        app = healthcheck.Healthcheck(app, cfg.CONF)
 
     # Create a CORS wrapper, and attach mistral-specific defaults that must be
     # included in all CORS responses.

@@ -718,6 +718,17 @@ yaql_opts = [
     )
 ]
 
+
+healthcheck_opts = [
+    cfg.BoolOpt('enabled',
+                default=False,
+                help=_('Enable the health check endpoint at /healthcheck. '
+                       'Note that this is unauthenticated. More information '
+                       'is available at '
+                       'https://docs.openstack.org/oslo.middleware/latest/'
+                       'reference/healthcheck_plugins.html.')),
+]
+
 CONF = cfg.CONF
 
 LEGACY_ACTION_PROVIDER_GROUP = 'legacy_action_provider'
@@ -736,6 +747,7 @@ ACTION_LOGGING_GROUP = 'action_logging'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
+HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
 
@@ -773,6 +785,7 @@ CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
+CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
 CLI_OPTS = [
@@ -820,6 +833,7 @@ def list_opts():
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
+        (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),
         (None, default_group_opts)
