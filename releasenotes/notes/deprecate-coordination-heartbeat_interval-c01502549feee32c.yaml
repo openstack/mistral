@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    The ``[coordination] heartbeat_interval`` option has been deprecated.
+    This option has been unused by any logic and has had no effect.
