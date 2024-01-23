@@ -499,11 +499,6 @@ class PoliciesTest(base.EngineTestCase):
             # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            task_ex = wf_ex.task_executions[0]
-
-        # If wait_before is 0 start the task immediately without delay.
-        self.assertEqual(states.IDLE, task_ex.state)
-
         self.await_workflow_success(wf_ex.id)
 
     def test_wait_before_policy_from_var_negative_number(self):
@@ -568,7 +563,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
@@ -586,7 +580,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         try:
@@ -621,7 +614,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
@@ -642,7 +634,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         try:
@@ -695,7 +686,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
@@ -730,7 +720,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         try:
@@ -787,7 +776,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
@@ -825,7 +813,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
         try:
@@ -1476,8 +1463,6 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
-
         self.await_task_success(task_ex.id)
 
         self.await_workflow_success(wf_ex.id)
@@ -1502,10 +1487,15 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.IDLE, task_ex.state)
-
+        # NOTE(amorin) we used to test the task state here
+        # but this is not possible because we cannot be sure the task is
+        # actually IDLE, RUNNING or even ERROR (because it's suppose to fail)
+        # It depends on the server load / latency
+        # So now, we will only await for it to be in error
+        # See lp-2051040
         self.await_task_error(task_ex.id)
 
+        # And workflow
         self.await_workflow_error(wf_ex.id)
 
         # Wait until timeout exceeds.
@@ -1530,8 +1520,6 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(states.IDLE, task_ex.state)
 
         self.await_task_error(task_ex.id)
 
@@ -1566,8 +1554,6 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(states.IDLE, task_ex.state)
 
         self.await_task_success(task_ex.id)
 
@@ -1675,8 +1661,6 @@ class PoliciesTest(base.EngineTestCase):
 
         task_ex = self._assert_single_item(task_execs, name='task1')
 
-        self.assertEqual(states.IDLE, task_ex.state)
-
         self.await_workflow_paused(wf_ex.id)
 
         self._sleep(1)
@@ -1716,8 +1700,6 @@ class PoliciesTest(base.EngineTestCase):
 
         task_ex = self._assert_single_item(task_execs, name='task1')
 
-        self.assertEqual(states.IDLE, task_ex.state)
-
         # Verify wf paused by pause-before
         self.await_workflow_paused(wf_ex.id)
 
@@ -1730,8 +1712,6 @@ class PoliciesTest(base.EngineTestCase):
         self.await_workflow_paused(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
-
-        self.assertEqual(states.IDLE, task_ex.state)
 
         self.engine.resume_workflow(wf_ex.id)
 
