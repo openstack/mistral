@@ -72,7 +72,7 @@ class KombuRPCListener(ConsumerMixin):
         :param message: the plain amqp kombu.message with additional
             information
         """
-        LOG.debug("Got response: {0}".format(response))
+        LOG.debug("Got response: {}", response)
 
         try:
             message.ack()
@@ -97,7 +97,7 @@ class KombuRPCListener(ConsumerMixin):
             else:
                 LOG.debug(
                     "Got a response, but seems like no process is waiting for "
-                    "it [correlation_id={0}]".format(correlation_id)
+                    "it [correlation_id={}]", correlation_id
                 )
 
     def get_result(self, correlation_id, timeout):

@@ -254,8 +254,8 @@ class DefaultEngine(base.Engine):
                     db_api.update_action_execution_heartbeat(exec_id)
                 except exceptions.DBEntityNotFoundError:
                     LOG.debug(
-                        "Action execution heartbeat update failed. {}"
-                        .format(exec_id),
+                        "Action execution heartbeat update failed. {}",
+                        exec_id,
                         exc_info=True
                     )
                     # Ignore this error and continue with the

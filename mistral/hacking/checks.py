@@ -68,24 +68,24 @@ def check_oslo_namespace_imports(logical_line):
         msg = ("O323: '%s' must be used instead of '%s'.") % (
             logical_line.replace('oslo.', 'oslo_'),
             logical_line)
-        yield(0, msg)
+        yield (0, msg)
     elif re.match(oslo_namespace_imports_from_root, logical_line):
         msg = ("O323: '%s' must be used instead of '%s'.") % (
             logical_line.replace('from oslo import ', 'import oslo_'),
             logical_line)
-        yield(0, msg)
+        yield (0, msg)
     elif re.match(oslo_namespace_imports_dot, logical_line):
         msg = ("O323: '%s' must be used instead of '%s'.") % (
             logical_line.replace('import', 'from').replace('.', ' import '),
             logical_line)
-        yield(0, msg)
+        yield (0, msg)
 
 
 @core.flake8ext
 def check_python3_xrange(logical_line):
     if re.search(r"\bxrange\s*\(", logical_line):
-        yield(0, "M327: Do not use xrange(). 'xrange()' is not compatible "
-              "with Python 3. Use range() or range() instead.")
+        yield (0, "M327: Do not use xrange(). 'xrange()' is not compatible "
+               "with Python 3. Use range() or range() instead.")
 
 
 @core.flake8ext
@@ -93,7 +93,7 @@ def check_python3_no_iteritems(logical_line):
     msg = ("M328: Use six.iteritems() instead of dict.iteritems().")
 
     if re.search(r".*\.iteritems\(\)", logical_line):
-        yield(0, msg)
+        yield (0, msg)
 
 
 @core.flake8ext
@@ -101,7 +101,7 @@ def check_python3_no_iterkeys(logical_line):
     msg = ("M329: Use six.iterkeys() instead of dict.iterkeys().")
 
     if re.search(r".*\.iterkeys\(\)", logical_line):
-        yield(0, msg)
+        yield (0, msg)
 
 
 @core.flake8ext
@@ -109,7 +109,7 @@ def check_python3_no_itervalues(logical_line):
     msg = ("M330: Use six.itervalues() instead of dict.itervalues().")
 
     if re.search(r".*\.itervalues\(\)", logical_line):
-        yield(0, msg)
+        yield (0, msg)
 
 
 class BaseASTChecker(ast.NodeVisitor):

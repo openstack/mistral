@@ -110,7 +110,7 @@ class TestCronTriggerController(base.APITest):
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
 
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_NOT_FOUND)
     def test_get_not_found(self):

@@ -213,7 +213,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.get('/v2/workbooks/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
     def test_put(self):

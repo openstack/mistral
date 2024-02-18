@@ -242,7 +242,7 @@ class TestTasksController(base.APITest):
         resp = self.app.get('/v2/tasks/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_EMPTY)
     def test_get_all_empty(self):

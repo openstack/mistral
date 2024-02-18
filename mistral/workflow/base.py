@@ -232,7 +232,7 @@ class WorkflowController(object):
 
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
-        """Evaluates final workflow context assuming that workflow has finished.
+        """Evaluates final workflow context after workflow has finished.
 
         :return: Final workflow context.
         """

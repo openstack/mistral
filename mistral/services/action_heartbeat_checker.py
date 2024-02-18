@@ -51,14 +51,12 @@ def handle_expired_actions():
             CONF.action_heartbeat.batch_size
         )
 
-        LOG.debug("Found {} running and expired actions.".format(
-            len(action_exs))
-        )
+        LOG.debug("Found {} running and expired actions.", len(action_exs))
 
         if action_exs:
             LOG.info(
                 "Actions executions to transit to error, because "
-                "heartbeat wasn't received: {}".format(action_exs)
+                "heartbeat wasn't received: {}", action_exs
             )
 
             for action_ex in action_exs:
@@ -131,7 +129,7 @@ def start():
     LOG.debug(
         "First run of action heartbeat checker, wait before "
         "checking to make sure executors have time to send "
-        "heartbeats. ({} seconds)".format(wait_time)
+        "heartbeats. ({} seconds)", wait_time
     )
 
     global _stopped
