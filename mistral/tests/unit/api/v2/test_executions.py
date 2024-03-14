@@ -224,7 +224,7 @@ class TestExecutionsController(base.APITest):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
 
         self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
+        self.assertIn('project_id', resp.json)
 
     @mock.patch.object(
         db_api,

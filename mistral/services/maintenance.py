@@ -56,8 +56,8 @@ def pause_running_executions(skip_tx=False):
                      db_api.get_workflow_executions(state=states.RUNNING,
                      insecure=True)]
 
-    LOG.info("Number of find workflow executions is {}"
-             .format(len(execution_ids)))
+    LOG.info("Number of find workflow executions is {}",
+             len(execution_ids))
 
     if skip_tx:
         sched = sched_base.get_system_scheduler()
@@ -112,7 +112,7 @@ def _pause_execution(wf_ex_id, project_id, skip_tx=False):
 
     if states.is_running(wf_ex.state):
         workflow_handler.pause_workflow(wf_ex)
-        LOG.info('Execution {} was paused'.format(wf_ex_id))
+        LOG.info('Execution {} was paused', wf_ex_id)
 
 
 def await_pause_executions(skip_tx=False):
@@ -139,9 +139,9 @@ def await_pause_executions(skip_tx=False):
                 db_api.update_maintenance_status(PAUSED)
             return
 
-        LOG.info('The following tasks have RUNNING state: {}'.format([
+        LOG.info('The following tasks have RUNNING state: {}', [
             task.id for task in tasks
-        ]))
+        ])
 
         sched = sched_base.get_system_scheduler()
         job = sched_base.SchedulerJob(
@@ -166,9 +166,9 @@ def await_pause_executions(skip_tx=False):
             if not tasks:
                 return True
 
-            LOG.info('The following tasks have RUNNING state: {}'.format([
+            LOG.info('The following tasks have RUNNING state: {}', [
                 task.id for task in tasks
-            ]))
+            ])
 
             eventlet.sleep(1)
 
@@ -284,6 +284,4 @@ def _resume_execution(wf_ex_id, skip_tx=False):
 
     workflow_handler.resume_workflow(wf_ex)
 
-    LOG.info('The following execution was resumed: {}'.format([
-        wf_ex.id
-    ]))
+    LOG.info('The following execution was resumed: {}', [wf_ex.id])
