@@ -149,7 +149,8 @@ class LegacyScheduler(sched_base.Scheduler):
 
             eventlet.sleep(
                 self._fixed_delay +
-                random.Random().randint(0, self._random_delay * 1000) * 0.001
+                random.Random().randint(0,
+                                        int(self._random_delay * 1000)) * 0.001
             )
 
     def _process_delayed_calls(self, ctx=None):
