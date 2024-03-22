@@ -54,6 +54,8 @@ class MaintenanceController(rest.RestController):
     def put(self, new_maintenance_status):
         context.set_ctx(None)
 
-        maintenance.change_maintenance_mode(new_maintenance_status.status)
+        new_maintenance_status.status = maintenance.change_maintenance_mode(
+            new_maintenance_status.status
+        )
 
         return new_maintenance_status

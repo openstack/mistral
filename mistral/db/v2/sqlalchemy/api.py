@@ -37,6 +37,7 @@ from mistral.db import utils as m_dbutils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import maintenance as m
 from mistral.services import security
 from mistral.workflow import states
 from mistral_lib import utils
@@ -66,7 +67,10 @@ def setup_db():
 
         try:
             models.Workbook.metadata.create_all(b.get_engine())
-
+            # NOTE(wortellen): We need this in case if we use sqlite3.
+            # We have to fill this table, but I haven't found any other
+            # appropriate place where this can be done.
+            fill_metrics_table()
             _initialized = True
         except sa.exc.OperationalError as e:
             raise exc.DBError("Failed to setup database: %s" % e)
@@ -2130,21 +2134,36 @@ def named_lock(name):
     delete_named_lock(lock_id)
 
 
-def get_maintenance_status():
-    query = b.get_engine().execute('SELECT status FROM mistral_metrics '
-                                   'WHERE name = %s', ("maintenance_status",))
-    rows = query.fetchall()
+@b.session_aware()
+def get_maintenance_status(session=None):
+    maintenance_entry = (
+        session.query(models.MistralMetrics)
+        .filter_by(name="maintenance_status")
+        .first()
+    )
+    return maintenance_entry.value if maintenance_entry else None
 
-    return rows[0][0] if rows else None
+
+@b.session_aware()
+def update_maintenance_status(status, session=None):
+    maintenance_entry = session.query(models.MistralMetrics).get(1)
+    maintenance_entry.value = status
+    session.commit()
 
 
-def update_maintenance_status(status):
-    b.get_engine().execute(
-        "INSERT into mistral_metrics (id, name, value)"
-        "VALUES (1, %s, %s)"
-        "ON CONFLICT (name) DO UPDATE"
-        "SET value = EXCLUDED.value",
-        ("maintenance_status", status,))
+@b.session_aware()
+def fill_metrics_table(session=None):
+    maintenance_entry = session.query(models.MistralMetrics).get(1)
+    if not maintenance_entry:
+        maintenance = models.MistralMetrics()
+        maintenance.update(
+            {
+                'id': 1,
+                'name': 'maintenance_status',
+                'value': m.RUNNING
+            }
+        )
+        maintenance.save(session=session)
 
 
 @b.session_aware()

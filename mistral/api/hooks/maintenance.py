@@ -10,6 +10,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import pecan
 from pecan import hooks
 
@@ -17,6 +18,25 @@ from mistral.db.v2 import api as db_api
 from mistral.services import maintenance as maintenance_service
 
 ALLOWED_WITHOUT_AUTH = ['/', '/v2/', '/health', '/maintenance']
+
+
+def _complete_async_action(maintenance_mode, state):
+    return (state.request.method == 'PUT' and
+            '/v2/action_executions' in state.request.path and
+            maintenance_mode == maintenance_service.PAUSING
+            )
+
+
+def _put_method_executions(maintenance_mode, state):
+    if not (state.request.method == 'PUT' and
+            '/v2/executions' in state.request.path):
+        return False
+
+    body = json.loads(state.request.body.decode('utf8').replace("'", '"'))
+    return ('state' in body and body['state'] == 'CANCELLED' and
+            (maintenance_mode == maintenance_service.PAUSING or
+             maintenance_mode == maintenance_service.PAUSED
+             ))
 
 
 class MaintenanceHook(hooks.PecanHook):
@@ -27,14 +47,10 @@ class MaintenanceHook(hooks.PecanHook):
             return
 
         cluster_state = db_api.get_maintenance_status()
-        is_complete_async_actions = (
-            state.request.method == 'PUT' and
-            '/v2/action_executions' in state.request.path and
-            cluster_state == maintenance_service.PAUSING
-        )
 
-        if is_complete_async_actions or \
-                cluster_state == maintenance_service.RUNNING:
+        if (cluster_state == maintenance_service.RUNNING or
+                _complete_async_action(cluster_state, state) or
+                _put_method_executions(cluster_state, state)):
             return
 
         msg = "Current Mistral state is {}. Method is not allowed".format(

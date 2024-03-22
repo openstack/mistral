@@ -40,41 +40,23 @@ _ALL_STATES = [
 LOG = logging.getLogger(__name__)
 
 _PAUSE_EXECUTIONS_PATH = 'mistral.services.maintenance._pause_executions'
-_PAUSE_EXECUTION_PATH = 'mistral.services.maintenance._pause_execution'
 _RESUME_EXECUTIONS_PATH = 'mistral.services.maintenance._resume_executions'
-_RESUME_EXECUTION_PATH = 'mistral.services.maintenance._resume_execution'
-_AWAIT_PAUSE_EXECUTION_PATH = \
-    'mistral.services.maintenance.await_pause_executions'
 
 
 def is_valid_transition(old_state, new_state):
     return new_state in _VALID_TRANSITIONS.get(old_state, [])
 
 
-def pause_running_executions(skip_tx=False):
+def pause_running_executions():
     execution_ids = [(ex.id, ex.project_id) for ex in
                      db_api.get_workflow_executions(state=states.RUNNING,
                      insecure=True)]
 
-    LOG.info("Number of find workflow executions is {}",
-             len(execution_ids))
-
-    if skip_tx:
-        sched = sched_base.get_system_scheduler()
-        for wf_ex_id, project_id in execution_ids:
-            job = sched_base.SchedulerJob(
-                func_name=_PAUSE_EXECUTION_PATH,
-                func_args={
-                    'wf_ex_id': wf_ex_id,
-                    'project_id': project_id
-                }
-            )
-            sched.schedule(job)
-        return
+    LOG.info("Number of find workflow executions is %s", len(execution_ids))
 
     for wf_ex_id, project_id in execution_ids:
         try:
-            with db_api.transaction(skip=skip_tx):
+            with db_api.transaction():
                 _pause_execution(wf_ex_id, project_id)
         except BaseException as e:
             LOG.error(str(e))
@@ -82,11 +64,12 @@ def pause_running_executions(skip_tx=False):
     return True
 
 
-def _pause_execution(wf_ex_id, project_id, skip_tx=False):
+def _pause_execution(wf_ex_id, project_id):
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
             user=None,
             auth_token=None,
+            project_id=project_id,
             is_admin=True
         )
     )
@@ -98,24 +81,12 @@ def _pause_execution(wf_ex_id, project_id, skip_tx=False):
 
     wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
-    if wf_ex.root_execution_id:
-        trace_uuid = wf_ex.root_execution_id
-    else:
-        trace_uuid = wf_ex.id
-
-    auth_ctx.set_ctx(
-        auth_ctx.MistralContext(
-            tenant=project_id,
-            trace_uuid=trace_uuid
-        )
-    )
-
     if states.is_running(wf_ex.state):
         workflow_handler.pause_workflow(wf_ex)
-        LOG.info('Execution {} was paused', wf_ex_id)
+        LOG.info('Execution %s was paused', wf_ex_id)
 
 
-def await_pause_executions(skip_tx=False):
+def await_pause_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
             user=None,
@@ -124,36 +95,8 @@ def await_pause_executions(skip_tx=False):
         )
     )
 
-    if skip_tx:
-        current_state = db_api.get_maintenance_status()
-
-        if current_state != PAUSING:
-            return False
-
-        tasks = db_api.get_task_executions(
-            state=states.RUNNING, insecure=True
-        )
-
-        if not tasks:
-            if db_api.get_maintenance_status() == PAUSING:
-                db_api.update_maintenance_status(PAUSED)
-            return
-
-        LOG.info('The following tasks have RUNNING state: {}', [
-            task.id for task in tasks
-        ])
-
-        sched = sched_base.get_system_scheduler()
-        job = sched_base.SchedulerJob(
-            run_after=1,
-            func_name=_AWAIT_PAUSE_EXECUTION_PATH,
-            func_args={'skip_tx': True}
-        )
-        sched.schedule(job)
-        return
-
     while True:
-        with db_api.transaction(skip=skip_tx):
+        with db_api.transaction():
             current_state = db_api.get_maintenance_status()
 
             if current_state != PAUSING:
@@ -166,10 +109,8 @@ def await_pause_executions(skip_tx=False):
             if not tasks:
                 return True
 
-            LOG.info('The following tasks have RUNNING state: {}', [
-                task.id for task in tasks
-            ])
-
+            LOG.info('The following tasks have RUNNING state: %s',
+                     [task.id for task in tasks])
             eventlet.sleep(1)
 
 
@@ -210,7 +151,7 @@ def change_maintenance_mode(new_state):
 
 
 @post_tx_queue.run
-def _pause_executions(skip_tx=False):
+def _pause_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
             user=None,
@@ -218,11 +159,6 @@ def _pause_executions(skip_tx=False):
             is_admin=True
         )
     )
-
-    if skip_tx:
-        pause_running_executions(skip_tx)
-        await_pause_executions(skip_tx)
-        return
 
     if pause_running_executions() and await_pause_executions():
         with db_api.transaction():
@@ -231,7 +167,7 @@ def _pause_executions(skip_tx=False):
 
 
 @post_tx_queue.run
-def _resume_executions(skip_tx=False):
+def _resume_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
             user=None,
@@ -239,9 +175,8 @@ def _resume_executions(skip_tx=False):
             is_admin=True
         )
     )
-    sched = sched_base.get_system_scheduler()
 
-    with db_api.transaction(skip=skip_tx):
+    with db_api.transaction():
         current_state = db_api.get_maintenance_status()
 
         if current_state != RUNNING:
@@ -255,33 +190,18 @@ def _resume_executions(skip_tx=False):
             return
 
         for ex in paused_executions:
-            if skip_tx:
-                job = sched_base.SchedulerJob(
-                    func_name=_RESUME_EXECUTION_PATH,
-                    func_args={
-                        'wf_ex_id': ex.id
-                    }
-                )
-                sched.schedule(job)
-            else:
-                _resume_execution(wf_ex_id=ex.id)
+            _resume_execution(wf_ex_id=ex.id)
 
 
-def _resume_execution(wf_ex_id, skip_tx=False):
+def _resume_execution(wf_ex_id):
     wf_ex = db_api.get_workflow_execution(wf_ex_id)
-
-    if wf_ex.root_execution_id:
-        trace_uuid = wf_ex.root_execution_id
-    else:
-        trace_uuid = wf_ex.id
 
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            tenant=wf_ex.project_id,
-            trace_uuid=trace_uuid
+            project_id=wf_ex.project_id
         )
     )
 
     workflow_handler.resume_workflow(wf_ex)
 
-    LOG.info('The following execution was resumed: {}', [wf_ex.id])
+    LOG.info('The following execution was resumed: %s', [wf_ex.id])

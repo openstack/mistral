@@ -67,7 +67,8 @@ class ActionsController(rest.RestController, hooks.HookController):
     # TODO(nmakhotkin): Have a discussion with pecan/WSME folks in order
     # to have requests and response of different content types. Then
     # delete ContentTypeHook.
-    __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
+    __hooks__ = [ct_hook.ContentTypeHook("application/json;charset=utf-8",
+                                         ['POST', 'PUT'])]
 
     validate = validation.SpecValidationController(
         spec_parser.get_action_list_spec_from_yaml)

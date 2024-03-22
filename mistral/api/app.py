@@ -21,6 +21,7 @@ import osprofiler.web
 import pecan
 
 from mistral.api import access_control
+from mistral.api.hooks import maintenance
 from mistral import config as m_config
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api_v2
@@ -65,7 +66,8 @@ def setup_app(config=None):
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [ctx.AuthHook(), ctx.ContextHook()],
+        hooks=lambda: [ctx.AuthHook(), maintenance.MaintenanceHook(),
+                       ctx.ContextHook()],
         logging=getattr(config, 'logging', {}),
         **app_conf
     )

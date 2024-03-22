@@ -220,6 +220,18 @@ class CodeSource(mb.MistralSecureModelBase):
     tags = sa.Column(st.JsonListType())
 
 
+class MistralMetrics(mb.MistralModelBase):
+    """Table for maintenance mode."""
+
+    __tablename__ = 'mistral_metrics'
+    __table_args__ = (
+        sa.UniqueConstraint('name'),
+    )
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.String(255), nullable=False)
+    value = sa.Column(sa.String(255), nullable=False)
+
+
 class DynamicActionDefinition(mb.MistralSecureModelBase):
     """Contains info about registered Dynamic Actions."""
 
