@@ -15,8 +15,6 @@ import os
 import sys
 
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -31,10 +29,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.autohttp.flask',
     'sphinxcontrib.pecanwsme.rest',
+    'os_api_ref',
+    'openstackdocstheme',
 ]
-
-if not on_rtd:
-    extensions.append('oslosphinx')
 
 wsme_protocols = ['restjson']
 
@@ -75,9 +72,10 @@ pygments_style = 'native'
 # a list of builtin themes.
 # html_static_path = ['_static']
 
-if on_rtd:
-    html_theme_path = ['.']
-    html_theme = 'sphinx_rtd_theme'
+html_theme = 'openstackdocs'
+html_theme_options = {
+    "sidebar_mode": "toc",
+}
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
