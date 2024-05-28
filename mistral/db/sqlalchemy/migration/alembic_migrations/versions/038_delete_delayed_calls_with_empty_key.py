@@ -35,13 +35,12 @@ def upgrade():
     # See https://bugs.launchpad.net/mistral/+bug/1861988.
     # Due to this bug there may be redundant delayed calls in DB.
     # We need to delete all rows where the "key" column is None.
-    session = sa.orm.Session(bind=op.get_bind())
+    with sa.orm.Session(bind=op.get_bind()) as session:
 
-    delayed_calls = table('delayed_calls_v2', column('key'))
+        delayed_calls = table('delayed_calls_v2', column('key'))
 
-    with session.begin(subtransactions=True):
         session.execute(
             delayed_calls.delete().where(delayed_calls.c.key==None)  # noqa
         )
 
-    session.commit()
+        session.commit()

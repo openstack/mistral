@@ -32,10 +32,9 @@ from sqlalchemy.sql import table, column
 
 def upgrade():
     wb_def = table('workbooks_v2', column('namespace'))
-    session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
+    with sa.orm.Session(bind=op.get_bind()) as session:
         session.execute(
             wb_def.update().values(namespace='').where(
                 wb_def.c.namespace == None))  # noqa
 
-    session.commit()
+        session.commit()

@@ -50,14 +50,13 @@ def upgrade():
         sa.Column('type', sa.String(length=10), nullable=True)
     )
 
-    session = sa.orm.Session(bind=op.get_bind())
-    values = []
+    with sa.orm.Session(bind=op.get_bind()) as session:
+        values = []
 
-    for row in session.query(task_executions):
-        values.append({'id': row[0],
-                       'spec': row[1]})
+        for row in session.query(task_executions):
+            values.append({'id': row[0],
+                           'spec': row[1]})
 
-    with session.begin(subtransactions=True):
         for value in values:
             task_type = "ACTION"
             if "workflow" in value['spec']:
@@ -69,5 +68,5 @@ def upgrade():
                 )
             )
 
-    # this commit appears to be necessary
-    session.commit()
+        # this commit appears to be necessary
+        session.commit()

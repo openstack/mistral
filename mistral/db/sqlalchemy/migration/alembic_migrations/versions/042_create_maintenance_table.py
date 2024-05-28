@@ -26,6 +26,7 @@ revision = '042'
 down_revision = '041'
 
 from alembic import op
+from sqlalchemy import text
 
 from mistral.services import maintenance
 
@@ -33,14 +34,13 @@ from mistral.services import maintenance
 def upgrade():
     connection = op.get_bind()
 
-    connection.execute(
+    connection.execute(text(
         """CREATE TABLE IF NOT EXISTS mistral_metrics
         (name VARCHAR(255) UNIQUE, value VARCHAR(255),
         id INT PRIMARY KEY DEFAULT 1)"""
-    )
+    ))
 
-    connection.execute(
+    connection.execute(text(
         """INSERT INTO mistral_metrics (id, name, value)
-        VALUES (1, 'maintenance_status', %s)""",
-        (maintenance.RUNNING,)
-    )
+        VALUES (1, 'maintenance_status', :status)"""
+    ), {'status': maintenance.RUNNING})

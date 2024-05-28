@@ -58,10 +58,9 @@ def upgrade():
     )
 
     action_def = table('action_definitions_v2', column('namespace'))
-    session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
+    with sa.orm.Session(bind=op.get_bind()) as session:
         session.execute(
             action_def.update().values(namespace='').where(
                 action_def.c.namespace is None))  # noqa
 
-    session.commit()
+        session.commit()

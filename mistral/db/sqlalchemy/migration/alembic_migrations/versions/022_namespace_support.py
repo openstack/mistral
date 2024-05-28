@@ -101,14 +101,13 @@ def upgrade():
         sa.Column('workflow_namespace', sa.String(length=255), nullable=True)
     )
 
-    session = sa.orm.Session(bind=op.get_bind())
-    values = []
+    with sa.orm.Session(bind=op.get_bind()) as session:
+        values = []
 
-    for row in session.query(action_executions):
-        values.append({'id': row[0],
-                       'workflow_name': row[1]})
+        for row in session.query(action_executions):
+            values.append({'id': row[0],
+                           'workflow_name': row[1]})
 
-    with session.begin(subtransactions=True):
         session.execute(wf_def.update().values(namespace=''))
         session.execute(wf_exec.update().values(workflow_namespace=''))
         session.execute(task_exec.update().values(workflow_namespace=''))
@@ -119,7 +118,7 @@ def upgrade():
                     workflow_namespace=''
                 ).where(action_executions.c.id == value['id']))
 
-    # this commit appears to be necessary
-    session.commit()
+        # this commit appears to be necessary
+        session.commit()
 
 # ### end Alembic commands ###
