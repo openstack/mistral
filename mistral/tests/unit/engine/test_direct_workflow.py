@@ -1297,7 +1297,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             "join_task": 1
         }
 
-        self.assertDictContainsSubset(expected_context, output)
+        self._assert_dict_contains_subset(expected_context, output)
 
     def test_context_versioning(self):
         wf_text = """---
