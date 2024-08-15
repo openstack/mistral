@@ -41,12 +41,9 @@ def _get_facade():
     global _facade
 
     if not _facade:
-        _facade = enginefacade.LegacyEngineFacade(
-            cfg.CONF.database.connection,
-            sqlite_fk=True,
-            autocommit=False,
-            **dict(cfg.CONF.database.items())
-        )
+        ctx = enginefacade.transaction_context()
+        ctx.configure(sqlite_fk=True)
+        _facade = ctx.writer
 
         if cfg.CONF.profiler.enabled:
             if cfg.CONF.profiler.trace_sqlalchemy:
@@ -82,7 +79,8 @@ def get_engine():
 
 
 def _get_session():
-    return _get_facade().get_session()
+    sessionmaker = _get_facade().get_sessionmaker()
+    return sessionmaker()
 
 
 def _get_thread_local_session():
