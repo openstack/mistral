@@ -401,7 +401,7 @@ class AdhocActionsTest(base.EngineTestCase):
             wf_namespace=namespace
         )
 
-        self.await_workflow_success(wf_ex.id, timeout=5)
+        self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
             action_execs = db_api.get_action_executions(

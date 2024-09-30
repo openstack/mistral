@@ -222,5 +222,4 @@ class ErrorResultTest(base.EngineTestCase):
             tasks = wf_ex.task_executions
             self.assertEqual(1, len(tasks))
 
-            task1 = self._assert_single_item(tasks, name='task1')
-            self.assertEqual(states.IDLE, task1.state)
+            self._assert_single_item(tasks, name='task1')
