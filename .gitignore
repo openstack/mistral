@@ -9,6 +9,7 @@
 dist
 build
 .venv
+venv
 eggs
 parts
 bin
@@ -31,6 +32,7 @@ cover/*
 .testrepository/
 .stestr/
 subunit.log
+mistral.log
 .mistral.conf
 AUTHORS
 ChangeLog
