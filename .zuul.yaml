@@ -111,8 +111,6 @@
         - mistral-devstack-kombu
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
-        - mistral-rally-task:
-            voting: false
     queue: mistral
     gate:
       jobs:
