@@ -13,9 +13,12 @@
 #    limitations under the License.
 
 from eventlet import event
+from oslo_log import log as logging
 from oslo_service import service
 
 from mistral.service import coordination
+
+LOG = logging.getLogger(__name__)
 
 
 class MistralService(service.Service):
@@ -36,7 +39,7 @@ class MistralService(service.Service):
         self._started.wait()
 
     def _notify_started(self, message):
-        print(message)
+        LOG.info(message)
 
         self._started.send()
 
