@@ -33,10 +33,14 @@ from mistral.services import security
 from mistral.tests.unit import config as test_config
 from mistral import version
 
-RESOURCES_PATH = 'tests/resources/'
+CONF = cfg.CONF
+
+logging.register_options(CONF)
+CONF.set_override('log_file', 'mistral.log')
+logging.setup(CONF, 'mistral')
 LOG = logging.getLogger(__name__)
 
-
+RESOURCES_PATH = 'tests/resources/'
 test_config.parse_args()
 
 
