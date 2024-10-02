@@ -33,9 +33,6 @@ class LegacyActionProviderTest(base.DbTestCase):
 
         action_descs = system_provider.find_all()
 
-        for a in action_descs:
-            print(a)
-
         self.assertTrue(len(action_descs) > 0)
 
         self.assertTrue(
