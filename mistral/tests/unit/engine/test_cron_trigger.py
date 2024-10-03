@@ -15,6 +15,7 @@ import datetime
 from unittest import mock
 
 from oslo_config import cfg
+from oslo_utils import timeutils
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
@@ -123,7 +124,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         next_trigger = next_triggers[0]
         next_execution_time_before = next_trigger.next_execution_time
-        ts_before = datetime.datetime.utcnow()
+        ts_before = timeutils.utcnow()
 
         periodic.process_cron_triggers_v2(None, None)
         self._await(
@@ -157,7 +158,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         # Make the first_time 1 sec later than current time, in order to make
         # it executed by next cron-trigger task.
-        first_time = datetime.datetime.utcnow() + datetime.timedelta(0, 1)
+        first_time = timeutils.utcnow() + datetime.timedelta(0, 1)
 
         # Creates a cron-trigger with pattern and first time, ensure the
         # cron-trigger can be executed more than once, and cron-trigger will
@@ -200,7 +201,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
     def test_validate_cron_trigger_input_first_time(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-        first_time = datetime.datetime.utcnow() + datetime.timedelta(0, 1)
+        first_time = timeutils.utcnow() + datetime.timedelta(0, 1)
 
         self.assertRaises(
             exc.InvalidModelException,

@@ -17,6 +17,8 @@ import datetime
 import json
 from unittest import mock
 
+from oslo_utils import timeutils
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import resources
@@ -24,7 +26,6 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
-from oslo_utils import uuidutils
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -67,8 +68,8 @@ ENVIRONMENT = {
     'variables': VARIABLES,
     'scope': 'private',
     'project_id': '<default-project>',
-    'created_at': str(datetime.datetime.utcnow()),
-    'updated_at': str(datetime.datetime.utcnow())
+    'created_at': str(timeutils.utcnow()),
+    'updated_at': str(timeutils.utcnow())
 }
 
 ENVIRONMENT_WITH_ILLEGAL_FIELD = {

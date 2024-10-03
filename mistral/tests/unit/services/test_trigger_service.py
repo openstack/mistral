@@ -17,6 +17,7 @@ import eventlet
 from unittest import mock
 
 from oslo_config import cfg
+from oslo_utils import timeutils
 
 from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
@@ -296,7 +297,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             self.wf.name,
             {},
             pattern='*/3 * * * *',
-            start_time=datetime.datetime.utcnow() + datetime.timedelta(0, 50)
+            start_time=timeutils.utcnow() + datetime.timedelta(0, 50)
         )
 
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]

@@ -18,6 +18,7 @@ from unittest import mock
 
 from oslo_config import cfg
 from oslo_messaging.rpc import client as rpc_client
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from mistral.db.v2 import api as db_api
@@ -74,8 +75,8 @@ ENVIRONMENT = {
         'key2': 123
     },
     'scope': 'private',
-    'created_at': str(datetime.datetime.utcnow()),
-    'updated_at': str(datetime.datetime.utcnow())
+    'created_at': str(timeutils.utcnow()),
+    'updated_at': str(timeutils.utcnow())
 }
 
 ENVIRONMENT_DB = models.Environment(

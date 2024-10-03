@@ -16,6 +16,9 @@
 
 import datetime
 
+from oslo_config import cfg
+from oslo_utils import timeutils
+
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.services import expiration_policy
@@ -23,7 +26,6 @@ from mistral.services.expiration_policy import ExecutionExpirationPolicy
 from mistral.tests.unit import base
 from mistral.tests.unit.base import get_context
 from mistral_lib import utils
-from oslo_config import cfg
 
 
 def _create_workflow_executions():
@@ -130,7 +132,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         _create_workflow_executions()
 
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
 
         # This execution has a parent wf and testing that we are
         # querying only for parent wfs.
@@ -171,7 +173,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
     def test_expiration_policy_for_executions_with_ignored_states(self):
         _create_workflow_executions()
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
 
         _set_expiration_policy_config(
             evaluation_interval=1,
@@ -215,7 +217,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         """
 
         _create_workflow_executions()
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
 
         _set_expiration_policy_config(
             evaluation_interval=1,
@@ -240,7 +242,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         """
 
         _create_workflow_executions()
-        now = datetime.datetime.utcnow()
+        now = timeutils.utcnow()
 
         _set_expiration_policy_config(
             evaluation_interval=1,

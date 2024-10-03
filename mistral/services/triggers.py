@@ -17,6 +17,7 @@ import datetime
 import json
 
 from oslo_log import log as logging
+from oslo_utils import timeutils
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import utils as eng_utils
@@ -39,8 +40,7 @@ def get_next_execution_time(pattern, start_time):
 
 def get_next_cron_triggers():
     return db_api.get_next_cron_triggers(
-        datetime.datetime.utcnow() + datetime.timedelta(0, 2)
-    )
+        timeutils.utcnow() + datetime.timedelta(0, 2))
 
 
 def validate_cron_trigger_input(pattern, first_time, count):
@@ -50,7 +50,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
         )
 
     if first_time:
-        valid_min_time = datetime.datetime.utcnow() + datetime.timedelta(0, 60)
+        valid_min_time = timeutils.utcnow() + datetime.timedelta(0, 60)
 
         if valid_min_time > first_time:
             raise exc.InvalidModelException(
@@ -74,7 +74,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
                         workflow_params=None, pattern=None, first_time=None,
                         count=None, start_time=None, workflow_id=None):
     if not start_time:
-        start_time = datetime.datetime.utcnow()
+        start_time = timeutils.utcnow()
 
     if isinstance(first_time, str):
         try:

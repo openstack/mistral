@@ -20,6 +20,7 @@ from unittest import mock
 from eventlet import queue
 from eventlet import timeout
 from oslo_config import cfg
+from oslo_utils import timeutils
 
 from mistral import context as auth_context
 from mistral.db.v2 import api as db_api
@@ -39,7 +40,7 @@ DELAY = 1.5
 
 
 def get_time_delay(delay=DELAY * 2):
-    return datetime.datetime.utcnow() + datetime.timedelta(seconds=delay)
+    return timeutils.utcnow() + datetime.timedelta(seconds=delay)
 
 
 def target_method():

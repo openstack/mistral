@@ -18,6 +18,7 @@ import json
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import timeutils
 import osprofiler.profiler
 import osprofiler.web
 
@@ -39,17 +40,14 @@ def log_to_file(info, context=None):
     th_local_name = '_profiler_trace_%s_start_time_' % info['trace_id']
 
     if info['name'].endswith('-start'):
-        utils.set_thread_local(
-            th_local_name,
-            datetime.datetime.utcnow()
-        )
+        utils.set_thread_local(th_local_name, timeutils.utcnow())
 
         # Insert a blank sequence for a trace start.
         attrs.insert(1, ' ' * 8)
 
     if info['name'].endswith('-stop'):
         delta = (
-            datetime.datetime.utcnow() - utils.get_thread_local(th_local_name)
+            timeutils.utcnow() - utils.get_thread_local(th_local_name)
         ).total_seconds()
 
         utils.set_thread_local(th_local_name, None)

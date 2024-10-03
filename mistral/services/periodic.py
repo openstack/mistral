@@ -12,13 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import datetime
 import json
 
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import periodic_task
 from oslo_service import threadgroup
+from oslo_utils import timeutils
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
@@ -125,7 +125,7 @@ def advance_cron_trigger(t):
             # we use the max of the current time or the next scheduled time.
             next_time = triggers.get_next_execution_time(
                 t.pattern,
-                max(datetime.datetime.utcnow(), t.next_execution_time)
+                max(timeutils.utcnow(), t.next_execution_time)
             )
 
             # Update the cron trigger with next execution details

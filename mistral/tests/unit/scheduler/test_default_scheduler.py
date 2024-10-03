@@ -12,14 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
+from unittest import mock
+
 from eventlet import event
 from eventlet import semaphore
 from eventlet import timeout
-from unittest import mock
-
-import datetime
-
 from oslo_config import cfg
+from oslo_utils import timeutils
 
 from mistral.db.v2 import api as db_api
 from mistral.scheduler import base as scheduler_base
@@ -124,9 +124,7 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         self.assertIsNotNone(captured_at)
         self.assertTrue(
-            datetime.datetime.utcnow() - captured_at <
-            datetime.timedelta(seconds=3)
-        )
+            timeutils.utcnow() - captured_at < datetime.timedelta(seconds=3))
 
         self._unlock_target_method()
         self._wait_target_method_end()
@@ -144,7 +142,7 @@ class DefaultSchedulerTest(base.DbTestCase):
         self.override_config('pickup_job_after', 1, 'scheduler')
 
         # 1. Create a scheduled job in Job Store.
-        execute_at = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
+        execute_at = timeutils.utcnow() + datetime.timedelta(seconds=1)
 
         db_api.create_scheduled_job({
             'run_after': 1,
@@ -176,17 +174,17 @@ class DefaultSchedulerTest(base.DbTestCase):
         # 1. Create a scheduled job in Job Store marked as captured in one
         #    second in the future. It can be captured again only after 3
         #    seconds after that according to the config option.
-        captured_at = datetime.datetime.utcnow() + datetime.timedelta(
+        captured_at = timeutils.utcnow() + datetime.timedelta(
             seconds=1
         )
 
-        before_ts = datetime.datetime.utcnow()
+        before_ts = timeutils.utcnow()
 
         db_api.create_scheduled_job({
             'run_after': 1,
             'func_name': TARGET_METHOD_PATH,
             'func_args': {'name': 'task', 'id': '321'},
-            'execute_at': datetime.datetime.utcnow(),
+            'execute_at': timeutils.utcnow(),
             'captured_at': captured_at,
             'auth_ctx': {}
         })
@@ -203,6 +201,4 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         # At least 3 seconds should have passed.
         self.assertTrue(
-            datetime.datetime.utcnow() - before_ts >=
-            datetime.timedelta(seconds=3)
-        )
+            timeutils.utcnow() - before_ts >= datetime.timedelta(seconds=3))

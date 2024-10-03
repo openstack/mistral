@@ -12,10 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import datetime as dt
 from unittest import mock
 
 from oslo_config import cfg
+from oslo_utils import timeutils
 import requests
 
 from mistral.db.v2 import api as db_api
@@ -186,7 +186,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        time_before = dt.datetime.utcnow()
+        time_before = timeutils.utcnow()
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', task_name='task1')
@@ -195,7 +195,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         # Workflow must work at least 2 seconds (1+1).
         self.assertGreater(
-            (dt.datetime.utcnow() - time_before).total_seconds(),
+            (timeutils.utcnow() - time_before).total_seconds(),
             2
         )
 

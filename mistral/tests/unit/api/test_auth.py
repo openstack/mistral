@@ -11,6 +11,7 @@
 #    limitations under the License.
 
 import datetime
+
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import pecan
@@ -36,7 +37,7 @@ PKI_TOKEN_VERIFIED = {
         'roles': [{'id': uuidutils.generate_uuid(dashed=False),
                    'name': 'admin'}],
         'expires_at': datetime.datetime.isoformat(
-            datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
+            timeutils.utcnow() + datetime.timedelta(seconds=60)
         ),
         'project': {
             'domain': {'id': 'default', 'name': 'Default'},

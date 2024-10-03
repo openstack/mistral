@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import periodic_task
 from oslo_service import threadgroup
+from oslo_utils import timeutils
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
@@ -118,8 +119,7 @@ def run_execution_expiration_policy(self, ctx):
     LOG.debug("Starting expiration policy.")
 
     older_than = CONF.execution_expiration_policy.older_than
-    exp_time = (datetime.datetime.utcnow()
-                - datetime.timedelta(minutes=older_than))
+    exp_time = timeutils.utcnow() - datetime.timedelta(minutes=older_than)
 
     batch_size = CONF.execution_expiration_policy.batch_size
     max_executions = CONF.execution_expiration_policy.max_finished_executions
