@@ -34,7 +34,7 @@ Mistral was original started within the OpenStack community. It is still
 used within a number of OpenStack projects for various purposes. Mistral
 has integration with OpenStack: authentication/authorization with Keystone
 identity service and actions to interact with all major OpenStack services
-like Nova, Neutron, Heat etc.
+like Nova, Neutron, Glance, etc.
 
 Why offload business processes to a 3rd party service?
 ------------------------------------------------------
@@ -143,12 +143,12 @@ Tasks are entities written with the Mistral Workflow Language that define
 certain workflow steps. Each task has:
 
 * Name
-* Optional tag names
+* Optional tag names.
 * List of tasks it depends on for reverse workflows or list of transitions
-  for direct workflows
+  for direct workflows.
 * Optional YAQL expression that extracts data from current data context so
-  that it would go as a task execution input
-* Optional task action (concrete work to do)
+  that it would go as a task execution input.
+* Optional task action (concrete work to do).
 * Optional task workflow. If specified, such task is associated with another
   workflow execution (subworkflow).
 
@@ -170,8 +170,8 @@ What are Mistral actions and how does Mistral execute them?
 
 Action is what to do when a particular task runs. Examples are:
 
-* Run a shell script
-* Send an email
+* Run a shell script.
+* Send an email.
 * Call your app’s URI. Send an AMQP (RabbitMQ) message to some queue.
 * Other types of signaling (email, UDP message, polling etc.).
 
