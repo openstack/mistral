@@ -1,6 +1,6 @@
-==========================
-Mistral Installation Guide
-==========================
+==================
+Installation Guide
+==================
 
 .. toctree::
    :maxdepth: 1

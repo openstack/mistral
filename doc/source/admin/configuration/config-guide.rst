@@ -1,5 +1,6 @@
-Mistral Configuration Guide
-===========================
+===================
+Configuration Guide
+===================
 
 Mistral configuration is needed for getting Mistral work correctly
 either with real OpenStack environment or without OpenStack environment.

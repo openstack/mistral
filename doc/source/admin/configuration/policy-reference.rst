@@ -1,6 +1,8 @@
-============================
-Mistral Policy Configuration
-============================
+================
+Policy Reference
+================
+
+The following is an overview of all available policies in Mistral.
 
 .. warning::
 
@@ -10,11 +12,9 @@ Mistral Policy Configuration
 
 .. __: https://docs.openstack.org/oslo.policy/latest/cli/oslopolicy-convert-json-to-yaml.html
 
-Configuration
-~~~~~~~~~~~~~
+.. only:: html
 
-The following is an overview of all available policies in Mistral. For a sample
-configuration file, refer to :doc:`samples/policy-yaml`.
+   For a sample configuration file, refer to :doc:`policy-sample`.
 
 .. show-policy::
-   :config-file: ../../tools/config/policy-generator.mistral.conf
+   :config-file: tools/config/policy-generator.mistral.conf

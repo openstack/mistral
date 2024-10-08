@@ -1,5 +1,6 @@
-Mistral Upgrade Guide
-=====================
+=============
+Upgrade Guide
+=============
 
 Database upgrade
 ----------------

@@ -23,9 +23,7 @@ import sys
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../'))
-sys.path.insert(0, os.path.abspath('./'))
 
 # -- General configuration ----------------------------------------------------
 
@@ -40,6 +38,8 @@ extensions = [
     'openstackdocstheme',
     'oslo_policy.sphinxext',
     'oslo_policy.sphinxpolicygen',
+    'oslo_config.sphinxconfiggen',
+    'oslo_config.sphinxext',
 ]
 
 wsme_protocols = ['restjson']
@@ -54,11 +54,15 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Mistral'
-copyright = '2023, Mistral Contributors'
+copyright = '2023-present, Mistral Contributors'
 
 policy_generator_config_file = \
     '../../tools/config/policy-generator.mistral.conf'
 sample_policy_basename = '_static/mistral'
+
+config_generator_config_file = \
+    '../../tools/config/config-generator.mistral.conf'
+sample_config_basename = '_static/mistral'
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
