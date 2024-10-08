@@ -290,6 +290,7 @@ directory.
    running.
 
    The default configuration is the following::
+
      [api]
      enable_info_endpoint = False
      info_json_file_path = info.json
