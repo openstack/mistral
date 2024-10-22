@@ -107,6 +107,7 @@
               - ^doc/.*$
               - ^releasenotes/.*$
         - mistral-devstack
+        - mistral-devstack-jammy
         - mistral-devstack-tempest-ipv6-only
         - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
@@ -118,6 +119,7 @@
     gate:
       jobs:
         - mistral-devstack
+        - mistral-devstack-jammy
         - mistral-devstack-tempest-ipv6-only
         - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
