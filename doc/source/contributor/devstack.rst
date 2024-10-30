@@ -28,8 +28,9 @@ As stack user, clone the mistral-tempest-plugin repo::
 
 Install the plugin::
 
-    /opt/stack/tempest/.tox/tempest/bin/pip install /opt/stack/tempest/.tox/tempest/bin/
+    /opt/stack/tempest/.tox/tempest/bin/pip install /opt/stack/mistral-tempest-plugin
 
 Run tempest::
 
+    cd /opt/stack/tempest/
     /opt/stack/tempest/.tox/tempest/bin/tempest run --regex mistral --concurrency=6
