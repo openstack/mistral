@@ -64,10 +64,6 @@ function mkdir_chown_stack {
 # configure_mistral - Set config files, create data dirs, etc
 function configure_mistral {
 
-    # create and clean up auth cache dir
-    mkdir_chown_stack "$MISTRAL_AUTH_CACHE_DIR"
-    rm -f "$MISTRAL_AUTH_CACHE_DIR"/*
-
     mkdir_chown_stack "$MISTRAL_CONF_DIR"
 
     # Generate Mistral configuration file and configure common parameters.
@@ -81,7 +77,7 @@ function configure_mistral {
     #-------------------------
 
     # Setup keystone_authtoken section
-    configure_auth_token_middleware $MISTRAL_CONF_FILE mistral $MISTRAL_AUTH_CACHE_DIR
+    configure_keystone_authtoken_middleware $MISTRAL_CONF_FILE mistral
     iniset $MISTRAL_CONF_FILE keystone_authtoken www_authenticate_uri $KEYSTONE_AUTH_URI_V3
 
     # Setup RabbitMQ credentials
