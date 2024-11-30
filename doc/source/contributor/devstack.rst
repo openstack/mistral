@@ -9,24 +9,41 @@ First, install devstack, see the following link for this:
 `Devstack Installation <https://docs.openstack.org/devstack/latest/>`_
 
 
-Before running ``stack.sh``, enable mistral plugin by editing your
-``local.conf`` file to add:
+Before running ``stack.sh``, enable mistral plugin, heat and swift by editing
+your ``local.conf`` file to add:
 
-    enable_plugin mistral https://github.com/openstack/mistral
+    enable_plugin mistral https://opendev.org/openstack/mistral
+    enable_plugin heat https://opendev.org/openstack/heat
+    enable_service s-proxy s-object s-container s-account
+    SWIFT_HASH=$ADMIN_PASSWORD
 
 
 Finally, run ``stack.sh``
 
 The mistral code will land in /opt/stack/mistral
 
+
+OpenStack actions
+=================
+
+You may want to add mistral-extra to have openstack actions available in your
+installation.
+
+You can achieve that with an extra optional step::
+
+    git clone https://opendev.org/openstack/mistral-extra /opt/stack/mistral-extra
+    /opt/stack/data/venv/bin/pip install /opt/stack/mistral-extra
+    sudo systemctl restart devstack@mistral*
+
+
 Tempest for mistral
 ===================
 
-As stack user, clone the mistral-tempest-plugin repo::
+Clone the mistral-tempest-plugin repo::
 
-    git clone https://github.com/openstack/mistral-tempest-plugin.git /opt/stack/mistral-tempest-plugin
+    git clone https://opendev.org/openstack/mistral-tempest-plugin.git /opt/stack/mistral-tempest-plugin
 
-Install the plugin::
+Install them::
 
     /opt/stack/tempest/.tox/tempest/bin/pip install /opt/stack/mistral-tempest-plugin
 
