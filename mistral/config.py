@@ -169,8 +169,10 @@ rpc_response_timeout_opt = cfg.IntOpt(
 
 oslo_rpc_executor = cfg.StrOpt(
     'oslo_rpc_executor',
-    default='eventlet',
-    choices=['eventlet', 'blocking', 'threading'],
+    default='threading',
+    choices=['eventlet', 'threading'],
+    deprecated_for_removal=True,
+    deprecated_reason='This option is going to be removed from oslo.messaging',
     help=_('Executor type used by Oslo Messaging framework. Defines how '
            'Oslo Messaging based RPC subsystem processes incoming calls.')
 )

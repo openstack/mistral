@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    The parameter `oslo_rpc_executor` is now deprecated and its default value
+    has been set to `threading` instead of `eventlet`.
+    This change has been done during the process of eventlet removal, see
+    `Eventlet Removal <https://wiki.openstack.org/wiki/Eventlet-removal>`_
