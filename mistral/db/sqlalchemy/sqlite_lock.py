@@ -12,17 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet import semaphore
+import threading
 
 
-_mutex = semaphore.Semaphore()
+_mutex = threading.Semaphore()
 _locks = {}
 
 
 def acquire_lock(obj_id, session):
     with _mutex:
         if obj_id not in _locks:
-            _locks[obj_id] = (session, semaphore.BoundedSemaphore(1))
+            _locks[obj_id] = (session, threading.BoundedSemaphore(1))
 
         tup = _locks.get(obj_id)
 
