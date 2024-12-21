@@ -147,7 +147,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                             self.stop()
 
                             LOG.info(
-                                "Server with id='{}' stopped.",
+                                "Server with id='%s' stopped.",
                                 self.server_id
                             )
 
