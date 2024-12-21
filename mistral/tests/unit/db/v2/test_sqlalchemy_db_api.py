@@ -3536,20 +3536,20 @@ class LockTest(SQLAlchemyTest):
 
         self.assertEqual('lock1', locks[0].name)
 
-        db_api.delete_named_lock('invalid_lock_id')
+        db_api.delete_named_lock('invalid_lock_id', 'fake')
 
         locks = db_api.get_named_locks()
 
         self.assertEqual(1, len(locks))
 
-        db_api.delete_named_lock(locks[0].id)
+        db_api.delete_named_lock(locks[0].id, 'lock1')
 
         locks = db_api.get_named_locks()
 
         self.assertEqual(0, len(locks))
 
     def test_with_named_lock(self):
-        name = 'lock1'
+        name = 'lock42'
 
         with db_api.named_lock(name):
             # Make sure that within 'with' section the lock record exists.

@@ -2080,6 +2080,13 @@ def delete_event_triggers(session=None, **kwargs):
 
 @b.session_aware()
 def create_named_lock(name, session=None):
+    if b.get_driver_name() == 'sqlite':
+        # In case of 'sqlite' we need to apply a manual lock because sqlite
+        # is not READ_COMMITED able
+        # This is useful for testing purpose as sqlite is not supposed to be
+        # used for prod
+        sqlite_lock.acquire_lock(name, session)
+
     # This method has to work not through SQLAlchemy session because
     # session may not immediately issue an SQL query to a database
     # and instead just schedule it whereas we need to make sure to
@@ -2103,7 +2110,7 @@ def get_named_locks(session=None, **kwargs):
 
 
 @b.session_aware()
-def delete_named_lock(lock_id, session=None):
+def delete_named_lock(lock_id, name, session=None):
     # This method has to work without SQLAlchemy session because
     # session may not immediately issue an SQL query to a database
     # and instead just schedule it whereas we need to make sure to
@@ -2118,6 +2125,9 @@ def delete_named_lock(lock_id, session=None):
 
     session.flush()
 
+    if b.get_driver_name() == 'sqlite':
+        sqlite_lock.release_lock(name, session)
+
 
 @contextlib.contextmanager
 def named_lock(name):
@@ -2131,7 +2141,7 @@ def named_lock(name):
 
     yield
 
-    delete_named_lock(lock_id)
+    delete_named_lock(lock_id, name)
 
 
 @b.session_aware()

@@ -33,6 +33,14 @@ def acquire_lock(obj_id, session):
     _locks[obj_id] = (session, tup[1])
 
 
+def release_lock(obj_id, session):
+    with _mutex:
+        if obj_id in _locks:
+            tup = _locks.get(obj_id)
+            tup[1].release()
+            del _locks[obj_id]
+
+
 def release_locks(session):
     with _mutex:
         for obj_id, tup in _locks.items():
