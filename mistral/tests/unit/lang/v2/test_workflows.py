@@ -27,7 +27,6 @@ def generate_test_function(default, expect_error):
     def test(self):
         overlay = {'test': {'task-defaults': {}}}
         utils.merge_dicts(overlay['test']['task-defaults'], default)
-        print(f'ARNAUD testing {default}')
         self._parse_dsl_spec(
             add_tasks=True,
             changes=overlay,
