@@ -1111,7 +1111,7 @@ class JoinEngineTest(base.EngineTestCase):
 
             task2:
               action: std.fail
-              on-success: join_task
+              on-complete: join_task
 
             task3:
               action: std.noop
@@ -1125,11 +1125,11 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf')
 
+        # Wait for wf to finish
         self.await_workflow_error(wf_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
             t_execs = wf_ex.task_executions
 
         task1 = self._assert_single_item(
@@ -1159,13 +1159,6 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertIsNone(task2.runtime_context.get(key))
         self.assertIsNone(task3.runtime_context.get(key))
 
-        self.assertIn(
-            {
-                "task_id": task2.id,
-                "event": "not triggered"
-            },
-            join_task.runtime_context.get(key)
-        )
         self.assertIn(
             {
                 "task_id": task3.id,
