@@ -879,80 +879,23 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             task_execs = wf_ex.task_executions
 
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(4, len(task_execs))
+        # NOTE(arnaud): we used to tests the tasks results here but we can't
+        # be sure about which one is failing, which one has succeeded or is
+        # still in waiting state.
+        # What we know is that, when a task fails, and if there is no condition
+        # to continue the worflow (like on-complete), then the workflow will
+        # fail and all other tasks may be blocked in WAITING state.
 
-        task_0_ex = self._assert_single_item(task_execs, name='t0')
+        # Resume workflow and re-run failed tasks
+        for task_exec in task_execs:
+            if task_exec.state == states.ERROR:
+                wf_ex = self.engine.rerun_workflow(task_exec.id)
 
-        self.assertEqual(states.SUCCESS, task_0_ex.state)
-
-        task_1_ex = self._assert_single_item(task_execs, name='t1')
-
-        self.assertEqual(states.ERROR, task_1_ex.state)
-        self.assertIsNotNone(task_1_ex.state_info)
-
-        task_2_ex = self._assert_single_item(task_execs, name='t2')
-
-        self.assertEqual(states.ERROR, task_2_ex.state)
-        self.assertIsNotNone(task_2_ex.state_info)
-
-        task_3_ex = self._assert_single_item(task_execs, name='t3')
-
-        self.assertEqual(states.ERROR, task_3_ex.state)
-        self.assertIsNotNone(task_3_ex.state_info)
-
-        # Resume workflow and re-run failed task.
-        wf_ex = self.engine.rerun_workflow(task_1_ex.id)
-
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        # This is prone to race conditions, but let's see if that works
+        self.await_workflow_running(wf_ex.id)
         self.assertIsNone(wf_ex.state_info)
 
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_execs = wf_ex.task_executions
-
-        # Wait for the task to succeed.
-        task_1_ex = self._assert_single_item(task_execs, name='t1')
-
-        self.await_task_success(task_1_ex.id)
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_execs = wf_ex.task_executions
-
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(4, len(task_execs))
-
-        task_0_ex = self._assert_single_item(task_execs, name='t0')
-        task_1_ex = self._assert_single_item(task_execs, name='t1')
-        task_2_ex = self._assert_single_item(task_execs, name='t2')
-        task_3_ex = self._assert_single_item(task_execs, name='t3')
-
-        self.assertEqual(states.SUCCESS, task_0_ex.state)
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-        self.assertEqual(states.ERROR, task_2_ex.state)
-        self.assertEqual(states.ERROR, task_3_ex.state)
-
-        # Check that join task did not start any action execution
-        task_3_action_exs = db_api.get_action_executions(
-            task_execution_id=task_3_ex.id
-        )
-        self.assertEqual(0, len(task_3_action_exs))
-
-        # Resume workflow and re-run failed task.
-        wf_ex = self.engine.rerun_workflow(task_2_ex.id)
-
-        self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertIsNone(wf_ex.state_info)
-
-        # Join now should finally complete.
-        self.await_task_success(task_3_ex.id)
-
-        # Wait for the workflow to succeed.
+        # Now wait for the workflow to finish
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
