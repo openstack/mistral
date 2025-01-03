@@ -116,9 +116,14 @@ workflows:
 
       third_lvl_wf1_task_2_fail:
         action: std.fail
+        on-complete: join_task
 
       third_lvl_wf1_task_3:
         action: std.noop
+        on-complete: join_task
+
+      join_task:
+        join: all
 
 
   wf2_top_lvl:
@@ -134,20 +139,31 @@ workflows:
     tasks:
       top_lvl_wf3_task_1_fail:
         workflow: wf3_second_lvl_fail
+        on-complete: join_task
 
       top_lvl_wf3_task_2_fail:
         action: std.fail
+        on-complete: join_task
+
+      join_task:
+        join: all
 
   wf3_second_lvl_fail:
     tasks:
       second_lvl_wf3_task_1_fail:
         workflow: wf3_third_lvl_fail
+        on-complete: join_task
 
       second_lvl_wf3_task_2:
         action: std.noop
+        on-complete: join_task
 
       second_lvl_wf3_task_3:
         action: std.noop
+        on-complete: join_task
+
+      join_task:
+        join: all
 
   wf3_third_lvl_fail:
     tasks:
@@ -158,9 +174,14 @@ workflows:
 
       third_lvl_wf3_task_2:
         action: std.noop
+        on-complete: join_task
 
       third_lvl_wf3_task_3_fail:
         action: std.fail
+        on-complete: join_task
+
+      join_task:
+        join: all
 
   wf4_top_lvl:
     tasks:
@@ -256,8 +277,8 @@ class TasksFunctionTest(base.EngineTestCase):
 
         main_task = task_execs[0]
 
-        self._assert_published_tasks(main_task, 'all_tasks_yaql', 22)
-        self._assert_published_tasks(main_task, 'all_tasks_jinja', 22)
+        self._assert_published_tasks(main_task, 'all_tasks_yaql', 26)
+        self._assert_published_tasks(main_task, 'all_tasks_jinja', 26)
         self._assert_published_tasks(
             main_task,
             'wf1_tasks_yaql',
@@ -275,7 +296,7 @@ class TasksFunctionTest(base.EngineTestCase):
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_tasks_yaql',
-            8,
+            9,
             [
                 'top_lvl_wf1_task_1',
                 'top_lvl_wf1_task_2',
@@ -284,14 +305,15 @@ class TasksFunctionTest(base.EngineTestCase):
                 'second_lvl_wf1_task_2',
                 'third_lvl_wf1_task_3',
                 'third_lvl_wf1_task_1',
-                'third_lvl_wf1_task_2_fail'
+                'third_lvl_wf1_task_2_fail',
+                'join_task',
             ]
         )
 
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_tasks_jinja',
-            8,
+            9,
             [
                 'top_lvl_wf1_task_1',
                 'top_lvl_wf1_task_2',
@@ -300,7 +322,8 @@ class TasksFunctionTest(base.EngineTestCase):
                 'second_lvl_wf1_task_2',
                 'third_lvl_wf1_task_3',
                 'third_lvl_wf1_task_1',
-                'third_lvl_wf1_task_2_fail'
+                'third_lvl_wf1_task_2_fail',
+                'join_task',
             ]
         )
 
@@ -333,26 +356,28 @@ class TasksFunctionTest(base.EngineTestCase):
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_success_flat_tasks_yaql',
-            5,
+            6,
             [
                 'top_lvl_wf1_task_2',
                 'second_lvl_wf1_task_3',
                 'second_lvl_wf1_task_2',
                 'third_lvl_wf1_task_3',
-                'third_lvl_wf1_task_1'
+                'third_lvl_wf1_task_1',
+                'join_task',
             ]
         )
 
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_success_flat_tasks_jinja',
-            5,
+            6,
             [
                 'top_lvl_wf1_task_2',
                 'second_lvl_wf1_task_3',
                 'second_lvl_wf1_task_2',
                 'third_lvl_wf1_task_3',
-                'third_lvl_wf1_task_1'
+                'third_lvl_wf1_task_1',
+                'join_task',
             ]
         )
 
