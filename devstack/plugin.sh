@@ -126,21 +126,6 @@ function init_mistral {
 function install_mistral {
     setup_develop $MISTRAL_DIR
 
-    # installing python-nose.
-    if is_fedora; then
-        if python3_enabled; then
-            real_install_package python3-nose
-        else
-            real_install_package python2-nose
-        fi
-    elif is_ubuntu; then
-        if python3_enabled; then
-            real_install_package python3-nose
-        fi
-    else
-        real_install_package python-nose
-    fi
-
     if is_service_enabled horizon; then
         _install_mistraldashboard
     fi
