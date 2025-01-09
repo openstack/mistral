@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import eventlet
+import time
 
 from mistral.api import service as api_service
 from mistral.cmd import launch
@@ -40,7 +41,7 @@ class ServiceLauncherTest(base.DbTestCase):
             if svr_proc_mgr and svr_thrd_mgr:
                 break
 
-            eventlet.sleep(0.1)
+            time.sleep(0.1)
 
         self.assertIsNotNone(svr_proc_mgr)
         self.assertIsNotNone(svr_thrd_mgr)
@@ -60,7 +61,7 @@ class ServiceLauncherTest(base.DbTestCase):
             if svr_proc_mgr:
                 break
 
-            eventlet.sleep(0.1)
+            time.sleep(0.1)
 
         svr_thrd_mgr = launch.get_server_thread_manager()
 
@@ -81,7 +82,7 @@ class ServiceLauncherTest(base.DbTestCase):
             if svr_thrd_mgr:
                 break
 
-            eventlet.sleep(0.1)
+            time.sleep(0.1)
 
         svr_proc_mgr = launch.get_server_process_manager()
 

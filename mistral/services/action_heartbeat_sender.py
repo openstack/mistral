@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import eventlet
+import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -82,7 +83,7 @@ def _loop():
                 ' due to an unexpected exception.'
             )
 
-        eventlet.sleep(CONF.action_heartbeat.check_interval)
+        time.sleep(CONF.action_heartbeat.check_interval)
 
 
 def start():

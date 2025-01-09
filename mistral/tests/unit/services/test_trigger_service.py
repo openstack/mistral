@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import datetime
-import eventlet
+import time
 from unittest import mock
 
 from oslo_config import cfg
@@ -56,9 +56,9 @@ def new_advance_cron_trigger(ct):
     another coroutine the process_cron_triggers_v2 will finish looping
     over all the cron triggers in one coroutine without any sharing at all.
     """
-    eventlet.sleep()
+    time.sleep()
     modified = advance_cron_trigger_orig(ct)
-    eventlet.sleep()
+    time.sleep()
 
     return modified
 
@@ -256,7 +256,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 25)
         )
 
-        eventlet.sleep(1)
+        time.sleep(1)
         self.assertEqual(0, delete_trust.call_count)
 
     def test_get_trigger_in_correct_orders(self):
@@ -343,13 +343,13 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         # Wait some more and make sure there are no more than 'trigger_count'
         # executions.
-        eventlet.sleep(5)
+        time.sleep(5)
 
         self.assertEqual(trigger_count, start_wf_mock.call_count)
 
     def _wait_for_single_execution_with_multiple_processes(self, trigger_count,
                                                            start_wf_mock):
-        eventlet.sleep(1)
+        time.sleep(1)
 
         return trigger_count == start_wf_mock.call_count
 

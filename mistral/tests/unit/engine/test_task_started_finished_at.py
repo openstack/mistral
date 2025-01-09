@@ -10,7 +10,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
+import time
 
 from mistral.tests.unit.engine import base
 
@@ -45,7 +45,7 @@ class TaskStartedFinishedAtTest(base.EngineTestCase):
 
         # Make sure to rerun the workflow after a certain delay so that
         # times for the first run are different from times in the second run.
-        eventlet.sleep(1)
+        time.sleep(1)
 
         wf_ex = self.engine.rerun_workflow(task_ex.id)
 
