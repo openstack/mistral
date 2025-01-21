@@ -129,19 +129,11 @@ python-mistralclient:
 
 To run integration tests:
 
-* in OpenStack mode (when auth in Mistral is enabled and Mistral integrates
-  with OpenStack components)
-
 .. code-block:: bash
 
     $ pip install git+http://git.opendev.org/openstack/tempest.git
-    $ nosetests mistral-tempest-plugin/mistral_tempest_tests/tests/api/v2
-
-* in Non-OpenStack mode:
-
-  * set 'auth_enable=false' in the mistral.conf under [pecan] group
-  * restart Mistral server
-  * execute: ./run_functional_tests
+    $ pip install git+http://git.opendev.org/openstack/mistral-tempest-plugin.git
+    $ tempest run -- mistral_tempest_plugin.mistral_tempest_tests.api.v2
 
 Mistral-Dashboard debug instructions
 ====================================
