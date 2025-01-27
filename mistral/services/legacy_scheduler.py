@@ -16,9 +16,9 @@
 
 import copy
 import datetime
-import eventlet
 import random
 import threading
+import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -147,7 +147,7 @@ class LegacyScheduler(sched_base.Scheduler):
                     " due to unexpected exception."
                 )
 
-            eventlet.sleep(
+            time.sleep(
                 self._fixed_delay +
                 random.Random().randint(0,
                                         int(self._random_delay * 1000)) * 0.001

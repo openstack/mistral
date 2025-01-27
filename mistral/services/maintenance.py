@@ -10,8 +10,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
 from oslo_log import log as logging
+import time
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
@@ -111,7 +111,7 @@ def await_pause_executions():
 
             LOG.info('The following tasks have RUNNING state: %s',
                      [task.id for task in tasks])
-            eventlet.sleep(1)
+            time.sleep(1)
 
 
 def change_maintenance_mode(new_state):

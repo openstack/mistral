@@ -14,6 +14,7 @@
 
 import datetime
 import eventlet
+import time
 
 from mistral import context as auth_ctx
 from mistral.db import utils as db_utils
@@ -110,7 +111,7 @@ def _loop():
                 ' due to an unexpected exception.'
             )
 
-        eventlet.sleep(CONF.action_heartbeat.check_interval)
+        time.sleep(CONF.action_heartbeat.check_interval)
 
 
 def start():

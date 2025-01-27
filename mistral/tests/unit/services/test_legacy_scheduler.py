@@ -14,7 +14,7 @@
 #    limitations under the License.
 
 import datetime
-import eventlet
+import time
 from unittest import mock
 
 from eventlet import queue
@@ -278,7 +278,7 @@ class LegacySchedulerTest(base.DbTestCase):
 
         self.queue.get()
 
-        eventlet.sleep(0.1)
+        time.sleep(0.1)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -332,7 +332,7 @@ class LegacySchedulerTest(base.DbTestCase):
 
         self.queue.get()
 
-        eventlet.sleep(1)
+        time.sleep(1)
 
         update_delayed_call.assert_called_with(
             id=calls[0].id,
