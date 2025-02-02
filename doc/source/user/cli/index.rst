@@ -1,7 +1,19 @@
+=============================
 Mistral Client Commands Guide
 =============================
 
-The Mistral CLI can be used with ``mistral`` command or via `OpenStackClient
+The Mistral CLI can be used with ``mistral`` command or via ``openstack``.
+
+Installation
+------------
+
+To install ``mistral`` and ``openstack`` via ``pip``:
+
+.. code-block:: console
+
+    $ pip install python-mistralclient python-openstackclient
+
+See here for more info about `OpenStackClient
 <https://docs.openstack.org/python-openstackclient/latest/>`_.
 
 Mistral Client
@@ -10,7 +22,7 @@ Mistral Client
 The best way to learn about all the commands and arguments that are expected
 is to use the ``mistral help`` command.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ mistral help
     usage: mistral [--version] [-v] [--log-file LOG_FILE] [-q] [-h] [--debug]
@@ -21,7 +33,7 @@ is to use the ``mistral help`` command.
 
 It can also be used with the name of a sub-command.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ mistral help execution-create
     usage: mistral execution-create [-h] [-f {json,shell,table,value,yaml}]
@@ -49,7 +61,7 @@ The full list of Mistral commands that are registered with OpenStack client
 can be listed with ``openstack command list``. By default it will list all
 commands grouped together, but we can specify only the Mistral command group.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ openstack command list --group openstack.workflow_engine.v2
     +------------------------------+-----------------------------------+
@@ -66,7 +78,7 @@ commands grouped together, but we can specify only the Mistral command group.
 
 Then detailed help output can be requested for an individual command.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ openstack help workflow execution create
     usage: openstack workflow execution create [-h]

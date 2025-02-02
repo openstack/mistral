@@ -1,23 +1,6 @@
-===========================
-Mistral Client Installation
-===========================
-
-To install ``python-mistralclient``, it is required to have ``pip``
-(in most cases). Make sure that ``pip`` is installed. Then type:
-
-.. code-block:: console
-
-    $ pip install python-mistralclient
-
-Or, if it is needed to install ``python-mistralclient`` from master branch,
-type:
-
-.. code-block:: console
-
-    $ pip install git+https://github.com/openstack/python-mistralclient.git
-
-After ``python-mistralclient`` is installed you will see command ``mistral``
-in your environment.
+=============================
+Mistral Client Advanced Usage
+=============================
 
 Configure Authentication Against Keystone
 -----------------------------------------
@@ -27,9 +10,9 @@ have auth variables:
 
 .. code-block:: console
 
-    $ export OS_AUTH_URL=http://<Keystone_host>:5000/v2.0
+    $ export OS_AUTH_URL=http://<Keystone_host>:5000/v3
     $ export OS_TENANT_NAME=tenant
-    $ export OS_USERNAME=admin
+    $ export OS_USERNAME=user
     $ export OS_PASSWORD=secret
     $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2
       ( optional, by default URL=http://localhost:8989/v2)

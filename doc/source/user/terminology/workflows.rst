@@ -1,5 +1,5 @@
-Mistral Workflows
-=================
+Workflows
+=========
 
 Workflow is the main building block of Mistral Workflow Language, the reason
 why the project exists. Workflow represents a process that can be described in

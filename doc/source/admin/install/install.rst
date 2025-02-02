@@ -1,5 +1,3 @@
-.. _install:
-
 =====================
 Install and configure
 =====================
@@ -7,19 +5,222 @@ Install and configure
 This section describes how to install and configure the
 Workflow Service, code-named mistral, on the controller node.
 
-**NOTE:** **Mistral can be used in standalone mode or it can work
-with OpenStack.**
+.. note::
+
+    Mistral can be used in standalone mode or it can work with OpenStack.
 
 If Mistral is used with OpenStack, you must already have a working OpenStack
 environment with at least the following components installed:
 
 - Keystone with API v3 support
 
-Note that installation and configuration vary by distribution.
+Note that installation and configuration may vary by distribution.
 
-.. toctree::
-   :maxdepth: 2
+Overview
+--------
 
-   install-ubuntu
-   install-rdo
-   install-obs
+The Workflow service consists of the following components:
+
+``Mistral API`` service
+  Provides a REST API for operating and monitoring workflow executions.
+
+``mistral-dashboard`` service
+  Mistral Dashboard is a Horizon plugin.
+
+``Mistral Engine`` service
+  Controls workflow executions and handles their data flow, places finished
+  tasks in a queue, transfers data from task to task, and deals with condition
+  transitions, and so on.
+
+``Mistral Executor`` service
+  Executes task actions, picks up the tasks from the queue, runs actions, and
+  sends results back to the engine.
+
+``Mistral Notifier`` service
+
+``python-mistralclient``
+  Python client API and Command Line Interface.
+
+  ``mistral-lib``
+  A library to support writing custom Mistral actions.
+
+Prerequisites
+-------------
+
+Install the following dependencies:
+
+On ``apt`` based distributions:
+
+.. code-block:: console
+
+    $ apt-get update
+    $ apt-get install python3 python3-venv python3-pip git
+
+On ``dnf`` based distributions:
+
+.. code-block:: console
+
+    $ dnf update
+    $ dnf install python3 python3-venv python3-pip git
+
+.. note::
+
+    you may need to adapt the previous commands based on your distribution.
+
+Installation
+------------
+
+.. note::
+
+    For instructions on how to install Mistral using devstack, refer to
+    :doc:`Mistral Devstack Installation <../../contributor/devstack>`
+
+Clone the repo and go to the repo directory:
+
+.. code-block:: console
+
+    $ git clone https://opendev.org/openstack/mistral
+    $ cd mistral
+
+Create a venv:
+
+.. code-block:: console
+
+    $ python3 -m venv venv
+    $ source venv/bin/activate
+
+Now install mistral:
+
+.. code-block:: console
+
+    $ pip install \
+      -c https://releases.openstack.org/constraints/upper/master \
+      -r requirements.txt \
+      .
+
+.. note::
+
+    You may need to adjust the constraints file based on the release
+    of mistral you are installing
+
+Generate the configuration file:
+
+.. code-block:: console
+
+    $ pip install tox
+    $ tox -egenconfig
+
+Create the mistral directory and copy the example configuration file:
+
+.. code-block:: console
+
+    $ mkdir /etc/mistral
+    $ cp etc/mistral.conf.sample /etc/mistral/mistral.conf
+
+Edit the configuration file:
+
+.. code-block:: console
+
+    $ vi /etc/mistral/mistral.conf
+
+You may also want to install the `mistral-extra` package to have the
+opentack actions available (but this is not mandatory):
+
+.. code-block:: console
+
+    $ pip install mistral-extra
+
+
+Configuring Mistral
+-------------------
+
+Refer :doc:`../configuration/index` to find general information on how to
+configure Mistral server.
+
+
+Before The First Run
+--------------------
+
+After the installation, you will see the **mistral-server** and
+**mistral-db-manage** commands in your virtual env.
+
+The **mistral-db-manage** command can be used for database migrations.
+
+Update the database to the latest revision:
+
+.. code-block:: console
+
+    # For MySQL / MariaDB / PostgreSQL
+    $ mistral-db-manage --config-file /etc/mistral/mistral.conf upgrade head
+
+    # For SQLite - do not use sqlite in production!
+    # e.g. connection = 'sqlite:////var/lib/mistral.sqlite'
+    $ python tools/sync_db.py --config-file /etc/mistral/mistral.conf
+
+Before starting the Mistral server, run the *mistral-db-manage populate*
+command. It creates the DB with all the standard actions and standard workflows
+that Mistral provides to all Mistral users.:
+
+.. code-block:: console
+
+    $ mistral-db-manage --config-file /etc/mistral/mistral.conf populate
+
+For more detailed information on the *mistral-db-manage* script, see
+the :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
+
+
+Running Mistral API server
+--------------------------
+
+To run the Mistral API server, execute the following command in a shell:
+
+.. code-block:: console
+
+    $ mistral-server --server api --config-file /etc/mistral/mistral.conf
+
+Running Mistral Engines
+-----------------------
+
+To run the Mistral Engine, execute the following command in a shell:
+
+.. code-block:: console
+
+    $ mistral-server --server engine --config-file /etc/mistral/mistral.conf
+
+Running Mistral Executors
+-------------------------
+To run the Mistral Executor instance, execute the following command in a
+shell:
+
+.. code-block:: console
+
+    $ mistral-server --server executor --config-file /etc/mistral/mistral.conf
+
+Note that at least one Engine instance and one Executor instance should be
+running so that workflow tasks are processed by Mistral.
+
+Mistral Notifier
+----------------
+
+To run the Mistral Notifier, execute the following command in a shell:
+
+.. code-block:: console
+
+    $ mistral-server --server notifier --config-file /etc/mistral/mistral.conf
+
+Running Multiple Mistral Servers Under the Same Process
+-------------------------------------------------------
+To run more than one server (API, Engine, or Task Executor) on the same process,
+execute the following command in a shell:
+
+.. code-block:: console
+
+    $ mistral-server --server api,engine --config-file /etc/mistral/mistral.conf
+
+The --server command line option can be a comma delimited list. The valid
+options are "all" (by default if not specified) or any combination of "api",
+"engine", and "executor". It is important to note that the "fake" transport for
+the rpc_backend defined in the config file should only be used if "all" the
+Mistral servers are launched on the same process. Otherwise, messages do not
+get delivered if the Mistral servers are launched on different processes
+because the "fake" transport is using an in-process queue.
