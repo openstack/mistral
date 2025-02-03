@@ -37,12 +37,17 @@ The Workflow service consists of the following components:
   sends results back to the engine.
 
 ``Mistral Notifier`` service
+  Send notifications based on state of workflow executions.
 
 ``python-mistralclient``
   Python client API and Command Line Interface.
 
-  ``mistral-lib``
-  A library to support writing custom Mistral actions.
+``mistral-lib``
+  A library used by mistral internals.
+
+``mistral-extra``
+  A collection of extra actions that could be installed to extend mistral
+  standard actions with openstack ones.
 
 Prerequisites
 -------------
