@@ -12,7 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet import event
+import threading
+
 from oslo_log import log as logging
 from oslo_service import service
 
@@ -29,10 +30,9 @@ class MistralService(service.Service):
     """
     def __init__(self, cluster_group, setup_profiler=True):
         super(MistralService, self).__init__()
-
         self.cluster_member = coordination.Service(cluster_group)
         self._setup_profiler = setup_profiler
-        self._started = event.Event()
+        self._started = threading.Event()
 
     def wait_started(self):
         """Wait until the service is fully started."""
@@ -40,18 +40,15 @@ class MistralService(service.Service):
 
     def _notify_started(self, message):
         LOG.info(message)
-
-        self._started.send()
+        self._started.set()
 
     def start(self):
         super(MistralService, self).start()
-
         self.cluster_member.register_membership()
 
     def stop(self, graceful=False):
         super(MistralService, self).stop(graceful)
-
-        self._started = event.Event()
+        self._started = threading.Event()
 
         # TODO(rakhmerov): Probably we could also take care of an RPC server
         # if it exists for this particular service type. Take a look at
