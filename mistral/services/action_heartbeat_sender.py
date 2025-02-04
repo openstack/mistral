@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
+import threading
 import time
 
 from oslo_config import cfg
@@ -101,7 +101,7 @@ def start():
 
     _stopped = False
 
-    eventlet.spawn(_loop)
+    threading.Thread(target=_loop).start()
 
 
 def stop(graceful=False):

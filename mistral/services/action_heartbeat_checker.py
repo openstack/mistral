@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import datetime
-import eventlet
+import threading
 import time
 
 from mistral import context as auth_ctx
@@ -137,7 +137,7 @@ def start():
 
     _stopped = False
 
-    eventlet.spawn_after(wait_time, _loop)
+    threading.Timer(wait_time, _loop).start()
 
 
 def stop(graceful=False):
