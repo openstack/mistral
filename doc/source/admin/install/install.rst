@@ -24,9 +24,6 @@ The Workflow service consists of the following components:
 ``Mistral API`` service
   Provides a REST API for operating and monitoring workflow executions.
 
-``mistral-dashboard`` service
-  Mistral Dashboard is a Horizon plugin.
-
 ``Mistral Engine`` service
   Controls workflow executions and handles their data flow, places finished
   tasks in a queue, transfers data from task to task, and deals with condition
@@ -37,7 +34,16 @@ The Workflow service consists of the following components:
   sends results back to the engine.
 
 ``Mistral Notifier`` service
-  Send notifications based on state of workflow executions.
+  Send notifications based on state of workflow and task executions.
+
+``Mistral Event Engine`` service
+  Create workflow executions based on external events (like RabbitMQ, HTTP,
+  kafka, etc.).
+
+The mistral project is also providing the following python libraries:
+
+``mistral-dashboard``
+  Mistral Dashboard is a Horizon (OpenSack dashboard) plugin.
 
 ``python-mistralclient``
   Python client API and Command Line Interface.
@@ -47,7 +53,8 @@ The Workflow service consists of the following components:
 
 ``mistral-extra``
   A collection of extra actions that could be installed to extend mistral
-  standard actions with openstack ones.
+  standard actions with openstack ones (by default mistral is not having any
+  OpenStack related action).
 
 Prerequisites
 -------------
@@ -174,58 +181,37 @@ For more detailed information on the *mistral-db-manage* script, see
 the :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
 
 
-Running Mistral API server
---------------------------
+Running Mistral server
+----------------------
 
-To run the Mistral API server, execute the following command in a shell:
+To run the Mistral components, execute the following command in a shell:
 
 .. code-block:: console
 
-    $ mistral-server --server api --config-file /etc/mistral/mistral.conf
+    $ mistral-server --server all --config-file /etc/mistral/mistral.conf
 
-Running Mistral Engines
------------------------
+Running Mistral components separately
+-------------------------------------
 
-To run the Mistral Engine, execute the following command in a shell:
+You can choose to split the Mistral component execution on more than one
+server, e.g. to start only the engine:
 
 .. code-block:: console
 
     $ mistral-server --server engine --config-file /etc/mistral/mistral.conf
 
-Running Mistral Executors
--------------------------
-To run the Mistral Executor instance, execute the following command in a
-shell:
+The --server command line option can be a comma delimited list, so you can
+build combination of components, like this:
 
 .. code-block:: console
 
-    $ mistral-server --server executor --config-file /etc/mistral/mistral.conf
+    $ mistral-server --server engine,executor --config-file /etc/mistral/mistral.conf
 
-Note that at least one Engine instance and one Executor instance should be
-running so that workflow tasks are processed by Mistral.
+The valid options are:
 
-Mistral Notifier
-----------------
-
-To run the Mistral Notifier, execute the following command in a shell:
-
-.. code-block:: console
-
-    $ mistral-server --server notifier --config-file /etc/mistral/mistral.conf
-
-Running Multiple Mistral Servers Under the Same Process
--------------------------------------------------------
-To run more than one server (API, Engine, or Task Executor) on the same process,
-execute the following command in a shell:
-
-.. code-block:: console
-
-    $ mistral-server --server api,engine --config-file /etc/mistral/mistral.conf
-
-The --server command line option can be a comma delimited list. The valid
-options are "all" (by default if not specified) or any combination of "api",
-"engine", and "executor". It is important to note that the "fake" transport for
-the rpc_backend defined in the config file should only be used if "all" the
-Mistral servers are launched on the same process. Otherwise, messages do not
-get delivered if the Mistral servers are launched on different processes
-because the "fake" transport is using an in-process queue.
+* all (by default if not specified)
+* api
+* engine
+* executor
+* event-engine
+* notifier
