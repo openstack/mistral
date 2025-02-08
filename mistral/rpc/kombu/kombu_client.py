@@ -39,8 +39,6 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
-CONF.import_opt('rpc_response_timeout', 'mistral.config')
-
 
 class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
     def __init__(self, conf):
@@ -58,7 +56,9 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         self.exchange = CONF.control_exchange
         self.durable_queue = CONF.oslo_messaging_rabbit.amqp_durable_queues
         self.auto_delete = CONF.oslo_messaging_rabbit.amqp_auto_delete
-        self._timeout = CONF.rpc_response_timeout
+        # NOTE(amorin) let's use a hardcoded 60s value until we deprecate the
+        # kombu RPC driver
+        self._timeout = 60
         self.routing_key = self.topic
 
         connections = []

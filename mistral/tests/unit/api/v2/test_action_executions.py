@@ -278,13 +278,12 @@ class TestActionExecutionsController(base.APITest):
     @mock.patch.object(oslo_client.OsloRPCClient, 'sync_call',
                        mock.MagicMock(side_effect=oslo_exc.MessagingTimeout))
     def test_post_timeout(self):
-        self.override_config('rpc_response_timeout', 100)
 
         resp = self.app.post_json(
             '/v2/action_executions',
             {
                 'name': 'std.sleep',
-                'input': {'seconds': 120}
+                'input': {'seconds': 80}
             },
             expect_errors=True
         )
@@ -292,7 +291,7 @@ class TestActionExecutionsController(base.APITest):
         error_msg = resp.json['faultstring']
         self.assertEqual(error_msg,
                          'This rpc call "start_action" took longer than '
-                         'configured 100 seconds.')
+                         'configured 60 seconds.')
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post(self, f):

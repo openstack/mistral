@@ -159,14 +159,6 @@ rpc_impl_opt = cfg.StrOpt(
            'Support of kombu driver is experimental.')
 )
 
-# TODO(ddeja): This config option is a part of oslo RPCClient
-# It would be the best to not register it twice, rather use RPCClient somehow
-rpc_response_timeout_opt = cfg.IntOpt(
-    'rpc_response_timeout',
-    default=60,
-    help=_('Seconds to wait for a response from a call.')
-)
-
 oslo_rpc_executor = cfg.StrOpt(
     'oslo_rpc_executor',
     default='threading',
@@ -784,7 +776,6 @@ CONF.register_opt(auth_type_opt)
 CONF.register_opt(scheduler_type_opt)
 CONF.register_opt(js_impl_opt)
 CONF.register_opt(rpc_impl_opt)
-CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 
@@ -830,7 +821,6 @@ default_group_opts = itertools.chain(
         scheduler_type_opt,
         js_impl_opt,
         rpc_impl_opt,
-        rpc_response_timeout_opt,
         oslo_rpc_executor,
         expiration_token_duration
     ]
