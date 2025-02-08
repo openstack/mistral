@@ -20,7 +20,6 @@
 Configuration options registration and useful routines.
 """
 
-import itertools
 import json
 
 from keystoneauth1 import loading
@@ -813,18 +812,15 @@ CLI_OPTS = [
     launch_opt
 ]
 
-default_group_opts = itertools.chain(
-    CLI_OPTS,
-    [
-        wf_trace_log_name_opt,
-        auth_type_opt,
-        scheduler_type_opt,
-        js_impl_opt,
-        rpc_impl_opt,
-        oslo_rpc_executor,
-        expiration_token_duration
-    ]
-)
+default_group_opts = CLI_OPTS + [
+    wf_trace_log_name_opt,
+    auth_type_opt,
+    scheduler_type_opt,
+    js_impl_opt,
+    rpc_impl_opt,
+    oslo_rpc_executor,
+    expiration_token_duration
+]
 
 
 _DEFAULT_LOG_LEVELS = [
