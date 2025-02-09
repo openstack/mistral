@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    The kombu RPC driver in mistral is now deprecated and will be removed in
+    the next cycle.
+    In the effort to keep mistral up and running, we decided to drop
+    experimental features like kombu RPC driver, which does not bring anything
+    more than the default oslo.messaging driver.

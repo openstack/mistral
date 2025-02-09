@@ -154,6 +154,9 @@ rpc_impl_opt = cfg.StrOpt(
     'rpc_implementation',
     default='oslo',
     choices=['oslo', 'kombu'],
+    deprecated_for_removal=True,
+    deprecated_reason='Kombu driver is deprecated and will be removed '
+                      'in the F release cycle',
     help=_('Specifies RPC implementation for RPC client and server. '
            'Support of kombu driver is experimental.')
 )
