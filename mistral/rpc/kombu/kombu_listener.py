@@ -19,7 +19,6 @@ import queue
 import threading
 
 from oslo_log import log as logging
-from oslo_utils import eventletutils
 
 from mistral.rpc.kombu import base as kombu_base
 
@@ -35,7 +34,7 @@ class KombuRPCListener(ConsumerMixin):
         self._thread = None
         self.connection = next(self._connections)
 
-        self.ready = eventletutils.Event()
+        self.ready = threading.Event()
 
     def add_listener(self, correlation_id):
         self._results[correlation_id] = queue.Queue()
