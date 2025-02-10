@@ -14,7 +14,6 @@
 
 import copy
 import datetime
-import eventlet
 import random
 import threading
 import time
@@ -189,13 +188,10 @@ class DefaultScheduler(base.Scheduler):
         return db_api.create_scheduled_job(values)
 
     def _schedule_in_memory(self, run_after, scheduled_job):
-        green_thread = eventlet.spawn_after(
-            run_after,
-            self._process_memory_job,
-            scheduled_job
-        )
-
-        self.in_memory_jobs[green_thread] = scheduled_job
+        timer = threading.Timer(run_after, self._process_memory_job,
+                                args=(scheduled_job,))
+        timer.start()
+        self.in_memory_jobs[timer] = scheduled_job
 
     def _process_memory_job(self, scheduled_job):
         # 1. Capture the job in Job Store.
@@ -219,7 +215,7 @@ class DefaultScheduler(base.Scheduler):
         # 3.1 What do we do if invocation wasn't successful?
 
         # Delete from a local collection of in-memory jobs.
-        del self.in_memory_jobs[eventlet.getcurrent()]
+        del self.in_memory_jobs[threading.current_thread()]
 
     @staticmethod
     def _capture_scheduled_job(scheduled_job):
