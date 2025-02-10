@@ -34,22 +34,10 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
-_pool_opts = [
-    cfg.IntOpt(
-        'executor_thread_pool_size',
-        default=64,
-        deprecated_name="rpc_thread_pool_size",
-        help='Size of executor thread pool when'
-        ' executor is threading or eventlet.'
-    ),
-]
-
 
 class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
     def __init__(self, conf):
         super(KombuRPCServer, self).__init__(conf)
-
-        CONF.register_opts(_pool_opts)
 
         kombu_base.set_transport_options()
 
@@ -60,7 +48,9 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         self._hosts = kombu_hosts.KombuHosts(CONF)
 
-        self._executor_threads = CONF.executor_thread_pool_size
+        # NOTE(amorin) let's use a hardcoded value until we deprecate the
+        # kombu RPC driver
+        self._executor_threads = 64
         self.exchange = CONF.control_exchange
         # TODO(rakhmerov): We shouldn't rely on any properties related
         # to oslo.messaging. Only "transport_url" should matter.
