@@ -12,10 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet import corolocal
-from eventlet import semaphore
 from oslo_config import cfg
 import testtools
+import threading
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
@@ -103,7 +102,7 @@ class BlockingAction(actions_base.Action):
         self.unblock_test()
         self.wait_for_test()
 
-        print('Action completed [eventlet_id=%s]' % corolocal.get_ident())
+        print('Action completed [thread_id=%s]' % threading.get_ident())
 
         return 'test'
 
@@ -118,8 +117,8 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
         global ACTION_SEMAPHORE
         global TEST_SEMAPHORE
 
-        ACTION_SEMAPHORE = semaphore.Semaphore(1)
-        TEST_SEMAPHORE = semaphore.Semaphore(0)
+        ACTION_SEMAPHORE = threading.Semaphore(1)
+        TEST_SEMAPHORE = threading.Semaphore(0)
 
         self.register_action_class('test.block', BlockingAction)
 
