@@ -26,6 +26,7 @@ from keystoneauth1 import loading
 from oslo_config import cfg
 from oslo_log import log
 from oslo_middleware import cors
+from oslo_service import _options as service_opts
 from osprofiler import opts as profiler
 
 from mistral import version
@@ -780,6 +781,7 @@ CONF.register_opt(js_impl_opt)
 CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
+CONF.register_opts(service_opts.service_opts)
 
 CONF.register_opts(
     legacy_action_provider_opts,
