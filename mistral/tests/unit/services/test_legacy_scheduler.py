@@ -14,11 +14,10 @@
 #    limitations under the License.
 
 import datetime
+import queue
 import time
 from unittest import mock
 
-from eventlet import queue
-from eventlet import timeout
 from oslo_config import cfg
 from oslo_utils import timeutils
 
@@ -28,6 +27,7 @@ from mistral import exceptions as exc
 from mistral.scheduler import base as sched_base
 from mistral.services import legacy_scheduler
 from mistral.tests.unit import base
+from mistral.tests.unit.utils.test_utils import TimeoutThreadWithException
 from mistral_lib import actions as ml_actions
 
 
@@ -51,7 +51,9 @@ class LegacySchedulerTest(base.DbTestCase):
     def setUp(self):
         super(LegacySchedulerTest, self).setUp()
 
-        self.timeout = timeout.Timeout(seconds=10)
+        self.timeout_thread = TimeoutThreadWithException(10)
+        self.timeout_thread.start()
+
         self.queue = queue.Queue()
 
         self.override_config('fixed_delay', 1, 'scheduler')
@@ -62,7 +64,13 @@ class LegacySchedulerTest(base.DbTestCase):
         self.scheduler.start()
 
         self.addCleanup(self.scheduler.stop, True)
-        self.addCleanup(self.timeout.cancel)
+        self.addCleanup(self.timeout_thread.stop)
+
+        def reraise_timeout(t):
+            """Re-raise a thread timeout if occured"""
+            if t.exception:
+                raise t.exception
+        self.addCleanup(reraise_timeout, self.timeout_thread)
 
     def target_method(self, *args, **kwargs):
         self.queue.put(item="item")

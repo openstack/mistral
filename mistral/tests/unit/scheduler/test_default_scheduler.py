@@ -13,11 +13,9 @@
 #    limitations under the License.
 
 import datetime
+import threading
 from unittest import mock
 
-from eventlet import event
-from eventlet import semaphore
-from eventlet import timeout
 from oslo_config import cfg
 from oslo_utils import timeutils
 
@@ -25,6 +23,7 @@ from mistral.db.v2 import api as db_api
 from mistral.scheduler import base as scheduler_base
 from mistral.scheduler import default_scheduler
 from mistral.tests.unit import base
+from mistral.tests.unit.utils.test_utils import TimeoutThreadWithException
 
 
 CONF = cfg.CONF
@@ -45,14 +44,15 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         # This Timeout object is needed to raise an exception if the test took
         # longer than a configured number of seconds.
-        self.timeout = timeout.Timeout(seconds=15)
+        self.timeout_thread = TimeoutThreadWithException(15)
+        self.timeout_thread.start()
 
         # Synchronization primitives to control when a scheduled invoked
         # method is allowed to enter the method and exit from it to perform
         # all needed checks.
-        self.target_mtd_started = event.Event()
-        self.target_mtd_finished = event.Event()
-        self.target_mtd_lock = semaphore.Semaphore(0)
+        self.target_mtd_started = threading.Event()
+        self.target_mtd_finished = threading.Event()
+        self.target_mtd_lock = threading.Semaphore(0)
 
         self.override_config('fixed_delay', 1, 'scheduler')
         self.override_config('random_delay', 1, 'scheduler')
@@ -62,16 +62,22 @@ class DefaultSchedulerTest(base.DbTestCase):
         self.scheduler.start()
 
         self.addCleanup(self.scheduler.stop, True)
-        self.addCleanup(self.timeout.cancel)
+        self.addCleanup(self.timeout_thread.stop)
+
+        def reraise_timeout(t):
+            """Re-raise a thread timeout if occured"""
+            if t.exception:
+                raise t.exception
+        self.addCleanup(reraise_timeout, self.timeout_thread)
 
     def target_method(self, *args, **kwargs):
-        self.target_mtd_started.send()
+        self.target_mtd_started.set()
 
         self.target_mtd_lock.acquire()
 
         # Note: Potentially we can do something else here. No-op for now.
 
-        self.target_mtd_finished.send()
+        self.target_mtd_finished.set()
 
     def _wait_target_method_start(self):
         self.target_mtd_started.wait()

@@ -14,6 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import threading
+import time
+
 from mistral import exceptions as exc
 from mistral.tests.unit import base
 from mistral.utils import ssh_utils
@@ -53,3 +56,27 @@ class UtilsTest(base.BaseTest):
             ssh_utils._to_paramiko_private_key(private_key_filename=None,
                                                password='pass')
         )
+
+
+class TimeoutThreadWithException(threading.Thread):
+    """Thread raising exception after timeout"""
+
+    def __init__(self, timeout):
+        super().__init__()
+        self.timeout = timeout
+        self._stop_event = threading.Event()
+        self.exception = None
+
+    def stop(self):
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
+
+    def run(self):
+        try:
+            while not self.stopped():
+                time.sleep(self.timeout)
+                raise Exception('Timeout')
+        except Exception as e:
+            self.exception = e
