@@ -13,7 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
+import threading
 import time
 
 from mistral.api import service as api_service
@@ -32,7 +32,8 @@ class ServiceLauncherTest(base.DbTestCase):
         sched_base.destroy_system_scheduler()
 
     def test_launch_all(self):
-        eventlet.spawn(launch.launch_any, launch.LAUNCH_OPTIONS.keys())
+        threading.Thread(target=launch.launch_any,
+                         args=(launch.LAUNCH_OPTIONS.keys(),)).start()
 
         for i in range(0, 50):
             svr_proc_mgr = launch.get_server_process_manager()
@@ -53,7 +54,8 @@ class ServiceLauncherTest(base.DbTestCase):
         self._await(lambda: len(svr_thrd_mgr.services.services) == 4)
 
     def test_launch_process(self):
-        eventlet.spawn(launch.launch_any, ['api'])
+        threading.Thread(target=launch.launch_any,
+                         args=(['api'],)).start()
 
         for i in range(0, 50):
             svr_proc_mgr = launch.get_server_process_manager()
@@ -74,7 +76,8 @@ class ServiceLauncherTest(base.DbTestCase):
         self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
 
     def test_launch_thread(self):
-        eventlet.spawn(launch.launch_any, ['engine'])
+        threading.Thread(target=launch.launch_any,
+                         args=(['engine'],)).start()
 
         for i in range(0, 50):
             svr_thrd_mgr = launch.get_server_thread_manager()
