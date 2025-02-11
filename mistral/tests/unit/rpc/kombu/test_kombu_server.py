@@ -299,12 +299,6 @@ class KombuServerTest(base.KombuTestCase):
             type(self.server._worker)
         )
 
-        self.server._prepare_worker('eventlet')
-        self.assertEqual(
-            futurist.GreenThreadPoolExecutor,
-            type(self.server._worker)
-        )
-
     @mock.patch('stevedore.driver.DriverManager')
     def test__prepare_worker_no_valid_executor(self, driver_manager_mock):
 
