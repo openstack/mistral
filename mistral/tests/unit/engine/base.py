@@ -15,7 +15,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -32,6 +31,8 @@ from mistral.services import actions as action_service
 from mistral.tests.unit import base
 from mistral.workflow import states
 
+CONF = cfg.CONF
+
 LOG = logging.getLogger(__name__)
 
 # Default delay and timeout in seconds for await_xxx() functions.
@@ -40,7 +41,7 @@ DEFAULT_TIMEOUT = 30
 
 
 def launch_service(s):
-    launcher = service.ServiceLauncher(cfg.CONF)
+    launcher = service.ServiceLauncher(CONF)
 
     launcher.launch_service(s)
 
@@ -60,44 +61,38 @@ class EngineTestCase(base.DbTestCase):
         # Get transport here to let oslo.messaging setup default config
         # before changing the rpc_backend to the fake driver; otherwise,
         # oslo.messaging will throw exception.
-        messaging.get_transport(cfg.CONF)
+        messaging.get_transport(CONF)
 
         # Set the transport to 'fake' for Engine tests.
-        cfg.CONF.set_default('transport_url', 'fake:/')
+        CONF.set_default('transport_url', 'fake:/')
 
         # Drop all RPC objects (transport, clients).
         rpc_base.cleanup()
         rpc_clients.cleanup()
         exe.cleanup()
 
-        self.threads = []
-
         # Start remote executor.
-        if cfg.CONF.executor.type == 'remote':
+        if CONF.executor.type == 'remote':
             LOG.info("Starting remote executor threads...")
 
             self.executor_client = rpc_clients.get_executor_client()
 
             exe_svc = executor_server.get_oslo_service(setup_profiler=False)
-
             self.executor = exe_svc.executor
-
-            self.threads.append(eventlet.spawn(launch_service, exe_svc))
-
+            exe_svc.start()
             self.addCleanup(exe_svc.stop, True)
         else:
-            self.executor = exe.get_executor(cfg.CONF.executor.type)
+            self.executor = exe.get_executor(CONF.executor.type)
 
         # Start remote notifier.
-        if cfg.CONF.notifier.type == 'remote':
+        if CONF.notifier.type == 'remote':
             LOG.info("Starting remote notifier threads...")
 
             self.notifier_client = rpc_clients.get_notifier_client()
 
             notif_svc = notif_server.get_oslo_service(setup_profiler=False)
-
             self.notifier = notif_svc.notifier
-            self.threads.append(eventlet.spawn(launch_service, notif_svc))
+            notif_svc.start()
             self.addCleanup(notif_svc.stop, True)
 
         # Start engine.
@@ -106,13 +101,11 @@ class EngineTestCase(base.DbTestCase):
         self.engine_client = rpc_clients.get_engine_client()
 
         eng_svc = engine_server.get_oslo_service(setup_profiler=False)
-
         self.engine = eng_svc.engine
-        self.threads.append(eventlet.spawn(launch_service, eng_svc))
+        eng_svc.start()
         self.addCleanup(eng_svc.stop, True)
 
         self.addOnException(self.print_executions)
-        self.addCleanup(self.kill_threads)
 
         # This call ensures that all plugged in action providers are
         # properly initialized.
@@ -120,19 +113,13 @@ class EngineTestCase(base.DbTestCase):
 
         # Make sure that both services fully started, otherwise
         # the test may run too early.
-        if cfg.CONF.executor.type == 'remote':
+        if CONF.executor.type == 'remote':
             exe_svc.wait_started()
 
-        if cfg.CONF.notifier.type == 'remote':
+        if CONF.notifier.type == 'remote':
             notif_svc.wait_started()
 
         eng_svc.wait_started()
-
-    def kill_threads(self):
-        LOG.info("Finishing engine and executor threads...")
-
-        for thread in self.threads:
-            thread.kill()
 
     @staticmethod
     def print_executions(exc_info=None):

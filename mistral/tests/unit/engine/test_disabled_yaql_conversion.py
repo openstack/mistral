@@ -104,10 +104,6 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
             )
 
     def test_configuration_check(self):
-        # Kill all the threads started by default and try to start an
-        # instance of engine server again with the wrong configuration.
-        self.kill_threads()
-
         self.override_config('convert_input_data', True, 'yaql')
         self.override_config('convert_output_data', False, 'yaql')
 
