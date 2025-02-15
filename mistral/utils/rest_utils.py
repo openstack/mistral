@@ -187,7 +187,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     insecure = False
 
     if (all_projects or
-            (auth_ctx.ctx().is_admin and filters.get('project_id', ''))):
+            (auth_ctx.ctx().is_admin)):
         insecure = True
 
     marker_obj = None
