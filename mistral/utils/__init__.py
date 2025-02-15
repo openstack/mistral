@@ -19,7 +19,6 @@ import inspect
 import os
 import shutil
 import tempfile
-import threading
 
 from oslo_concurrency import processutils
 from oslo_serialization import jsonutils
@@ -28,10 +27,6 @@ from mistral_lib.utils import inspect_utils
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
-
-
-# Thread local storage.
-_th_loc_storage = threading.local()
 
 
 @contextlib.contextmanager
