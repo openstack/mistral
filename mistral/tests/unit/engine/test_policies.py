@@ -1647,8 +1647,8 @@ class PoliciesTest(base.EngineTestCase):
         wf1:
           tasks:
             task1:
-              action: std.sleep seconds=10
-              timeout: 2
+              action: std.sleep seconds=2
+              timeout: 1
         """
 
         wf_service.create_workflows(wf_text)
@@ -1658,16 +1658,18 @@ class PoliciesTest(base.EngineTestCase):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             task_ex = wf_ex.task_executions[0]
-        self.await_task_running(task_ex.id)
+        self.await_task_processed(task_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             task_ex = wf_ex.task_executions[0]
             action_ex = task_ex.action_executions[0]
 
-        self.await_workflow_error(wf_ex.id, delay=8)
-        self.await_task_error(task_ex.id, delay=8)
-        self.await_action_error(action_ex.id, delay=8)
+        self.await_workflow_error(wf_ex.id, delay=1)
+        self.await_task_error(task_ex.id, delay=1)
+        # The action can take a little bit longer than workflow and task
+        # because we can't stop the thread running the action
+        self.await_action_error(action_ex.id, delay=2)
 
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)

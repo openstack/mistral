@@ -13,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet import timeout as ev_timeout
 from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -23,6 +22,7 @@ from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
 from mistral.services import action_heartbeat_sender
+from mistral.utils import ThreadWithException
 
 LOG = logging.getLogger(__name__)
 
@@ -81,6 +81,13 @@ class DefaultExecutor(base.Executor):
 
             return error_result
 
+        def _thread_run_action(fn, auth_ctx, action_ctx, result):
+            # Run an action in a thread and keep track of the result
+            # As we are running in a different thread, we need to set
+            # our auth_context correctly
+            context.set_ctx(auth_ctx)
+            result['r'] = fn(action_ctx)
+
         if redelivered and not safe_rerun:
             msg = (
                 "Request to run an action was redelivered, but it cannot "
@@ -92,15 +99,45 @@ class DefaultExecutor(base.Executor):
 
         # Run action.
         try:
-            with ev_timeout.Timeout(seconds=timeout):
-                # NOTE(d0ugal): If the action is a subclass of mistral-lib we
-                # know that it expects to be passed the context.
-                if isinstance(action, mistral_lib.Action):
-                    result = action.run(
-                        context.create_action_context(exec_ctx)
-                    )
-                else:
-                    result = action.run()
+            # NOTE(d0ugal): If the action is a subclass of mistral-lib we
+            # know that it expects to be passed an ActionContext.
+            if isinstance(action, mistral_lib.Action):
+                action_ctx = context.create_action_context(exec_ctx)
+            else:
+                action_ctx = None
+            # NOTE(amorin) we need a dict type to store the result so python
+            # will give pointer to this object and not copy the value into a
+            # new memory space
+            result_ptr = {}
+            thread = ThreadWithException(
+                target=_thread_run_action,
+                args=[action.run, context.ctx(), action_ctx, result_ptr]
+            )
+            thread.start()
+            thread.join(timeout=timeout)
+            # Get back result
+            result = result_ptr.get('r')
+
+            if thread.is_alive():
+                # The action is taking too long.
+                # There is no proper way to kill a thread, so we have two
+                # options:
+                # - Leave the thread alone without taking care
+                # - Wait for it to finish now (thread.join())
+                # amorin: I decided to wait for the thread to finish, it's a
+                # safer decision as we are giving "result" to our thread
+                # and we dont want another thread to overwrite this later
+                # if we don't wait
+                # We may block this mistral thread for an infinite time,
+                # but, it's the safest option I came to for now.
+                # Note: we were using eventlet here before, and eventlet
+                # allowed us to kill the greenthread
+                # Let's print a log message about this, so at least, we can
+                # identify that we are stuck from logs
+                LOG.warning("The action %s timed out, we are now waiting for "
+                            "the action thread to finish...", (action_ex_id))
+                thread.join()
+                raise Exception("Timeout after %s seconds" % (timeout))
 
             # Note: it's made for backwards compatibility with already
             # existing Mistral actions which don't return result as
@@ -113,9 +150,7 @@ class DefaultExecutor(base.Executor):
                 "The action raised an exception [action=%s, action_ex_id=%s, "
                 "msg='%s']" % (action, action_ex_id, e)
             )
-
             LOG.warning(msg, exc_info=True)
-
             return send_error_back(msg)
 
         # Send action result.

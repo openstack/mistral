@@ -19,6 +19,7 @@ import inspect
 import os
 import shutil
 import tempfile
+import threading
 
 from oslo_concurrency import processutils
 from oslo_serialization import jsonutils
@@ -163,3 +164,18 @@ def evaluate_object_fields(obj, ctx):
 
     for k, v in evaluated_fields.items():
         setattr(obj, k, v)
+
+
+class ThreadWithException(threading.Thread):
+    """Thread capturing exception"""
+    def run(self):
+        self.exception = None
+        try:
+            super().run()
+        except Exception as e:
+            self.exception = e
+
+    def join(self, *args, **kwargs):
+        super().join(*args, **kwargs)
+        if self.exception:
+            raise self.exception
