@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 import threading
-import time
 
 from mistral import exceptions as exc
 from mistral.tests.unit import base
@@ -64,19 +63,21 @@ class TimeoutThreadWithException(threading.Thread):
     def __init__(self, timeout):
         super().__init__()
         self.timeout = timeout
-        self._stop_event = threading.Event()
+        self.timer = threading.Timer(timeout, self._timeout)
         self.exception = None
 
     def stop(self):
-        self._stop_event.set()
-
-    def stopped(self):
-        return self._stop_event.is_set()
+        self.timer.cancel()
 
     def run(self):
-        try:
-            while not self.stopped():
-                time.sleep(self.timeout)
-                raise Exception('Timeout')
-        except Exception as e:
-            self.exception = e
+        # This method is called when the thread actually starts (.start())
+        self.timer.start()
+
+    def _timeout(self):
+        # We can't raise from a thread, instead, we prepare
+        # an exception so that the main process can read that and decide to
+        # re-raise or not
+        self.exception = Exception(
+            "Timeout after %(secs)s seconds" %
+            {'secs': self.timeout}
+        )
