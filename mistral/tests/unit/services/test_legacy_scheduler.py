@@ -43,7 +43,7 @@ def get_time_delay(delay=DELAY * 2):
     return timeutils.utcnow() + datetime.timedelta(seconds=delay)
 
 
-def target_method():
+def target_method(*args, **kwargs):
     pass
 
 
