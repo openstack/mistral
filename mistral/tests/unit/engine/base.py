@@ -71,7 +71,7 @@ class EngineTestCase(base.DbTestCase):
         rpc_clients.cleanup()
         exe.cleanup()
 
-        # Start remote executor.
+        # Start executor.
         if CONF.executor.type == 'remote':
             LOG.info("Starting remote executor threads...")
 
@@ -82,9 +82,10 @@ class EngineTestCase(base.DbTestCase):
             exe_svc.start()
             self.addCleanup(exe_svc.stop, True)
         else:
+            LOG.info("Starting executor threads...")
             self.executor = exe.get_executor(CONF.executor.type)
 
-        # Start remote notifier.
+        # Start notifier.
         if CONF.notifier.type == 'remote':
             LOG.info("Starting remote notifier threads...")
 
