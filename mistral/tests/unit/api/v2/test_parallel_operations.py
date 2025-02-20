@@ -12,8 +12,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-import eventlet
-from eventlet import semaphore
+import threading
 from unittest import mock
 
 from mistral.api.controllers.v2 import execution
@@ -48,12 +47,6 @@ class TestParallelOperations(base.APITest, engine_base.EngineTestCase):
         self.wf_ex_id = wf_ex.id
 
         self.decorator_call_cnt = 0
-        self.threads = []
-        self.addCleanup(self.kill_threads)
-
-    def kill_threads(self):
-        for thread in self.threads:
-            thread.kill()
 
     def test_parallel_api_list_and_delete_operations(self):
         # One execution already exists. Let's create another one.
@@ -63,8 +56,8 @@ class TestParallelOperations(base.APITest, engine_base.EngineTestCase):
 
         self.assertEqual(2, len(db_api.get_workflow_executions()))
 
-        delete_lock = semaphore.Semaphore(0)
-        list_lock = semaphore.Semaphore(0)
+        delete_lock = threading.Semaphore(0)
+        list_lock = threading.Semaphore(0)
 
         orig_func = execution._get_workflow_execution_resource
 
@@ -104,13 +97,15 @@ class TestParallelOperations(base.APITest, engine_base.EngineTestCase):
 
         with mock.patch.object(execution, '_get_workflow_execution_resource',
                                wraps=decorate_resource_function_):
-            self.threads.append(eventlet.spawn(list_))
+            t1 = threading.Thread(target=list_)
+            t1.start()
 
             # Make sure that the "list" operation came to the right point
             # which is just about the call to the resource function.
             delete_lock.acquire()
 
-            self.threads.append(eventlet.spawn(delete_))
+            t2 = threading.Thread(target=delete_)
+            t2.start()
 
-        for t in self.threads:
-            t.wait()
+        t1.join()
+        t2.join()
