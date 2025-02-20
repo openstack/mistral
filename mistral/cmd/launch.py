@@ -191,23 +191,6 @@ def get_properly_ordered_parameters():
     return args
 
 
-def override_keystone_options():
-    # TODO(wxy): This function is used for keeping backward compatibility.
-    # Remove it in Stein.
-    auth_opts = CONF['keystone_authtoken']
-
-    for opt, value in auth_opts.items():
-        if opt in CONF['keystone']:
-            default_value = auth_opts._group._opts[opt]['opt'].default
-
-            if default_value != value != CONF['keystone'][opt]:
-                LOG.warning("The config option '%s' in section "
-                            "[keystone_authtoken] has the same copy in "
-                            "[keystone]. Please add the same option to the "
-                            "[keystone] section to keep using it.", opt)
-                CONF.set_override(opt, value, group='keystone')
-
-
 def main():
     try:
         CONF.register_cli_opts(config.CLI_OPTS)
@@ -217,8 +200,6 @@ def main():
         print_server_info()
 
         logging.setup(CONF, 'Mistral')
-
-        override_keystone_options()
 
         # Please refer to the oslo.messaging documentation for transport
         # configuration. The default transport for oslo.messaging is
