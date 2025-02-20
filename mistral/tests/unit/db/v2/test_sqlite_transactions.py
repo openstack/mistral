@@ -13,9 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import threading
 
-import eventlet
-from eventlet import semaphore
 from oslo_config import cfg
 import testtools
 
@@ -56,8 +55,8 @@ class SQLiteTransactionsTest(test_base.DbTestCase):
         )
 
     def test_dirty_reads(self):
-        sem1 = semaphore.Semaphore(0)
-        sem2 = semaphore.Semaphore(0)
+        sem1 = threading.Semaphore(0)
+        sem2 = threading.Semaphore(0)
 
         def _run_tx1():
             with db_api.transaction():
@@ -90,10 +89,11 @@ class SQLiteTransactionsTest(test_base.DbTestCase):
 
             print("TX2 completed.")
 
-        t1 = eventlet.spawn(_run_tx1)
-        t2 = eventlet.spawn(_run_tx2)
+        t1 = threading.Thread(target=_run_tx1)
+        t2 = threading.Thread(target=_run_tx2)
 
-        t1.wait()
-        t2.wait()
-        t1.kill()
-        t2.kill()
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
