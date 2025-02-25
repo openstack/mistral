@@ -594,6 +594,8 @@ coordination_opts = [
     cfg.StrOpt(
         'backend_url',
         secret=True,
+        deprecated_for_removal=True,
+        deprecated_reason='Coordination will be removed from mistral code',
         help=_('The backend URL to be used for coordination')
     ),
     cfg.FloatOpt(

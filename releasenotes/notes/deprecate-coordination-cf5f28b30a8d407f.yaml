@@ -1,0 +1,13 @@
+---
+deprecations:
+  - |
+    The coordination service inside mistral has been used only to list the
+    mistral services list behind the endpoint ``v2/services``.
+    This feature is not enabled by default and needs a specific ``coordinator``
+    ``backend_url`` configuration to be set for mistral to answer the services
+    list correctly.
+    Coordination rely on the ``tooz`` project and, depending on the driver in
+    use, may need eventlet monkeypatching.
+    Because we want to get rid of all eventlet code inside mistral, the
+    ``v2/services`` endpoint is now deprecated and all coordination code
+    will be dropped in the next cycle.
