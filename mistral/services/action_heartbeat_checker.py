@@ -55,12 +55,12 @@ def handle_expired_actions():
         LOG.debug("Found {} running and expired actions.", len(action_exs))
 
         if action_exs:
-            LOG.info(
-                "Actions executions to transit to error, because "
-                "heartbeat wasn't received: {}", action_exs
-            )
-
             for action_ex in action_exs:
+                LOG.warning(
+                    "Action execution to transit to error, because "
+                    "heartbeat wasn't received: {}", action_ex.id
+                )
+
                 task_ex = db_api.get_task_execution(
                     action_ex.task_execution_id
                 )
