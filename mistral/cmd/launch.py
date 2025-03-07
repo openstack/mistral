@@ -58,26 +58,9 @@ from mistral import version
 
 
 CONF = cfg.CONF
-SERVER_THREAD_MANAGER = None
 SERVER_PROCESS_MANAGER = None
 
 LOG = logging.getLogger(__name__)
-
-
-def launch_thread(server, workers=1):
-    try:
-        global SERVER_THREAD_MANAGER
-
-        if not SERVER_THREAD_MANAGER:
-            SERVER_THREAD_MANAGER = service.ServiceLauncher(
-                CONF,
-                restart_method='mutate'
-            )
-
-        SERVER_THREAD_MANAGER.launch_service(server, workers=workers)
-    except Exception as e:
-        sys.stderr.write("ERROR: %s\n" % e)
-        sys.exit(1)
 
 
 def launch_process(server, workers=1):
@@ -97,19 +80,19 @@ def launch_process(server, workers=1):
 
 
 def launch_executor():
-    launch_thread(executor_server.get_oslo_service())
+    launch_process(executor_server.get_oslo_service())
 
 
 def launch_engine():
-    launch_thread(engine_server.get_oslo_service())
+    launch_process(engine_server.get_oslo_service())
 
 
 def launch_event_engine():
-    launch_thread(event_engine_server.get_oslo_service())
+    launch_process(event_engine_server.get_oslo_service())
 
 
 def launch_notifier():
-    launch_thread(notification_server.get_oslo_service())
+    launch_process(notification_server.get_oslo_service())
 
 
 def launch_api():
@@ -123,10 +106,6 @@ def launch_any(options):
         LAUNCH_OPTIONS[option]()
 
     global SERVER_PROCESS_MANAGER
-    global SERVER_THREAD_MANAGER
-
-    if SERVER_THREAD_MANAGER:
-        SERVER_THREAD_MANAGER.wait()
 
     if SERVER_PROCESS_MANAGER:
         SERVER_PROCESS_MANAGER.wait()
@@ -239,18 +218,9 @@ def main():
 
 # Helper method used in unit tests to reset the service launchers.
 def reset_server_managers():
-    global SERVER_THREAD_MANAGER
     global SERVER_PROCESS_MANAGER
 
-    SERVER_THREAD_MANAGER = None
     SERVER_PROCESS_MANAGER = None
-
-
-# Helper method used in unit tests to access the service launcher.
-def get_server_thread_manager():
-    global SERVER_THREAD_MANAGER
-
-    return SERVER_THREAD_MANAGER
 
 
 # Helper method used in unit tests to access the process launcher.
