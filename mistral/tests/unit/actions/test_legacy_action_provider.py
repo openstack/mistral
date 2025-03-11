@@ -202,3 +202,61 @@ class LegacyActionProviderTest(base.BaseTest):
         )
 
         self.assertEqual('Goodbye, Lieutenant Dan!', goodbye_action.run(None))
+
+    def test_allowlist(self):
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'allowlist', ['std.noop'],
+            'legacy_action_provider'
+        )
+
+        provider = legacy.LegacyActionProvider()
+        action_descs = provider.find_all()
+        self.assertEqual(1, len(action_descs))
+        self.assertIsNotNone(provider.find('std.noop'))
+
+    def test_denylist(self):
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'denylist', ['std.noop'],
+            'legacy_action_provider'
+        )
+
+        provider = legacy.LegacyActionProvider()
+        action_descs = provider.find_all()
+        self.assertTrue(
+            all(
+                [
+                    a_d.name != 'std.noop'
+                    for a_d in action_descs
+                ]
+            )
+        )
+
+    def test_allowlist_and_denylist(self):
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'allowlist', ['std.noop'],
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'denylist', ['std.fail'],
+            'legacy_action_provider'
+        )
+
+        provider = legacy.LegacyActionProvider()
+        action_descs = provider.find_all()
+        self.assertEqual(1, len(action_descs))
+        self.assertIsNotNone(provider.find('std.noop'))

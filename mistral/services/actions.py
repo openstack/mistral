@@ -18,6 +18,7 @@ collection of functions for accessing information about actions
 available in the system.
 """
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from stevedore import extension
 
@@ -39,7 +40,17 @@ def _get_registered_providers():
         invoke_on_load=False
     )
 
+    allowlist = cfg.CONF.action_providers.allowlist
+    denylist = cfg.CONF.action_providers.denylist
+
     for provider_name in mgr.names():
+        if allowlist:
+            if provider_name not in allowlist:
+                continue
+        elif denylist:
+            if provider_name in denylist:
+                continue
+
         provider_cls = mgr[provider_name].plugin
 
         try:
