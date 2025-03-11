@@ -99,7 +99,17 @@ class LegacyActionProvider(ml_actions.ActionProvider):
             invoke_on_load=False
         )
 
+        allowlist = CONF.legacy_action_provider.allowlist
+        denylist = CONF.legacy_action_provider.denylist
+
         for action_name in ext_mgr.names():
+            if allowlist:
+                if action_name not in allowlist:
+                    continue
+            elif denylist:
+                if action_name in denylist:
+                    continue
+
             action_cls = ext_mgr[action_name].plugin
 
             if CONF.legacy_action_provider.only_builtin_actions:
