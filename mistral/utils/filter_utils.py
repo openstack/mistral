@@ -15,6 +15,7 @@
 
 import datetime
 from dateutil import parser as dateparser
+import fnmatch
 
 
 EQUALS = 'eq'
@@ -166,3 +167,28 @@ def match_filters(obj, filters):
             return False
 
     return True
+
+
+def filtered_by_allow_deny_list(
+        allowlist, denylist, value):
+    """Evaluate allow and deny lists.
+
+    Return True if the value is filtered by the allow or
+    deny list.
+
+    :param allowlist: List of strings to allow
+    :param denylist: List of strings to deny
+    :param value: String to evaluate
+    """
+    def _match_value(list_to_check, value):
+        for i in list_to_check:
+            if fnmatch.fnmatchcase(value, i):
+                return True
+        return False
+
+    if allowlist:
+        return not _match_value(allowlist, value)
+    elif denylist:
+        return _match_value(denylist, value)
+
+    return False
