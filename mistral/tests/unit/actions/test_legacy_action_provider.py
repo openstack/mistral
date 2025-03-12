@@ -219,6 +219,28 @@ class LegacyActionProviderTest(base.BaseTest):
         self.assertEqual(1, len(action_descs))
         self.assertIsNotNone(provider.find('std.noop'))
 
+    def test_allowlist_fnmatch(self):
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'allowlist', ['std.*'],
+            'legacy_action_provider'
+        )
+
+        provider = legacy.LegacyActionProvider()
+        action_descs = provider.find_all()
+        self.assertTrue(
+            all(
+                [
+                    str(a_d.name).startswith('std.')
+                    for a_d in action_descs
+                ]
+            )
+        )
+
     def test_denylist(self):
         self.override_config(
             'load_action_generators',
@@ -236,6 +258,28 @@ class LegacyActionProviderTest(base.BaseTest):
             all(
                 [
                     a_d.name != 'std.noop'
+                    for a_d in action_descs
+                ]
+            )
+        )
+
+    def test_denylist_fnmatch(self):
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'denylist', ['std.*'],
+            'legacy_action_provider'
+        )
+
+        provider = legacy.LegacyActionProvider()
+        action_descs = provider.find_all()
+        self.assertTrue(
+            all(
+                [
+                    not str(a_d.name).startswith('std.')
                     for a_d in action_descs
                 ]
             )

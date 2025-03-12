@@ -24,10 +24,7 @@ import threading
 from oslo_concurrency import processutils
 from oslo_serialization import jsonutils
 
-from mistral_lib.utils import inspect_utils
-
 from mistral import exceptions as exc
-from mistral import expressions as expr
 
 
 @contextlib.contextmanager
@@ -148,26 +145,9 @@ def from_json_str(json_str):
     return jsonutils.loads(json_str)
 
 
-def evaluate_object_fields(obj, ctx):
-    """Evaluates all expressions recursively contained in the object fields.
-
-    Some of the given object fields may be strings or data structures that
-    contain YAQL/Jinja expressions. The method evaluates them and updates
-    the corresponding object fields with the evaluated values.
-
-    :param obj: The object to inspect.
-    :param ctx: Expression context.
-    """
-    fields = inspect_utils.get_public_fields(obj)
-
-    evaluated_fields = expr.evaluate_recursively(fields, ctx)
-
-    for k, v in evaluated_fields.items():
-        setattr(obj, k, v)
-
-
 class ThreadWithException(threading.Thread):
     """Thread capturing exception"""
+
     def run(self):
         self.exception = None
         try:
