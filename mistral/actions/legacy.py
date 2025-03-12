@@ -18,6 +18,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from stevedore import extension
 
+from mistral.utils.filter_utils import filtered_by_allow_deny_list
 from mistral_lib import actions as ml_actions
 from mistral_lib.utils import inspect_utils as i_utils
 
@@ -103,12 +104,8 @@ class LegacyActionProvider(ml_actions.ActionProvider):
         denylist = CONF.legacy_action_provider.denylist
 
         for action_name in ext_mgr.names():
-            if allowlist:
-                if action_name not in allowlist:
-                    continue
-            elif denylist:
-                if action_name in denylist:
-                    continue
+            if filtered_by_allow_deny_list(allowlist, denylist, action_name):
+                continue
 
             action_cls = ext_mgr[action_name].plugin
 

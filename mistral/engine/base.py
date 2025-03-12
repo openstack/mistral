@@ -19,7 +19,7 @@ import abc
 import jsonschema
 
 from mistral import exceptions as exc
-from mistral import utils
+from mistral.utils import expr_utils
 
 from mistral_lib.utils import inspect_utils
 
@@ -167,7 +167,7 @@ class TaskPolicy(object, metaclass=abc.ABCMeta):
 
         :param task: Engine task. Instance of engine.tasks.Task.
         """
-        utils.evaluate_object_fields(self, task.get_expression_context())
+        expr_utils.evaluate_object_fields(self, task.get_expression_context())
 
         self._validate()
 
@@ -176,7 +176,7 @@ class TaskPolicy(object, metaclass=abc.ABCMeta):
 
         :param task: Engine task. Instance of engine.tasks.Task.
         """
-        utils.evaluate_object_fields(self, task.get_expression_context())
+        expr_utils.evaluate_object_fields(self, task.get_expression_context())
 
         self._validate()
 

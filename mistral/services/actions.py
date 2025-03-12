@@ -25,6 +25,8 @@ from stevedore import extension
 from mistral_lib import actions as ml_actions
 
 from mistral.actions import test
+from mistral.utils.filter_utils import filtered_by_allow_deny_list
+
 
 LOG = logging.getLogger(__name__)
 
@@ -44,12 +46,8 @@ def _get_registered_providers():
     denylist = cfg.CONF.action_providers.denylist
 
     for provider_name in mgr.names():
-        if allowlist:
-            if provider_name not in allowlist:
-                continue
-        elif denylist:
-            if provider_name in denylist:
-                continue
+        if filtered_by_allow_deny_list(allowlist, denylist, provider_name):
+            continue
 
         provider_cls = mgr[provider_name].plugin
 
