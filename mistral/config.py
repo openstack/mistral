@@ -893,6 +893,7 @@ _DEFAULT_LOG_LEVELS = [
 def list_opts():
     return [
         (ACTION_PROVIDERS_GROUP, action_providers_opts),
+        (LEGACY_ACTION_PROVIDER_GROUP, legacy_action_provider_opts),
         (API_GROUP, api_opts),
         (ENGINE_GROUP, engine_opts),
         (EXECUTOR_GROUP, executor_opts),
