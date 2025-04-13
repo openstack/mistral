@@ -1,0 +1,12 @@
+version: '2.0'
+
+http_action:
+  input:
+    - url
+  output:
+    result: <% task(task1).result %>
+  tasks:
+    task1:
+      action: std.http
+      input:
+        url: <% $.url %>

@@ -50,6 +50,16 @@ directory.
     cert_file = <path-to-certificate file>
     key_file = <path-to-key file>
 
+#. If you want to use headers propogation from execution's headers into actions
+   and notifications, provide following options in config file::
+
+    [headers_propagation]
+    enabled = True
+    template = Regex1, Regex2, Regex3
+
+   Be sure not to use `.*`, otherwise you can ruin your http actions
+   (for example, by propagation 'Content-Length' header).
+
 #. **If you don't use OpenStack or you want to disable authentication for the
    Mistral service**, provide ``auth_enable = False`` in the config file::
 

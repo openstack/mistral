@@ -1,3 +1,5 @@
+# Modified in 2025 by NetCracker Technology Corp.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
@@ -60,6 +62,8 @@ class MistralHTTPActionTest(base.BaseTest):
     def test_http_action(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         action = std.MistralHTTPAction(
             url=URL,
@@ -110,6 +114,8 @@ class MistralHTTPActionTest(base.BaseTest):
     def test_http_action_error_result(self, mocked_method):
         mocked_method.return_value = get_error_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         action = std.MistralHTTPAction(
             url=URL,

@@ -1,4 +1,5 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,7 +23,9 @@ from jwt import algorithms as jwt_algos
 from oslo_config import cfg
 from oslo_log import log as logging
 import pprint
+import re
 import requests
+import threading
 from urllib import parse
 
 from mistral._i18n import _
@@ -32,25 +35,51 @@ from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
 
+_PEM_CACHE = {}
+_PEM_CACHE_LOCK = threading.RLock()
+
 CONF = cfg.CONF
+TOKEN_HEADER_KEY = 'Authorization'
+AUTH_HEADER_PATTERN = re.compile(r'^\w+\s(.*)$')
+
+
+def extract_token_from_header(headers):
+    header_with_token = headers.get(TOKEN_HEADER_KEY)
+
+    if not header_with_token:
+        token = headers.get('X-Auth-Token')
+
+        if token:
+            return token
+
+        raise exc.UnauthorizedException(
+            message='There is no token in headers(X-Auth-Token,Authorization)')
+
+    header_pattern_match = AUTH_HEADER_PATTERN.match(header_with_token)
+    if header_pattern_match is None:
+        raise exc.UnauthorizedException('Does not match pattern ' +
+                                        AUTH_HEADER_PATTERN.pattern)
+
+    groups = header_pattern_match.groups()
+
+    if len(groups) != 1:
+        raise exc.UnauthorizedException(
+            'Not found the token in the header. '
+            'Authorization header: {}'.format(header_with_token)
+        )
+
+    return groups[0]
 
 
 class KeycloakAuthHandler(auth.AuthHandler):
     def authenticate(self, req):
-        if 'X-Auth-Token' not in req.headers:
-            msg = _("Auth token must be provided in 'X-Auth-Token' header.")
-
-            LOG.error(msg)
-
-            raise exc.UnauthorizedException(message=msg)
-
-        access_token = req.headers.get('X-Auth-Token')
-
+        headers = req.headers
+        access_token = extract_token_from_header(headers)
         try:
             decoded = jwt.decode(
                 access_token,
                 algorithms=['RS256'],
-                verify=False
+                options={"verify_signature": False}
             )
         except Exception as e:
             msg = _("Token can't be decoded because of wrong format %s")\
@@ -69,39 +98,25 @@ class KeycloakAuthHandler(auth.AuthHandler):
         roles = ','.join(decoded['realm_access']['roles']) \
             if 'realm_access' in decoded else ''
 
-        # NOTE(rakhmerov): There's a special endpoint for introspecting
-        # access tokens described in OpenID Connect specification but it's
-        # available in KeyCloak starting only with version 1.8.Final so we have
-        # to use user info endpoint which also takes exactly one parameter
-        # (access token) and replies with error if token is invalid.
-        user_info_endpoint_url = CONF.keycloak_oidc.user_info_endpoint_url
+        public_key = self.get_public_key(realm_name)
 
-        if user_info_endpoint_url.startswith(('http://', 'https://')):
-            self.send_request_to_auth_server(
-                url=user_info_endpoint_url,
-                access_token=access_token
+        keycloak_iss = None
+
+        if CONF.keycloak_oidc.keycloak_iss:
+            keycloak_iss = CONF.keycloak_oidc.keycloak_iss % realm_name
+
+        try:
+            jwt.decode(
+                access_token,
+                public_key,
+                audience=audience,
+                issuer=keycloak_iss,
+                algorithms=['RS256']
             )
-        else:
-            public_key = self.get_public_key(realm_name)
+        except Exception:
+            LOG.exception('The request access token is invalid.')
 
-            keycloak_iss = None
-
-            try:
-                if CONF.keycloak_oidc.keycloak_iss:
-                    keycloak_iss = CONF.keycloak_oidc.keycloak_iss % realm_name
-
-                jwt.decode(
-                    access_token,
-                    public_key,
-                    audience=audience,
-                    issuer=keycloak_iss,
-                    algorithms=['RS256'],
-                    verify=True
-                )
-            except Exception:
-                LOG.exception('The request access token is invalid.')
-
-                raise exc.UnauthorizedException()
+            raise exc.UnauthorizedException()
 
         req.headers["X-Identity-Status"] = "Confirmed"
         req.headers["X-Project-Id"] = realm_name
@@ -134,7 +149,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
     @cached(LRUCache(maxsize=32))
     def get_public_key(self, realm_name):
         keycloak_key_url = (
-            CONF.keycloak_oidc.auth_url +
+            cfg.CONF.oauth2.idp_url + "/auth" +
             CONF.keycloak_oidc.public_cert_url % realm_name
         )
 

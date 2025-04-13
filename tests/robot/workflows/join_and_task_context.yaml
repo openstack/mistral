@@ -1,0 +1,18 @@
+version: 2
+JoinAndTaskContextWorkflow:
+  output:
+    resultOfWorkflow: <% $.taskResult %>
+  tasks:
+    task1:
+      action: std.echo
+      input:
+        output: resultOfFirstTask
+      on-success:
+        - task2
+    task2:
+      action: std.echo
+      input:
+        output: resultOfSecondTask
+      join: all
+      publish:
+        taskResult: <% task().result %>

@@ -1,0 +1,10 @@
+version: '2.0'
+
+yaql:
+  output:
+    res: <% $.res %>
+  tasks:
+    task1:
+      action: std.echo output="abc ab abc"
+      publish:
+        res: <% task().result.replace({abc => xx, ab => yy}) %>

@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,14 +22,6 @@ import re
 import sys
 import threading
 
-from oslo_config import cfg
-from oslo_db import exception as db_exc
-from oslo_db import sqlalchemy as oslo_sqlalchemy
-from oslo_db.sqlalchemy import utils as db_utils
-from oslo_log import log as logging
-from oslo_utils import uuidutils  # noqa
-import sqlalchemy as sa
-
 from mistral import context
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
@@ -37,10 +30,19 @@ from mistral.db import utils as m_dbutils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
-from mistral.services import maintenance as m
 from mistral.services import security
 from mistral.workflow import states
 from mistral_lib import utils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
+from oslo_db import sqlalchemy as oslo_sqlalchemy
+from oslo_db.sqlalchemy import utils as db_utils
+from oslo_log import log as logging
+from oslo_utils import uuidutils  # noqa
+import sqlalchemy as sa
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy import text
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -551,6 +553,11 @@ def get_workflow_definitions(fields=None, session=None, **kwargs):
 
 
 @b.session_aware()
+def get_workflow_definitions_count(session=None, **kwargs):
+    return _get_count(model=models.WorkflowDefinition, **kwargs)
+
+
+@b.session_aware()
 def create_workflow_definition(values, session=None):
     wf_def = models.WorkflowDefinition()
 
@@ -1051,6 +1058,11 @@ def get_workflow_executions(session=None, **kwargs):
 
 
 @b.session_aware()
+def get_workflow_executions_count(session=None, **kwargs):
+    return _get_count(model=models.WorkflowExecution, **kwargs)
+
+
+@b.session_aware()
 def create_workflow_execution(values, session=None):
     wf_ex = models.WorkflowExecution()
 
@@ -1088,7 +1100,7 @@ def create_or_update_workflow_execution(id, values, session=None):
 
 
 @b.session_aware()
-def delete_workflow_execution(id, session=None):
+def delete_workflow_execution(id, strict=True, session=None):
     model = models.WorkflowExecution
     insecure = context.ctx().is_admin
     query = b.model_query(model) if insecure else _secure_query(model)
@@ -1098,10 +1110,12 @@ def delete_workflow_execution(id, session=None):
             models.WorkflowExecution.id == id
         ).delete()
 
-        if count == 0:
+        if count == 0 and strict:
             raise exc.DBEntityNotFoundError(
                 "WorkflowExecution not found [id=%s]" % id
             )
+
+        return count
     except Exception as e:
         if is_mysql_max_depth_error(e) or is_mariadb_max_depth_error(e):
             # https://bugs.launchpad.net/mistral/+bug/1832300
@@ -1159,11 +1173,62 @@ def update_workflow_execution_state(id, cur_state, state):
     return update_on_match(id, specimen, values={'state': state}, attempts=1)
 
 
+def update_workflow_executions_read_only_status(wf_exs):
+    for wf_ex in wf_exs:
+        specimen = models.WorkflowExecution(id=wf_ex.id, params=wf_ex.params)
+        wf_ex_new_params = wf_ex.params
+        wf_ex_new_params['read_only'] = True
+        wf_ex = update_on_match(wf_ex.id, specimen,
+                                {'params': wf_ex_new_params}, attempts=1)
+    return wf_exs[0]
+
+
+@b.session_aware()
+def get_tasks_statistics_of_execution(wf_ex_id, current_only=False,
+                                      session=None):
+    if not current_only:
+        related_wf_ex_ids_query = session.query(models.WorkflowExecution.id).\
+            filter(or_(
+                models.WorkflowExecution.id == wf_ex_id,
+                models.WorkflowExecution.root_execution_id == wf_ex_id
+            ))
+    else:
+        related_wf_ex_ids_query = session.query(models.WorkflowExecution.id).\
+            filter(
+                models.WorkflowExecution.id == wf_ex_id
+        )
+
+    total_tasks_query = session.query(func.count(models.TaskExecution.id))\
+        .filter(models.TaskExecution.workflow_execution_id.in_(
+            related_wf_ex_ids_query))
+    total_tasks_count = total_tasks_query.scalar()
+
+    task_count_by_state_query = (
+        session.query(
+            models.TaskExecution.state,
+            func.count(models.TaskExecution.id)
+        )
+        .filter(models.TaskExecution.workflow_execution_id.in_(
+            related_wf_ex_ids_query))
+        .group_by(models.TaskExecution.state)
+    )
+    task_count_by_state = task_count_by_state_query.all()
+
+    return total_tasks_count, task_count_by_state
+
+
 # Tasks executions.
 
 @b.session_aware()
 def get_task_execution(id, fields=(), session=None):
-    task_ex = _get_db_object_by_id(models.TaskExecution, id, columns=fields)
+    ctx = context.ctx()
+
+    task_ex = _get_db_object_by_id(
+        models.TaskExecution,
+        id,
+        insecure=ctx.is_admin,
+        columns=fields
+    )
 
     if not task_ex:
         raise exc.DBEntityNotFoundError(
@@ -1190,6 +1255,11 @@ def get_task_executions_count(session=None, **kwargs):
     query = query.filter_by(**kwargs)
 
     return query.count()
+
+
+@b.session_aware()
+def get_task_executions_count_with_filters(session=None, **kwargs):
+    return _get_count(model=models.TaskExecution, **kwargs)
 
 
 def _get_completed_task_executions_query(kwargs):
@@ -1238,6 +1308,38 @@ def get_completed_task_executions_as_batches(session=None, **kwargs):
         yield query.slice(idx, idx + batch_size).all()
 
         idx += batch_size
+
+
+def _get_incomplete_actions_query(kwargs):
+    query = b.model_query(models.ActionExecution)
+
+    query = query.filter_by(**kwargs)
+
+    query = query.filter(
+        models.ActionExecution.state.in_(
+            [states.IDLE,
+             states.RUNNING,
+             states.WAITING,
+             states.RUNNING_DELAYED,
+             states.PAUSED]
+        )
+    )
+
+    return query
+
+
+@b.session_aware()
+def get_incomplete_actions(session=None, **kwargs):
+    query = _get_incomplete_actions_query(kwargs)
+
+    return query.all()
+
+
+@b.session_aware()
+def get_incomplete_actions_count(session=None, **kwargs):
+    query = _get_incomplete_actions_query(kwargs)
+
+    return query.count()
 
 
 def _get_incomplete_task_executions_query(kwargs):
@@ -1327,6 +1429,85 @@ def update_task_execution_state(id, cur_state, state):
     return update_on_match(id, specimen, values={'state': state}, attempts=1)
 
 
+def get_sub_executions_query(id, workflow, accepted=True,
+                             states=(), or_=False, limit=None):
+    model = models.WorkflowExecution if workflow else models.ActionExecution
+    query = b.model_query(model).filter(model.task_execution_id == id)
+
+    if not or_:
+        query = query.filter(model.accepted == accepted)
+
+        if states:
+            query = query.filter(model.state.in_(states))
+    else:
+        query = query.filter(
+            sa.or_(
+                model.accepted == accepted,
+                model.state.in_(states)
+            )
+        )
+
+    if limit:
+        query = query.order_by(model.created_at.desc()).limit(limit)
+
+    return query
+
+
+@b.session_aware()
+def get_sub_executions_count(id, workflow, accepted=True,
+                             states=(), or_=False, session=None):
+    query = get_sub_executions_query(id, workflow, accepted, states, or_)
+
+    return query.count()
+
+
+@b.session_aware()
+def get_sub_executions(id, workflow, accepted=True,
+                       states=(), or_=False, limit=None, session=None):
+    query = get_sub_executions_query(id, workflow, accepted,
+                                     states, or_, limit)
+
+    res = query.all()
+
+    return res
+
+
+@b.session_aware()
+def get_accepted_executions_indexes(id, workflow, accepted, session=None):
+    table = 'workflow' if workflow else 'action'
+    table += '_executions_v2'
+    sql = text(
+        f"SELECT cast(runtime_context AS json)->'index', "
+        f"cast(runtime_context AS json)->'retry_no' from {table} "
+        f"WHERE accepted={accepted} AND "
+        "state IN ('SUCCESS', 'ERROR', 'CANCELLED','SKIPPED') "
+        f"AND task_execution_id='{id}'"
+    )
+
+    query = b.get_engine().execute(sql)
+    rows = query.fetchall()
+
+    return [(row[0], row[1]) for row in rows]
+
+
+@b.session_aware()
+def get_with_items_statistics_of_task(task_ex_id, type, session=None):
+    model = models.ActionExecution if type == 'ACTION' \
+        else models.WorkflowExecution
+    total_executions_query = session.query(func.count(model.id)).filter(
+        model.task_execution_id == task_ex_id
+    )
+    total_executions_count = total_executions_query.scalar()
+    executions_count_by_state_query = session.query(
+        model.state,
+        func.count(model.id)
+    ).filter(
+        model.task_execution_id == task_ex_id
+    ).group_by(model.state)
+    executions_count_by_state = executions_count_by_state_query.all()
+    return total_executions_count, executions_count_by_state
+
+
 # Delayed calls.
 
 @b.session_aware()
@@ -1363,6 +1544,18 @@ def get_delayed_calls_to_start(time, batch_size=None, session=None):
 
     query = query.filter(models.DelayedCall.execution_time < time)
     query = query.filter_by(processing=False)
+    query = query.order_by(models.DelayedCall.execution_time)
+    query = query.limit(batch_size)
+
+    return query.all()
+
+
+@b.session_aware()
+def get_unlocked_delayed_calls_to_start(time, batch_size=None, session=None):
+    query = b.model_query(models.DelayedCall)
+
+    query = query.with_for_update(skip_locked=True)
+    query = query.filter(models.DelayedCall.execution_time < time)
     query = query.order_by(models.DelayedCall.execution_time)
     query = query.limit(batch_size)
 
@@ -2153,6 +2346,7 @@ def update_maintenance_status(status, session=None):
 
 @b.session_aware()
 def fill_metrics_table(session=None):
+    from mistral.services import maintenance as m
     maintenance_entry = session.query(models.MistralMetrics).get(1)
     if not maintenance_entry:
         maintenance = models.MistralMetrics()
@@ -2174,3 +2368,136 @@ def get_overdue_calls(time, session=None):
     query = query.filter_by(processing=True)
 
     return query.all()
+
+
+# Monitoring
+@b.session_aware()
+def _get_execution_count_by_state(model, session=None):
+    return session.query(
+        model.state,
+        func.count(model.state)
+    ).group_by(model.state).all()
+
+
+def get_action_execution_count_by_state():
+    return _get_execution_count_by_state(models.ActionExecution)
+
+
+def get_task_execution_count_by_state():
+    return _get_execution_count_by_state(models.TaskExecution)
+
+
+def get_workflow_execution_count_by_state():
+    return _get_execution_count_by_state(models.WorkflowExecution)
+
+
+@b.session_aware()
+def get_delayed_calls_count_by_target(session=None):
+    return session.query(
+        models.DelayedCall.target_method_name,
+        func.count(models.DelayedCall.target_method_name)
+    ).group_by(models.DelayedCall.target_method_name).all()
+
+
+@b.session_aware()
+def get_calls_for_recovery(timeout, session=None):
+    query = b.model_query(models.DelayedCall)
+
+    query = query.filter(
+        models.DelayedCall.execution_time + timeout < utils.utc_now_sec()
+    )
+    query = query.filter(
+        models.DelayedCall.updated_at + timeout < utils.utc_now_sec()
+    )
+    query = query.filter_by(processing=True)
+    query = query.filter(
+        models.DelayedCall.target_method_name.in_(
+            ['mistral.engine.task_handler._refresh_task_state',
+             'mistral.engine.task_handler._scheduled_on_action_complete',
+             'mistral.engine.task_handler._scheduled_on_action_update',
+             'mistral.engine.workflow_handler._check_and_complete',
+             'mistral.engine.workflow_handler._start_workflow',
+             'mistral.engine.policies._continue_task',
+             'mistral.engine.policies._complete_task',
+             'mistral.engine.policies._fail_task_if_incomplete',
+             'mistral.services.maintenance._pause_executions',
+             'mistral.services.maintenance._resume_executions',
+             'mistral.engine.task_handler._start_task']
+        )
+    )
+
+    return query.all()
+
+
+@b.session_aware()
+def get_expired_idle_task_executions(timeout, session=None):
+    query = b.model_query(models.TaskExecution)
+
+    query = query.filter(models.TaskExecution.state == states.IDLE)
+
+    query = query.filter(
+        models.TaskExecution.created_at + timeout < utils.utc_now_sec()
+    )
+
+    return query.all()
+
+
+@b.session_aware()
+def get_expired_waiting_tasks(timeout, session=None):
+    query = b.model_query(models.TaskExecution)
+
+    query = query.filter(models.TaskExecution.state == states.WAITING)
+
+    query = query.filter(
+        models.TaskExecution.updated_at + timeout < utils.utc_now_sec()
+    )
+
+    return query.all()
+
+
+@b.session_aware()
+def get_expired_subwf_tasks(timeout, session=None):
+    model = models.TaskExecution
+    query = b.model_query(model, [model.id])
+    query = query.join(
+        models.WorkflowExecution,
+        models.WorkflowExecution.task_execution_id == models.TaskExecution.id,
+        isouter=True
+    ).filter(
+        models.TaskExecution.state == states.RUNNING
+    ).filter(
+        models.TaskExecution.type == 'WORKFLOW'
+    ).filter(
+        models.TaskExecution.updated_at + timeout < utils.utc_now_sec()
+    ).filter(
+        models.WorkflowExecution.id is None
+    )
+
+    return [i[0] for i in query.all()]
+
+
+@b.session_aware()
+def get_stucked_subwf_tasks(timeout, session=None):
+    model = models.TaskExecution
+    query = b.model_query(model, [model.id])
+    query = query.join(
+        models.WorkflowExecution,
+        models.WorkflowExecution.task_execution_id == models.TaskExecution.id,
+        isouter=True
+    ).filter(
+        models.TaskExecution.state == states.RUNNING
+    ).filter(
+        models.TaskExecution.type == 'WORKFLOW'
+    ).filter(
+        models.TaskExecution.updated_at + timeout < utils.utc_now_sec()
+    ).filter(
+        models.WorkflowExecution.state == states.SUCCESS or
+        models.WorkflowExecution.state == states.ERROR
+    )
+
+    return [i[0] for i in query.all()]
+
+
+@b.session_aware()
+def delete_named_locks(session=None, **kwargs):
+    return _delete_all(models.NamedLock, **kwargs)

@@ -1,4 +1,5 @@
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,9 +16,11 @@
 from oslo_log import log as logging
 
 from mistral import config as cfg
+from mistral.db.v2 import api as db_api
 from mistral.notifiers import default_notifier as notif
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
+from mistral.services.kafka_notifications import init_consume_loop
 from mistral.utils import profiler as profiler_utils
 from mistral_lib import utils
 
@@ -41,6 +44,8 @@ class NotificationServer(service_base.MistralService):
         if self._setup_profiler:
             profiler_utils.setup('mistral-notifier', cfg.CONF.notifier.host)
 
+        db_api.setup_db()
+
         # Initialize and start RPC server.
 
         self._rpc_server = rpc.get_rpc_server_driver()(cfg.CONF.notifier)
@@ -49,6 +54,9 @@ class NotificationServer(service_base.MistralService):
         self._rpc_server.run(executor='threading')
 
         self._notify_started('Notification server started.')
+
+        if cfg.CONF.kafka_notifications.enabled:
+            init_consume_loop(self.notifier)
 
     def stop(self, graceful=False):
         super(NotificationServer, self).stop(graceful)

@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2014 - StackStorm, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -40,6 +41,12 @@ def _register_preinstalled_adhoc_actions():
         )
 
 
+def _clear_system_action_db():
+    db_api.delete_action_definitions(is_system=True)
+
+
 def sync_db():
     with db_api.transaction():
+        # update from 9 mistral
+        _clear_system_action_db()
         _register_preinstalled_adhoc_actions()

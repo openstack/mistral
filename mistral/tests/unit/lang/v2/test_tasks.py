@@ -1,6 +1,7 @@
 # Copyright 2015 - Huawei Technologies Co. Ltd
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -701,7 +702,28 @@ class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
                 expect_error=expect_error
             )
 
-    def test_safe_rerurn(self):
+    def test_safe_input(self):
+        tests = [
+            ({'safe-input': True}, False),
+            ({'safe-input': False}, False),
+            ({'safe-input': '<% false %>'}, False),
+            ({'safe-input': '<% true %>'}, False),
+            ({'safe-input': '<% * %>'}, True),
+            ({'safe-input': None}, True)
+        ]
+
+        for default, expect_error in tests:
+            overlay = {'test': {'task-defaults': {}}}
+
+            utils.merge_dicts(overlay['test']['task-defaults'], default)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
+
+    def test_safe_rerun(self):
         tests = [
             ({'safe-rerun': True}, False),
             ({'safe-rerun': False}, False),

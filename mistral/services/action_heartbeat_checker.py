@@ -1,4 +1,5 @@
 # Copyright 2018 Nokia Networks.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -60,19 +61,31 @@ def handle_expired_actions():
             )
 
             for action_ex in action_exs:
-                task_ex = db_api.get_task_execution(
-                    action_ex.task_execution_id
+                # This is an administrative thread so we need to set an admin
+                # security context.
+                auth_ctx.set_ctx(
+                    auth_ctx.MistralContext(
+                        user=None,
+                        project_id=None,
+                        auth_token=None,
+                        is_admin=True
+                    )
                 )
-                wf_ex = db_api.get_workflow_execution(
-                    task_ex.workflow_execution_id,
-                    fields=(db_models.WorkflowExecution.id,
-                            db_models.WorkflowExecution.root_execution_id)
-                )
+                root_execution_id = None
+                if action_ex.task_execution_id:
+                    task_ex = db_api.get_task_execution(
+                        action_ex.task_execution_id
+                    )
+                    wf_ex = db_api.get_workflow_execution(
+                        task_ex.workflow_execution_id,
+                        fields=(db_models.WorkflowExecution.id,
+                                db_models.WorkflowExecution.root_execution_id)
+                    )
 
-                if wf_ex.root_execution_id:
-                    root_execution_id = wf_ex.root_execution_id
-                else:
-                    root_execution_id = wf_ex.id
+                    if wf_ex.root_execution_id:
+                        root_execution_id = wf_ex.root_execution_id
+                    else:
+                        root_execution_id = wf_ex.id
 
                 result = mistral_lib.Result(
                     error="Heartbeat wasn't received."

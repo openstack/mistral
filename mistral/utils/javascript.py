@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2020 - Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,6 +15,7 @@
 #    limitations under the License.
 
 import abc
+import json
 
 from mistral import config as cfg
 from mistral import exceptions as exc
@@ -90,9 +92,32 @@ class PyMiniRacerEvaluator(JSEvaluator):
 
         js_ctx = _PY_MINI_RACER.MiniRacer()
 
-        return js_ctx.eval(
-            '$ = {}; {}'.format(utils.to_json_str(ctx), script)
+        wrapper_script = '''
+            var original_result = (function() {{
+                {}
+                return f();
+            }})();
+
+            var isPrimitive = (val) => Object(val) !== val;
+            var isString = (val) => typeof val === "string";
+
+            var result = isPrimitive(original_result) ?
+             (isString(original_result) ?
+             '\"' + original_result + '\"' : original_result)
+             : JSON.stringify(original_result);
+            result;
+        '''.format(script)
+        result = js_ctx.eval(
+            '$ = {}; {}'.format(utils.to_json_str(ctx), wrapper_script)
         )
+
+        if isinstance(result, str):
+            try:
+                return json.loads(result)
+            except json.JSONDecodeError:
+                return result
+        else:
+            return result
 
 
 _mgr = extension.ExtensionManager(

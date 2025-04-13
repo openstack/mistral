@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -208,6 +209,15 @@ class EngineTestCase(base.DbTestCase):
                            timeout=DEFAULT_TIMEOUT):
         self._await(
             lambda: self.is_action_in_state(ex_id, state),
+            delay,
+            timeout
+        )
+
+    def await_action_completed_state(self, ex_id, delay=DEFAULT_DELAY,
+                                     timeout=DEFAULT_TIMEOUT):
+        self._await(
+            lambda: states.is_completed(
+                db_api.get_action_execution(ex_id).state),
             delay,
             timeout
         )

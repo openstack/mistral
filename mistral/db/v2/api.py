@@ -1,6 +1,7 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -148,6 +149,10 @@ def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
         fields=fields,
         **kwargs
     )
+
+
+def get_workflow_definitions_count(**kwargs):
+    return IMPL.get_workflow_definitions_count(**kwargs)
 
 
 def create_workflow_definition(values):
@@ -364,6 +369,10 @@ def get_workflow_executions(limit=None, marker=None, sort_keys=None,
     )
 
 
+def get_workflow_executions_count(**kwargs):
+    return IMPL.get_workflow_executions_count(**kwargs)
+
+
 def create_workflow_execution(values):
     return IMPL.create_workflow_execution(values)
 
@@ -376,8 +385,8 @@ def create_or_update_workflow_execution(id, values):
     return IMPL.create_or_update_workflow_execution(id, values)
 
 
-def delete_workflow_execution(id):
-    return IMPL.delete_workflow_execution(id)
+def delete_workflow_execution(id, strict=True):
+    return IMPL.delete_workflow_execution(id, strict)
 
 
 def delete_workflow_executions(**kwargs):
@@ -388,7 +397,15 @@ def update_workflow_execution_state(**kwargs):
     return IMPL.update_workflow_execution_state(**kwargs)
 
 
+def update_workflow_executions_read_only_status(**kwargs):
+    return IMPL.update_workflow_executions_read_only_status(**kwargs)
+
+
+def get_tasks_statistics_of_execution(wf_ex_id, current_only):
+    return IMPL.get_tasks_statistics_of_execution(wf_ex_id, current_only)
+
 # Tasks executions.
+
 
 def get_task_execution(id, fields=()):
     return IMPL.get_task_execution(id, fields=fields)
@@ -414,12 +431,24 @@ def get_task_executions_count(**kwargs):
     return IMPL.get_task_executions_count(**kwargs)
 
 
+def get_task_executions_count_with_filters(**kwargs):
+    return IMPL.get_task_executions_count_with_filters(**kwargs)
+
+
 def get_completed_task_executions(**kwargs):
     return IMPL.get_completed_task_executions(**kwargs)
 
 
 def get_completed_task_executions_as_batches(**kwargs):
     return IMPL.get_completed_task_executions_as_batches(**kwargs)
+
+
+def get_incomplete_actions(**kwargs):
+    return IMPL.get_incomplete_actions(**kwargs)
+
+
+def get_incomplete_actions_count(**kwargs):
+    return IMPL.get_incomplete_actions_count(**kwargs)
 
 
 def get_incomplete_task_executions(**kwargs):
@@ -452,6 +481,26 @@ def delete_task_executions(**kwargs):
 
 def update_task_execution_state(**kwargs):
     return IMPL.update_task_execution_state(**kwargs)
+
+
+def get_sub_executions_count(id, workflow, accepted=True,
+                             states=(), or_=False):
+    return IMPL.get_sub_executions_count(id, workflow, accepted,
+                                         states, or_)
+
+
+def get_sub_executions(id, workflow, accepted=True,
+                       states=(), or_=False, limit=None):
+    return IMPL.get_sub_executions(id, workflow, accepted,
+                                   states, or_, limit)
+
+
+def get_accepted_executions_indexes(id, workflow, accepted):
+    return IMPL.get_accepted_executions_indexes(id, workflow, accepted)
+
+
+def get_with_items_statistics_of_task(task_ex_id, type):
+    return IMPL.get_with_items_statistics_of_task(task_ex_id, type)
 
 
 # Delayed calls.
@@ -734,3 +783,46 @@ def get_maintenance_status():
 
 def update_maintenance_status(status):
     return IMPL.update_maintenance_status(status)
+
+
+# Monitoring
+
+
+def get_action_execution_count_by_state():
+    return IMPL.get_action_execution_count_by_state()
+
+
+def get_task_execution_count_by_state():
+    return IMPL.get_task_execution_count_by_state()
+
+
+def get_workflow_execution_count_by_state():
+    return IMPL.get_workflow_execution_count_by_state()
+
+
+def get_delayed_calls_count_by_target():
+    return IMPL.get_delayed_calls_count_by_target()
+
+
+def get_calls_for_recovery(timeout):
+    return IMPL.get_calls_for_recovery(timeout)
+
+
+def get_expired_idle_task_executions(timeout):
+    return IMPL.get_expired_idle_task_executions(timeout)
+
+
+def delete_named_locks(**kwargs):
+    return IMPL.delete_named_locks(**kwargs)
+
+
+def get_stucked_subwf_tasks(timeout):
+    return IMPL.get_stucked_subwf_tasks(timeout)
+
+
+def get_expired_subwf_tasks(timeout):
+    return IMPL.get_expired_subwf_tasks(timeout)
+
+
+def get_expired_waiting_tasks(timeout):
+    return IMPL.get_expired_waiting_tasks(timeout)

@@ -1,4 +1,5 @@
 # Copyright 2015 - Alcatel-lucent, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -105,7 +106,19 @@ def _delete(executions):
                 execution.id,
                 execution.updated_at
             )
-            db_api.delete_workflow_execution(execution.id)
+
+            cnt = db_api.delete_workflow_execution(execution.id, strict=False)
+
+            if cnt > 0:
+                LOG.debug(
+                    'Execution %s was successfully deleted.',
+                    execution.id
+                )
+            else:
+                LOG.debug(
+                    'Execution %s was already deleted by another engine.',
+                    execution.id
+                )
         except Exception as e:
             msg = ("Failed to delete [execution_id=%s]\n %s"
                    % (execution.id, traceback.format_exc(e)))

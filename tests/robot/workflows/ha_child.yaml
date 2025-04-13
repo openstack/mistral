@@ -1,0 +1,31 @@
+version: 2
+ha_child:
+  input:
+    - echo_url
+    - async_url
+  output:
+    task1: <% $.task1 %>
+    task2: <% $.task2 %>
+  tasks:
+    task1:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task2
+      publish:
+        task1: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task2:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      publish:
+        task2: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0

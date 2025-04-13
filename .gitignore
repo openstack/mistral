@@ -46,6 +46,7 @@ ChangeLog
 .DS_Store
 etc/*.conf
 etc/mistral.conf.sample
+.vscode
 
 #Linux swap files range from .saa to .swp
 *.s[a-w][a-p]

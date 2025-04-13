@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2014 - StackStorm, Inc.
 # Copyright 2022 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ import time
 from urllib import parse
 
 from oslo_log import log as logging
+import random
 import requests
 
 from mistral import exceptions as exc
@@ -136,6 +138,45 @@ class FailAction(actions.Action):
         raise exc.ActionException('Fail action expected exception.')
 
 
+class RandomFailAction(actions.Action):
+    """'Always fail' action.
+
+    If you pass the `error_data` parameter, this action will be failed and
+    return this data as error data. Otherwise, the action just throws an
+    instance of ActionException.
+
+    This behavior is useful in a number of cases, especially if we need to
+    test a scenario where some of workflow tasks fail.
+
+    :param error_data: Action will be failed with this data
+    """
+
+    def __init__(self, prob, output, error_data=None):
+        super(RandomFailAction, self).__init__()
+        self.prob = prob
+        self.output = output
+        self.error_data = error_data
+
+    def run(self, context):
+        LOG.info('Running random fail action.')
+
+        r = random.random()
+
+        if r < self.prob:
+            return self.output
+
+        if self.error_data:
+            return actions.Result(error=self.error_data)
+
+        raise exc.ActionException('Fail action expected exception.')
+
+    def test(self, context):
+        if self.error_data:
+            return actions.Result(error=self.error_data)
+
+        raise exc.ActionException('Fail action expected exception.')
+
+
 class HTTPAction(actions.Action):
     """HTTP action.
 
@@ -232,6 +273,12 @@ class HTTPAction(actions.Action):
                 action_verify = self.verify
             else:
                 action_verify = None
+
+            if context.execution.workflow_propagated_headers:
+                if not self.headers:
+                    self.headers = {}
+                self.headers.update(
+                    context.execution.workflow_propagated_headers)
 
             resp = requests.request(
                 self.method,
@@ -543,6 +590,8 @@ class SleepAction(actions.Action):
     def __init__(self, seconds=1):
         super(SleepAction, self).__init__()
 
+        self.interrupted = False
+
         try:
             self._seconds = int(seconds)
             self._seconds = 0 if self._seconds < 0 else self._seconds
@@ -551,9 +600,12 @@ class SleepAction(actions.Action):
 
     def run(self, context):
         LOG.info('Running sleep action [seconds=%s]', self._seconds)
-
-        time.sleep(self._seconds)
-
+        n = 0
+        while n < self._seconds:
+            time.sleep(1)
+            n = n + 1
+            if self.interrupted:
+                raise exc.ActionException('Fail action interrupted exception.')
         return None
 
     def test(self, context):

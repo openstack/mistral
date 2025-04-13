@@ -5,7 +5,7 @@ Team and repository tags
 .. image:: https://governance.openstack.org/tc/badges/mistral.svg
     :target: https://governance.openstack.org/tc/reference/tags/index.html
 
-Mistral
+Mistral 
 =======
 
 Workflow Service integrated with OpenStack. This project aims to provide a

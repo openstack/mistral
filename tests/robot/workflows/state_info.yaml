@@ -1,0 +1,12 @@
+version: "2.0"
+state_info:
+  type: direct
+  tasks:
+    main_task:
+      action: std.test_dict
+      input:
+        size: 1
+        key_prefix: "abc"
+        val: "pqr"
+      on-success:
+        - fail msg="<% task().result %>"

@@ -1,0 +1,3 @@
+mistral-lib
+oslo.log
+requests

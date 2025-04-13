@@ -1,6 +1,7 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.

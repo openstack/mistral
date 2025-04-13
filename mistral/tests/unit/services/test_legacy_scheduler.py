@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@ from mistral import context as auth_context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.scheduler import base as sched_base
-from mistral.services import legacy_scheduler
+from mistral.scheduler import legacy_scheduler
 from mistral.tests.unit import base
 from mistral_lib import actions as ml_actions
 

@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -198,15 +199,23 @@ def get_task_execution_result(task_ex):
         if hasattr(ex, 'output') and ex.accepted
     ]
 
-    # If it's a 'with-items' task we should always return an array.
-    if spec_parser.get_task_spec(task_ex.spec).get_with_items():
-        return results
+    task_spec = spec_parser.get_task_spec(task_ex.spec)
+
+    if task_spec.get_with_items():
+        # TODO(rakhmerov): Smell: violation of 'with-items' encapsulation.
+        with_items_ctx = task_ex.runtime_context.get('with_items')
+
+        if with_items_ctx and with_items_ctx.get('count') > 0:
+            return results
+        else:
+            return []
 
     return results[0] if len(results) == 1 else results
 
 
-def publish_variables(task_ex, task_spec):
-    if task_ex.state not in [states.SUCCESS, states.ERROR, states.SKIPPED]:
+def publish_variables(task_ex, task_spec, dry_run=False):
+    if task_ex.state not in [states.SUCCESS, states.ERROR, states.SKIPPED]\
+            and not dry_run:
         return
 
     wf_ex = task_ex.workflow_execution
@@ -225,8 +234,10 @@ def publish_variables(task_ex, task_spec):
             'publishing: %s',
             task_ex.name
         )
-
-    publish_spec = task_spec.get_publish(task_ex.state)
+    if dry_run:
+        publish_spec = task_spec.get_publish(states.SUCCESS)
+    else:
+        publish_spec = task_spec.get_publish(task_ex.state)
 
     if not publish_spec:
         return
@@ -239,10 +250,13 @@ def publish_variables(task_ex, task_spec):
     # Publish global variables.
     global_vars = publish_spec.get_global()
 
-    utils.merge_dicts(
-        task_ex.workflow_execution.context,
-        expr.evaluate_recursively(global_vars, expr_ctx)
-    )
+    global_publish = expr.evaluate_recursively(global_vars, expr_ctx)
+
+    if not dry_run:
+        utils.merge_dicts(
+            task_ex.workflow_execution.context,
+            global_publish
+        )
 
     # TODO(rakhmerov):
     # 1. Publish atomic variables.

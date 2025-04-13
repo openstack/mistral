@@ -1,4 +1,5 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -214,6 +215,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             }
         }
 
+        task_execution_result.return_value = 'task_execution_result'
         result = self._evaluator.evaluate('_|task("some")', ctx)
 
         self.assertEqual({
@@ -243,6 +245,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             }
         }
 
+        task_execution_result.return_value = 'task_execution_result'
         result = self._evaluator.evaluate('_|tasks()', ctx)
 
         self.assertEqual([{
@@ -269,7 +272,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
                 'name': 'some'
             }
         }
-
+        task_execution_result.return_value = 'task_execution_result'
         result = self._evaluator.evaluate('_|task("some")', ctx)
 
         self.assertEqual({
@@ -296,6 +299,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             }
         }
 
+        task_execution_result.return_value = 'task_execution_result'
         result = self._evaluator.evaluate('task("some")', ctx)
 
         self.assertEqual({
@@ -313,9 +317,11 @@ class JinjaEvaluatorTest(base.DbTestCase):
         }, result)
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
-    def test_filter_execution(self, workflow_execution):
+    @mock.patch.object(db_api, 'refresh')
+    def test_filter_execution(self, workflow_execution, refresh_execution):
         wf_ex = mock.MagicMock(return_value={})
         workflow_execution.return_value = wf_ex
+        refresh_execution.return_value = wf_ex
         ctx = {
             '__execution': {
                 'id': 'some'
@@ -452,9 +458,12 @@ class JinjaEvaluatorTest(base.DbTestCase):
             self.assertEqual([], result)
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
-    def test_function_execution(self, workflow_execution):
+    @mock.patch.object(db_api, 'refresh')
+    def test_function_execution(self, workflow_execution, refresh_execution):
+
         wf_ex = mock.MagicMock(return_value={})
         workflow_execution.return_value = wf_ex
+        refresh_execution.return_value = wf_ex
         ctx = {
             '__execution': {
                 'id': 'some'

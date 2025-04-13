@@ -1,0 +1,13 @@
+version: 2
+IdempotentCreationWorkflow:
+  output:
+    result_wf: <% $.result_task %>
+  input:
+    - result
+  tasks:
+    test1.json:
+      action: std.echo
+      input:
+        output: <% $.result %>
+      publish:
+        result_task: <% task().result %>

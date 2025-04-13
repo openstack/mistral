@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -524,11 +525,10 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         state_info = task_ex.state_info
 
-        print(state_info)
-
         self.assertIsNotNone(state_info)
         self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('wf='))
+        self.assertEqual(state_info.find('error='), 36)
+        self.assertIn('Unknown function "invalid_yaql_function"', state_info)
 
     def test_error_message_format_complete_task(self):
         wf_text = """
@@ -749,7 +749,9 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                yaql_expression.get_yaql_context({})  # Successful run
+                yaql_expression.get_yaql_context({}),  # Successful run
+                yaql_expression.get_yaql_context({}),  # Successful run
+
             ]
         )
     )
@@ -789,7 +791,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                jinja_expression.get_jinja_context({})  # Successful run
+                jinja_expression.get_jinja_context({}),  # Successful run
+                jinja_expression.get_jinja_context({})
             ]
         )
     )

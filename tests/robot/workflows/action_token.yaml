@@ -1,0 +1,9 @@
+version: '2.0'
+action_token:
+  output:
+    access_token: <% $.res['access_token'] %>
+  tasks:
+    task1:
+      action: tests.auth
+      publish:
+        res: <% task().result %>

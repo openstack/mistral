@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -11,7 +12,9 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import itertools
 
+import eventlet
 from unittest import mock
 
 from oslo_config import cfg
@@ -447,8 +450,8 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertDictEqual(
-            {'wait_before_policy': {'skip': True}},
-            task_ex.runtime_context
+            {'skip': True},
+            task_ex.runtime_context['wait_before_policy']
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -563,7 +566,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
         self.await_task_success(task_ex.id)
@@ -580,7 +585,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         try:
             self.await_task_delayed(task_ex.id, delay=0.5)
@@ -614,7 +621,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
         self.await_task_success(task_ex.id)
@@ -634,7 +643,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         try:
             self.await_task_delayed(task_ex.id, delay=0.5)
@@ -667,7 +678,9 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
     @mock.patch.object(
         requests,
@@ -686,7 +699,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
         self.await_task_error(task_ex.id)
@@ -720,7 +735,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         try:
             self.await_task_delayed(task_ex.id, delay=0.5)
@@ -776,7 +793,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_task_delayed(task_ex.id, delay=0.5)
         self.await_task_error(task_ex.id)
@@ -813,7 +832,9 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         try:
             self.await_task_delayed(task_ex.id, delay=0.5)
@@ -850,7 +871,9 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_workflow_error(wf_ex.id)
 
@@ -867,7 +890,9 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual(
+            {'recovery': {'first_run': True, 'rerun': False, 'reset': False}},
+            task_ex.runtime_context)
 
         self.await_workflow_error(wf_ex.id)
 
@@ -1080,6 +1105,131 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(
             {},
             task_ex.runtime_context['retry_task_policy']
+        )
+
+    def test_fail_on_true_condition(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output=4
+                fail-on: <% task(task1).result <= 4 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.ERROR, "Check task state")
+
+    def test_fail_on_false_condition(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output=4
+                fail-on: <% task(task1).result != 4 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[1, 2, 3, 4])
+    )
+    def test_fail_on_with_retry(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output="mocked"
+                fail-on: <% task(task1).result <= 2 %>
+                retry:
+                  count: 3
+                  delay: 0
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+        self.assertEqual(
+            2,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[1, 2, 3, 4])
+    )
+    def test_fail_on_with_retry_and_with_items(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                with-items: x in [1, 2]
+                action: std.echo output="mocked"
+                fail-on: <% not task(task1).result.contains(4) %>
+                retry:
+                  count: 3
+                  delay: 0
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+        self.assertEqual(
+            1,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_policy_one_line(self):
@@ -1296,6 +1446,49 @@ class PoliciesTest(base.EngineTestCase):
             state=states.ERROR
         )
 
+    @mock.patch.object(std_actions.EchoAction, 'run')
+    def test_timeout_should_force_fail_task(self, mock_action):
+        counter = itertools.count()
+
+        def raise_error_first_three_times(*args, **kwargs):
+            eventlet.sleep(0.7)
+
+            if next(counter) < 3:
+                raise Exception("expect result")
+            else:
+                return "This should not happen"
+
+        mock_action.side_effect = raise_error_first_three_times
+
+        wf_text = """---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              action: std.echo output='mock'
+              timeout: 2
+              retry:
+                count: 2
+                delay: 0
+              publish-on-error:
+                res: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertDictEqual(
+            {'retry_no': 2},
+            task_ex.runtime_context['retry_task_policy']
+        )
+
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
@@ -1436,6 +1629,43 @@ class PoliciesTest(base.EngineTestCase):
         self._assert_single_item(task_execs, name='task1')
 
         self.await_workflow_success(wf_ex.id)
+
+    def test_concurrency_with_timeout(self):
+        wf = """---
+        version: '2.0'
+        wf:
+          tasks:
+            task1:
+              action: std.sleep seconds="2"
+              with-items: x in <% range(3).toList() %>
+              concurrency: 1
+              timeout: 3
+        """
+        wf_service.create_workflows(wf)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+            actions = task_ex.executions
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertEqual(2, len(actions))
+
+        self.await_action_completed_state(actions[0].id)
+        self.await_action_completed_state(actions[1].id)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+            actions = task_ex.executions
+
+        self.assertEqual(2, len(actions))
+        self._assert_single_item(actions, state=states.SUCCESS)
+        self._assert_single_item(actions, state=states.ERROR)
 
     def test_timeout_policy_zero_seconds(self):
         wb = """---
@@ -1937,58 +2167,6 @@ class PoliciesTest(base.EngineTestCase):
             fail_task_ex.runtime_context["retry_task_policy"]
         )
 
-    def test_fail_on_true_condition(self):
-        retry_wb = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          wf1:
-            tasks:
-              task1:
-                action: std.echo output=4
-                fail-on: <% task(task1).result <= 4 %>
-        """
-        wb_service.create_workbook_v2(retry_wb)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(task_ex.state, states.ERROR, "Check task state")
-
-    def test_fail_on_false_condition(self):
-        retry_wb = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          wf1:
-            tasks:
-              task1:
-                action: std.echo output=4
-                fail-on: <% task(task1).result != 4 %>
-        """
-        wb_service.create_workbook_v2(retry_wb)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
-
     def test_fail_on_true_condition_task_defaults(self):
         retry_wb = """---
         version: '2.0'
@@ -2015,80 +2193,3 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(task_ex.state, states.ERROR, "Check task state")
-
-    @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.Mock(side_effect=[1, 2, 3, 4])
-    )
-    def test_fail_on_with_retry(self):
-        retry_wb = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          wf1:
-            tasks:
-              task1:
-                action: std.echo output="mocked"
-                fail-on: <% task(task1).result <= 2 %>
-                retry:
-                  count: 3
-                  delay: 0
-        """
-        wb_service.create_workbook_v2(retry_wb)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
-        self.assertEqual(
-            2,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
-        )
-
-    @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.Mock(side_effect=[1, 2, 3, 4])
-    )
-    def test_fail_on_with_retry_and_with_items(self):
-        retry_wb = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          wf1:
-            tasks:
-              task1:
-                with-items: x in [1, 2]
-                action: std.echo output="mocked"
-                fail-on: <% not task(task1).result.contains(4) %>
-                retry:
-                  count: 3
-                  delay: 0
-        """
-        wb_service.create_workbook_v2(retry_wb)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
-        self.assertEqual(
-            1,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
-        )

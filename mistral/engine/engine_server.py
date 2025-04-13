@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -167,6 +168,39 @@ class EngineServer(service_base.MistralService):
             **params
         )
 
+    def plan_workflow(self, rpc_ctx, wf_identifier, wf_namespace,
+                      wf_ex_id, wf_input, description, params):
+        """Receives calls over RPC to plan workflows on engine.
+
+        :param rpc_ctx: RPC request context.
+        :param wf_identifier: Workflow definition identifier.
+        :param wf_namespace: Workflow namespace.
+        :param wf_input: Workflow input.
+        :param wf_ex_id: Workflow execution id. If passed, it will be set
+            in the new execution object.
+        :param description: Workflow execution description.
+        :param params: Additional workflow type specific parameters.
+        :return: Workflow execution.
+        """
+
+        LOG.info(
+            "Received RPC request 'plan_workflow'[workflow_identifier=%s, "
+            "workflow_input=%s, description=%s, params=%s]",
+            wf_identifier,
+            utils.cut(wf_input),
+            description,
+            params
+        )
+
+        return self.engine.plan_workflow(
+            wf_identifier,
+            wf_namespace,
+            wf_ex_id,
+            wf_input,
+            description,
+            **params
+        )
+
     def start_task(self, rpc_ctx, task_ex_id, first_run, waiting,
                    triggered_by, rerun, **params):
         """Receives calls over RPC to start tasks on engine.
@@ -300,7 +334,24 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.resume_workflow(wf_ex_id, env)
 
-    def stop_workflow(self, rpc_ctx, wf_ex_id, state, message=None):
+    def update_wf_ex_to_read_only(self, rpc_ctx, wf_ex_id):
+        """Receives calls over RPC to resume workflows on engine.
+
+        :param rpc_ctx: RPC request context.
+        :param wf_ex_id: Workflow execution id.
+        :return: Workflow execution.
+        """
+        LOG.info(
+            "Received RPC request "
+            "'update_wf_ex_to_read_only'[wf_ex_id=%s]",
+            wf_ex_id
+        )
+
+        return self.engine.update_wf_ex_to_read_only(wf_ex_id)
+
+    def stop_workflow(self, rpc_ctx, wf_ex_id, state,
+                      message=None,
+                      sync=True, force=False):
         """Receives calls over RPC to stop workflows on engine.
 
         Sets execution state to SUCCESS or ERROR. No more tasks will be
@@ -312,18 +363,23 @@ class EngineServer(service_base.MistralService):
         :param state: State assigned to the workflow. Permitted states are
             SUCCESS or ERROR.
         :param message: Optional information string.
+        :param sync: Optional mode to update workflow state
+        :param force: Optional flag to set if workflow state
+        should be updated immidiately or not
 
         :return: Workflow execution.
         """
         LOG.info(
             "Received RPC request 'stop_workflow'[execution_id=%s,"
-            " state=%s, message=%s]",
+            " state=%s, message=%s, force=%s]",
             wf_ex_id,
             state,
-            message
+            message,
+            force
         )
 
-        return self.engine.stop_workflow(wf_ex_id, state, message)
+        return self.engine.stop_workflow(wf_ex_id, state, message,
+                                         sync, force)
 
     def rollback_workflow(self, rpc_ctx, wf_ex_id):
         """Receives calls over RPC to rollback workflows on engine.

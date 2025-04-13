@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -30,6 +31,7 @@ from mistral.lang import parser as spec_parser
 from mistral.scheduler import base as sched_base
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands as wf_cmds
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 # TODO(rakhmerov): At some point we need to completely switch to
@@ -68,6 +70,11 @@ def run_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run=False):
     """
 
     task_ex = db_api.get_task_execution(task_ex_id)
+
+    if task_ex.state == states.RUNNING:
+        LOG.info("Task already running. [id=%s]", task_ex_id)
+        return
+
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
         task_ex.workflow_execution_id
     )
@@ -115,6 +122,7 @@ def create_task(wf_cmd, first_run):
     """
 
     task = _build_task_from_command(wf_cmd)
+    task.first_run = first_run
 
     if task.waiting and task.rerun:
         task.set_state(states.WAITING, 'Task is waiting.')
@@ -254,6 +262,12 @@ def force_fail_task(task_ex, msg, task=None):
 
     task.set_state(states.ERROR, msg)
 
+    try:
+        data_flow.publish_variables(task_ex, task.task_spec)
+    except exc.MistralException:
+        LOG.error("Can not evaluate publish-on-error "
+                  "in case of force fail task.")
+
     wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
 
 
@@ -269,6 +283,11 @@ def continue_task(task_ex):
 
     try:
         with db_api.named_lock('continue-task-%s' % task_ex.id):
+            db_api.refresh(task_ex)
+
+            if states.is_completed(task_ex.state):
+                return
+
             task.set_state(states.RUNNING, None)
             task.run()
     except exc.MistralException as e:
@@ -286,7 +305,7 @@ def continue_task(task_ex):
     _check_affected_tasks(task)
 
 
-def complete_task(task_ex, state, state_info):
+def complete_task(task_ex, state, state_info, force=False):
     if not task_ex:
         return
 
@@ -297,7 +316,7 @@ def complete_task(task_ex, state, state_info):
     task = build_task_from_execution(wf_spec, task_ex)
 
     try:
-        task.complete(state, state_info)
+        task.complete(state, state_info, force=force)
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
@@ -348,6 +367,8 @@ def _check_affected_tasks(task):
         # already been processed and the task state hasn't changed.
         sched = sched_base.get_system_scheduler()
 
+        # TODO(vgvoleg): need to check this part
+
         jobs_exist = sched.has_scheduled_jobs(
             key=_get_refresh_state_job_key(t_ex_id),
             processing=False
@@ -382,7 +403,7 @@ def _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by, rerun,
         wf_spec.get_task(task_ex.name),
         task_ex.in_context,
         task_ex,
-        waiting=waiting == states.WAITING,
+        waiting=waiting,
         triggered_by=triggered_by,
         rerun=rerun
     )
@@ -461,6 +482,14 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
         triggered_by=triggered_by,
         rerun=rerun
     )
+
+
+@db_utils.retry_on_db_error
+@post_tx_queue.run
+@profiler.trace('task-handler-run-task', hide_args=True)
+def _start_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run):
+    with db_api.transaction():
+        run_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run)
 
 
 @db_utils.retry_on_db_error
@@ -545,7 +574,6 @@ def _schedule_refresh_task_state(task_ex_id, delay=0):
     """
 
     sched = sched_base.get_system_scheduler()
-
     job = sched_base.SchedulerJob(
         run_after=delay,
         func_name=_REFRESH_TASK_STATE_PATH,
@@ -571,6 +599,10 @@ def _scheduled_on_action_complete(action_ex_id, wf_action):
 
         if action_ex:
             _on_action_complete(action_ex)
+
+
+def _get_on_action_complete_job_key(action_ex):
+    return 'th_on_a_c-%s' % action_ex.task_execution_id
 
 
 def schedule_on_action_complete(action_ex, delay=0):
@@ -604,7 +636,7 @@ def schedule_on_action_complete(action_ex, delay=0):
             'action_ex_id': action_ex.id,
             'wf_action': isinstance(action_ex, models.WorkflowExecution)
         },
-        key='th_on_a_c-%s' % action_ex.task_execution_id
+        key=_get_on_action_complete_job_key(action_ex)
     )
 
     sched.schedule(job)

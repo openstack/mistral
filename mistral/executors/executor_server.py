@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -71,7 +72,7 @@ class ExecutorServer(service_base.MistralService):
             self._rpc_server.stop(graceful)
 
     def run_action(self, rpc_ctx, action, action_ex_id, safe_rerun, exec_ctx,
-                   timeout):
+                   deadline, timeout):
 
         """Receives calls over RPC to run action on executor.
 
@@ -83,13 +84,20 @@ class ExecutorServer(service_base.MistralService):
             the current execution.
         :param timeout: a period of time in seconds after which execution of
             action will be interrupted
+        :param execution_context: A dict of values providing information about
+            the current execution.
+        :param deadline: a deadline after which execution of action will be
+                         interrupted.
+        :param timeout: a timeout after which execution of action will be
+                         interrupted.
         :return: Action result.
         """
         LOG.debug(
             "Received RPC request 'run_action'"
-            "[action=%s, action_ex_id=%s, timeout=%s]",
+            "[action=%s, action_ex_id=%s, deadline=%s, timeout=%s]",
             action,
             action_ex_id,
+            deadline,
             timeout
         )
 
@@ -101,6 +109,7 @@ class ExecutorServer(service_base.MistralService):
             safe_rerun,
             exec_ctx,
             redelivered,
+            deadline=deadline,
             timeout=timeout
         )
 
@@ -109,6 +118,27 @@ class ExecutorServer(service_base.MistralService):
             " [action=%s, action_ex_id=%s]",
             action,
             action_ex_id
+        )
+
+        return res
+
+    def interrupt_action(self, rpc_ctx, action_ex_id):
+        """Receives calls over RPC to run action on executor.
+
+        :param rpc_ctx: RPC request context dictionary.
+        :param action_ex_id: Action execution id.
+        :return: Action result.
+        """
+
+        LOG.debug(
+            "Received RPC request 'interrupt_action'[action_ex_id=%s, "
+            "rpc_ctx=%s]",
+            action_ex_id,
+            rpc_ctx
+        )
+
+        res = self.executor.interrupt_action(
+            action_ex_id,
         )
 
         return res

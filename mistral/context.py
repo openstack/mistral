@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -328,6 +329,9 @@ def create_action_context(execution_ctx):
         service_catalog=context.service_catalog,
         trust_id=context.trust_id,
     )
+    if 'headers' in execution_ctx:
+        temp_headers = execution_ctx.pop('headers')
+        execution_ctx['workflow_propagated_headers'] = temp_headers
 
     ex_ctx = lib_ctx.ExecutionContext(**execution_ctx)
 
