@@ -1,0 +1,9 @@
+version: '2.0'
+parent:
+  tasks:
+    task1:
+      workflow: child
+      input:
+        in_var: 'stub'
+      publish:
+        var: <% task().result['out_var'] %>

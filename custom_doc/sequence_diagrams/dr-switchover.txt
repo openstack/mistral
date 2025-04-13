@@ -1,0 +1,15 @@
+note over dr_site_manager, Mistral DR script
+--move-to-right or
+--move-to-left
+end note
+
+dr_site_manager->Infra services DR scripts: launch
+dr_site_manager->Openshift: change labels main->dr and remove pods
+
+Infra services DR scripts->dr_site_manager: exit 0
+Openshift->dr_site_manager: exit 0
+
+dr_site_manager->Mistral DR script: launch
+Mistral DR script->Openshift: Remove the openshift selector
+Mistral DR script->Openshift: Remove all pods
+Mistral DR script->dr_site_manager: exit 0

@@ -3,6 +3,7 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -68,6 +70,51 @@ class DefaultEngine(base.Engine):
                     params
                 )
 
+                if not wf_ex:
+                    return
+
+                # Checking a case when all tasks are completed immediately.
+                wf_handler.check_and_complete(wf_ex.id)
+
+                return wf_ex.get_clone()
+
+        except exceptions.DBDuplicateEntryError:
+            # NOTE(akovi): the workflow execution with a provided
+            # wf_ex_id may already exist. In this case, simply
+            # return the existing entity.
+            with db_api.transaction():
+                wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+                return wf_ex.get_clone()
+
+    @db_utils.retry_on_db_error
+    @post_tx_queue.run
+    @profiler.trace('engine-plan-workflow', hide_args=True)
+    def plan_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
+                      wf_input=None, description='', async_=False, **params):
+        if wf_namespace:
+            params['namespace'] = wf_namespace
+
+        if cfg.CONF.notifier.notify:
+            if 'notify' not in params or not params['notify']:
+                params['notify'] = []
+
+            params['notify'].extend(cfg.CONF.notifier.notify)
+
+        try:
+            with db_api.transaction():
+                wf_ex = wf_handler.plan_workflow(
+                    wf_identifier,
+                    wf_namespace,
+                    wf_ex_id,
+                    wf_input or {},
+                    description,
+                    params
+                )
+
+                if not wf_ex:
+                    return
+
                 # Checking a case when all tasks are completed immediately.
                 wf_handler.check_and_complete(wf_ex.id)
 
@@ -108,8 +155,6 @@ class DefaultEngine(base.Engine):
             target = params.get('target')
             timeout = params.get('timeout')
 
-            # In order to know if it's sync or not we have to instantiate
-            # the actual runnable action.
             action = action_desc.instantiate(action_input, {})
 
             is_action_sync = action.is_sync()
@@ -118,8 +163,13 @@ class DefaultEngine(base.Engine):
                 raise exceptions.InputException(
                     "Action does not support synchronous execution.")
 
+            deadline = None if not timeout else (datetime.datetime.now() +
+                                                 datetime.timedelta(
+                                                     seconds=timeout)
+                                                 ).isoformat()
+
             if not sync and (save or not is_action_sync):
-                engine_action.schedule(action_input, target, timeout=timeout)
+                engine_action.schedule(action_input, target, deadline=deadline)
 
                 return engine_action.action_ex.get_clone()
 
@@ -127,7 +177,7 @@ class DefaultEngine(base.Engine):
                 action_input,
                 target,
                 save=False,
-                timeout=timeout
+                deadline=deadline
             )
 
             state = states.SUCCESS if output.is_success() else states.ERROR
@@ -233,11 +283,22 @@ class DefaultEngine(base.Engine):
 
     @db_utils.retry_on_db_error
     @post_tx_queue.run
-    def stop_workflow(self, wf_ex_id, state, message=None):
+    def update_wf_ex_to_read_only(self, wf_ex_id):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
-            wf_handler.stop_workflow(wf_ex, state, message)
+            wf_handler.update_wf_ex_to_read_only(wf_ex)
+
+            return wf_ex.get_clone()
+
+    @db_utils.retry_on_db_error
+    @post_tx_queue.run
+    def stop_workflow(self, wf_ex_id, state, message=None,
+                      sync=True, force=False):
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+            wf_handler.stop_workflow(wf_ex, state, message, sync, force)
 
             return wf_ex.get_clone()
 

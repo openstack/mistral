@@ -1,5 +1,6 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -2094,13 +2095,26 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
+            wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
+            wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
 
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
             )
+            wf_2_task_2_ex = self._assert_single_item(
+                wf_2_ex.task_executions,
+                name='task2'
+            )
+            wf_3_task_1_ex = self._assert_single_item(
+                wf_3_ex.task_executions,
+                name='task1'
+            )
+
         self.await_task_running(wf_1_task_1_ex.id)
         self.await_task_running(wf_2_task_2_ex.id)
+        self.await_task_running(wf_3_task_1_ex.id)
+
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
 

@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from unittest import mock
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -758,7 +760,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertIn("Task 'task3' not found", str(exception))
 
-    def test_delete_workflow_integrity_check_on_stop(self):
+    @mock.patch('mistral.db.v2.api.get_delayed_calls_count', return_value=0)
+    def test_delete_workflow_integrity_check_on_stop(
+        self, delayed_calls_count
+    ):
         wf_text = """---
         version: '2.0'
 

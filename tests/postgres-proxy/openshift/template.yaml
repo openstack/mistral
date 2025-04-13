@@ -1,0 +1,73 @@
+---
+kind: Template
+apiVersion: v1
+metadata:
+  name: postgres-proxy-template
+  annotations:
+    openshift.io/display-name: postgres-proxy template
+    description: Template for postgres-proxy microservice
+labels:
+  template: postgres-proxy-template
+parameters:
+- name: POSTGRES_URL
+  description: Postgres URL
+  value: pg-common.postgres-service
+  required: true
+- description: Which docker image should be used to deploy.
+  displayName: Docker image.
+  name: DOCKER_TAG
+  required: true
+objects:
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: postgres-proxy
+      labels:
+        app: postgres-proxy
+    spec:
+      triggers:
+      - type: ConfigChange
+      replicas: 1
+      selector:
+        app: postgres-proxy
+        deploymentconfig: postgres-proxy
+        name: postgres-proxy
+      template:
+        metadata:
+          labels:
+            app: postgres-proxy
+            deploymentconfig: postgres-proxy
+            name: postgres-proxy
+        spec:
+          containers:
+            - name: postgres-proxy
+              image: "${DOCKER_TAG}"
+              env:
+                - name: PROXY_PORT
+                  value: '5432'
+                - name: POSTGRES_URL
+                  value: "${POSTGRES_URL}"
+              ports:
+                - containerPort: 5432
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: 50m
+                  memory: 25Mi
+                requests:
+                  cpu: 20m
+                  memory: 5Mi
+              imagePullPolicy: Always
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: postgres-proxy
+      labels:
+        app: postgres-proxy
+    spec:
+      selector:
+         deploymentconfig: postgres-proxy
+      ports:
+         - protocol: TCP
+           port: 5432
+           targetPort: 5432

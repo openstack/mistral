@@ -41,7 +41,7 @@ class LegacyActionProviderTest(base.DbTestCase):
         self.assertTrue(
             all(
                 [
-                    a_d.action_class.__module__.startswith('mistral.')
+                    a_d.action_class_name.startswith('mistral.')
                     for a_d in action_descs
                 ]
             )

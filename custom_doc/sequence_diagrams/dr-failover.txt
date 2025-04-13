@@ -1,0 +1,19 @@
+note over dr_site_manager, Mistral DR script
+--stop-left or
+--stop-right
+end note
+
+dr_site_manager->Infra services DR scripts: launch
+dr_site_manager->Openshift: change labels main->dr and remove pods
+
+Infra services DR scripts->dr_site_manager: exit 0
+Openshift->dr_site_manager: exit 0
+
+dr_site_manager->Mistral DR script: launch
+Mistral DR script-> Mistral DR Openshift Job: Create
+Mistral DR Openshift Job -> PostgreSQL: get all RUNNING executions
+Mistral DR Openshift Job -> Mistral DR Openshift Job: pause the executions
+Mistral DR Openshift Job -> Mistral DR script: exit 0
+Mistral DR script -> Mistral DR script: Remove `do-not-start` openshift selector
+Mistral DR script -> Mistral DR script: Remove all Mistral pods
+Mistral DR script -> dr_site_manager: exit 0

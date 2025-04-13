@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -82,6 +83,7 @@ def executions_(context, id=None, root_execution_id=None, state=None,
 @db_utils.tx_cached(ignore_args='context')
 def execution_(context):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
+    db_api.refresh(wf_ex)
 
     return {
         'id': wf_ex.id,
@@ -286,3 +288,13 @@ def json_parse_(context, data):
 
 def yaml_parse_(context, data):
     return yaml.safe_load(data)
+
+
+def generate_random_data_(context, count=10, length=10):
+    return {uuid_(): "A" * length for _ in range(count)}
+
+
+def _generate_data(depth=1, count=10):
+    return {uuid_(): uuid_() if depth == 1
+            else _generate_data(depth - 1, count)
+            for _ in range(count)}

@@ -1,0 +1,30 @@
+---
+version: '2.0'
+
+name: adhoc_actions
+
+actions:
+  concat_twice:
+    base: std.echo
+    base-input:
+      output: "<% $.s1 %>+<% $.s2 %>"
+    input:
+      - s1: "a"
+      - s2
+    output: "<% $ %> and <% $ %>"
+
+workflows:
+  adhoc_actions:
+    type: direct
+    input:
+      - str1
+      - str2
+    output:
+      workflow_result: <% $.result %>
+      concat_task_result: <% task(concat).result %>
+
+    tasks:
+      concat:
+        action: concat_twice s1=<% $.str1 %> s2=<% $.str2 %>
+        publish:
+          result: <% task(concat).result %>

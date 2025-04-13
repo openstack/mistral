@@ -4,6 +4,7 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,17 +18,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
+import pecan
 from pecan import rest
+import re
 from wsme import types as wtypes
+from wsme import Unset
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
+from mistral.api.controllers.v2 import execution_errors_report
 from mistral.api.controllers.v2 import execution_report
 from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import sub_execution
 from mistral.api.controllers.v2 import task
+from mistral.api.controllers.v2 import tasks_statistics
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -95,7 +102,9 @@ def _get_workflow_execution(id, must_exist=True, fields=None):
 class ExecutionsController(rest.RestController):
     tasks = task.ExecutionTasksController()
     report = execution_report.ExecutionReportController()
+    errors_report = execution_errors_report.ExecutionErrorsReportController()
     executions = sub_execution.SubExecutionsController()
+    tasks_statistics = tasks_statistics.TasksStatisticsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Execution, wtypes.text, types.uniquelist)
@@ -147,8 +156,15 @@ class ExecutionsController(rest.RestController):
                 wf_ex_old = db_api.get_workflow_execution(
                     id,
                     fields=(db_models.WorkflowExecution.id,
-                            db_models.WorkflowExecution.root_execution_id)
+                            db_models.WorkflowExecution.root_execution_id,
+                            db_models.WorkflowExecution.params)
                 )
+
+                if wf_ex_old.params.get('read_only'):
+                    raise exc.InputException(
+                        'This execution is read only. '
+                        'Any update operation is forbidden'
+                    )
                 root_execution_id = wf_ex_old.root_execution_id
                 if not root_execution_id:
                     root_execution_id = wf_ex_old.id
@@ -160,13 +176,43 @@ class ExecutionsController(rest.RestController):
                 if wf_ex.state:
                     delta['state'] = wf_ex.state
 
+                if wf_ex.sync is not Unset:
+                    if not delta['state']:
+                        raise exc.InputException(
+                            'The property sync could not be updated '
+                            'separately from state.'
+                        )
+                    delta['sync'] = wf_ex.sync
+
+                if wf_ex.force is not Unset:
+                    if not delta['state']:
+                        raise exc.InputException(
+                            'The property force could not be updated '
+                            'separately from state.'
+                        )
+                    delta['force'] = wf_ex.force
+
+                if not delta.get('sync', True) and delta.get('force', False):
+                    raise exc.InputException(
+                        'It is impossible to update state using both force '
+                        'and async way.'
+                    )
+
                 if wf_ex.description:
                     delta['description'] = wf_ex.description
 
                 if wf_ex.params and wf_ex.params.get('env'):
                     delta['env'] = wf_ex.params.get('env')
 
-                # Currently we can change only state, description, or env.
+                if wf_ex.params and wf_ex.params.get('read_only'):
+                    delta['read_only'] = wf_ex.params.get('read_only')
+
+                if wf_ex.params and wf_ex.params.get('force_cancel'):
+                    delta['force_cancel'] = wf_ex.params.get('force_cancel')
+
+                # Currently we can change only state, description, read_only,
+                # or env.
+
                 if len(delta.values()) <= 0:
                     raise exc.InputException(
                         'The property state, description, or env '
@@ -196,6 +242,12 @@ class ExecutionsController(rest.RestController):
                         {'description': delta['description']}
                     )
 
+                if delta.get('read_only') and delta.get('state'):
+                    raise exc.InputException(
+                        'The property read_only must be updated '
+                        'separately from state.'
+                    )
+
                 if not delta.get('state') and delta.get('env'):
                     wf_ex = db_api.get_workflow_execution(id)
                     wf_ex = wf_service.update_workflow_execution_env(
@@ -203,9 +255,22 @@ class ExecutionsController(rest.RestController):
                         delta.get('env')
                     )
 
+                if delta.get('read_only'):
+                    wf_ex = db_api.get_workflow_execution(id)
+                    if wf_ex.state != states.ERROR:
+                        msg = "Execution should be in ERROR state to set " \
+                              "read only"
+                        raise exc.InputException(msg)
+                    elif wf_ex.root_execution_id is not None:
+                        msg = "Execution should be root to set read only"
+                        raise exc.InputException(msg)
+
                 return delta, wf_ex
 
         delta, wf_ex = _compute_delta(wf_ex)
+
+        if delta.get('read_only'):
+            wf_ex = rpc.get_engine_client().update_wf_ex_to_read_only(id)
 
         if delta.get('state'):
             if states.is_paused(delta.get('state')):
@@ -216,11 +281,15 @@ class ExecutionsController(rest.RestController):
                     env=delta.get('env')
                 )
             elif states.is_completed(delta.get('state')):
+                sync = delta.get('sync', True)
+                force = delta.get('force_cancel', False)
                 msg = wf_ex.state_info if wf_ex.state_info else None
                 wf_ex = rpc.get_engine_client().stop_workflow(
                     id,
                     delta.get('state'),
-                    msg
+                    msg,
+                    sync,
+                    force
                 )
             else:
                 # To prevent changing state in other cases throw a message.
@@ -307,7 +376,27 @@ class ExecutionsController(rest.RestController):
 
         engine = rpc.get_engine_client()
 
-        result = engine.start_workflow(
+        if cfg.CONF.headers_propagation.enabled:
+            if 'params' not in result_exec_dict:
+                result_exec_dict['params'] = {}
+            result_exec_dict['params']['headers'] = {}
+
+            template = cfg.CONF.headers_propagation.template
+
+            for h_name, h_value in pecan.request.headers.items():
+                for t in template:
+                    if re.match(t, h_name):
+                        result_exec_dict['params']['headers'][h_name] = h_value
+
+        is_planned = cfg.CONF.api.start_workflow_as_planned
+
+        if is_planned:
+            start_method_name = 'plan_workflow'
+        else:
+            start_method_name = 'start_workflow'
+
+        start_method = getattr(engine, start_method_name)
+        result = start_method(
             result_exec_dict.get(
                 'workflow_id',
                 result_exec_dict.get('workflow_name')
@@ -459,6 +548,7 @@ class ExecutionsController(rest.RestController):
             db_api.get_workflow_executions,
             db_api.get_workflow_execution,
             resource_function=resource_function,
+            get_count_function=db_api.get_workflow_executions_count,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

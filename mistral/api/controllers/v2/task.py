@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -27,6 +28,7 @@ from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import sub_execution
 from mistral.api.controllers.v2 import types
+from mistral.api.controllers.v2 import with_items_statistics
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
@@ -52,7 +54,9 @@ STATE_TYPES = wtypes.Enum(
 
 
 def _get_task_resource_with_result(task_ex, fields=()):
-    task = resources.Task.from_db_model(task_ex, fields=fields)
+    task = resources.Task.from_db_model(task_ex, ())
+    # we have to load it to avoid error on published
+    task_ex.spec
     if 'result' in fields or not fields:
         task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
 
@@ -66,7 +70,7 @@ def _get_task_execution(id, fields=()):
         fields.insert(0, 'id')
 
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(id, fields=fields)
+        task_ex = db_api.get_task_execution(id, ())
 
         rest_utils.load_deferred_fields(task_ex, ['workflow_execution'])
         rest_utils.load_deferred_fields(
@@ -207,6 +211,8 @@ class TasksController(rest.RestController):
     action_executions = action_execution.TasksActionExecutionController()
     workflow_executions = TaskExecutionsController()
     executions = sub_execution.SubExecutionsController()
+    with_items_statistics = \
+        with_items_statistics.WithItemsStatisticsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Task, wtypes.text, types.uniquelist)
@@ -221,7 +227,8 @@ class TasksController(rest.RestController):
         acl.enforce('tasks:get', context.ctx())
         LOG.debug("Fetch task [id=%s]", id)
 
-        task, task_ex = _get_task_execution(id, ())
+        task, task_ex = _get_task_execution(id, fields)
+
         task = _task_with_published_global(task, task_ex)
         if fields:
             if 'id' not in fields:
@@ -316,6 +323,7 @@ class TasksController(rest.RestController):
             resources.Task,
             db_api.get_task_executions,
             db_api.get_task_execution,
+            get_count_function=db_api.get_task_executions_count_with_filters,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
@@ -357,6 +365,11 @@ class TasksController(rest.RestController):
                     root_execution_id = wf_ex.id
 
                 context.ctx(root_execution_id=root_execution_id)
+
+                if wf_ex.params['read_only']:
+                    raise exc.WorkflowException(
+                        'Can not change task execution in '
+                        'read only workflow execution.')
 
                 return env, reset, task_ex, task_spec, wf_ex
 
@@ -501,6 +514,7 @@ class ExecutionTasksController(rest.RestController):
             resources.Task,
             db_api.get_task_executions,
             db_api.get_task_execution,
+            get_count_function=db_api.get_task_executions_count_with_filters,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

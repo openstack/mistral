@@ -1,3 +1,4 @@
+# Modified in 2025 by NetCracker Technology Corp.
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
@@ -16,6 +17,7 @@ from unittest import mock
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.lang.v2.workflows import DirectWorkflowSpec
 from mistral.rpc import clients as rpc_clients
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
@@ -26,6 +28,19 @@ from mistral.workflow import states
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
+WF_SPEC_MOCK = {
+    "tasks": {
+        "task1": {
+            "action": "std.noop",
+            "type": "direct",
+            "name": "task1",
+            "version": "2.0",
+        }
+    },
+    "name": "wf",
+    "version": "2.0",
+}
+
 
 class ActionHeartbeatCheckerTest(base.EngineTestCase):
     def setUp(self):
@@ -33,6 +48,7 @@ class ActionHeartbeatCheckerTest(base.EngineTestCase):
         self.override_config('check_interval', 1, 'action_heartbeat')
         self.override_config('max_missed_heartbeats', 1, 'action_heartbeat')
         self.override_config('first_heartbeat_timeout', 0, 'action_heartbeat')
+        self.override_config('noop_execution', 'remote', 'executor')
 
         super(ActionHeartbeatCheckerTest, self).setUp()
 
@@ -92,12 +108,17 @@ class ActionHeartbeatCheckerTest(base.EngineTestCase):
         '__getitem__',
         mock.MagicMock(side_effect=KeyError)
     )
-    @mock.patch.object(
-        cachetools.LRUCache,
-        '__contains__',
-        mock.MagicMock(return_value=False)
+    @mock.patch(
+        "mistral.lang.parser.cache_workflow_spec_by_execution_id",
+        return_value=mock.MagicMock()
     )
-    def test_fail_action_with_missing_heartbeats_wf_spec_not_cached(self):
+    @mock.patch(
+        "cachetools.Cache.setdefault",
+        return_value=DirectWorkflowSpec(WF_SPEC_MOCK, None)
+    )
+    def test_fail_action_with_missing_heartbeats_wf_spec_not_cached(
+        self, createworkflow_mock, workflow_spec
+    ):
         wf_text = """---
         version: '2.0'
 

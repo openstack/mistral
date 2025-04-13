@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -296,6 +297,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             resources.Workflow,
             db_api.get_workflow_definitions,
             db_api.get_workflow_definition_by_id,
+            get_count_function=db_api.get_workflow_definitions_count,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

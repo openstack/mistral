@@ -1,4 +1,5 @@
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -81,7 +82,7 @@ workflows:
 
 
 def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx, target=None,
-                   async_=True, timeout=None):
+                   async_=True, deadline=None, timeout=None):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
@@ -92,6 +93,7 @@ def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx, target=None,
         exec_ctx=exec_ctx,
         target=target,
         async_=async_,
+        deadline=deadline,
         timeout=timeout
     )
 
@@ -183,8 +185,8 @@ class EnvironmentTest(base.EngineTestCase):
                         'action_execution_id': a_ex.id,
                     },
                     target=TARGET,
-                    timeout=None
-                )
+                    deadline=None,
+                    timeout=None)
 
     def test_subworkflow_env_task_input(self):
         env = {

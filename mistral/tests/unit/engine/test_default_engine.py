@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -135,7 +136,10 @@ class DefaultEngineTest(base.DbTestCase):
             self.assertEqual('task1', task_ex.name)
             self.assertEqual(states.IDLE, task_ex.state)
             self.assertIsNotNone(task_ex.spec)
-            self.assertDictEqual({}, task_ex.runtime_context)
+            self.assertDictEqual(
+                {'recovery': {'first_run': True,
+                              'rerun': False, 'reset': False}},
+                task_ex.runtime_context)
         self.engine.start_task(task_ex.id, True, False, None, False, False)
 
         # Data Flow properties.
@@ -205,7 +209,10 @@ class DefaultEngineTest(base.DbTestCase):
             self.assertEqual('task1', task_ex.name)
             self.assertEqual(states.IDLE, task_ex.state)
             self.assertIsNotNone(task_ex.spec)
-            self.assertDictEqual({}, task_ex.runtime_context)
+            self.assertDictEqual(
+                {'recovery': {'first_run': True, 'rerun': False,
+                              'reset': False}},
+                task_ex.runtime_context)
         self.engine.start_task(task_ex.id, True, False, None, False, False)
 
         # Data Flow properties.
@@ -410,6 +417,7 @@ class DefaultEngineTest(base.DbTestCase):
                 task2:
                     action: std.noop
         """
+        self.override_config('noop_execution', 'remote', 'executor')
 
         # Start workflow.
         wf_service.create_workflows(workflow)
@@ -490,7 +498,7 @@ class DefaultEngineTest(base.DbTestCase):
             self.assertEqual('task1', task1_ex.name)
             self.assertEqual(states.RUNNING, task1_ex.state)
             self.assertIsNotNone(task1_ex.spec)
-            self.assertDictEqual({}, task1_ex.runtime_context)
+            self.assertDictEqual({'recovery': None}, task1_ex.runtime_context)
             self.assertNotIn('__execution', task1_ex.in_context)
 
         action_execs = db_api.get_action_executions(

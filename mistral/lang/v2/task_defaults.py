@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -42,6 +43,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             "on-error": on_clause.OnClauseSpec.get_schema(),
             "on-skip": on_clause.OnClauseSpec.get_schema(),
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
+            "safe-input": types.EXPRESSION_OR_BOOLEAN,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
             }
@@ -75,6 +77,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_skip = self._spec_property('on-skip', on_spec_cls)
 
         self._safe_rerun = data.get('safe-rerun')
+        self._safe_input = data.get('safe-input')
 
         # TODO(rakhmerov): 'requires' should reside in a different spec for
         # reverse workflows.
@@ -84,6 +87,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         super(TaskDefaultsSpec, self).validate_schema()
 
         self.validate_expr(self._data.get('safe-rerun', {}))
+        self.validate_expr(self._data.get('safe-input', {}))
 
     def validate_semantics(self):
         # Validate YAQL expressions.
@@ -118,6 +122,9 @@ class TaskDefaultsSpec(base.BaseSpec):
 
     def get_safe_rerun(self):
         return self._safe_rerun
+
+    def get_safe_input(self):
+        return self._safe_input
 
     def get_requires(self):
         if isinstance(self._requires, str):

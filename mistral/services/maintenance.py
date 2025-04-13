@@ -1,3 +1,5 @@
+# Modified in 2025 by NetCracker Technology Corp.
+
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
@@ -40,7 +42,11 @@ _ALL_STATES = [
 LOG = logging.getLogger(__name__)
 
 _PAUSE_EXECUTIONS_PATH = 'mistral.services.maintenance._pause_executions'
+_PAUSE_EXECUTION_PATH = 'mistral.services.maintenance._pause_execution'
 _RESUME_EXECUTIONS_PATH = 'mistral.services.maintenance._resume_executions'
+_RESUME_EXECUTION_PATH = 'mistral.services.maintenance._resume_execution'
+_AWAIT_PAUSE_EXECUTION_PATH = \
+    'mistral.services.maintenance.await_pause_executions'
 
 
 def is_valid_transition(old_state, new_state):
@@ -102,15 +108,24 @@ def await_pause_executions():
             if current_state != PAUSING:
                 return False
 
-            tasks = db_api.get_task_executions(
+            tasks_running = db_api.get_task_executions(
                 state=states.RUNNING, insecure=True
             )
+            tasks_idle = db_api.get_task_executions(
+                state=states.IDLE, insecure=True
+            )
 
-            if not tasks:
+            if not tasks_running and not tasks_idle:
                 return True
 
-            LOG.info('The following tasks have RUNNING state: %s',
-                     [task.id for task in tasks])
+            if tasks_running:
+                LOG.info('The following tasks have RUNNING state: {}'.format([
+                    task.id for task in tasks_running
+                ]))
+            if tasks_idle:
+                LOG.info('The following tasks have IDLE state: {}'.format([
+                    task.id for task in tasks_idle
+                ]))
             eventlet.sleep(1)
 
 

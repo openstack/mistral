@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2020 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -375,24 +376,25 @@ class DirectWorkflowController(base.WorkflowController):
         induced_states = []
 
         for t_s in in_task_specs:
-            t_ex = t_execs_cache[t_s.get_name()]
+            t_exes = t_execs_cache[t_s.get_name()]
 
-            tup = self._get_induced_join_state(
-                t_s,
-                t_ex,
-                task_spec,
-                t_execs_cache
-            )
-
-            induced_states.append(
-                (
-                    t_s.get_name(),
+            for t_ex in t_exes:
+                tup = self._get_induced_join_state(
+                    t_s,
                     t_ex,
-                    tup[0],
-                    tup[1],
-                    tup[2]
+                    task_spec,
+                    t_execs_cache
                 )
-            )
+
+                induced_states.append(
+                    (
+                        t_s.get_name(),
+                        t_ex,
+                        tup[0],
+                        tup[1],
+                        tup[2]
+                    )
+                )
 
         def count(state):
             cnt = 0
@@ -525,9 +527,9 @@ class DirectWorkflowController(base.WorkflowController):
                     self._prepare_task_executions_cache(task_spec)
                 )
 
-            t_ex = t_execs_cache.get(t_s.get_name())
+            t_exs = t_execs_cache.get(t_s.get_name())
 
-            if not t_ex:
+            if not t_exs or t_exs == [None]:
                 possible, depth = self._possible_route(
                     t_s,
                     t_execs_cache,
@@ -539,11 +541,12 @@ class DirectWorkflowController(base.WorkflowController):
             else:
                 t_name = task_spec.get_name()
 
-                if not states.is_completed(t_ex.state):
-                    return True, depth
+                for t_ex in t_exs:
+                    if not states.is_completed(t_ex.state):
+                        return True, depth
 
-                if t_name in [t[0] for t in t_ex.next_tasks]:
-                    return True, depth
+                    if t_name in [t[0] for t in t_ex.next_tasks]:
+                        return True, depth
 
         return False, depth
 
@@ -567,16 +570,21 @@ class DirectWorkflowController(base.WorkflowController):
 
     def _prepare_task_executions_cache(self, task_spec):
         names = self._find_all_parent_task_names(task_spec)
-
-        t_execs_cache = {
-            t_ex.name: t_ex for t_ex in self._get_task_executions(
+        t_execs_cache = {}
+        # don't perform a db request if 'names' are empty
+        if names:
+            task_execs = self._get_task_executions(
                 fields=('id', 'name', 'state', 'next_tasks'),
                 name={'in': names}
             )
-        } if names else {}  # don't perform a db request if 'names' are empty
+            for t_ex in task_execs:
+                if t_execs_cache.get(t_ex.name):
+                    t_execs_cache[t_ex.name].append(t_ex)
+                else:
+                    t_execs_cache[t_ex.name] = [t_ex]
 
         for name in names:
             if name not in t_execs_cache:
-                t_execs_cache[name] = None
+                t_execs_cache[name] = [None]
 
         return t_execs_cache

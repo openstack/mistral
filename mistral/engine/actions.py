@@ -1,6 +1,7 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.db.v2 import api as db_api
+from mistral.engine import action_handler
 from mistral.engine import post_tx_queue
 from mistral.engine import utils as engine_utils
 from mistral.engine import workflow_handler as wf_handler
@@ -31,6 +33,7 @@ from mistral.services import security
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral_lib import actions as ml_actions
 from mistral_lib import utils
 
 
@@ -96,7 +99,7 @@ class Action(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+                 deadline=None, timeout=None):
         """Schedule action run.
 
         This method is needed to schedule action run so its result can
@@ -105,28 +108,28 @@ class Action(object, metaclass=abc.ABCMeta):
         executor asynchrony when executor doesn't immediately send a
         result).
 
-        :param timeout: a period of time in seconds after which execution of
-            action will be interrupted
         :param input_dict: Action input.
         :param target: Target (group of action executors).
         :param index: Action execution index. Makes sense for some types.
         :param desc: Action execution description.
         :param safe_rerun: If true, action would be re-run if executor dies
             during execution.
+        :param deadline: a deadline after which execution of action will be
+                         interrupted.
+        :param timeout: a timeout after which execution of action will be
+                         interrupted.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False, timeout=None):
+            safe_rerun=False, deadline=None, timeout=None):
         """Immediately run action.
 
         This method runs method w/o scheduling its run for a later time.
         From engine perspective action will be processed in synchronous
         mode.
 
-        :param timeout: a period of time in seconds after which execution of
-            action will be interrupted
         :param input_dict: Action input.
         :param target: Target (group of action executors).
         :param index: Action execution index. Makes sense for some types.
@@ -134,6 +137,10 @@ class Action(object, metaclass=abc.ABCMeta):
         :param save: True if action execution object needs to be saved.
         :param safe_rerun: If true, action would be re-run if executor dies
             during execution.
+        :param deadline: a deadline after which execution of action will be
+                         interrupted.
+        :param timeout: a timeout after which execution of action will be
+                         interrupted.
         :return: Action output.
         """
         raise NotImplementedError
@@ -147,6 +154,9 @@ class Action(object, metaclass=abc.ABCMeta):
             res['workflow_execution_id'] = wf_ex.id
             res['task_execution_id'] = self.task_ex.id
             res['workflow_name'] = wf_ex.name
+
+            if 'params' in wf_ex and 'headers' in wf_ex['params']:
+                res['headers'] = wf_ex['params']['headers']
 
         if self.action_ex:
             res['action_execution_id'] = self.action_ex.id
@@ -244,7 +254,7 @@ class RegularAction(Action):
 
     @profiler.trace('action-schedule', hide_args=True)
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+                 deadline=None, timeout=None, retry_no=0):
         assert not self.action_ex
 
         self.action_desc.check_parameters(input_dict)
@@ -274,12 +284,24 @@ class RegularAction(Action):
 
         self._create_action_execution(
             input_dict,
-            self._prepare_runtime_context(index, safe_rerun),
+            self._prepare_runtime_context(index, safe_rerun, retry_no=0),
             desc=desc,
             action_ex_id=action_ex_id,
             is_sync=action.is_sync()
         )
 
+        noop_execution = cfg.CONF.executor.noop_execution
+
+        if self.action_desc.name == "std.noop" and noop_execution == "local":
+            LOG.info("Running no-op action locally.")
+            action_handler.on_action_complete(
+                self.action_ex,
+                ml_actions.Result()
+            )
+            return
+
+        # Register an asynchronous command to send the action to
+        # run on an executor outside of the main DB transaction.
         def _run_action():
             executor = exe.get_executor(cfg.CONF.executor.type)
 
@@ -289,6 +311,7 @@ class RegularAction(Action):
                 safe_rerun,
                 self._prepare_execution_context(),
                 target=target,
+                deadline=deadline,
                 timeout=timeout
             )
 
@@ -298,7 +321,7 @@ class RegularAction(Action):
 
     @profiler.trace('action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False, timeout=None):
+            safe_rerun=False, deadline=None, timeout=None):
         assert not self.action_ex
 
         self.action_desc.check_parameters(input_dict)
@@ -336,17 +359,18 @@ class RegularAction(Action):
             self._prepare_execution_context(),
             target=target,
             async_=False,
-            timeout=timeout
+            deadline=deadline
         )
 
-    def _prepare_runtime_context(self, index, safe_rerun):
+    def _prepare_runtime_context(self, index, safe_rerun, retry_no=0):
         """Template method to prepare action runtime context.
 
         Regular action inserts an index into its runtime context and
         the flag showing if the action is safe to rerun (i.e. it's
         idempotent).
         """
-        return {'index': index, 'safe_rerun': safe_rerun}
+        return {'index': index, 'safe_rerun': safe_rerun,
+                'retry_no': retry_no}
 
 
 class WorkflowAction(Action):
@@ -364,7 +388,7 @@ class WorkflowAction(Action):
 
     @profiler.trace('workflow-action-schedule', hide_args=True)
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+                 deadline=None, timeout=None, retry_no=0):
         assert not self.action_ex
 
         self.validate_input(input_dict)
@@ -401,6 +425,9 @@ class WorkflowAction(Action):
         if 'notify' in parent_wf_ex.params:
             wf_params['notify'] = parent_wf_ex.params['notify']
 
+        if 'headers' in parent_wf_ex.params:
+            wf_params['headers'] = parent_wf_ex.params['headers']
+
         for k, v in list(input_dict.items()):
             if k not in wf_spec.get_input():
                 wf_params[k] = v
@@ -431,7 +458,7 @@ class WorkflowAction(Action):
 
     @profiler.trace('workflow-action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=True, timeout=None):
+            safe_rerun=True, deadline=None, timeout=None):
         raise NotImplementedError('Does not apply to this WorkflowAction.')
 
     def validate_input(self, input_dict):

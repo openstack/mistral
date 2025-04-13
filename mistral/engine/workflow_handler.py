@@ -1,5 +1,6 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,10 +20,12 @@ from oslo_utils import timeutils
 from osprofiler import profiler
 import traceback as tb
 
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import post_tx_queue
 from mistral.engine import workflows
 from mistral import exceptions as exc
+from mistral.executors import base as exe
 from mistral.scheduler import base as sched_base
 from mistral.workflow import states
 
@@ -34,38 +37,103 @@ _CHECK_AND_FIX_INTEGRITY_PATH = (
     'mistral.engine.workflow_handler._check_and_fix_integrity'
 )
 
+_START_WORKFLOW_PATH = (
+    'mistral.engine.workflow_handler._start_workflow'
+)
+
 
 @profiler.trace('workflow-handler-start-workflow', hide_args=True)
 def start_workflow(wf_identifier, wf_namespace, wf_ex_id, wf_input, desc,
                    params):
-    wf = workflows.Workflow()
+    try:
+        wf = workflows.Workflow()
 
-    wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
+        wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
 
-    if 'namespace' not in params:
-        params['namespace'] = wf_def.namespace
+        if 'namespace' not in params:
+            params['namespace'] = wf_def.namespace
 
-    wf.start(
-        wf_def=wf_def,
-        wf_ex_id=wf_ex_id,
-        input_dict=wf_input,
-        desc=desc,
-        params=params
-    )
+        wf.start(
+            wf_def=wf_def,
+            wf_ex_id=wf_ex_id,
+            input_dict=wf_input,
+            desc=desc,
+            params=params
+        )
 
-    _schedule_check_and_fix_integrity(wf.wf_ex, delay=10)
+        _schedule_check_and_fix_integrity(wf.wf_ex, delay=10)
 
-    return wf.wf_ex
+        return wf.wf_ex
+
+    except exc.MistralException as e:
+        # TODO(vgvoleg): maybe there is a better way to do this
+        if 'task_execution_id' in params:
+            task_ex_id = params['task_execution_id']
+            # To break cyclic dependency.
+            from mistral.engine import task_handler
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            msg = ("Failed to run task [error=%s, task=%s]:\n%s" % (
+                e, task_ex.name, tb.format_exc()
+            ))
+
+            task_handler.force_fail_task(task_ex, msg=msg)
+            return
+
+        raise e
 
 
-def stop_workflow(wf_ex, state, msg=None):
+@profiler.trace('workflow-handler-plan-workflow', hide_args=True)
+def plan_workflow(wf_identifier, wf_namespace, wf_ex_id, wf_input, desc,
+                  params):
+    try:
+        wf = workflows.Workflow()
+
+        wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
+
+        if 'namespace' not in params:
+            params['namespace'] = wf_def.namespace
+
+        wf.plan(
+            wf_def,
+            wf_ex_id,
+            wf_input,
+            desc,
+            params
+        )
+
+        _schedule_start_planned_workflow(wf.wf_ex, wf_identifier, wf_namespace)
+
+        _schedule_check_and_fix_integrity(wf.wf_ex, delay=10)
+
+        return wf.wf_ex
+
+    except exc.MistralException as e:
+        # TODO(vgvoleg): maybe there is a better way to do this
+        if 'task_execution_id' in params:
+            task_ex_id = params['task_execution_id']
+            # To break cyclic dependency.
+            from mistral.engine import task_handler
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            msg = ("Failed to run task [error=%s, task=%s]:\n%s" % (
+                e, task_ex.name, tb.format_exc()
+            ))
+
+            task_handler.force_fail_task(task_ex, msg=msg)
+            return
+
+        raise e
+
+
+def stop_workflow(wf_ex, state, msg=None, sync=True, force=False):
     wf = workflows.Workflow(wf_ex=wf_ex)
 
     # In this case we should not try to handle possible errors. Instead,
     # we need to let them pop up since the typical way of failing objects
     # doesn't work here. Failing a workflow is the same as stopping it
     # with ERROR state.
-    wf.stop(state, msg)
+    wf.stop(state, msg, sync, force)
 
     # Cancels subworkflows.
     if state == states.CANCELLED:
@@ -76,7 +144,7 @@ def stop_workflow(wf_ex, state, msg=None):
 
             for sub_wf_ex in sub_wf_exs:
                 if not states.is_completed(sub_wf_ex.state):
-                    stop_workflow(sub_wf_ex, state, msg=msg)
+                    stop_workflow(sub_wf_ex, state, msg=msg, sync=sync)
 
 
 def force_fail_workflow(wf_ex, msg=None):
@@ -206,6 +274,33 @@ def pause_workflow(wf_ex, msg=None):
     wf.pause(msg=msg)
 
 
+def terminate_workflow_to_error(wf_ex, recursive_terminate, msg=None):
+    wf = workflows.Workflow(wf_ex=wf_ex)
+    if recursive_terminate:
+        task_exs = db_api.get_task_executions(state=states.RUNNING,
+                                              workflow_execution_id=wf_ex.id)
+        for task_ex in task_exs:
+            action_exs = db_api.get_action_executions(
+                task_execution_id=task_ex.id,
+                state=states.RUNNING,
+            )
+            for action_ex in action_exs:
+                executor = exe.get_executor(cfg.CONF.executor.type)
+                executor.interrupt_action(action_ex.id)
+
+        for task_ex in wf_ex.task_executions:
+            sub_wf_exs = db_api.get_workflow_executions(
+                task_execution_id=task_ex.id
+            )
+
+            for sub_wf_ex in sub_wf_exs:
+                if not states.is_completed(sub_wf_ex.state):
+                    terminate_workflow_to_error(sub_wf_ex, recursive_terminate,
+                                                msg=msg)
+
+    wf.terminate_to_error(recursive_terminate)
+
+
 def rerun_workflow(wf_ex, task_ex, reset=True, skip=False, env=None):
     if wf_ex.state == states.PAUSED:
         return wf_ex.get_clone()
@@ -229,6 +324,23 @@ def rerun_workflow(wf_ex, task_ex, reset=True, skip=False, env=None):
             wf_ex.task_execution.workflow_execution,
             delay=CONF.engine.execution_integrity_check_delay
         )
+
+
+def update_wf_ex_to_read_only(wf_ex):
+    wf_exs = [wf_ex]
+    wf_exs = _get_list_wf_ex_to_set_read_only(wf_ex, wf_exs)
+    wf_exs = db_api.update_workflow_executions_read_only_status(wf_exs=wf_exs)
+    return wf_ex
+
+
+def _get_list_wf_ex_to_set_read_only(wf_ex, list_wf_ex):
+    wf_exs = db_api.get_workflow_executions(
+        root_execution_id=wf_ex.id, state=states.ERROR
+    )
+    list_wf_ex += wf_exs
+    for child_wf_ex in wf_exs:
+        _get_list_wf_ex_to_set_read_only(child_wf_ex, list_wf_ex)
+    return list_wf_ex
 
 
 def resume_workflow(wf_ex, env=None):
@@ -286,11 +398,52 @@ def _schedule_check_and_fix_integrity(wf_ex, delay=0):
 
     sched = sched_base.get_system_scheduler()
 
-    job = sched_base.SchedulerJob(
-        run_after=delay,
-        func_name=_CHECK_AND_FIX_INTEGRITY_PATH,
-        func_args={'wf_ex_id': wf_ex.id},
-        key=_get_integrity_check_key(wf_ex)
+    job_exist = sched.has_scheduled_jobs(
+        key=_get_integrity_check_key(wf_ex),
+        processing=False
     )
 
+    if not job_exist:
+        job = sched_base.SchedulerJob(
+            run_after=delay,
+            func_name=_CHECK_AND_FIX_INTEGRITY_PATH,
+            func_args={'wf_ex_id': wf_ex.id},
+            key=_get_integrity_check_key(wf_ex)
+        )
+
+        sched.schedule(job)
+
+
+@profiler.trace(
+    'workflow-handler-start-planned-workflow',
+    hide_args=True
+)
+def _schedule_start_planned_workflow(wf_ex, wf_identifier, wf_namespace,
+                                     delay=0):
+    sched = sched_base.get_system_scheduler()
+    job = sched_base.SchedulerJob(
+        run_after=delay,
+        func_name=_START_WORKFLOW_PATH,
+        func_args={'wf_ex_id': wf_ex.id,
+                   'wf_identifier': wf_identifier,
+                   'wf_namespace': wf_namespace}
+    )
     sched.schedule(job)
+
+
+@db_utils.retry_on_db_error
+@post_tx_queue.run
+def _start_workflow(wf_ex_id, wf_identifier, wf_namespace):
+    with db_api.transaction():
+        wf_ex = db_api.get_workflow_execution(wf_ex_id)
+        wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
+
+        wf = workflows.Workflow(wf_ex)
+        wf.start(
+            wf_def=wf_def,
+            wf_ex_id=wf_ex_id,
+            input_dict=wf.wf_ex.input,
+            desc=wf.wf_ex.description,
+            params=wf.wf_ex.params,
+            is_planned=True
+        )

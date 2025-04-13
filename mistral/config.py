@@ -3,6 +3,7 @@
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - Nokia Networks
 # Copyright 2022 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -131,6 +132,14 @@ api_opts = [
                "API requests.")
     ),
     cfg.BoolOpt(
+        'start_workflow_as_planned',
+        default=False,
+        help=_("Allows the planned creation of workflow executions. Instead of"
+               "immediately starting the execution upon creation, the"
+               "workflow execution will have a 'PLANNED' status, and "
+               "the actual execution will be scheduled by a scheduler.")
+    ),
+    cfg.BoolOpt(
         'enable_info_endpoint',
         default=False,
         help=_('Enable API for exposing info json about '
@@ -205,6 +214,22 @@ pecan_opts = [
         default=True,
         help=_('Enables user authentication in pecan.')
     )
+]
+
+headers_propagation_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=False,
+        help=_('Parameter for enabling header propagation.')
+    ),
+    cfg.ListOpt(
+        'template',
+        default='.*',
+        help=_(
+            'Template (regex) to sort if header '
+            'should be propagated or not.'
+        )
+    ),
 ]
 
 engine_opts = [
@@ -283,6 +308,16 @@ executor_opts = [
             'a separate server to run action executions.'
         )
     ),
+    cfg.StrOpt(
+        'noop_execution',
+        choices=['local', 'remote'],
+        default='local',
+        help=(
+            'Type of noop action executor. Use local to run noop within the '
+            'engine server. Use remote if to run noop actions '
+            'on the remote executor.'
+        )
+    ),
     cfg.HostAddressOpt(
         'host',
         default='0.0.0.0',
@@ -309,7 +344,7 @@ executor_opts = [
 scheduler_type_opt = cfg.StrOpt(
     'scheduler_type',
     default='legacy',
-    choices=['legacy', 'default'],
+    choices=['legacy', 'legacy_pg', 'default'],
     help=_('The name of the scheduler implementation used in the system.')
 )
 
@@ -460,6 +495,73 @@ notifier_opts = [
         help=_('List of publishers to publish notification.')
     )
 ]
+
+
+kafka_notifications_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=False,
+        help=_('Enable mistral notifications using kafka instead of RabbitMQ.')
+    ),
+    cfg.StrOpt(
+        'kafka_host',
+        default='0.0.0.0',
+        help='Kafka server host'
+    ),
+    cfg.StrOpt(
+        'kafka_topic',
+        default='mistral_notifications'
+    ),
+    cfg.IntOpt(
+        'kafka_topic_partitions_count',
+        default=2,
+        min=1
+    ),
+    cfg.StrOpt(
+        'kafka_consumer_group_id',
+        default='notification_consumer_group'
+    ),
+    cfg.IntOpt(
+        'kafka_max_poll_interval',
+        default=3600000,
+        min=10,
+        help=_('The maximum delay in seconds between invocations of poll() '
+               'when using consumer group management. '
+               'This places an upper bound on the amount of time that '
+               'the consumer can be idle before fetching more records. '
+               'If poll() is not called before expiration of this timeout, '
+               'then the consumer is considered failed and the group '
+               'will rebalance in order to reassign '
+               'the partitions to another member.')
+    ),
+    cfg.BoolOpt(
+        'kafka_tls_enabled',
+        default=False
+    ),
+    cfg.BoolOpt(
+        'kafka_security_enabled',
+        default=False
+    ),
+    cfg.StrOpt(
+        'kafka_sasl_plain_username'
+    ),
+    cfg.StrOpt(
+        'kafka_sasl_plain_password'
+    ),
+    cfg.IntOpt(
+        'kafka_consumer_poll_timeout',
+        default=60
+    ),
+    cfg.IntOpt(
+        'kafka_consumer_commit_max_interval',
+        default=20
+    ),
+    cfg.IntOpt(
+        'kafka_consumer_commit_min_message_count',
+        default=5
+    )
+]
+
 
 execution_expiration_policy_opts = [
     cfg.IntOpt(
@@ -638,7 +740,7 @@ keycloak_oidc_opts = [
     ),
     cfg.BoolOpt(
         'insecure',
-        default=False,
+        default=True,
         help=_('If True, SSL/TLS certificate verification is disabled')
     ),
     cfg.StrOpt(
@@ -655,6 +757,40 @@ keycloak_oidc_opts = [
         'keycloak_iss',
         help="Keycloak issuer(iss) url. "
              "Example: https://ip_add:port/auth/realms/%s"
+    )
+]
+
+oauth2_opts = [
+    cfg.StrOpt(
+        'idp_url',
+        help=_('Identity provider URL')
+    ),
+    cfg.StrOpt(
+        'jwk_exp',
+        help=_('JSON Web Key RSA exponent')
+    ),
+    cfg.StrOpt(
+        'jwk_exp',
+        help=_('JSON Web Key RSA exponent')
+    ),
+    cfg.StrOpt(
+        'jwk_mod',
+        help=_('JSON Web Key RSA modules')
+    ),
+    cfg.StrOpt(
+        'security_profile',
+        choices=['prod', 'dev'],
+        default='dev',
+        help=_('Security in actions: "dev" - disable, "prod" - enable')
+    ),
+    cfg.StrOpt(
+        'client_id',
+        help=_('Public identifier for apps')
+    ),
+    cfg.StrOpt(
+        'client_secret',
+        help=_('Secret known only to the application and the '
+               'authorization server')
     )
 ]
 
@@ -755,6 +891,92 @@ healthcheck_opts = [
                        'reference/healthcheck_plugins.html.')),
 ]
 
+monitoring_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=False,
+        help=('Parameter for monitoring-mode.')
+    ),
+    cfg.StrOpt(
+        'namespace',
+        help=('Monitoring namespace')
+    ),
+
+    cfg.IntOpt(
+        'metric_collection_interval',
+        min=1,
+        default=30,
+        help=('Metric collection interval')
+    ),
+    cfg.BoolOpt(
+        'tls_enabled',
+        default=False,
+        help=('Parameter to enable TLS to monitoring service.')
+    )
+]
+
+recovery_job_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=True,
+        help=('Parameter for enabling recovery job.')
+    ),
+    cfg.IntOpt(
+        'recovery_interval',
+        default=30,
+        min=1,
+        help=('Recovery interval')
+    ),
+    cfg.IntOpt(
+        'hang_interval',
+        default=600,
+        min=1,
+        help=('Timeout for scheduled calls to be in processing state')
+    ),
+    cfg.IntOpt(
+        'idle_task_timeout',
+        default=120,
+        min=1,
+        help=('Timeout for IDLE tasks to send run_task call again')
+    ),
+    cfg.IntOpt(
+        'waiting_task_timeout',
+        default=600,
+        min=1,
+        help=('Timeout for WAITING tasks to refresh its state again')
+    ),
+    cfg.IntOpt(
+        'expired_subwf_task_timeout',
+        default=600,
+        min=1,
+        help=('Timeout for subwf tasks without created subworkflow')
+    ),
+    cfg.IntOpt(
+        'stucked_subwf_task_timeout',
+        default=600,
+        min=1,
+        help=('Timeout for subwf tasks with completed subworkflow')
+    )
+]
+
+rabbitmq_opts = [
+    cfg.StrOpt(
+        'management_host',
+    ),
+    cfg.StrOpt(
+        'management_port',
+    ),
+    cfg.StrOpt(
+        'virtual_host',
+    ),
+    cfg.StrOpt(
+        'user',
+    ),
+    cfg.StrOpt(
+        'password',
+    )
+]
+
 CONF = cfg.CONF
 
 LEGACY_ACTION_PROVIDER_GROUP = 'legacy_action_provider'
@@ -765,7 +987,9 @@ SCHEDULER_GROUP = 'scheduler'
 CRON_TRIGGER_GROUP = 'cron_trigger'
 EVENT_ENGINE_GROUP = 'event_engine'
 NOTIFIER_GROUP = 'notifier'
+KAFKA_NOTIFICATION_GROUP = 'kafka_notifications'
 PECAN_GROUP = 'pecan'
+HEADERS_PROP_GROUP = 'headers_propagation'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
@@ -776,6 +1000,10 @@ KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
+OAUTH2_GROUP = 'oauth2'
+MONITORING_GROUP = 'monitoring'
+RECOVERY_JOB_GROUP = 'recovery_job'
+RABBITMQ_GROUP = 'rabbitmq'
 
 
 CONF.register_opt(wf_trace_log_name_opt)
@@ -809,11 +1037,17 @@ CONF.register_opts(context_versioning_opts, group=CONTEXT_VERSIONING_GROUP)
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
+CONF.register_opts(kafka_notifications_opts, group=KAFKA_NOTIFICATION_GROUP)
+CONF.register_opts(headers_propagation_opts, group=HEADERS_PROP_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
+CONF.register_opts(oauth2_opts, group=OAUTH2_GROUP)
+CONF.register_opts(monitoring_opts, group=MONITORING_GROUP)
+CONF.register_opts(recovery_job_opts, group=RECOVERY_JOB_GROUP)
+CONF.register_opts(rabbitmq_opts, group=RABBITMQ_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
 CLI_OPTS = [
@@ -856,12 +1090,15 @@ def list_opts():
         (CRON_TRIGGER_GROUP, cron_trigger_opts),
         (NOTIFIER_GROUP, notifier_opts),
         (PECAN_GROUP, pecan_opts),
+        (HEADERS_PROP_GROUP, headers_propagation_opts),
+        (KAFKA_NOTIFICATION_GROUP, kafka_notifications_opts),
         (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
+        (OAUTH2_GROUP, oauth2_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),
         (CONTEXT_VERSIONING_GROUP, context_versioning_opts),

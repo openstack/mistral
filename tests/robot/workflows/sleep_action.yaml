@@ -1,0 +1,8 @@
+version: 2
+sleep_action:
+  tasks:
+    task1:
+      action: std.sleep seconds=8
+      on-success: task2
+    task2:
+      action: std.noop

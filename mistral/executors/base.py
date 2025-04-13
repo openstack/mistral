@@ -1,4 +1,5 @@
 # Copyright 2017 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -44,7 +45,8 @@ class Executor(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
-                   redelivered=False, target=None, async_=True, timeout=None):
+                   redelivered=False, target=None, async_=True,
+                   deadline=None, timeout=None):
         """Runs the given action.
 
         :param action: Action to run.
@@ -60,6 +62,18 @@ class Executor(object, metaclass=abc.ABCMeta):
             for completion).
         :param timeout: a period of time in seconds after which execution of
             action will be interrupted
+        :param deadline: a deadline after which execution of action will be
+                         interrupted
+        :param timeout: a timeout after which execution of action will be
+                         interrupted
         :return: Action result.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def interrupt_action(self, action_ex_id):
+        """Interrupts action.
+
+        :param action_ex_id: Corresponding action execution id.
         """
         raise NotImplementedError()

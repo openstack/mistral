@@ -1,0 +1,9 @@
+version: 2
+test_tags:
+  tasks:
+    task1:
+      action: std.noop
+      tags:
+        - sub-operation
+  tags:
+    - operation
