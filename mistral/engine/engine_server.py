@@ -44,12 +44,11 @@ class EngineServer(service_base.MistralService):
     """Engine server.
 
     This class manages engine life-cycle and gets registered as an RPC
-    endpoint to process engine specific calls. It also registers a
-    cluster member associated with this instance of engine.
+    endpoint to process engine specific calls.
     """
 
     def __init__(self, engine, setup_profiler=True):
-        super(EngineServer, self).__init__('engine_group', setup_profiler)
+        super(EngineServer, self).__init__(setup_profiler)
 
         self.engine = engine
         self._rpc_server = None

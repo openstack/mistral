@@ -33,10 +33,7 @@ class SchedulerServer(service_base.MistralService):
     """
 
     def __init__(self, scheduler, setup_profiler=True):
-        super(SchedulerServer, self).__init__(
-            'scheduler_group',
-            setup_profiler
-        )
+        super(SchedulerServer, self).__init__(setup_profiler)
 
         self.scheduler = scheduler
         self._rpc_server = None

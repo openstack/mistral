@@ -31,12 +31,11 @@ class ExecutorServer(service_base.MistralService):
     """Executor server.
 
     This class manages executor life-cycle and gets registered as an RPC
-    endpoint to process executor specific calls. It also registers a
-    cluster member associated with this instance of executor.
+    endpoint to process executor specific calls.
     """
 
     def __init__(self, executor, setup_profiler=True):
-        super(ExecutorServer, self).__init__('executor_group', setup_profiler)
+        super(ExecutorServer, self).__init__(setup_profiler)
 
         self.executor = executor
         self._rpc_server = None

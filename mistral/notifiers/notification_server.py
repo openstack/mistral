@@ -27,10 +27,7 @@ LOG = logging.getLogger(__name__)
 class NotificationServer(service_base.MistralService):
 
     def __init__(self, notifier, setup_profiler=True):
-        super(NotificationServer, self).__init__(
-            'notifier_group',
-            setup_profiler
-        )
+        super(NotificationServer, self).__init__(setup_profiler)
 
         self.notifier = notifier
         self._rpc_server = None

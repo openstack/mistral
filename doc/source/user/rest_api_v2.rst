@@ -193,30 +193,6 @@ Note: using CLI, Environment can be created via JSON or YAML file.
    :webprefix: /v2/environments
 
 
-Services
---------
-
-Through service management API, system administrator or operator can retrieve
-Mistral services information of the system, including service group and service
-identifier. The internal implementation of this feature make use of tooz
-library, which needs coordinator backend(the most commonly used at present is
-Zookeeper) installed, please refer to tooz official documentation for more
-detailed instruction.
-
-There are three service groups according to Mistral architecture currently,
-namely api_group, engine_group and executor_group. The service identifier
-contains name of the host that the service is running on and the process
-identifier of the service on that host.
-
-.. autotype:: mistral.api.controllers.v2.resources.Service
-   :members:
-
-.. autotype:: mistral.api.controllers.v2.resources.Services
-   :members:
-
-.. rest-controller:: mistral.api.controllers.v2.service:ServicesController
-   :webprefix: /v2/services
-
 Validation
 ----------
 

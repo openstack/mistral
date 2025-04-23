@@ -632,23 +632,6 @@ context_versioning_opts = [
     )
 ]
 
-coordination_opts = [
-    cfg.StrOpt(
-        'backend_url',
-        secret=True,
-        deprecated_for_removal=True,
-        deprecated_reason='Coordination will be removed from mistral code',
-        help=_('The backend URL to be used for coordination')
-    ),
-    cfg.FloatOpt(
-        'heartbeat_interval',
-        default=5.0,
-        deprecated_for_removal=True,
-        deprecated_reason='This option has been unused and has had no effect',
-        help=_('Number of seconds between heartbeats for coordination.')
-    )
-]
-
 profiler_opts = profiler.list_opts()[0][1]
 profiler_opts.append(
     cfg.StrOpt(
@@ -807,7 +790,6 @@ CRON_TRIGGER_GROUP = 'cron_trigger'
 EVENT_ENGINE_GROUP = 'event_engine'
 NOTIFIER_GROUP = 'notifier'
 PECAN_GROUP = 'pecan'
-COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
 ACTION_LOGGING_GROUP = 'action_logging'
@@ -851,7 +833,6 @@ CONF.register_opts(context_versioning_opts, group=CONTEXT_VERSIONING_GROUP)
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
-CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
@@ -896,7 +877,6 @@ def list_opts():
         (CRON_TRIGGER_GROUP, cron_trigger_opts),
         (NOTIFIER_GROUP, notifier_opts),
         (PECAN_GROUP, pecan_opts),
-        (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),

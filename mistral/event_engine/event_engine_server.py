@@ -29,13 +29,11 @@ class EventEngineServer(service_base.MistralService):
     """RPC EventEngine server.
 
     This class manages event engine life-cycle and gets registered as
-    an RPC endpoint to process event engine specific calls. It also
-    registers a cluster member associated with this instance of event
-    engine.
+    an RPC endpoint to process event engine specific calls.
     """
 
     def __init__(self, event_engine):
-        super(EventEngineServer, self).__init__('event-engine_group')
+        super(EventEngineServer, self).__init__()
 
         self._event_engine = event_engine
         self._rpc_server = None
