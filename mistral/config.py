@@ -64,6 +64,29 @@ auth_type_opt = cfg.StrOpt(
     help=_('Authentication type (valid options: keystone, keycloak-oidc)')
 )
 
+action_providers_opts = [
+    cfg.ListOpt(
+        'allowlist',
+        default=[],
+        help=_(
+            'Allowlist with action providers that is allowed to be '
+            'loaded from the entry point "mistral.action.providers", '
+            'if empty all action providers will be allowed unless '
+            'denylist is set.'
+        ),
+    ),
+    cfg.ListOpt(
+        'denylist',
+        default=[],
+        help=_(
+            'Denylist with action providers that is not allowed to '
+            'be loaded from the entry point "mistral.action.providers", '
+            'allowlist takes precendence, if empty all action providers '
+            'will be allowed.'
+        ),
+    ),
+]
+
 legacy_action_provider_opts = [
     cfg.BoolOpt(
         'load_action_plugins',
@@ -90,6 +113,25 @@ legacy_action_provider_opts = [
             'the box plugged in with the entry point "mistral.actions".'
             'This property is needed mostly for testing.'
         )
+    ),
+    cfg.ListOpt(
+        'allowlist',
+        default=[],
+        help=_(
+            'Allowlist with actions that is allowed to be '
+            'loaded from the entry point "mistral.actions", '
+            'if empty all actions will be allowed.'
+        ),
+    ),
+    cfg.ListOpt(
+        'denylist',
+        default=[],
+        help=_(
+            'Denylist with actions that is not allowed to '
+            'be loaded from the entry point "mistral.actions", '
+            'allowlist takes precedence, if empty all actions '
+            'will be allowed.'
+        ),
     ),
 ]
 
@@ -755,6 +797,7 @@ healthcheck_opts = [
 
 CONF = cfg.CONF
 
+ACTION_PROVIDERS_GROUP = 'action_providers'
 LEGACY_ACTION_PROVIDER_GROUP = 'legacy_action_provider'
 API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
@@ -785,6 +828,7 @@ CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 CONF.register_opts(service_opts.service_opts)
 
+CONF.register_opts(action_providers_opts, group=ACTION_PROVIDERS_GROUP)
 CONF.register_opts(
     legacy_action_provider_opts,
     group=LEGACY_ACTION_PROVIDER_GROUP
@@ -842,6 +886,7 @@ _DEFAULT_LOG_LEVELS = [
 
 def list_opts():
     return [
+        (ACTION_PROVIDERS_GROUP, action_providers_opts),
         (API_GROUP, api_opts),
         (ENGINE_GROUP, engine_opts),
         (EXECUTOR_GROUP, executor_opts),
