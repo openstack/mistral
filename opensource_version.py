@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MISTRAL_VERSION = '18.0.0'
+MISTRAL_VERSION = '19.0.0'
