@@ -96,6 +96,166 @@ def _get_workflow_execution(id, must_exist=True, fields=None):
         )
 
 
+@rest_utils.rest_retry_on_db_error
+def _compute_delta(id, wf_ex):
+    with db_api.transaction():
+        # ensure that workflow execution exists
+        wf_ex_old = db_api.get_workflow_execution(
+            id,
+            fields=(db_models.WorkflowExecution.id,
+                    db_models.WorkflowExecution.root_execution_id,
+                    db_models.WorkflowExecution.params)
+        )
+
+        if wf_ex_old.params.get('read_only'):
+            raise exc.InputException(
+                'This execution is read only. '
+                'Any update operation is forbidden'
+            )
+
+        root_execution_id = wf_ex_old.root_execution_id
+
+        if not root_execution_id:
+            root_execution_id = wf_ex_old.id
+
+        context.ctx(root_execution_id=root_execution_id)
+
+        delta = {}
+
+        simple_fields = {
+            'state': wf_ex.state,
+            'description': wf_ex.description,
+        }
+
+        for field, value in simple_fields.items():
+            if value:
+                delta[field] = value
+
+        dependent_fields = {
+            'sync': wf_ex.sync if wf_ex.sync is not Unset else None,
+            'force': wf_ex.force if wf_ex.force is not Unset else None,
+        }
+
+        for field, value in dependent_fields.items():
+            if value is not None:
+                if 'state' not in delta:
+                    raise exc.InputException(
+                        f'The property {str(field)} cannot be updated '
+                        'separately from state.'
+                    )
+                delta[field] = value
+
+        if not delta.get('sync', True) and delta.get('force', False):
+            raise exc.InputException(
+                'It is impossible to update state using both force '
+                'and async way.'
+            )
+
+        if wf_ex.params:
+            for param_field in ['env', 'read_only', 'force_cancel']:
+                value = wf_ex.params.get(param_field)
+                if value:
+                    delta[param_field] = value
+
+        # Currently we can change only state, description, read_only,
+        # or env.
+
+        if not delta:
+            raise exc.InputException(
+                'The property state, description, or env '
+                'is not provided for update.'
+            )
+
+        # Description cannot be updated together with state.
+        if delta.get('description') and delta.get('state'):
+            raise exc.InputException(
+                'The property description must be updated '
+                'separately from state.'
+            )
+
+        # If state change, environment cannot be updated
+        # if not RUNNING.
+        if (delta.get('env') and
+                delta.get('state') and
+                delta['state'] != states.RUNNING):
+            raise exc.InputException(
+                'The property env can only be updated when workflow '
+                'execution is not running or on resume from pause.'
+            )
+
+        if delta.get('read_only') and delta.get('state'):
+            raise exc.InputException(
+                'The property read_only must be updated '
+                'separately from state.'
+            )
+
+        if delta.get('read_only'):
+            wf_ex = db_api.get_workflow_execution(id)
+            if wf_ex.state != states.ERROR:
+                msg = "Execution should be in ERROR state to set " \
+                      "read only"
+                raise exc.InputException(msg)
+            elif wf_ex.root_execution_id is not None:
+                msg = "Execution should be root to set read only"
+                raise exc.InputException(msg)
+
+        return delta, wf_ex
+
+
+@rest_utils.rest_retry_on_db_error
+def _update_execution(id, wf_ex, delta):
+    with db_api.transaction():
+        if delta.get('description'):
+            wf_ex = db_api.update_workflow_execution(
+                id,
+                {'description': delta['description']}
+            )
+
+        if not delta.get('state') and delta.get('env'):
+            wf_ex = db_api.get_workflow_execution(id)
+            wf_ex = wf_service.update_workflow_execution_env(
+                wf_ex,
+                delta.get('env')
+            )
+
+    if delta.get('read_only'):
+        wf_ex = rpc.get_engine_client().update_wf_ex_to_read_only(id)
+
+    if delta.get('state'):
+        if states.is_paused(delta.get('state')):
+            wf_ex = rpc.get_engine_client().pause_workflow(id)
+        elif delta.get('state') == states.RUNNING:
+            wf_ex = rpc.get_engine_client().resume_workflow(
+                id,
+                env=delta.get('env')
+            )
+        elif states.is_completed(delta.get('state')):
+            sync = delta.get('sync', True)
+            force = delta.get('force_cancel', False)
+            msg = wf_ex.state_info if wf_ex.state_info else None
+            wf_ex = rpc.get_engine_client().stop_workflow(
+                id,
+                delta.get('state'),
+                msg,
+                sync,
+                force
+            )
+        else:
+            # To prevent changing state in other cases throw a message.
+            raise exc.InputException(
+                "Cannot change state to %s. Allowed states are: '%s" % (
+                    wf_ex.state,
+                    ', '.join([
+                        states.RUNNING,
+                        states.PAUSED,
+                        states.SUCCESS,
+                        states.ERROR,
+                        states.CANCELLED
+                    ])
+                )
+            )
+    return wf_ex
+
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
 
@@ -149,162 +309,9 @@ class ExecutionsController(rest.RestController):
 
         LOG.info('Update execution [id=%s, execution=%s]', id, wf_ex)
 
-        @rest_utils.rest_retry_on_db_error
-        def _compute_delta(wf_ex):
-            with db_api.transaction():
-                # ensure that workflow execution exists
-                wf_ex_old = db_api.get_workflow_execution(
-                    id,
-                    fields=(db_models.WorkflowExecution.id,
-                            db_models.WorkflowExecution.root_execution_id,
-                            db_models.WorkflowExecution.params)
-                )
+        delta, wf_ex = _compute_delta(id, wf_ex)
 
-                if wf_ex_old.params.get('read_only'):
-                    raise exc.InputException(
-                        'This execution is read only. '
-                        'Any update operation is forbidden'
-                    )
-                root_execution_id = wf_ex_old.root_execution_id
-                if not root_execution_id:
-                    root_execution_id = wf_ex_old.id
-
-                context.ctx(root_execution_id=root_execution_id)
-
-                delta = {}
-
-                if wf_ex.state:
-                    delta['state'] = wf_ex.state
-
-                if wf_ex.sync is not Unset:
-                    if not delta['state']:
-                        raise exc.InputException(
-                            'The property sync could not be updated '
-                            'separately from state.'
-                        )
-                    delta['sync'] = wf_ex.sync
-
-                if wf_ex.force is not Unset:
-                    if not delta['state']:
-                        raise exc.InputException(
-                            'The property force could not be updated '
-                            'separately from state.'
-                        )
-                    delta['force'] = wf_ex.force
-
-                if not delta.get('sync', True) and delta.get('force', False):
-                    raise exc.InputException(
-                        'It is impossible to update state using both force '
-                        'and async way.'
-                    )
-
-                if wf_ex.description:
-                    delta['description'] = wf_ex.description
-
-                if wf_ex.params and wf_ex.params.get('env'):
-                    delta['env'] = wf_ex.params.get('env')
-
-                if wf_ex.params and wf_ex.params.get('read_only'):
-                    delta['read_only'] = wf_ex.params.get('read_only')
-
-                if wf_ex.params and wf_ex.params.get('force_cancel'):
-                    delta['force_cancel'] = wf_ex.params.get('force_cancel')
-
-                # Currently we can change only state, description, read_only,
-                # or env.
-
-                if len(delta.values()) <= 0:
-                    raise exc.InputException(
-                        'The property state, description, or env '
-                        'is not provided for update.'
-                    )
-
-                # Description cannot be updated together with state.
-                if delta.get('description') and delta.get('state'):
-                    raise exc.InputException(
-                        'The property description must be updated '
-                        'separately from state.'
-                    )
-
-                # If state change, environment cannot be updated
-                # if not RUNNING.
-                if (delta.get('env') and
-                        delta.get('state') and
-                        delta['state'] != states.RUNNING):
-                    raise exc.InputException(
-                        'The property env can only be updated when workflow '
-                        'execution is not running or on resume from pause.'
-                    )
-
-                if delta.get('description'):
-                    wf_ex = db_api.update_workflow_execution(
-                        id,
-                        {'description': delta['description']}
-                    )
-
-                if delta.get('read_only') and delta.get('state'):
-                    raise exc.InputException(
-                        'The property read_only must be updated '
-                        'separately from state.'
-                    )
-
-                if not delta.get('state') and delta.get('env'):
-                    wf_ex = db_api.get_workflow_execution(id)
-                    wf_ex = wf_service.update_workflow_execution_env(
-                        wf_ex,
-                        delta.get('env')
-                    )
-
-                if delta.get('read_only'):
-                    wf_ex = db_api.get_workflow_execution(id)
-                    if wf_ex.state != states.ERROR:
-                        msg = "Execution should be in ERROR state to set " \
-                              "read only"
-                        raise exc.InputException(msg)
-                    elif wf_ex.root_execution_id is not None:
-                        msg = "Execution should be root to set read only"
-                        raise exc.InputException(msg)
-
-                return delta, wf_ex
-
-        delta, wf_ex = _compute_delta(wf_ex)
-
-        if delta.get('read_only'):
-            wf_ex = rpc.get_engine_client().update_wf_ex_to_read_only(id)
-
-        if delta.get('state'):
-            if states.is_paused(delta.get('state')):
-                wf_ex = rpc.get_engine_client().pause_workflow(id)
-            elif delta.get('state') == states.RUNNING:
-                wf_ex = rpc.get_engine_client().resume_workflow(
-                    id,
-                    env=delta.get('env')
-                )
-            elif states.is_completed(delta.get('state')):
-                sync = delta.get('sync', True)
-                force = delta.get('force_cancel', False)
-                msg = wf_ex.state_info if wf_ex.state_info else None
-                wf_ex = rpc.get_engine_client().stop_workflow(
-                    id,
-                    delta.get('state'),
-                    msg,
-                    sync,
-                    force
-                )
-            else:
-                # To prevent changing state in other cases throw a message.
-                raise exc.InputException(
-                    "Cannot change state to %s. Allowed states are: '%s" % (
-                        wf_ex.state,
-                        ', '.join([
-                            states.RUNNING,
-                            states.PAUSED,
-                            states.SUCCESS,
-                            states.ERROR,
-                            states.CANCELLED
-                        ])
-                    )
-                )
+        wf_ex = _update_execution(id, wf_ex, delta)
 
         return resources.Execution.from_dict(
             wf_ex if isinstance(wf_ex, dict) else wf_ex.to_dict()
@@ -327,26 +334,12 @@ class ExecutionsController(rest.RestController):
 
         exec_dict = wf_ex.to_dict()
 
-        exec_id = exec_dict.get('id')
+        exec_id = exec_dict.setdefault('id', uuidutils.generate_uuid())
+        wf_ex = _get_workflow_execution(exec_id, must_exist=False)
+        context.ctx(root_execution_id=exec_id)
 
-        if not exec_id:
-            exec_id = uuidutils.generate_uuid()
-            context.ctx(root_execution_id=exec_id)
-
-            LOG.debug("Generated execution id [exec_id=%s]", exec_id)
-
-            exec_dict.update({'id': exec_id})
-
-            wf_ex = None
-        else:
-            # If ID is present we need to check if such execution exists.
-            # If yes, the method just returns the object. If not, the ID
-            # will be used to create a new execution.
-            wf_ex = _get_workflow_execution(exec_id, must_exist=False)
-            context.ctx(root_execution_id=exec_id)
-
-            if wf_ex:
-                return resources.Execution.from_db_model(wf_ex)
+        if wf_ex:
+            return resources.Execution.from_db_model(wf_ex)
 
         source_execution_id = exec_dict.get('source_execution_id')
 
@@ -377,23 +370,18 @@ class ExecutionsController(rest.RestController):
         engine = rpc.get_engine_client()
 
         if cfg.CONF.headers_propagation.enabled:
-            if 'params' not in result_exec_dict:
-                result_exec_dict['params'] = {}
-            result_exec_dict['params']['headers'] = {}
-
+            # If headers propagation is enabled in the configuration we will
+            # set header parameter in result execution dict by matching the
+            # headers in template in the config
             template = cfg.CONF.headers_propagation.template
-
+            result_exec_dict.setdefault('params', {})['headers'] = {}
             for h_name, h_value in pecan.request.headers.items():
-                for t in template:
-                    if re.match(t, h_name):
-                        result_exec_dict['params']['headers'][h_name] = h_value
+                if any(re.match(t, h_name) for t in template):
+                    result_exec_dict['params']['headers'][h_name] = h_value
 
-        is_planned = cfg.CONF.api.start_workflow_as_planned
-
-        if is_planned:
-            start_method_name = 'plan_workflow'
-        else:
-            start_method_name = 'start_workflow'
+        start_method_name = 'plan_workflow' \
+            if cfg.CONF.api.start_workflow_as_planned \
+            else 'start_workflow'
 
         start_method = getattr(engine, start_method_name)
         result = start_method(
