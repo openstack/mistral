@@ -36,6 +36,6 @@ tenacity>=5.0.1 # Apache-2.0
 SQLAlchemy>=1.2.5 # MIT
 stevedore>=1.20.0 # Apache-2.0
 WSME>=0.8.0 # MIT
-yaql>=1.1.3 # Apache 2.0 License
+yaql>=3.0.0 # Apache 2.0 License
 tooz>=1.58.0 # Apache-2.0
 
