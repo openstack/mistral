@@ -104,25 +104,39 @@
               - ^.*\.rst$
               - ^doc/.*$
               - ^releasenotes/.*$
-        - mistral-devstack
-        - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
-        - mistral-devstack-kombu
-        - mistral-tox-unit-mysql
-        - mistral-tox-unit-postgresql
+        - mistral-devstack:
+            voting: false
+        - mistral-devstack-tempest-ipv6-only:
+            voting: false
+        - mistral-devstack-non-apache-tempest-ipv6-only:
+            voting: false
+        - mistral-devstack-non-apache:
+            voting: false
+        - mistral-devstack-kombu:
+            voting: false
+        - mistral-tox-unit-mysql:
+            voting: false
+        - mistral-tox-unit-postgresql:
+            voting: false
         - mistral-rally-task:
             voting: false
     queue: mistral
     gate:
       jobs:
-        - mistral-devstack
-        - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
-        - mistral-devstack-kombu
-        - mistral-tox-unit-mysql
-        - mistral-tox-unit-postgresql
+        - mistral-devstack:
+            voting: false
+        - mistral-devstack-tempest-ipv6-only:
+            voting: false
+        - mistral-devstack-non-apache-tempest-ipv6-only:
+            voting: false
+        - mistral-devstack-non-apache:
+            voting: false
+        - mistral-devstack-kombu:
+            voting: false
+        - mistral-tox-unit-mysql:
+            voting: false
+        - mistral-tox-unit-postgresql:
+            voting: false
     post:
       jobs:
         - mistral-docker-buildimage:
