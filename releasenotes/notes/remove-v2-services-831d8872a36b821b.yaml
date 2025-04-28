@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    The `/v2/services` endpoint in mistral is now removed.
+    This endpoint was using tooz.coordination which we decided to get rid of
+    in the previous release.
+    That endpoint was introduced in the past to help administrator know which
+    services were running but we believe this is not widely used and can
+    easily be replaced by external tooling.
