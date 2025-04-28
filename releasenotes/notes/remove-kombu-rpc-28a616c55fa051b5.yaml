@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    Kombu RPC driver is now deleted from mistral RPC drivers.
+    Only oslo messaging driver is supported.

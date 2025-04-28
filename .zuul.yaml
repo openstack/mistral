@@ -111,7 +111,6 @@
         - mistral-devstack-tempest-ipv6-only
         - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
-        - mistral-devstack-kombu
         # Disable mysql / postgresql units as they are not working as expected
         # - mistral-tox-unit-mysql
         # - mistral-tox-unit-postgresql
@@ -123,7 +122,6 @@
         - mistral-devstack-tempest-ipv6-only
         - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
-        - mistral-devstack-kombu
         # Disable mysql / postgresql units as they are not working as expected
         # - mistral-tox-unit-mysql
         # - mistral-tox-unit-postgresql

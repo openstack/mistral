@@ -42,9 +42,6 @@ def cleanup():
     _TRANSPORT = None
 
 
-# TODO(rakhmerov): This method seems misplaced. Now we have different kind
-# of transports (oslo, kombu) and this module should not have any oslo
-# specific things anymore.
 def get_transport():
     global _TRANSPORT
 
@@ -54,27 +51,25 @@ def get_transport():
     return _TRANSPORT
 
 
+# TODO(amorin) maybe refactor this since we have only one impl now
 def get_rpc_server_driver():
-    rpc_impl = cfg.CONF.rpc_implementation
-
     global _IMPL_SERVER
     if not _IMPL_SERVER:
         _IMPL_SERVER = driver.DriverManager(
             'mistral.rpc.backends',
-            '%s_server' % rpc_impl
+            'oslo_server'
         ).driver
 
     return _IMPL_SERVER
 
 
+# TODO(amorin) maybe refactor this since we have only one impl now
 def get_rpc_client_driver():
-    rpc_impl = cfg.CONF.rpc_implementation
-
     global _IMPL_CLIENT
     if not _IMPL_CLIENT:
         _IMPL_CLIENT = driver.DriverManager(
             'mistral.rpc.backends',
-            '%s_client' % rpc_impl
+            'oslo_client'
         ).driver
 
     return _IMPL_CLIENT

@@ -193,17 +193,6 @@ js_impl_opt = cfg.StrOpt(
            'action to evaluate scripts.')
 )
 
-rpc_impl_opt = cfg.StrOpt(
-    'rpc_implementation',
-    default='oslo',
-    choices=['oslo', 'kombu'],
-    deprecated_for_removal=True,
-    deprecated_reason='Kombu driver is deprecated and will be removed '
-                      'in the F release cycle',
-    help=_('Specifies RPC implementation for RPC client and server. '
-           'Support of kombu driver is experimental.')
-)
-
 oslo_rpc_executor = cfg.StrOpt(
     'oslo_rpc_executor',
     default='threading',
@@ -805,7 +794,6 @@ CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
 CONF.register_opt(scheduler_type_opt)
 CONF.register_opt(js_impl_opt)
-CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 CONF.register_opts(service_opts.service_opts)
@@ -849,7 +837,6 @@ default_group_opts = CLI_OPTS + [
     auth_type_opt,
     scheduler_type_opt,
     js_impl_opt,
-    rpc_impl_opt,
     oslo_rpc_executor,
     expiration_token_duration
 ]
