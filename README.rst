@@ -2,6 +2,10 @@
 Mistral
 =======
 
+.. image:: https://governance.openstack.org/tc/badges/mistral.svg
+
+.. Change things from this point on
+
 Workflow Service integrated with OpenStack. This project aims to provide a
 mechanism to define tasks and workflows in a simple YAML-based language, manage
 and execute them in a distributed environment.
