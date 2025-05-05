@@ -29,7 +29,7 @@ from mistral.workflow import states
 
 
 def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
-                   target=None, async_=True, deadline=None, timeout=None,
+                   target=None, async_=True, deadline=None, timeout=10,
                    async_heartbeats_enabled=False):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
@@ -42,7 +42,7 @@ def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
         redelivered=True,
         deadline=deadline,
         timeout=timeout,
-        async_heartbeats_enabled=async_heartbeats_enabled
+        # async_heartbeats_enabled=async_heartbeats_enabled
     )
 
 
@@ -118,7 +118,7 @@ class TestSafeRerun(base.EngineTestCase):
         wf:
           tasks:
             task1:
-              action: std.noop
+              action: std.fail
               safe-rerun: false
               on-success:
                 - task2
@@ -206,6 +206,7 @@ class TestSafeRerun(base.EngineTestCase):
                 safe-rerun: true
               tasks:
                 task1:
+                  action: std.fail
                   safe-rerun: false
                   on-error:
                     - task2
@@ -241,7 +242,7 @@ class TestSafeRerun(base.EngineTestCase):
             wf:
               tasks:
                 task1:
-                  action: std.noop
+                  action: std.fail
             """
 
         wf_service.create_workflows(wf_text)
