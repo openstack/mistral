@@ -1,5 +1,6 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2026 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -421,16 +422,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf1_task1_actions[1].id
             )
 
-        # NOTE(amorin) we need to await the wf to make sure it's actually
-        # running and avoid race condition with IDLE state
-        # See lp-2051040
-        self.await_workflow_state(wf2_ex1.id, states.RUNNING)
-        self.await_workflow_state(wf2_ex2.id, states.RUNNING)
-
-        with db_api.transaction():
-            # Grab latest info
-            wf2_ex1 = db_api.get_workflow_execution(wf2_ex1.id)
-            wf2_ex2 = db_api.get_workflow_execution(wf2_ex2.id)
 
             wf2_ex1_task1 = self._assert_single_item(
                 wf2_ex1.task_executions,
@@ -441,11 +432,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-        # And wait for the tasks to be RUNNING
-        self.await_task_running(wf2_ex1_task1.id)
-        self.await_task_running(wf2_ex2_task1.id)
-
-        with db_api.transaction():
             # Grab actions so we can complete it after
             wf2_ex1_task1_actions = db_api.get_action_executions(
                 task_execution_id=wf2_ex1_task1.id

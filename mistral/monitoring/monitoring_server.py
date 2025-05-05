@@ -14,27 +14,35 @@
 #  under the License.
 
 import datetime
-import ssl
 
-from flask import Flask
-from flask import jsonify
-from flask import Response
+from asyncio import iscoroutinefunction
+from fastapi import FastAPI
+from fastapi import Response
 from importlib_metadata import entry_points
+import uvicorn
+
+from oslo_config import cfg
+from oslo_log import log as logging
+from prometheus_client import CONTENT_TYPE_LATEST
 
 from mistral.monitoring.prometheus import format_to_prometheus
 from mistral.service import base as service_base
 
-from oslo_config import cfg
-from oslo_log import log as logging
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
+app = FastAPI(title="Mistral Monitoring Service")
+
+server = None
+
+
 def get_oslo_service(setup_profiler=True):
-    return MonitoringServer(
-        setup_profiler=setup_profiler
-    )
+    global server
+    if not server:
+        server = MonitoringServer(setup_profiler=setup_profiler)
+    return server
 
 
 class MonitoringServer(service_base.MistralService):
@@ -47,54 +55,62 @@ class MonitoringServer(service_base.MistralService):
         collectors = entry_points(group='monitoring.metric_collector')
         self._metric_collectors = [collector.load()()
                                    for collector in collectors]
+
         self._jobs = []
         self._standard_tags = {}
-        self._metrics = {}
-        self._prometheus_formatted_metrics = []
+        self._metrics = []
         self._last_updated = None
         self._timedelta = datetime.timedelta(
             seconds=CONF.monitoring.metric_collection_interval
         )
 
-        self.app = Flask(__name__)
-        self.app.add_url_rule('/metrics', 'metrics', self.metrics)
-        self.app.add_url_rule('/health', 'health', self.health)
+        self._prometheus_cache = ""
+        self._prometheus_last_updated = None
 
-    def collect_metrics(self, to_json=False):
+    async def collect_metrics(self, to_json=False):
         now = datetime.datetime.now()
         if not self._last_updated or self._outdated(now):
             metrics = []
             for collector in self._metric_collectors:
-                metrics.extend(collector.collect())
+                if hasattr(collector, "collect_async"):
+                    metrics.extend(await collector.collect_async())
+                elif iscoroutinefunction(collector.collect):
+                    metrics.extend(await collector.collect())
+                else:
+                    metrics.extend(collector.collect())
 
             for metric in metrics:
                 metric.tags.update(self._standard_tags)
 
             self._metrics = metrics
-
             self._last_updated = now
 
         if to_json:
-            return list(map(lambda x: x.__dict__, self._metrics))
-
+            return [m.__dict__ for m in self._metrics]
         return self._metrics
 
     def _outdated(self, now):
+        if self._last_updated is None:
+            return True
         return self._last_updated <= now - self._timedelta
 
-    def _get_prometheus_metrics(self):
-        metrics = self.collect_metrics(to_json=True)
-        pr_metrics = format_to_prometheus(metrics)
-        return ''.join([line.decode('utf-8') for line in pr_metrics])
+    async def _get_prometheus_metrics(self):
+        if (
+            not self._prometheus_last_updated
+            or self._prometheus_last_updated
+            <= datetime.datetime.now() - self._timedelta
+        ):
+            now = datetime.datetime.now()
 
-    def metrics(self):
-        with self.app.app_context():
-            m = self._get_prometheus_metrics()
-            return Response(m, 200, content_type='text/plain')
+            metrics = await self.collect_metrics(to_json=True)
+            formatted = format_to_prometheus(metrics)
+            self._prometheus_cache = ''.join(
+                line.decode('utf-8') for line in formatted
+            )
 
-    def health(self):
-        with self.app.app_context():
-            return jsonify({'status': 'UP'})
+            self._prometheus_last_updated = now
+
+        return self._prometheus_cache
 
     def _init_monitoring_jobs(self):
         if CONF.recovery_job.enabled:
@@ -105,22 +121,40 @@ class MonitoringServer(service_base.MistralService):
                 recovery_job.start()
 
     def start(self):
-        super(MonitoringServer, self).start()
+        super().start()
         self._init_monitoring_jobs()
+        LOG.info("Launched monitoring server with Uvicorn")
+
         if CONF.monitoring.tls_enabled:
             cert_dir = "/opt/mistral/mount_configs/tls/"
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            context.load_cert_chain(
-                cert_dir + "tls.crt",
-                cert_dir + "tls.key"
-            )
-            context.load_verify_locations(cert_dir + "ca.crt")
+            tls_cert_path = cert_dir + "tls.crt"
+            tls_key_path = cert_dir + "tls.key"
+            tls_ca_path = cert_dir + "ca.crt"
+            LOG.info("SSL/TLS mode on for monitoring")
 
-            self.app.run(host="0.0.0.0", port=9090, ssl_context=context)
+            uvicorn.run(
+                app,
+                host="0.0.0.0",
+                port=9090,
+                ssl_certfile=tls_cert_path,
+                ssl_keyfile=tls_key_path,
+                ssl_ca_certs=tls_ca_path
+            )
         else:
-            self.app.run(host="0.0.0.0", port=9090)
+            uvicorn.run(app, host="0.0.0.0", port=9090)
 
     def stop(self, graceful=False):
-        super(MonitoringServer, self).stop()
+        super().stop()
         for job in self._jobs:
             job.stop(graceful)
+
+
+@app.get("/health")
+def health():
+    return {"status": "UP"}
+
+
+@app.get("/metrics")
+async def metrics():
+    prometheus_data = await get_oslo_service()._get_prometheus_metrics()
+    return Response(content=prometheus_data, media_type=CONTENT_TYPE_LATEST)

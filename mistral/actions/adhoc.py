@@ -14,6 +14,7 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import importutils
 
 from mistral_lib import actions as ml_actions
 from mistral_lib.actions.providers import base as action_providers_base
@@ -127,7 +128,11 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
     @property
     def action_class_name(self):
         return "{}.{}".format(AdHocAction.__module__, AdHocAction.__name__)
-
+    
+    @property
+    def action_class(self):
+        return importutils.import_class(self.action_class_name)
+    
     @property
     def spec(self):
         return self._spec

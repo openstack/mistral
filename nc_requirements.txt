@@ -1,6 +1,5 @@
 certifi==2024.2.2
 confluent-kafka==1.6.1
-Flask
 gevent
 jsonschema<4.6.0
 kubernetes
@@ -11,3 +10,5 @@ setuptools==70.0.0
 urllib3==1.26.18
 # tls issue
 oslo.service==3.4.0
+fastapi
+uvicorn

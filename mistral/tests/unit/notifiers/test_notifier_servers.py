@@ -143,8 +143,8 @@ class LocalNotifServerTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
-            (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
+            (t2_ex.id, events.TASK_SUCCEEDED)
         ]
 
         self.assertFalse(r_notif.RemoteNotifier.notify.called)

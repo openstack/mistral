@@ -49,6 +49,7 @@ class KubernetesMetricCollector(base.MetricCollector):
         self._api_client = client.ApiClient()
         self._workspace = open(self.SA_NAMESPACE_PATH).read()
         self._apps_api = client.AppsV1Api(self._api_client)
+        self._core_api = client.CoreV1Api(self._api_client)
 
     def collect(self):
         mistral_deployments = self._apps_api.list_namespaced_deployment(
@@ -184,4 +185,32 @@ class KubernetesMetricCollector(base.MetricCollector):
             },
             tags=mistral_cluster_tags
         )
+
+        pods_restarts_tags = {
+            "name": "mistral_pods_restarts",
+            "description": "Count of container restarts in each Mistral pod",
+            "namespace": self._workspace,
+            "labels": ["namespace", "pod_name"]
+        }
+
+        pod_list = self._core_api.list_namespaced_pod(
+            namespace=self._workspace,
+            label_selector=MISTRAL_LABEL_SELECTOR
+        )
+        for pod in pod_list.items:
+            total_restarts = 0
+            if pod.status and pod.status.container_statuses:
+                for cstatus in pod.status.container_statuses:
+                    total_restarts += cstatus.restart_count
+
+            base.add_metric(
+                metrics_data,
+                'mistral_pods_restarts',
+                fields={
+                    "pod_name": pod.metadata.name,
+                    "value": total_restarts
+                },
+                tags=pods_restarts_tags
+            )
+
         return metrics_data

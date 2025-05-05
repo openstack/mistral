@@ -826,3 +826,11 @@ def get_expired_subwf_tasks(timeout):
 
 def get_expired_waiting_tasks(timeout):
     return IMPL.get_expired_waiting_tasks(timeout)
+
+
+def get_task_retries(limit=None):
+    return IMPL.get_task_retries(limit=limit)
+
+
+def get_recent_workflow_executions(limit=None):
+    return IMPL.get_recent_workflow_executions(limit=limit)
