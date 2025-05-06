@@ -65,6 +65,7 @@ class DefaultNotifier(base.Notifier):
                     exc_info=True
                 )
 
+
         for entry in publishers:
             params = copy.deepcopy(entry)
             publisher_name = params.pop('type', None)
