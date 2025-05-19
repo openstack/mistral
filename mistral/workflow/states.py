@@ -139,3 +139,7 @@ def is_valid_transition(from_state, to_state):
         return True
 
     return to_state in _VALID_TRANSITIONS[from_state]
+
+
+def is_active_state(state):
+    return state in [RUNNING or PAUSED]

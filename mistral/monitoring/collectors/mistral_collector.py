@@ -13,6 +13,8 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from datetime import datetime
+
 from mistral.db.v2 import api as db_api
 from mistral.monitoring import base
 from mistral.workflow import states
@@ -85,6 +87,8 @@ class MistralMetricCollector(base.MetricCollector):
         self._update_workflow_count()
         self._update_delayed_call_count()
         self._update_mistral_version()
+        self._update_task_retries()
+        self._update_execution_time()
 
         return self._metrics_data
 
@@ -207,3 +211,89 @@ class MistralMetricCollector(base.MetricCollector):
             },
             tags=version_tags
         )
+
+    def _update_task_retries(self):
+        retry_counts = db_api.get_task_retries(limit=50)
+
+        task_retries_tags = {
+            "name": "mistral_task_retries",
+            "description": "Retry count for task executions",
+            "namespace": self._namespace,
+            "labels": [
+                'namespace',
+                'workflow_execution_id',
+                'task_name'
+            ]
+        }
+
+        for (execution_id, task_name), retries in retry_counts.items():
+            base.add_metric(
+                self._metrics_data,
+                'mistral_task_retries',
+                fields={
+                    "value": retries,
+                    "namespace": self._namespace,
+                    "workflow_execution_id": execution_id,
+                    "task_name": task_name
+                },
+                tags=task_retries_tags
+            )
+
+    def _update_execution_time(self):
+        wf_exes = db_api.get_recent_workflow_executions(limit=50)
+        now = datetime.utcnow()
+
+        time_tags = {
+            "name": "mistral_execution_time",
+            "description": "Workflow execution time in seconds",
+            "namespace": self._namespace,
+            "labels": [
+                "namespace",
+                "workflow_name",
+                "execution_id",
+                "state"
+            ],
+        }
+
+        created_tags = {
+            "name": "mistral_execution_created_timestamp",
+            "description": "Start time of workflow execution (UNIX timestamp)",
+            "namespace": self._namespace,
+            "labels": [
+                "namespace",
+                "workflow_name",
+                "execution_id"
+            ],
+        }
+
+        for wf in wf_exes:
+            exec_time = (
+                (now - wf.created_at).total_seconds()
+                if states.is_active_state(wf.state) or wf.updated_at is None
+                else (wf.updated_at - wf.created_at).total_seconds()
+            )
+
+            base.add_metric(
+                self._metrics_data,
+                "mistral_execution_time",
+                fields={
+                    "value": exec_time,
+                    "namespace": self._namespace,
+                    "workflow_name": wf.name,
+                    "execution_id": wf.id,
+                    "state": wf.state,
+                },
+                tags=time_tags
+            )
+
+            base.add_metric(
+                self._metrics_data,
+                "mistral_execution_created_timestamp",
+                fields={
+                    "value": wf.created_at.timestamp(),
+                    "namespace": self._namespace,
+                    "workflow_name": wf.name,
+                    "execution_id": wf.id,
+                },
+                tags=created_tags
+            )

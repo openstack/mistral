@@ -14,16 +14,17 @@
 #  under the License.
 
 import prometheus_client
+from prometheus_client import CollectorRegistry
 from prometheus_client import Gauge
 
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
-_GRAPH = {}
-
 
 def format_to_prometheus(metrics_list):
+    registry = CollectorRegistry()
+    graph = {}
 
     for metric in metrics_list:
         metric_tags = metric['tags']
@@ -44,16 +45,17 @@ def format_to_prometheus(metrics_list):
         if 'namespace' in metric_labels:
             metric_label_values['namespace'] = metric_tags.get('namespace')
 
-        if not _GRAPH.get(metric_name):
-            _GRAPH[metric_name] = Gauge(
+        if metric_name not in graph:
+            graph[metric_name] = Gauge(
                 metric_name,
                 metric_tags.get('description'),
-                metric_labels
+                metric_labels,
+                registry=registry
             )
-        _GRAPH[metric_name].labels(**metric_label_values).set(metric_value)
+        graph[metric_name].labels(**metric_label_values).set(metric_value)
 
     res = []
-    for key in _GRAPH:
-        res.append(prometheus_client.generate_latest(_GRAPH[key]))
+    for key in graph:
+        res.append(prometheus_client.generate_latest(graph[key]))
 
     return res

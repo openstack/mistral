@@ -40,9 +40,14 @@ from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import uuidutils  # noqa
 import sqlalchemy as sa
+from sqlalchemy import case
+from sqlalchemy import cast
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import text
+from sqlalchemy.types import Integer
+
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -2501,3 +2506,49 @@ def get_stucked_subwf_tasks(timeout, session=None):
 @b.session_aware()
 def delete_named_locks(session=None, **kwargs):
     return _delete_all(models.NamedLock, **kwargs)
+
+
+@b.session_aware()
+def get_task_retries(limit=50, session=None):
+    ctx_json = cast(models.TaskExecution.runtime_context, JSONB)
+    retry_no_text = func.jsonb_extract_path_text(ctx_json,
+                                                 'retry_task_policy',
+                                                 'retry_no')
+    retry_no_int = cast(retry_no_text, Integer)
+
+    q = (
+        session.query(
+            models.TaskExecution.workflow_execution_id,
+            models.TaskExecution.name,
+            retry_no_int.label('retry_no')
+        )
+        .filter(retry_no_int > 0)
+        .order_by(models.TaskExecution.updated_at.desc())
+        .limit(limit)
+    )
+
+    result = {
+        (execution_id, task_name): retry_no
+        for execution_id, task_name, retry_no in q
+    }
+
+    return result or {("none", "none"): 0}
+
+
+@b.session_aware()
+def get_recent_workflow_executions(limit=50, session=None):
+    query = b.model_query(models.WorkflowExecution, session=session)
+    query = query.order_by(
+        case(
+            [
+                (
+                    states.is_active_state(models.WorkflowExecution.state),
+                    0,
+                )
+            ],
+            else_=1
+        ),
+        models.WorkflowExecution.created_at.desc()
+    )
+
+    return query.limit(limit).all()
