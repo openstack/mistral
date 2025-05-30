@@ -14,8 +14,8 @@
 #    limitations under the License.
 
 import datetime
+import importlib.resources
 import json
-import pkg_resources as pkg
 import time
 from unittest import mock
 
@@ -45,9 +45,10 @@ test_config.parse_args()
 
 
 def get_resource(resource_name):
-    return open(pkg.resource_filename(
-        version.version_info.package,
-        RESOURCES_PATH + resource_name)).read()
+    filepath = importlib.resources.files(
+        version.version_info.package).joinpath(RESOURCES_PATH + resource_name)
+    with open(filepath) as f:
+        return f.read()
 
 
 def get_context(default=True, admin=False):
