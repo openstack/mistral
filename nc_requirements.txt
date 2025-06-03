@@ -12,3 +12,6 @@ urllib3==1.26.18
 oslo.service==3.4.0
 fastapi
 uvicorn
+
+#context issue
+oslo.context==5.7.1
