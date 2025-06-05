@@ -11,7 +11,7 @@ RUN BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
     COMMIT_DATE=$(date) && \
     echo "{ \"git\": { \"branch\": \"$BRANCH\", \"id\": \"$ID\", \"time\": \"$COMMIT_DATE\" }}" > /repo/version.json
 
-FROM python:3.10.14-alpine3.20
+FROM python:3.10.17-alpine3.22
 
 LABEL "maintainer"="Vadim Zelenevskii wortellen@gmail.com"
 
@@ -104,7 +104,7 @@ COPY requirements.txt requirements.txt
 COPY nc_requirements.txt nc_requirements.txt
 
 # hadolint ignore=DL3013
-RUN pip install --upgrade pip==23.3 "setuptools==70.0.0" wheel && \
+RUN pip install --upgrade pip==23.3 wheel && \
     pip install -r requirements.txt && \
     pip install -r nc_requirements.txt
 
@@ -115,7 +115,7 @@ RUN pip install --no-dependencies --no-cache-dir -e $MISTRAL_HOME && \
     cp -r $MISTRAL_HOME/config/* $CONFIGS_HOME && \
     chmod -R 777 $CONFIGS_HOME && chmod 777 $CONFIGS_HOME
 
-RUN pip install --upgrade pip==23.3 "setuptools==70.0.0"
+# RUN pip install --upgrade pip==23.3 "setuptools==70.0.0"
 
 RUN python -c "import uuid; print(uuid.uuid4())" > \
             /opt/mistral/mistral_version
