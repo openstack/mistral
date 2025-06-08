@@ -215,3 +215,11 @@ The valid options are:
 * executor
 * event-engine
 * notifier
+
+.. _install-osa:
+
+Deploying with OpenStack-Ansible
+--------------------------------
+You can also deploy and set up Mistral using `OpenStack-Ansible <https://docs.openstack.org/openstack-ansible/latest/>`_ by following
+the `Mistral role for OpenStack-Ansible <https://docs.openstack.org/openstack-ansible-os_mistral/latest/>`_
+which installs and configures Mistral as part of your OpenStack deployment.
