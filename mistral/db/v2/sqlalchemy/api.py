@@ -934,6 +934,10 @@ def delete_action_definitions(session=None, **kwargs):
 
 @b.session_aware()
 def get_action_execution(id, insecure=False, fields=(), session=None):
+    # Allow admin to retrieve action execution by overwriting insecure
+    ctx = context.ctx()
+    insecure = ctx.is_admin or insecure
+
     a_ex = _get_db_object_by_id(models.ActionExecution, id, insecure=insecure,
                                 columns=fields)
 
@@ -1163,7 +1167,11 @@ def update_workflow_execution_state(id, cur_state, state):
 
 @b.session_aware()
 def get_task_execution(id, fields=(), session=None):
-    task_ex = _get_db_object_by_id(models.TaskExecution, id, columns=fields)
+    # Allow admin to retrieve all tasks
+    ctx = context.ctx()
+
+    task_ex = _get_db_object_by_id(models.TaskExecution, id,
+                                   insecure=ctx.is_admin, columns=fields)
 
     if not task_ex:
         raise exc.DBEntityNotFoundError(
