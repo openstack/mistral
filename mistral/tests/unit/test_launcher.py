@@ -16,10 +16,13 @@
 import threading
 import time
 
-from mistral.api import service as api_service
+from oslo_config import cfg
+
 from mistral.cmd import launch
 from mistral.scheduler import base as sched_base
 from mistral.tests.unit import base
+
+CONF = cfg.CONF
 
 
 class ServiceLauncherTest(base.DbTestCase):
@@ -27,33 +30,14 @@ class ServiceLauncherTest(base.DbTestCase):
         super(ServiceLauncherTest, self).setUp()
 
         self.override_config('enabled', False, group='cron_trigger')
+        self.override_config('api_workers', 2, group='api')
+        # Set the transport to 'fake' for executor process
+        CONF.set_default('transport_url', 'fake:/')
 
         launch.reset_server_managers()
         sched_base.destroy_system_scheduler()
 
-    def test_launch_all(self):
-        threading.Thread(target=launch.launch_any,
-                         args=(launch.LAUNCH_OPTIONS.keys(),)).start()
-
-        for i in range(0, 50):
-            svr_proc_mgr = launch.get_server_process_manager()
-            svr_thrd_mgr = launch.get_server_thread_manager()
-
-            if svr_proc_mgr and svr_thrd_mgr:
-                break
-
-            time.sleep(0.1)
-
-        self.assertIsNotNone(svr_proc_mgr)
-        self.assertIsNotNone(svr_thrd_mgr)
-
-        api_server = api_service.WSGIService('mistral_api')
-        api_workers = api_server.workers
-
-        self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
-        self._await(lambda: len(svr_thrd_mgr.services.services) == 4)
-
-    def test_launch_process(self):
+    def test_launch_one_process(self):
         threading.Thread(target=launch.launch_any,
                          args=(['api'],)).start()
 
@@ -65,31 +49,25 @@ class ServiceLauncherTest(base.DbTestCase):
 
             time.sleep(0.1)
 
-        svr_thrd_mgr = launch.get_server_thread_manager()
-
         self.assertIsNotNone(svr_proc_mgr)
-        self.assertIsNone(svr_thrd_mgr)
+        self._await(lambda: len(svr_proc_mgr.children.keys()) == 2)
+        svr_proc_mgr.stop()
 
-        api_server = api_service.WSGIService('mistral_api')
-        api_workers = api_server.workers
-
-        self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
-
-    def test_launch_thread(self):
+    def test_launch_multiple_processes(self):
         threading.Thread(target=launch.launch_any,
-                         args=(['engine'],)).start()
+                         args=(['api', 'executor'],)).start()
 
         for i in range(0, 50):
-            svr_thrd_mgr = launch.get_server_thread_manager()
+            svr_proc_mgr = launch.get_server_process_manager()
 
-            if svr_thrd_mgr:
+            if svr_proc_mgr:
                 break
 
             time.sleep(0.1)
 
-        svr_proc_mgr = launch.get_server_process_manager()
+        self.assertIsNotNone(svr_proc_mgr)
 
-        self.assertIsNone(svr_proc_mgr)
-        self.assertIsNotNone(svr_thrd_mgr)
+        # API x 2 + executor = 3
+        self._await(lambda: len(svr_proc_mgr.children.keys()) == 3)
 
-        self._await(lambda: len(svr_thrd_mgr.services.services) == 1)
+        svr_proc_mgr.stop()
