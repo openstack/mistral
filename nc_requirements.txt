@@ -1,4 +1,4 @@
-certifi==2024.2.2
+certifi>=2024.7.4
 confluent-kafka==1.6.1
 gevent
 jsonschema<4.6.0
@@ -6,9 +6,13 @@ kubernetes
 psycopg2
 py_mini_racer
 prometheus_client
-setuptools==70.0.0
+setuptools==78.1.1
 urllib3==1.26.18
 # tls issue
 oslo.service==3.4.0
 fastapi
 uvicorn
+Jinja2==3.1.5
+
+#context issue
+oslo.context==5.7.1
