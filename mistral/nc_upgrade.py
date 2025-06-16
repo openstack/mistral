@@ -178,6 +178,15 @@ def upgrade_db(config, cmd):
         alembic_u.err(six.text_type(e))
 
 
+def set_idle_timeout(config, cmd):
+    timeout = os.getenv('PG_IDLE_TIMEOUT', '30s')
+    LOG.info("Try to set timeout '{}' for idle session".format(timeout))
+    with get_curs() as curs:
+        curs.execute(sql.SQL(f"ALTER DATABASE {pg_db_name} \
+        SET idle_in_transaction_session_timeout = '{timeout}'"))
+    LOG.info('Timeout is set.')
+
+
 def delete_action_definition_by_prefix(prefix):
     LOG.info('Try to delete actions with {} prefix'.format(prefix))
     try:
@@ -368,6 +377,9 @@ def add_command_parsers(subparsers):
 
     parser = subparsers.add_parser('upgrade_db')
     parser.set_defaults(func=upgrade_db)
+
+    parser = subparsers.add_parser('set_idle_timeout')
+    parser.set_defaults(func=set_idle_timeout)
 
     parser = subparsers.add_parser('set_version')
     parser.add_argument('version', nargs='?')
