@@ -40,6 +40,9 @@ else
         mistral-db-nc-manage --config-file "$CONFIG" set_nc_version 79ceffbdf791
     fi
 
+    # Set idle in transaction session timeout for running queries
+    mistral-db-nc-manage --config-file "$CONFIG" set_idle_timeout
+
     mistral-db-manage --config-file "$CONFIG" upgrade head
     mistral-db-nc-manage --config-file "$CONFIG" upgrade_db
     mistral-db-manage --config-file "$CONFIG" populate
