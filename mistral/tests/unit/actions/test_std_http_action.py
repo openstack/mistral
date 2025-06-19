@@ -315,3 +315,43 @@ class HTTPActionTest(base.BaseTest):
 
         args, kwargs = mocked_method.call_args
         self.assertEqual(headers, kwargs['headers'])
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_with_mistral_headers(self, mocked_method):
+        mocked_method.return_value = get_success_fake_response()
+        mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
+
+        mock_ex = mock_ctx.execution
+
+        headers = {
+            'Mistral-Workflow-Name': mock_ex.workflow_name,
+            'Mistral-Task-Id': mock_ex.task_execution_id,
+            'Mistral-Action-Execution-Id': mock_ex.action_execution_id,
+            'Mistral-Workflow-Execution-Id': mock_ex.workflow_execution_id
+        }
+
+        action = std.HTTPAction(
+            url=URL,
+            method='GET',
+            headers=headers.copy(),
+            mistral_headers=True
+        )
+
+        action.run(mock_ctx)
+
+        mocked_method.assert_called_with(
+            'GET',
+            URL,
+            data=None,
+            json=None,
+            headers=headers,
+            cookies=None,
+            params=None,
+            timeout=None,
+            auth=None,
+            allow_redirects=None,
+            proxies=None,
+            verify=None
+        )
