@@ -65,12 +65,13 @@ LOG = logging.getLogger(__name__)
 
 def launch_process(server, workers=1):
     try:
+        # NOTE(amorin) it is recommended to have only one ProcessLauncher
+        # See https://docs.openstack.org/oslo.service/latest/user/usage.html
         global SERVER_PROCESS_MANAGER
 
         if not SERVER_PROCESS_MANAGER:
             SERVER_PROCESS_MANAGER = service.ProcessLauncher(
                 CONF,
-                restart_method='mutate'
             )
 
         SERVER_PROCESS_MANAGER.launch_service(server, workers=workers)
@@ -107,6 +108,8 @@ def launch_any(options):
 
     global SERVER_PROCESS_MANAGER
 
+    # Wait for the services to finish now
+    # This main process will do nothing starting from now
     if SERVER_PROCESS_MANAGER:
         SERVER_PROCESS_MANAGER.wait()
 
@@ -207,20 +210,6 @@ def main():
     except RuntimeError as excp:
         sys.stderr.write("ERROR: %s\n" % excp)
         sys.exit(1)
-
-
-# Helper method used in unit tests to reset the service launchers.
-def reset_server_managers():
-    global SERVER_PROCESS_MANAGER
-
-    SERVER_PROCESS_MANAGER = None
-
-
-# Helper method used in unit tests to access the process launcher.
-def get_server_process_manager():
-    global SERVER_PROCESS_MANAGER
-
-    return SERVER_PROCESS_MANAGER
 
 
 if __name__ == '__main__':
