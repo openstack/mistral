@@ -5,8 +5,6 @@
       devstack_plugins:
         rally-openstack: https://opendev.org/openstack/rally-openstack
       rally_task: rally-jobs/task-mistral.yaml
-      devstack_localrc:
-        USE_PYTHON3: true
       devstack_local_conf:
         post-config:
           $MISTRAL_CONF_FILE:
