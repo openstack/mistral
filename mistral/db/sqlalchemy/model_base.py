@@ -15,8 +15,8 @@
 from oslo_db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
 from sqlalchemy import event
-from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
+from sqlalchemy.orm import declarative_base
 
 from mistral.services import security
 from mistral_lib import utils
@@ -149,7 +149,7 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
                 )
 
 
-MistralModelBase = declarative.declarative_base(cls=_MistralModelBase)
+MistralModelBase = declarative_base(cls=_MistralModelBase)
 
 
 # Secure model related stuff.
