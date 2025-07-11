@@ -67,7 +67,7 @@ def pause_running_executions():
 def _pause_execution(wf_ex_id, project_id):
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user=None,
+            user_id=None,
             auth_token=None,
             project_id=project_id,
             is_admin=True
@@ -89,7 +89,7 @@ def _pause_execution(wf_ex_id, project_id):
 def await_pause_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user=None,
+            user_id=None,
             auth_token=None,
             is_admin=True
         )
@@ -154,7 +154,7 @@ def change_maintenance_mode(new_state):
 def _pause_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user=None,
+            user_id=None,
             auth_token=None,
             is_admin=True
         )
@@ -170,7 +170,7 @@ def _pause_executions():
 def _resume_executions():
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user=None,
+            user_id=None,
             auth_token=None,
             is_admin=True
         )
