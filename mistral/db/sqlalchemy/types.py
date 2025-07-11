@@ -27,6 +27,7 @@ class JsonEncoded(sa.TypeDecorator):
     """Represents an immutable structure as a json-encoded string."""
 
     impl = sa.Text
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         return utils.to_json_str(value)
