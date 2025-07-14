@@ -106,8 +106,6 @@
               - ^releasenotes/.*$
         - mistral-devstack
         - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
         # Disable mysql / postgresql units as they are not working as expected
         # - mistral-tox-unit-mysql
         # - mistral-tox-unit-postgresql
@@ -116,8 +114,6 @@
       jobs:
         - mistral-devstack
         - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
         # Disable mysql / postgresql units as they are not working as expected
         # - mistral-tox-unit-mysql
         # - mistral-tox-unit-postgresql
