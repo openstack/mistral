@@ -187,7 +187,7 @@ def _extract_mistral_auth_params(headers):
             'auth_token': headers.get('X-Target-Auth-Token'),
             'auth_uri': headers.get('X-Target-Auth-Uri'),
             'project_id': headers.get('X-Target-Project-Id'),
-            'user': headers.get('X-Target-User-Id'),
+            'user_id': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
             'region_name': headers.get('X-Target-Region-Name'),
             'is_target': True
