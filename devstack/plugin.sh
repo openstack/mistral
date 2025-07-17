@@ -98,10 +98,6 @@ function configure_mistral {
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
     fi
 
-    if [ "$MISTRAL_RPC_IMPLEMENTATION" ]; then
-        iniset $MISTRAL_CONF_FILE DEFAULT rpc_implementation $MISTRAL_RPC_IMPLEMENTATION
-    fi
-
     if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
         _config_mistral_apache_wsgi
     fi
