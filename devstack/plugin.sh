@@ -25,9 +25,6 @@ fi
 # NOTE(arnaud) maybe check if PROJECT_VENV should be used here
 MISTRAL_ENV_DIR=${DEVSTACK_VENV}
 
-# Toggle for deploying Mistral API under HTTPD + mod_wsgi
-MISTRAL_USE_MOD_WSGI=${MISTRAL_USE_MOD_WSGI:-True}
-
 MISTRAL_FILES_DIR=$MISTRAL_DIR/devstack/files
 
 # create_mistral_accounts - Set up common required mistral accounts
@@ -97,10 +94,6 @@ function configure_mistral {
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
     fi
-
-    if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
-        _config_mistral_apache_wsgi
-    fi
 }
 
 
@@ -118,10 +111,6 @@ function install_mistral {
 
     if is_service_enabled horizon; then
         _install_mistraldashboard
-    fi
-
-    if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
-        install_apache_wsgi
     fi
 }
 
@@ -157,18 +146,9 @@ function install_mistral_extra {
 
 # start_mistral - Start running processes
 function start_mistral {
-    # If the site is not enabled then we are in a grenade scenario
-    local enabled_site_file
-    enabled_site_file=$(apache_site_config_for mistral-api)
-
     if is_service_enabled mistral-api && is_service_enabled mistral-engine && is_service_enabled mistral-executor && is_service_enabled mistral-event-engine ; then
         echo_summary "Installing all mistral services in separate processes"
-        if [ -f ${enabled_site_file} ] && [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
-            enable_apache_site mistral-api
-            restart_apache_server
-        else
-            run_process mistral-api "$MISTRAL_BIN_DIR/mistral-server --server api --config-file $MISTRAL_CONF_DIR/mistral.conf"
-        fi
+        run_process mistral-api "$MISTRAL_BIN_DIR/mistral-server --server api --config-file $MISTRAL_CONF_DIR/mistral.conf"
         run_process mistral-engine "$MISTRAL_BIN_DIR/mistral-server --server engine --config-file $MISTRAL_CONF_DIR/mistral.conf"
         run_process mistral-executor "$MISTRAL_BIN_DIR/mistral-server --server executor --config-file $MISTRAL_CONF_DIR/mistral.conf"
         run_process mistral-event-engine "$MISTRAL_BIN_DIR/mistral-server --server event-engine --config-file $MISTRAL_CONF_DIR/mistral.conf"
@@ -182,16 +162,9 @@ function start_mistral {
 # stop_mistral - Stop running processes
 function stop_mistral {
     local serv
-    for serv in mistral mistral-engine mistral-executor mistral-event-engine; do
+    for serv in mistral mistral-api mistral-engine mistral-executor mistral-event-engine; do
         stop_process $serv
     done
-
-    if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
-        disable_apache_site mistral-api
-        restart_apache_server
-    else
-        stop_process mistral-api
-    fi
 }
 
 function configure_tempest_for_mistral {
@@ -204,37 +177,12 @@ function cleanup_mistral {
     if is_service_enabled horizon; then
         _mistral_cleanup_mistraldashboard
     fi
-
-    if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
-        _mistral_cleanup_apache_wsgi
-    fi
     sudo rm -rf $MISTRAL_CONF_DIR
 }
 
 
 function _mistral_cleanup_mistraldashboard {
     rm -f $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
-}
-
-function _mistral_cleanup_apache_wsgi {
-    sudo rm -f $(apache_site_config_for mistral-api)
-}
-
-# _config_mistral_apache_wsgi() - Set WSGI config files for Mistral
-function _config_mistral_apache_wsgi {
-    local mistral_apache_conf
-    mistral_apache_conf=$(apache_site_config_for mistral-api)
-    local mistral_api_port=$MISTRAL_SERVICE_PORT
-
-    sudo cp $MISTRAL_FILES_DIR/apache-mistral-api.template $mistral_apache_conf
-    sudo sed -e "
-        s|%PUBLICPORT%|$mistral_api_port|g;
-        s|%APACHE_NAME%|$APACHE_NAME|g;
-        s|%MISTRAL_DIR%|$MISTRAL_DIR|g;
-        s|%MISTRAL_ENV_DIR%|$MISTRAL_ENV_DIR|g;
-        s|%API_WORKERS%|$API_WORKERS|g;
-        s|%USER%|$STACK_USER|g;
-    " -i $mistral_apache_conf
 }
 
 if is_service_enabled mistral; then
