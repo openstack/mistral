@@ -853,7 +853,7 @@ yaql_opts = [
     ),
     cfg.BoolOpt(
         'convert_sets_to_lists',
-        default=False,
+        default=True,
         help=_('When set to True, yaql converts all sets in the expression '
                'result to lists. Otherwise the produced result may contain '
                'sets that are not JSON-serializable. It works only if '
