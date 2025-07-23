@@ -203,6 +203,6 @@ After a successful login bring the port back - it will continue your session.
 - If you would like to manually restart the apache server,
   open a terminal and run::
 
-    $ sudo service apache2 restart
+    $ sudo systemctl restart apache2
 
   *(if not under Ubuntu, replace "sudo" with an identical command)*
