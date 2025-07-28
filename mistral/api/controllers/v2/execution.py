@@ -107,11 +107,15 @@ def _compute_delta(id, wf_ex):
                     db_models.WorkflowExecution.params)
         )
 
+        force_cancel = (wf_ex.params or {}).get('force_cancel', False)
+        force_cancelled = (wf_ex_old.params or {}).get('force_cancelled', False)
         if wf_ex_old.params.get('read_only'):
-            raise exc.InputException(
-                'This execution is read only. '
-                'Any update operation is forbidden'
-            )
+            is_soft_force_cancel = force_cancel and not force_cancelled
+            if not is_soft_force_cancel:
+                raise exc.InputException(
+                    'This execution is read only. '
+                    'Any update operation is forbidden'
+                )
 
         root_execution_id = wf_ex_old.root_execution_id
 
