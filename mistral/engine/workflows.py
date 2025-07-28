@@ -642,7 +642,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
             self._cancel_workflow(final_context, msg)
 
     def _cancel_workflow(self, final_context, msg=None, force=False):
-        if states.is_completed(self.wf_ex.state):
+        if states.is_completed(self.wf_ex.state) and not force:
             return
 
         msg = "Workflow was cancelled." if not msg else msg
@@ -658,6 +658,9 @@ class Workflow(object, metaclass=abc.ABCMeta):
         )
 
         if force:
+            if self.wf_ex.params.get('force_cancelled', False):
+                return
+            self.wf_ex.params['force_cancelled'] = True
             tasks_ex = db_api.get_incomplete_task_executions(
                 workflow_execution_id=self.wf_ex.id
             )

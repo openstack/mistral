@@ -674,3 +674,61 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.assertIn("cancelled", task_ex.state_info)
         self.assertEqual(states.CANCELLED, wf_ex.state)
         self.assertEqual("Cancelled tasks: taskx", wf_ex.state_info)
+
+    def test_force_cancel_with_items(self):
+        workflow = """
+        version: '2.0'
+
+        wf_force_cancel_with_items:
+          type: direct
+          input:
+            - items: [1, 2, 3]
+          tasks:
+            loop_task:
+              with-items: item in <% $.items %>
+              action: std.sleep seconds=1000
+              on-success:
+                - final_task
+            final_task:
+              action: std.echo output="Done"
+        """
+
+        wf_service.create_workflows(workflow)
+
+        wf_ex = self.engine.start_workflow('wf_force_cancel_with_items')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = self._assert_single_item(wf_ex.task_executions, name='loop_task')
+
+        self.await_task_running(task_ex.id)
+
+        self.engine.stop_workflow(
+            wf_ex.id,
+            states.CANCELLED,
+            "Soft Cancelled by user.",
+            force=False
+        )
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = self._assert_single_item(wf_ex.task_executions, name='loop_task')
+
+        self.assertEqual(states.CANCELLED, wf_ex.state)
+        self.assertEqual(states.RUNNING, task_ex.state)
+
+        self.engine.stop_workflow(
+            wf_ex.id,
+            states.CANCELLED,
+            "Force Cancelled by user.",
+            force=True
+        )
+
+        self.await_task_state(task_ex.id, states.ERROR)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = self._assert_single_item(wf_ex.task_executions, name='loop_task')
+
+        self.assertEqual(states.CANCELLED, wf_ex.state)
+        self.assertEqual(states.ERROR, task_ex.state)
