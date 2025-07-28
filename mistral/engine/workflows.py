@@ -657,19 +657,23 @@ class Workflow(object, metaclass=abc.ABCMeta):
             final_context
         )
 
-        if force:
-            tasks_ex = db_api.get_incomplete_task_executions(
-                workflow_execution_id=self.wf_ex.id
-            )
+        tasks_ex = db_api.get_incomplete_task_executions(
+            workflow_execution_id=self.wf_ex.id
+        )
 
-            from mistral.engine import action_handler as a_h
-            from mistral.engine import task_handler as t_h
+        from mistral.engine import action_handler as a_h
+        from mistral.engine import task_handler as t_h
 
-            for task_ex in tasks_ex:
+        for task_ex in tasks_ex:
+            try:
                 task = t_h.build_task_from_execution(self.wf_spec, task_ex)
-                task.set_state(states.ERROR, 'Task was failed due '
-                               'to workflow force cancel.')
+                if force:
+                    task.set_state(states.ERROR, 'Task was failed due to workflow force cancel.')
+                else:
+                    task.set_state(states.CANCELLED, 'Task was cancelled due to workflow soft cancellation.')
                 a_h.cancel_incomplete_actions(task_ex.id)
+            except Exception as e:
+                LOG.error(f"Failed to update task execution {task_ex.id}: {e}")
 
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
