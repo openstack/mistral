@@ -129,3 +129,37 @@ class MistralHTTPActionTest(base.BaseTest):
 
         self.assertIsInstance(result, mistral_lib_actions.Result)
         self.assertEqual(401, result.error['status'])
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_without_mistral_headers(self, mocked_method):
+        mocked_method.return_value = get_error_fake_response()
+        mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
+        DATA_STR = json.dumps(DATA)
+
+        action = std.MistralHTTPAction(
+            url=URL,
+            method='POST',
+            body=DATA,
+            timeout=20,
+            allow_redirects=True,
+            mistral_headers=False
+        )
+
+        action.run(mock_ctx)
+
+        mocked_method.assert_called_with(
+            'POST',
+            URL,
+            data=DATA_STR,
+            json=None,
+            headers=None,
+            cookies=None,
+            params=None,
+            timeout=20,
+            auth=None,
+            allow_redirects=True,
+            proxies=None,
+            verify=None
+        )

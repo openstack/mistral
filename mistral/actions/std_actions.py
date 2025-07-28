@@ -203,6 +203,11 @@ class HTTPAction(actions.Action):
         the proxy.
     :param verify: (optional) if ``True``, the SSL cert will be verified.
         A CA_BUNDLE path can also be provided.
+    :param mistral_headers: (optional) if ``True``, mistrla headers  like
+        Mistral-Workflow-Name, Mistral-Workflow-Execution-Id,
+        Mistral-Task-Id & Mistral-Action-Execution-Id would be sent with
+        the HTTP request. For Async action mistral-http an additional
+        header Mistral-Callback-URL would be added.
     """
 
     def __init__(self,
@@ -217,7 +222,8 @@ class HTTPAction(actions.Action):
                  timeout=None,
                  allow_redirects=None,
                  proxies=None,
-                 verify=None):
+                 verify=None,
+                 mistral_headers=None):
         super(HTTPAction, self).__init__()
 
         if auth and len(auth.split(':')) == 2:
@@ -246,8 +252,21 @@ class HTTPAction(actions.Action):
         self.allow_redirects = allow_redirects
         self.proxies = proxies
         self.verify = verify
+        self.mistral_headers = mistral_headers
 
     def run(self, context):
+
+        if self.mistral_headers is True:
+            self.headers = self.headers or {}
+            exec_ctx = context.execution
+            self.headers.update({
+                'Mistral-Workflow-Name': exec_ctx.workflow_name,
+                'Mistral-Workflow-Execution-Id':
+                    exec_ctx.workflow_execution_id,
+                'Mistral-Task-Id': exec_ctx.task_execution_id,
+                'Mistral-Action-Execution-Id': exec_ctx.action_execution_id
+            })
+
         LOG.info(
             "Running HTTP action "
             "[url=%s, method=%s, params=%s, body=%s, json=%s,"
@@ -341,17 +360,13 @@ class HTTPAction(actions.Action):
 class MistralHTTPAction(HTTPAction):
 
     def run(self, context):
-        self.headers = self.headers or {}
-
-        exec_ctx = context.execution
-        self.headers.update({
-            'Mistral-Workflow-Name': exec_ctx.workflow_name,
-            'Mistral-Workflow-Execution-Id': exec_ctx.workflow_execution_id,
-            'Mistral-Task-Id': exec_ctx.task_execution_id,
-            'Mistral-Action-Execution-Id': exec_ctx.action_execution_id,
-            'Mistral-Callback-URL': exec_ctx.callback_url,
-        })
-
+        if self.mistral_headers is None:
+            self.mistral_headers = True
+            self.headers = self.headers or {}
+            exec_ctx = context.execution
+            self.headers.update({
+                'Mistral-Callback-URL': exec_ctx.callback_url
+            })
         return super(MistralHTTPAction, self).run(context)
 
     def is_sync(self):
