@@ -134,12 +134,17 @@ Mistral Workflow Service, version %s
 """ % version.version_string
 
 
+def _get_server():
+    server = cfg.CONF.server
+    if 'all' in server:
+        return set(LAUNCH_OPTIONS.keys())
+    return set(cfg.CONF.server)
+
+
 def print_server_info():
     print(MISTRAL_TITLE)
 
-    comp_str = ("[%s]" % ','.join(LAUNCH_OPTIONS
-                if cfg.CONF.server == ['all'] else cfg.CONF.server))
-
+    comp_str = "[%s]" % ','.join(_get_server())
     print('Launching server components %s...' % comp_str)
 
 
@@ -197,19 +202,7 @@ def main():
         # processes because the "fake" transport is using an in process queue.
         rpc.get_transport()
 
-        if cfg.CONF.server == ['all']:
-            # Launch all servers.
-            launch_any(LAUNCH_OPTIONS.keys())
-        else:
-            # Validate launch option.
-            if set(cfg.CONF.server) - set(LAUNCH_OPTIONS.keys()):
-                raise Exception(
-                    "Valid options are 'all' or any combination of [%s]" %
-                    ', '.join(LAUNCH_OPTIONS.keys())
-                )
-
-            # Launch distinct set of server(s).
-            launch_any(set(cfg.CONF.server))
+        launch_any(_get_server())
 
     except RuntimeError as excp:
         sys.stderr.write("ERROR: %s\n" % excp)

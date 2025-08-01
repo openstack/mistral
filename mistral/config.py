@@ -24,6 +24,7 @@ import json
 
 from keystoneauth1 import loading
 from oslo_config import cfg
+from oslo_config import types
 from oslo_log import log
 from oslo_middleware import cors
 from oslo_service import _options as service_opts
@@ -38,9 +39,10 @@ from mistral.workflow import states
 launch_opt = cfg.ListOpt(
     'server',
     default=['all'],
-    help=_('Specifies which mistral server to start by the launch script. '
-           'Valid options are all or any combination of '
-           'api, engine, and executor.')
+    item_type=types.String(
+        choices=('all', 'api', 'engine', 'executor', 'event-engine',
+                 'notifier')),
+    help=_('Specifies which mistral server to start by the launch script.')
 )
 
 wf_trace_log_name_opt = cfg.StrOpt(
