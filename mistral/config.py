@@ -49,15 +49,6 @@ wf_trace_log_name_opt = cfg.StrOpt(
     help=_('Logger name for pretty workflow trace output.')
 )
 
-use_debugger_opt = cfg.BoolOpt(
-    'use-debugger',
-    default=False,
-    help=_('Enables debugger. Note that using this option changes how the '
-           'eventlet library is used to support async IO. This could result '
-           'in failures that do not occur under normal operation. '
-           'Use at your own risk.')
-)
-
 auth_type_opt = cfg.StrOpt(
     'auth_type',
     default='keystone',
@@ -828,7 +819,6 @@ CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
 CLI_OPTS = [
-    use_debugger_opt,
     launch_opt
 ]
 
