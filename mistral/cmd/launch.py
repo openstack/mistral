@@ -14,20 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import sys
-
-import eventlet
-
-
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=False if '--use-debugger' in sys.argv else True,
-    time=True)
-
-
 import os
+import sys
 
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
@@ -46,6 +34,7 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service
+from oslo_service.backend import init_backend, BackendType
 
 from mistral.api import service as api_service
 from mistral import config
@@ -177,6 +166,9 @@ def get_properly_ordered_parameters():
 
 def main():
     try:
+        # Initialize threading backend early before any service components
+        init_backend(BackendType.THREADING)
+
         CONF.register_cli_opts(config.CLI_OPTS)
 
         config.parse_args(get_properly_ordered_parameters())

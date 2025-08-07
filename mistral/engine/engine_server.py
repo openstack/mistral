@@ -87,7 +87,7 @@ class EngineServer(service_base.MistralService):
         self._rpc_server = rpc.get_rpc_server_driver()(CONF.engine)
         self._rpc_server.register_endpoint(self)
 
-        self._rpc_server.run(executor=CONF.oslo_rpc_executor)
+        self._rpc_server.run(executor='threading')
 
         self._notify_started('Engine server started.')
 

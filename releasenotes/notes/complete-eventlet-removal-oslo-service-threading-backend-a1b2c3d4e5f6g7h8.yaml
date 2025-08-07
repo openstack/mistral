@@ -1,0 +1,36 @@
+---
+upgrade:
+  - |
+    **Complete Eventlet Removal and Oslo.Service Threading Backend Migration**
+    
+    Mistral has completed its migration away from eventlet and now uses the
+    oslo.service threading backend exclusively. This represents the final step
+    in the eventlet removal process.
+
+    **Key Changes:**
+
+    * **Service Framework Migration**: Mistral now uses oslo.service's threading
+      backend instead of eventlet for service management. The threading backend
+      is initialized early in the application startup process.
+    * **Monkey Patching Removed**: All ``eventlet.monkey_patch()`` calls have been
+      removed from both the main service entry point (``cmd/launch.py``) and the
+      test suite initialization. This eliminates eventlet's modification of the
+      Python standard library.
+    * **RPC Executor Migration**: The deprecated ``oslo_rpc_executor`` configuration
+      option has been removed. All RPC servers (engine, executor, event-engine)
+      now use the threading executor exclusively.
+    * **Dependency Updates**: The ``eventlet`` dependency has been removed from
+      requirements.txt and replaced with the necessary oslo.service threading
+      backend dependencies.
+
+    **Configuration Impact:**
+
+    * If you were explicitly setting ``oslo_rpc_executor = threading`` in your
+      configuration, you can safely remove this setting as threading is now the
+      only supported executor type.
+    * No other configuration changes are required. Mistral services will
+      automatically use the threading backend.
+
+    This migration builds upon the extensive component-level eventlet removal work
+    completed in previous releases and represents the final step in Mistral's
+    modernization to a pure threading-based architecture.

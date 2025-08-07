@@ -12,14 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
+# Threading backend initialization for tests
+from oslo_service.backend import init_backend, BackendType
 
-import eventlet
-
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=False if '--use-debugger' in sys.argv else True,
-    time=True
-)
+init_backend(BackendType.THREADING)
