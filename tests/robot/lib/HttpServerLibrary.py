@@ -45,12 +45,12 @@ class EchoHandler(web.RequestHandler):
 
 class AsyncHandler(web.RequestHandler):
 
-    def initialize(self, queue):
-        self._queue = queue
+    def initialize(self, id_queue, queue):
+        self._id_queue = id_queue
 
     def get(self):
         action_ex_id = self.request.headers['Mistral-Action-Execution-Id']
-        self._queue.put(action_ex_id)
+        self._id_queue.put(action_ex_id)
 
         # trace_id = self._headers.get('X-B3-TraceId')
         # if trace_id:
@@ -159,14 +159,15 @@ class AsyncOauth2Handler(web.RequestHandler):
 
 class WfNotifyHandler(web.RequestHandler):
 
-    def initialize(self, queue):
+    def initialize(self, status_queue, queue):
+        self._status_queue = status_queue
         self._queue = queue
         self._data = json.loads(self.request.body)
         self._headers = self.request.headers
 
     def post(self):
         logger.debug(self._data)
-        self._queue.put(self._data['state'])
+        self._status_queue.put(self._data['state'])
 
         # trace_id = self._headers.get('X-B3-TraceId')
         # if trace_id:
@@ -215,6 +216,8 @@ class HttpServerLibrary(object):
     def __init__(self, mistral_url):
         self._mistral_url = mistral_url
 
+        self.id_queue = queue.Queue()
+        self.status_queue = queue.Queue()
         self.queue = queue.PriorityQueue()
         self._thread = threading.Thread(target=self._start_server)
 
@@ -226,11 +229,11 @@ class HttpServerLibrary(object):
     def _start_server(self):
         handlers = [(r"/sync", SyncHandler),
                     (r'/echo', EchoHandler),
-                    (r'/async', AsyncHandler, {"queue": self.queue}),
+                    (r'/async', AsyncHandler, {"id_queue": self.id_queue, "queue": self.queue}),
                     (r'/ha_async', HA_AsyncHandler, {"mistral_url": self._mistral_url}),
                     (r'/oauth2', Oauth2Handler, {"queue": self.queue}),
                     (r'/async_oauth2', AsyncOauth2Handler, {"queue": self.queue}),
-                    (r'/wf_notify', WfNotifyHandler, {"queue": self.queue}),
+                    (r'/wf_notify', WfNotifyHandler, {"status_queue": self.status_queue, "queue": self.queue}),
                     (r'/wf_retry_notify', WfRetryNotifyHandler, {
                         "queue": self.queue,
                         "is_fail": self.is_fail
@@ -248,6 +251,12 @@ class HttpServerLibrary(object):
     def launch_server(self):
         self._thread.start()
 
+    def await_action_id(self, timeout=30):
+        return self.id_queue.get(timeout=timeout)
+
+    def await_status(self, timeout=30):
+        return self.status_queue.get(timeout=timeout)
+
     def await_rest(self, timeout=30):
         return self.queue.get(timeout=timeout)
 
@@ -263,8 +272,9 @@ class HttpServerLibrary(object):
         self._counter = 0
         self._fail_number = 2
 
-        while not self.queue.empty():
-            self.queue.get(block=False)
+        for q in [self.queue, self.id_queue, self.status_queue]:
+            while not q.empty():
+                q.get(block=False)
 
         logger.log_background_messages()
 

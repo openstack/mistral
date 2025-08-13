@@ -470,7 +470,7 @@ Async action with pause mode
     ${EX_INPUT}=  Create Dictionary  url=${OWN_URL}/async
 
     Recreate the http_async_action workflow and starts with ${EX_INPUT} and params ${EX_PARAMS}
-    ${EX_STATE}=  Await Rest
+    ${EX_STATE}=  await status
 
     ${STATE}=  Get maintenance mode
     Should be equal  RUNNING  ${STATE.status}
@@ -480,8 +480,8 @@ Async action with pause mode
 
     Sleep  10s
 
-    ${ACTION_EX_ID}=  await rest
-    continue action  ${ACTION_EX_ID}
+    ${ACTION_EX_ID}=  await action id
+    Wait Until Keyword Succeeds  10x  2s  continue action  ${ACTION_EX_ID}
 
     Await mistral cluster status  PAUSED
     ${HTTP_CODE}=  continue action  ${ACTION_EX_ID}
