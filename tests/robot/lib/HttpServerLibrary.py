@@ -47,10 +47,12 @@ class AsyncHandler(web.RequestHandler):
 
     def initialize(self, id_queue, queue):
         self._id_queue = id_queue
+        self._queue = queue
 
     def get(self):
         action_ex_id = self.request.headers['Mistral-Action-Execution-Id']
         self._id_queue.put(action_ex_id)
+        self._queue.put(action_ex_id)
 
         # trace_id = self._headers.get('X-B3-TraceId')
         # if trace_id:
@@ -168,6 +170,7 @@ class WfNotifyHandler(web.RequestHandler):
     def post(self):
         logger.debug(self._data)
         self._status_queue.put(self._data['state'])
+        self._queue.put(self._data['state'])
 
         # trace_id = self._headers.get('X-B3-TraceId')
         # if trace_id:
