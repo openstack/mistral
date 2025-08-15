@@ -182,8 +182,8 @@ def set_idle_timeout(config, cmd):
     timeout = os.getenv('PG_IDLE_TIMEOUT', '30s')
     LOG.info("Try to set timeout '{}' for idle session".format(timeout))
     with get_curs() as curs:
-        curs.execute(sql.SQL(f"ALTER DATABASE {pg_db_name} \
-        SET idle_in_transaction_session_timeout = '{timeout}'"))
+        curs.execute(sql.SQL(f'ALTER DATABASE "{pg_db_name}" \
+            SET idle_in_transaction_session_timeout = "{timeout}"'))
     LOG.info('Timeout is set.')
 
 
