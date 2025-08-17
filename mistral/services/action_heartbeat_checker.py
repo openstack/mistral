@@ -130,7 +130,7 @@ def start():
     LOG.debug(
         "First run of action heartbeat checker, wait before "
         "checking to make sure executors have time to send "
-        "heartbeats. ({} seconds)", wait_time
+        "heartbeats. (%s seconds)", wait_time
     )
 
     global _stopped
