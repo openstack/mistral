@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The Mistral API is now served by ``cheroot.wsgi.Server`` instead of the
+    deprecated ``oslo_service.wsgi`` / eventlet stack. Behaviour and CLI
+    commands are unchanged.

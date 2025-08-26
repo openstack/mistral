@@ -92,19 +92,7 @@ class EngineServer(service_base.MistralService):
         self._notify_started('Engine server started.')
 
     def stop(self, graceful=False):
-        # NOTE(rakhmerov): Unfortunately, oslo.service doesn't pass the
-        # 'graceful' parameter with a correct value. It's simply ignored
-        # in the corresponding call chain leading to a concrete service.
-        # The only workaround for now is to check 'graceful_shutdown_timeout'
-        # configuration option. If it's not empty (not None or 0) then we
-        # should treat it a graceful shutdown.
-        graceful = bool(CONF.graceful_shutdown_timeout)
-
-        LOG.info(
-            'Stopping an engine server [graceful=%s, timeout=%s]',
-            graceful,
-            CONF.graceful_shutdown_timeout
-        )
+        LOG.info('Stopping engine server')
 
         super(EngineServer, self).stop(graceful)
 

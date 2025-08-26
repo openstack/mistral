@@ -12,14 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
-
-import eventlet
-
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=False if '--use-debugger' in sys.argv else True,
-    time=True
-)
+# NOTE(amorin)
+# Hardcode the threading backend to avoid using eventlet until this will
+# eventually become the default
+import oslo_service.backend as service_backend
+service_backend.init_backend(service_backend.BackendType.THREADING)

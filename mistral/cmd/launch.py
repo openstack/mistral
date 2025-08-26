@@ -16,17 +16,6 @@
 
 import sys
 
-import eventlet
-
-
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=False if '--use-debugger' in sys.argv else True,
-    time=True)
-
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service
@@ -82,7 +71,6 @@ def launch_notifier():
 
 def launch_api():
     server = api_service.WSGIService('mistral_api')
-
     launch_process(server, workers=server.workers)
 
 
@@ -90,12 +78,11 @@ def launch_any(options):
     for option in options:
         LAUNCH_OPTIONS[option]()
 
-    global SERVER_PROCESS_MANAGER
-
     # Wait for the services to finish now
     # This main process will do nothing starting from now
+    global SERVER_PROCESS_MANAGER
     if SERVER_PROCESS_MANAGER:
-        SERVER_PROCESS_MANAGER.wait()
+        sys.exit(SERVER_PROCESS_MANAGER.wait())
 
 
 # Map cli options to appropriate functions. The cli options are

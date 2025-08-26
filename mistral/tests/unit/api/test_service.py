@@ -16,66 +16,83 @@ from unittest import mock
 
 from oslo_concurrency import processutils
 from oslo_config import cfg
+from oslo_service import sslutils
 
 from mistral.api import service
 from mistral.tests.unit import base
+
+CONF = cfg.CONF
 
 
 class TestWSGIService(base.BaseTest):
     def setUp(self):
         super(TestWSGIService, self).setUp()
-
         self.override_config('enabled', False, group='cron_trigger')
+        sslutils.register_opts(CONF)
+        self.server = mock.Mock()
 
+    @mock.patch.object(processutils, 'get_worker_count', lambda: 2)
     @mock.patch.object(service.wsgi, 'Server')
     def test_workers_set_default(self, wsgi_server):
         service_name = "mistral_api"
-
         with mock.patch('mistral.api.app.setup_app'):
             test_service = service.WSGIService(service_name)
-
+            self.assertEqual(1, test_service.workers)
             wsgi_server.assert_called_once_with(
-                cfg.CONF,
-                service_name,
-                test_service.app,
-                host='0.0.0.0',
-                port=8989,
-                use_ssl=False
+                bind_addr=('0.0.0.0', 8989),
+                wsgi_app=test_service.app,
+                server_name=service_name,
             )
 
     def test_workers_set_correct_setting(self):
+        # NOTE(amorin) since we moved to cheroot, we can't start more than
+        # one worker, so, no matter what the setting will be set to,
+        # mistral will start only one worker
         self.override_config('api_workers', 8, group='api')
 
         with mock.patch('mistral.api.app.setup_app'):
             test_service = service.WSGIService("mistral_api")
 
-            self.assertEqual(8, test_service.workers)
+            self.assertEqual(1, test_service.workers)
 
+    @mock.patch.object(processutils, 'get_worker_count', lambda: 3)
     def test_workers_set_zero_setting(self):
         self.override_config('api_workers', 0, group='api')
 
         with mock.patch('mistral.api.app.setup_app'):
             test_service = service.WSGIService("mistral_api")
 
-            self.assertEqual(
-                processutils.get_worker_count(),
-                test_service.workers
-            )
+            self.assertEqual(1, test_service.workers)
 
     @mock.patch.object(service.wsgi, 'Server')
-    def test_wsgi_service_with_ssl_enabled(self, wsgi_server):
+    @mock.patch('mistral.api.service.cheroot_ssl.BuiltinSSLAdapter',
+                autospec=True)
+    @mock.patch('mistral.api.service.validate_cert_paths',
+                autospec=True)
+    @mock.patch('oslo_service.sslutils.is_enabled', return_value=True,
+                autospec=True)
+    def test_wsgi_service_with_ssl_enabled(self, mock_is_enabled,
+                                           mock_validate_tls,
+                                           mock_ssl_adapter,
+                                           wsgi_server):
+        wsgi_server.return_value = self.server
         self.override_config('enable_ssl_api', True, group='api')
+        self.override_config('cert_file', '/path/to/cert', group='ssl')
+        self.override_config('key_file', '/path/to/key', group='ssl')
 
         service_name = 'mistral_api'
 
         with mock.patch('mistral.api.app.setup_app'):
-            srv = service.WSGIService(service_name)
+            test_service = service.WSGIService(service_name)
 
             wsgi_server.assert_called_once_with(
-                cfg.CONF,
-                service_name,
-                srv.app,
-                host='0.0.0.0',
-                port=8989,
-                use_ssl=True
+                server_name=service_name,
+                wsgi_app=test_service.app,
+                bind_addr=('0.0.0.0', 8989)
             )
+
+            mock_ssl_adapter.assert_called_once_with(
+                certificate='/path/to/cert',
+                private_key='/path/to/key'
+            )
+            self.assertIsNotNone(self.server.ssl_adapter)

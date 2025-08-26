@@ -34,20 +34,28 @@ class ServiceLauncherTest(base.DbTestCase):
 
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
     @mock.patch.object(service.ProcessLauncher, 'wait')
-    def test_launch_one_process(self, mock_wait, mock_launch_service):
+    @mock.patch('sys.exit')
+    def test_launch_one_process(self, mock_exit, mock_wait,
+                                mock_launch_service):
         # Launch API
         launch.launch_any(['api'])
 
         # Make sure we tried to start a service
-        mock_launch_service.assert_called_once_with(mock.ANY, workers=2)
+        # NOTE(amorin) despite the fact that the config set 2 workers
+        # we are hardcoding 1 worker since we use cheroot
+        mock_launch_service.assert_called_once_with(mock.ANY, workers=1)
         mock_wait.assert_called_once_with()
+        mock_exit.assert_called_once()
 
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
     @mock.patch.object(service.ProcessLauncher, 'wait')
-    def test_launch_multiple_processes(self, mock_wait, mock_launch_service):
+    @mock.patch('sys.exit')
+    def test_launch_multiple_processes(self, mock_exit, mock_wait,
+                                       mock_launch_service):
         # Launch API and executor
         launch.launch_any(['api', 'executor'])
 
         # Make sure we tried to start 2 services
         mock_launch_service.call_count = 2
         mock_wait.call_count = 2
+        mock_exit.assert_called_once()

@@ -12,13 +12,32 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_concurrency import processutils
+import os
+import threading
+
+from cheroot.ssl import builtin as cheroot_ssl
+from cheroot import wsgi
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_service import service
-from oslo_service import wsgi
+from oslo_service import sslutils
 
 from mistral.api import app
 from mistral.rpc import clients as rpc_clients
+
+
+LOG = logging.getLogger(__name__)
+
+
+def validate_cert_paths(cert_file, key_file):
+    if cert_file and not os.path.exists(cert_file):
+        raise RuntimeError(_("Unable to find cert_file: %s") % cert_file)
+    if key_file and not os.path.exists(key_file):
+        raise RuntimeError(_("Unable to find key_file: %s") % key_file)
+    if not cert_file or not key_file:
+        raise RuntimeError(_("When running server in SSL mode, you must "
+                             "specify a valid cert_file and key_file "
+                             "paths in your configuration file"))
 
 
 class WSGIService(service.ServiceBase):
@@ -27,18 +46,39 @@ class WSGIService(service.ServiceBase):
     def __init__(self, name):
         self.name = name
         self.app = app.setup_app()
-        self.workers = (
-            cfg.CONF.api.api_workers or processutils.get_worker_count()
-        )
+        # NOTE(amorin) since we moved to cheroot, we can't start more than
+        # one process.
+        # If you want to use more than one worker, you should start
+        # mistral-wsgi-api instead
+        self.workers = 1
 
+        bind_addr = (cfg.CONF.api.host, cfg.CONF.api.port)
         self.server = wsgi.Server(
-            cfg.CONF,
-            name,
-            self.app,
-            host=cfg.CONF.api.host,
-            port=cfg.CONF.api.port,
-            use_ssl=cfg.CONF.api.enable_ssl_api
-        )
+            bind_addr=bind_addr,
+            wsgi_app=self.app,
+            server_name=name)
+
+        if cfg.CONF.api.enable_ssl_api:
+            # NOTE(amorin) I copy pasted this from ironic code and they
+            # were warning about this so I kept it
+            LOG.warning(
+                "Using deprecated [ssl] group for TLS "
+                "credentials: the global [ssl] configuration block is "
+                "deprecated and will be removed in 2026.1"
+            )
+            # Register global SSL config options and validate the
+            # existence of configured certificate/private key file paths,
+            # when in secure mode.
+            sslutils.is_enabled(cfg.CONF)
+            cert_file = cfg.CONF.ssl.cert_file
+            key_file = cfg.CONF.ssl.key_file
+            validate_cert_paths(cert_file, key_file)
+            self.server.ssl_adapter = cheroot_ssl.BuiltinSSLAdapter(
+                certificate=cert_file,
+                private_key=key_file,
+            )
+
+        self._thread = None
 
     def start(self):
         # NOTE: When oslo.service creates an API worker it forks a new child
@@ -50,15 +90,25 @@ class WSGIService(service.ServiceBase):
         # generated queue names).
         rpc_clients.cleanup()
 
-        self.server.start()
-
-        print('API server started.')
+        self.server.prepare()
+        self._thread = threading.Thread(
+            target=self.server.serve,
+            daemon=True
+        )
+        self._thread.start()
+        LOG.info('API server started with one process. If you want more '
+                 'workers, consider switching to a wsgi server using '
+                 'mistral-wsgi-api')
 
     def stop(self):
-        self.server.stop()
+        if self.server:
+            self.server.stop()
+            if self._thread:
+                self._thread.join(timeout=2)
 
     def wait(self):
-        self.server.wait()
+        if self._thread:
+            self._thread.join()
 
     def reset(self):
-        self.server.reset()
+        pass
