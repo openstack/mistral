@@ -27,22 +27,6 @@ eventlet.monkey_patch(
     time=True)
 
 
-import os
-
-
-# If ../mistral/__init__.py exists, add ../ to Python search path, so that
-# it will override what happens to be installed in /usr/(local/)lib/python...
-POSSIBLE_TOPDIR = os.path.normpath(
-    os.path.join(
-        os.path.abspath(sys.argv[0]),
-        os.pardir,
-        os.pardir
-    )
-)
-
-if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
-    sys.path.insert(0, POSSIBLE_TOPDIR)
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service
