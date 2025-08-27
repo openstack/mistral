@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    Deprecate the ``api_workers`` option for mistral-api. This option was used
+    to spawn multiple workers when using oslo.service wsgi server.
+    Since we moved to cheroot, this is not possible anymore.
+    If you want to use more than one process to handle Mistral API requests,
+    you should consider using mistral-wsgi-api behind a wsgi server.
