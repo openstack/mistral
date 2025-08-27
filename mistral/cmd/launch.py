@@ -181,30 +181,10 @@ def get_properly_ordered_parameters():
 def main():
     try:
         CONF.register_cli_opts(config.CLI_OPTS)
-
         config.parse_args(get_properly_ordered_parameters())
-
         print_server_info()
-
         logging.setup(CONF, 'Mistral')
-
-        # Please refer to the oslo.messaging documentation for transport
-        # configuration. The default transport for oslo.messaging is
-        # rabbitMQ. The available transport drivers are listed in the
-        # setup.cfg file in oslo.messaging under the entry_points section for
-        # oslo.messaging.drivers. The transport driver is specified using the
-        # rpc_backend option in the default section of the oslo configuration
-        # file. The expected value for the rpc_backend is one of the key
-        # values available for the oslo.messaging.drivers (i.e. rabbit, fake).
-        # There are additional options such as ssl and credential that can be
-        # specified depending on the driver.  Please refer to the driver
-        # implementation for those additional options. It's important to note
-        # that the "fake" transport should only be used if "all" the Mistral
-        # servers are launched on the same process. Otherwise, messages do not
-        # get delivered if the Mistral servers are launched on different
-        # processes because the "fake" transport is using an in process queue.
         rpc.get_transport()
-
         launch_any(_get_server())
 
     except RuntimeError as excp:
