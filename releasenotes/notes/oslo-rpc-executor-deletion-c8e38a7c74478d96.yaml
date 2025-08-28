@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    The ``oslo_rpc_executor`` option is removed.
+    If you were explicitly setting ``oslo_rpc_executor = threading`` in your
+    configuration, you can safely remove this setting as threading is now the
+    only supported executor type.

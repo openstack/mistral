@@ -9,8 +9,6 @@
         post-config:
           $MISTRAL_CONF_FILE:
             default:
-              oslo_rpc_executor: threading
-              rpc_message_ttl: 3000
               rpc_response_timeout: 3000
               default_log_levels: mistral=DEBUG,mistral.expressions=INFO,sqlalchemy=INFO
             engine:

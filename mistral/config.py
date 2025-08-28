@@ -190,16 +190,6 @@ js_impl_opt = cfg.StrOpt(
            'action to evaluate scripts.')
 )
 
-oslo_rpc_executor = cfg.StrOpt(
-    'oslo_rpc_executor',
-    default='threading',
-    choices=['eventlet', 'threading'],
-    deprecated_for_removal=True,
-    deprecated_reason='This option is going to be removed from oslo.messaging',
-    help=_('Executor type used by Oslo Messaging framework. Defines how '
-           'Oslo Messaging based RPC subsystem processes incoming calls.')
-)
-
 expiration_token_duration = cfg.IntOpt(
     'expiration_token_duration',
     default=30,
@@ -791,7 +781,6 @@ CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
 CONF.register_opt(scheduler_type_opt)
 CONF.register_opt(js_impl_opt)
-CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 
 CONF.register_opts(action_providers_opts, group=ACTION_PROVIDERS_GROUP)
@@ -832,7 +821,6 @@ default_group_opts = CLI_OPTS + [
     auth_type_opt,
     scheduler_type_opt,
     js_impl_opt,
-    oslo_rpc_executor,
     expiration_token_duration
 ]
 
