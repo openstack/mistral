@@ -111,16 +111,17 @@ def end_tx():
 
 @contextlib.contextmanager
 def transaction(read_only=False):
-    start_tx()
+    with b.tx_lock:
+        start_tx()
 
-    try:
-        yield
-        if read_only:
-            rollback_tx()
-        else:
-            commit_tx()
-    finally:
-        end_tx()
+        try:
+            yield
+            if read_only:
+                rollback_tx()
+            else:
+                commit_tx()
+        finally:
+            end_tx()
 
 
 @b.session_aware()

@@ -26,6 +26,8 @@ from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
 from mistral_lib import utils
 
+import threading
+
 
 # Note(dzimine): sqlite only works for basic testing.
 options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")
@@ -35,6 +37,22 @@ _TX_SCOPED_CACHE_THREAD_LOCAL_NAME = "__tx_scoped_cache__"
 
 _facade = None
 _sqlalchemy_create_engine_orig = sa.create_engine
+
+# NOTE(amorin) Create a reentrant lock so only one thread can create a SQL
+# session at a time.
+# Without the lock, after evenlet-removal, multiple threads could create
+# session at the same time (e.g. one thread start a session, start working in
+# that session, another could start a session in the meantime).
+# When multiple threads try to start sessions at the same time, some sql
+# backend could fail with errors like: cannot start a transaction within a
+# transaction (sqlite for e.g.), because threads were re-using the same
+# connection to create another session (and sqlite does not like that).
+# So to avoid this, when a thread create a session, it will grab that lock
+# until it has finished.
+# The lock is used a two places: one here (in base.py) in session_aware
+# decorator, and another one (in db/v2/sqlalchemy/api.py) for def transaction
+# context manager.
+tx_lock = threading.RLock()
 
 
 def _get_facade():
@@ -120,27 +138,28 @@ def session_aware(param_name="session"):
 
     def _decorator(func):
         def _within_session(*args, **kw):
-            # If 'created' flag is True it means that the transaction is
-            # demarcated explicitly outside this module.
-            ses, created = _get_or_create_thread_local_session()
+            with tx_lock:
+                # If 'created' flag is True it means that the transaction is
+                # demarcated explicitly outside this module.
+                ses, created = _get_or_create_thread_local_session()
 
-            try:
-                kw[param_name] = ses
+                try:
+                    kw[param_name] = ses
 
-                result = func(*args, **kw)
+                    result = func(*args, **kw)
 
-                if created:
-                    ses.commit()
+                    if created:
+                        ses.commit()
 
-                return result
-            except Exception:
-                if created:
-                    ses.rollback()
-                raise
-            finally:
-                if created:
-                    _set_thread_local_session(None)
-                    ses.close()
+                    return result
+                except Exception:
+                    if created:
+                        ses.rollback()
+                    raise
+                finally:
+                    if created:
+                        _set_thread_local_session(None)
+                        ses.close()
 
         _within_session.__doc__ = func.__doc__
 
