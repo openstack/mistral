@@ -65,8 +65,8 @@ class EventEngineTest(base.DbTestCase):
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_start_with_no_triggers(self):
         e_engine = evt_eng.DefaultEventEngine()
-
-        self.addCleanup(e_engine.handler_tg.stop)
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
 
         self.assertEqual(0, len(e_engine.event_triggers_map))
         self.assertEqual(0, len(e_engine.exchange_topic_events_map))
@@ -78,8 +78,8 @@ class EventEngineTest(base.DbTestCase):
         trigger = db_api.create_event_trigger(EVENT_TRIGGER)
 
         e_engine = evt_eng.DefaultEventEngine()
-
-        self.addCleanup(e_engine.handler_tg.stop)
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
 
         self.assertEqual(1, len(e_engine.exchange_topic_events_map))
         self.assertEqual(
@@ -112,8 +112,8 @@ class EventEngineTest(base.DbTestCase):
         auth_context.set_ctx(self.ctx)
 
         e_engine = evt_eng.DefaultEventEngine()
-
-        self.addCleanup(e_engine.handler_tg.stop)
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
 
         event = {
             'event_type': EVENT_TYPE,
@@ -161,8 +161,8 @@ class EventEngineTest(base.DbTestCase):
         db_api.create_event_trigger(EVENT_TRIGGER)
 
         e_engine = evt_eng.DefaultEventEngine()
-
-        self.addCleanup(e_engine.handler_tg.stop)
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
 
         event = {
             'event_type': EVENT_TYPE,

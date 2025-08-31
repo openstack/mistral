@@ -41,6 +41,8 @@ class EventEngineServer(service_base.MistralService):
     def start(self):
         super(EventEngineServer, self).start()
 
+        self._event_engine.start()
+
         profiler_utils.setup(
             'mistral-event-engine',
             cfg.CONF.event_engine.host
@@ -60,6 +62,8 @@ class EventEngineServer(service_base.MistralService):
 
         if self._rpc_server:
             self._rpc_server.stop(graceful)
+
+        self._event_engine.stop()
 
     def create_event_trigger(self, rpc_ctx, trigger, events):
         LOG.info(
