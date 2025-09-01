@@ -52,13 +52,13 @@ def handle_expired_actions():
             CONF.action_heartbeat.batch_size
         )
 
-        LOG.debug("Found {} running and expired actions.", len(action_exs))
+        LOG.debug("Found %d running and expired actions.", len(action_exs))
 
         if action_exs:
             for action_ex in action_exs:
                 LOG.warning(
                     "Action execution to transit to error, because "
-                    "heartbeat wasn't received: {}", action_ex.id
+                    "heartbeat wasn't received: %s", action_ex.id
                 )
 
                 task_ex = db_api.get_task_execution(
