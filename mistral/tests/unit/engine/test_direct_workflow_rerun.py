@@ -886,9 +886,11 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         # to continue the worflow (like on-complete), then the workflow will
         # fail and all other tasks may be blocked in WAITING state.
 
-        # Resume workflow and re-run failed tasks
+        # Resume workflow and re-run t1/t2 failed tasks
+        # t3 will be resumed automatically by t1/t2, so no need to resume it
         for task_exec in task_execs:
-            if task_exec.state == states.ERROR:
+            if (task_exec.state == states.ERROR and
+                    task_exec.name in ['t1', 't2']):
                 wf_ex = self.engine.rerun_workflow(task_exec.id)
 
         # This is prone to race conditions, but let's see if that works
