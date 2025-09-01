@@ -524,8 +524,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         state_info = task_ex.state_info
 
-        print(state_info)
-
         self.assertIsNotNone(state_info)
         self.assertGreater(state_info.find('error='), 0)
         self.assertLess(state_info.find('error='), state_info.find('wf='))

@@ -321,7 +321,6 @@ class TriggerServiceV2Test(base.DbTestCase):
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_single_execution_with_multiple_processes(self, start_wf_mock):
         def stop_thread_groups():
-            print('Killing cron trigger threads...')
             [tg.stop() for tg in self.trigger_threads]
 
         self.trigger_threads = [

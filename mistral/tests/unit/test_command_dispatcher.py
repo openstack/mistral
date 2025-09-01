@@ -18,16 +18,6 @@ from mistral.tests.unit import base
 from mistral.workflow import commands
 
 
-def _print_commands(cmds):
-    print("commands:")
-
-    for cmd in cmds:
-        if isinstance(cmd, commands.RunTask):
-            print("%s, %s, %s" % (type(cmd), cmd.is_waiting(), cmd.unique_key))
-        else:
-            print("%s" % type(cmd))
-
-
 class CommandDispatcherTest(base.BaseTest):
     def test_rearrange_commands(self):
         no_wait = commands.RunTask(None, None, None, None)

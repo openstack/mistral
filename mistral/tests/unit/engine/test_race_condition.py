@@ -101,9 +101,6 @@ class BlockingAction(actions_base.Action):
     def run(self, context):
         self.unblock_test()
         self.wait_for_test()
-
-        print('Action completed [thread_id=%s]' % threading.get_ident())
-
         return 'test'
 
     def test(self):

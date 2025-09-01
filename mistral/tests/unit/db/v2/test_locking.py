@@ -120,8 +120,6 @@ class SQLiteLocksTest(test_base.DbTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        print("Correct locking test gave object name: %s" % wf_ex.name)
-
         self.assertEqual(str(number), wf_ex.name)
         self.assertEqual(1, len(sqlite_lock.get_locks()))
         sqlite_lock.cleanup()
