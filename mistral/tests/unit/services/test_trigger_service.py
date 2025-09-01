@@ -46,23 +46,6 @@ my_wf:
       action: std.echo output='Hi!'
 """
 
-advance_cron_trigger_orig = periodic.advance_cron_trigger
-
-
-def new_advance_cron_trigger(ct):
-    """Wrap the original advance_cron_trigger method.
-
-    This method makes sure that the other coroutines will also run
-    while this thread is executing. Without explicitly passing control to
-    another coroutine the process_cron_triggers_v2 will finish looping
-    over all the cron triggers in one coroutine without any sharing at all.
-    """
-    time.sleep()
-    modified = advance_cron_trigger_orig(ct)
-    time.sleep()
-
-    return modified
-
 
 class TriggerServiceV2Test(base.DbTestCase):
     def setUp(self):
@@ -233,7 +216,7 @@ class TriggerServiceV2Test(base.DbTestCase):
     @mock.patch.object(rpc.EngineClient, 'start_workflow', mock.Mock())
     @mock.patch(
         'mistral.services.periodic.advance_cron_trigger',
-        mock.MagicMock(side_effect=new_advance_cron_trigger)
+        mock.MagicMock(side_effect=periodic.advance_cron_trigger)
     )
     @mock.patch.object(security, 'delete_trust')
     def test_create_delete_trust_in_trigger(self, delete_trust, create_ctx):
@@ -316,7 +299,7 @@ class TriggerServiceV2Test(base.DbTestCase):
     @testtools.skip('Skipped because of threading concurrency')
     @mock.patch(
         'mistral.services.periodic.advance_cron_trigger',
-        mock.MagicMock(side_effect=new_advance_cron_trigger)
+        mock.MagicMock(side_effect=periodic.advance_cron_trigger)
     )
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_single_execution_with_multiple_processes(self, start_wf_mock):
