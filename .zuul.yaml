@@ -49,44 +49,6 @@
     required-projects:
       - openstack/mistral
 
-# This job does not work. We can come back to it later.
-# - job:
-#     name: mistral-ha
-#     parent: legacy-base
-#     run: playbooks/legacy/mistral-ha/run
-#     timeout: 4200
-
-# This job does not work. We can come back to it later.
-# - job:
-#     name: mistral-tox-unit-mysql
-#     parent: openstack-tox
-#     vars:
-#       tox_envlist: unit-mysql
-#     irrelevant-files:
-#       - ^.*\.rst$
-#       - ^doc/.*$
-#       - ^releasenotes/.*$
-#     timeout: 3600
-#     required-projects:
-#       - openstack/mistral-lib
-#       - openstack/mistral-extra
-
-# This job does not work. We can come back to it later.
-# - job:
-#     name: mistral-tox-unit-postgresql
-#     parent: openstack-tox
-#     vars:
-#       tox_envlist: unit-postgresql
-#       tox_environment: {CI_PROJECT: "{{ zuul['project']['name'] }}"}
-#     irrelevant-files:
-#       - ^.*\.rst$
-#       - ^doc/.*$
-#       - ^releasenotes/.*$
-#     timeout: 3600
-#     required-projects:
-#       - openstack/mistral-lib
-#       - openstack/mistral-extra
-
 - project:
     templates:
       - openstack-python3-jobs
@@ -104,17 +66,11 @@
               - ^releasenotes/.*$
         - mistral-devstack
         - mistral-devstack-tempest-ipv6-only
-        # Disable mysql / postgresql units as they are not working as expected
-        # - mistral-tox-unit-mysql
-        # - mistral-tox-unit-postgresql
     queue: mistral
     gate:
       jobs:
         - mistral-devstack
         - mistral-devstack-tempest-ipv6-only
-        # Disable mysql / postgresql units as they are not working as expected
-        # - mistral-tox-unit-mysql
-        # - mistral-tox-unit-postgresql
     post:
       jobs:
         - mistral-docker-buildimage:
@@ -123,6 +79,3 @@
       jobs:
         - mistral-docker-buildimage-test:
             branches: master
-        # This job doesn't work yet.
-        # - mistral-ha:
-        #     voting: false
