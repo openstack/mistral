@@ -35,10 +35,12 @@ The Workflow service consists of the following components:
 
 ``Mistral Notifier`` service
   Send notifications based on state of workflow and task executions.
+  `This service is optional`.
 
 ``Mistral Event Engine`` service
   Create workflow executions based on external events (like RabbitMQ, HTTP,
   kafka, etc.).
+  `This service is optional`.
 
 The mistral project is also providing the following python libraries:
 
@@ -163,11 +165,11 @@ Update the database to the latest revision:
 .. code-block:: console
 
     # For MySQL / MariaDB / PostgreSQL
-    $ mistral-db-manage --config-file /etc/mistral/mistral.conf upgrade head
+    $ mistral-db-manage upgrade head
 
     # For SQLite - do not use sqlite in production!
     # e.g. connection = 'sqlite:////var/lib/mistral.sqlite'
-    $ python tools/sync_db.py --config-file /etc/mistral/mistral.conf
+    $ python tools/sync_db.py
 
 Before starting the Mistral server, run the *mistral-db-manage populate*
 command. It creates the DB with all the standard actions and standard workflows
@@ -175,7 +177,7 @@ that Mistral provides to all Mistral users.:
 
 .. code-block:: console
 
-    $ mistral-db-manage --config-file /etc/mistral/mistral.conf populate
+    $ mistral-db-manage populate
 
 For more detailed information on the *mistral-db-manage* script, see
 the :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
@@ -188,7 +190,12 @@ To run the Mistral components, execute the following command in a shell:
 
 .. code-block:: console
 
-    $ mistral-server --server all --config-file /etc/mistral/mistral.conf
+    $ mistral-server --server all
+
+.. note::
+
+    in this situation API will start only one worker! If you need more than
+    worker for you API, you should start the API with uWSGI (see below)
 
 Running Mistral components separately
 -------------------------------------
@@ -198,14 +205,14 @@ server, e.g. to start only the engine:
 
 .. code-block:: console
 
-    $ mistral-server --server engine --config-file /etc/mistral/mistral.conf
+    $ mistral-server --server engine
 
 The --server command line option can be a comma delimited list, so you can
 build combination of components, like this:
 
 .. code-block:: console
 
-    $ mistral-server --server engine,executor --config-file /etc/mistral/mistral.conf
+    $ mistral-server --server engine,executor
 
 The valid options are:
 
@@ -215,6 +222,102 @@ The valid options are:
 * executor
 * event-engine
 * notifier
+
+Running Mistral API with uWSGI
+------------------------------
+
+The WSGI application
+~~~~~~~~~~~~~~~~~~~~
+
+One downside of running ``mistral-server --server api`` directly is that it
+will start only one process (worker) to handle HTTP requests.
+
+While this may be enough for small/dev deployments, it may not for production.
+
+In that situation, Mistral provides a WSGI application at
+``mistral.wsgi:application`` that can be used with any WSGI server.
+
+The below example uses uWSGI
+
+
+Using uWSGI
+~~~~~~~~~~~
+
+Install uWSGI:
+
+.. code-block:: console
+
+    $ pip install uwsgi
+
+
+Create a uWSGI configuration file (e.g., ``/etc/uwsgi/mistral.ini``):
+
+.. code-block:: cfg
+
+    [uwsgi]
+    # Listen on port 8989 and start as a full web server
+    http-socket = 0.0.0.0:8989
+
+    # Stats on port 9191
+    stats = 0.0.0.0:9191
+
+    # App to start
+    virtualenv = /opt/openstack/mistral/
+    module = mistral.wsgi:application
+
+    # load apps in each worker instead of the master
+    lazy-apps = true
+
+    # Number of processes
+    processes = 4
+
+    # Will kill processes that run more that 60s
+    harakiri = 60
+
+    # Enable threads
+    enable-threads = true
+
+    # Gracefully manage processes
+    master = true
+
+    # Thunder-lock - serialize accept() usage (if possible)
+    thunder-lock = true
+
+
+Start uWSGI:
+
+.. code-block:: console
+
+    $ uwsgi --ini /etc/uwsgi/mistral.ini
+
+
+Passing Configuration Options
+------------------------------
+
+By default, Mistral will use its standard configuration file search paths:
+
+* ``/etc/mistral/mistral.conf``
+* ``/etc/mistral/mistral.conf.d/``
+* ``/etc/mistral.conf.d/``
+* many others, see:
+  https://docs.openstack.org/oslo.config/latest/configuration/options.html
+
+You can also provide ``config-dir`` or ``config-file`` options to
+``mistral-server`` command line to provide a custom file/folder:
+
+.. code-block:: console
+
+    $ mistral-server --config-dir /etc/mycustomdir/
+
+Note that, when using ``uwsgi``, you won't be able to provide such params. In
+that situation, you can use ``MISTRAL_CONFIG_DIR`` and/or
+``MISTRAL_CONFIG_FILE`` environment variable instead:
+
+.. code-block:: cfg
+
+    [uwsgi]
+    ...
+    env = MISTRAL_CONFIG_DIR=/etc/mycustomdir/
 
 .. _install-osa:
 

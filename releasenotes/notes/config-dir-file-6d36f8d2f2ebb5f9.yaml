@@ -1,0 +1,12 @@
+---
+other:
+  - |
+    Adding a new wsgi entrypoint to allow using it within WSGI servers (like
+    uWSGI) using ``mistral.wsgi:application``.
+
+    Note that **this is the only way to start more than one mistral API
+    worker**.
+
+    Also adding two environment variables ``MISTRAL_CONFIG_DIR`` and
+    ``MISTRAL_CONFIG_FILE`` to allow setting config-dir and config-file when
+    using the new wsgi entrypoint.

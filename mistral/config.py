@@ -21,6 +21,7 @@ Configuration options registration and useful routines.
 """
 
 import json
+import os
 
 from keystoneauth1 import loading
 from oslo_config import cfg
@@ -859,7 +860,13 @@ def list_opts():
     ]
 
 
-def parse_args(args=None, usage=None, default_config_files=None):
+def parse_args(args=None, usage=None):
+    # NOTE(amorin) allow overwritting config dir and file from env
+    conf_d = os.environ.get('MISTRAL_CONFIG_DIR')
+    default_config_dirs = [conf_d] if conf_d else None
+    conf_f = os.environ.get('MISTRAL_CONFIG_FILE')
+    default_config_files = [conf_f] if conf_f else None
+
     default_log_levels = log.get_default_log_levels()
     default_log_levels.extend(_DEFAULT_LOG_LEVELS)
     log.set_defaults(default_log_levels=default_log_levels)
@@ -871,7 +878,8 @@ def parse_args(args=None, usage=None, default_config_files=None):
         project='mistral',
         version=version.version_string,
         usage=usage,
-        default_config_files=default_config_files
+        default_config_dirs=default_config_dirs,
+        default_config_files=default_config_files,
     )
 
 
