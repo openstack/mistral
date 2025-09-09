@@ -42,9 +42,9 @@ function create_mistral_accounts {
     get_or_create_service "mistral" "workflowv2" "Workflow Service v2"
     get_or_create_endpoint "workflowv2" \
         "$REGION_NAME" \
-        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2"
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST/workflow/v2" \
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST/workflow/v2" \
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST/workflow/v2"
 }
 
 
@@ -94,6 +94,8 @@ function configure_mistral {
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
     fi
+
+    write_uwsgi_config "$MISTRAL_UWSGI_CONF" "$MISTRAL_UWSGI" "/workflow" "" "mistral-api"
 }
 
 
@@ -149,7 +151,7 @@ function install_mistral_extra {
 function start_mistral {
     if is_service_enabled mistral-api && is_service_enabled mistral-engine && is_service_enabled mistral-executor && is_service_enabled mistral-event-engine ; then
         echo_summary "Installing all mistral services in separate processes"
-        run_process mistral-api "$MISTRAL_BIN_DIR/mistral-server --server api --config-file $MISTRAL_CONF_DIR/mistral.conf"
+        run_process mistral-api "$(which uwsgi) --procname-prefix mistral-api --ini $MISTRAL_UWSGI_CONF"
         run_process mistral-engine "$MISTRAL_BIN_DIR/mistral-server --server engine --config-file $MISTRAL_CONF_DIR/mistral.conf"
         run_process mistral-executor "$MISTRAL_BIN_DIR/mistral-server --server executor --config-file $MISTRAL_CONF_DIR/mistral.conf"
         run_process mistral-event-engine "$MISTRAL_BIN_DIR/mistral-server --server event-engine --config-file $MISTRAL_CONF_DIR/mistral.conf"
@@ -179,6 +181,7 @@ function cleanup_mistral {
         _mistral_cleanup_mistraldashboard
     fi
     sudo rm -rf $MISTRAL_CONF_DIR
+    remove_uwsgi_config "$MISTRAL_UWSGI_CONF" "$MISTRAL_UWSGI"
 }
 
 
