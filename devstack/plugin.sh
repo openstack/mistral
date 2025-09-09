@@ -101,7 +101,8 @@ function configure_mistral {
 function init_mistral {
     # (re)create Mistral database
     recreate_database mistral utf8
-    $PYTHON $MISTRAL_DIR/tools/sync_db.py --config-file $MISTRAL_CONF_FILE
+    $MISTRAL_BIN_DIR/mistral-db-manage --config-file $MISTRAL_CONF_FILE upgrade head
+    $MISTRAL_BIN_DIR/mistral-db-manage --config-file $MISTRAL_CONF_FILE populate
 }
 
 
