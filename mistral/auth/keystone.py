@@ -35,7 +35,7 @@ class KeystoneAuthHandler(auth.AuthHandler):
             return
 
         if req.headers.get('X-Auth-Token'):
-            msg = 'Auth token is invalid: %s' % req.headers['X-Auth-Token']
+            msg = 'Auth token is invalid'
         else:
             msg = 'Authentication required'
 
