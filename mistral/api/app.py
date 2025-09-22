@@ -24,7 +24,6 @@ from mistral.api import access_control
 from mistral.api.hooks import maintenance
 from mistral import config as m_config
 from mistral import context as ctx
-from mistral.db.v2 import api as db_api_v2
 from mistral.rpc import base as rpc
 from mistral.services import periodic
 
@@ -53,8 +52,6 @@ def setup_app(config=None):
     m_config.set_config_defaults()
 
     app_conf = dict(config.app)
-
-    db_api_v2.setup_db()
 
     # TODO(rakhmerov): Why do we run cron triggers in the API layer?
     # Should we move it to engine?s

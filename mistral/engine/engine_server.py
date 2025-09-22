@@ -15,7 +15,6 @@
 from oslo_log import log as logging
 
 from mistral import config as cfg
-from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine
 from mistral import exceptions as exc
 from mistral.rpc import base as rpc
@@ -59,8 +58,6 @@ class EngineServer(service_base.MistralService):
         super(EngineServer, self).start()
 
         _validate_config()
-
-        db_api.setup_db()
 
         self._scheduler = sched_base.get_system_scheduler()
         self._scheduler.start()
