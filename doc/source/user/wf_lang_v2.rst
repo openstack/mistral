@@ -1239,9 +1239,60 @@ Input parameters:
    host in **<home-user-directory>/.ssh** directory or absolute path of
    the key should be provided. The file needs to be accessible
    for the user account running the executor. *Optional*.
+-  **return_result_on_error** - Boolean, defaults to false (to keep backward
+   behavior compatibility). If set to True, even if the remote command
+   returns non-zero, the task will be in SUCCESS, and the returned value
+   should be read to tell if the command succeeded.
 
 **NOTE**: Authentication using key pairs is supported, key should be
 on Mistral Executor server machine.
+
+Example with return_result_on_error=True:
+
+::
+
+    tasks:
+      execute_command:
+        action: std.ssh
+        input:
+          host: "node1.example.com"
+          username: "root"
+          private_key: |
+          -----BEGIN OPENSSH PRIVATE KEY-----
+          ...
+          -----END OPENSSH PRIVATE KEY-----
+          cmd: "/path/to/script"
+          return_result_on_error: true
+        on-complete:
+          - collect_output
+
+      collect_output:
+        action: std.noop
+        publish:
+          ssh_stdout: <% task(execute_command).result.stdout %>
+          exit_code: <% task(execute_command).result.exit_code %>
+        on-complete:
+          - decision_task
+
+      decision_task:
+        action: std.echo
+        input:
+          output: "Checking exit code..."
+        on-success:
+          - log_completion: <% $.exit_code = 0 %>
+          - fail_workflow: <% $.exit_code != 0 %>
+
+      fail_workflow:
+        action: std.fail
+
+    log_completion:
+      action: std.noop
+
+
+Here, the workflow will be in error if /path/to/script returns non-zero.
+However, it will still be possible to read the script output by reading
+the "execute_command" task, with a "openstack task execution result show"
+command.
 
 std.echo
 ''''''''

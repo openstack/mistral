@@ -417,7 +417,8 @@ class SSHAction(actions.Action):
         return ssh_utils.execute_command
 
     def __init__(self, cmd, host, username,
-                 password="", private_key_filename=None, private_key=None):
+                 password="", private_key_filename=None, private_key=None,
+                 return_result_on_error=False):
         super(SSHAction, self).__init__()
 
         self.cmd = cmd
@@ -426,6 +427,7 @@ class SSHAction(actions.Action):
         self.password = password
         self.private_key_filename = private_key_filename
         self.private_key = private_key
+        self.return_result_on_error = return_result_on_error
 
         self.params = {
             'cmd': self.cmd,
@@ -437,7 +439,7 @@ class SSHAction(actions.Action):
         }
 
     def run(self, context):
-        def raise_exc(parent_exc=None):
+        def raise_exc(parent_exc=None, result=None):
             message = ("Failed to execute ssh cmd "
                        "'%s' on %s" % (self.cmd, self.host))
             # We suppress the actual parent error messages in favor of
@@ -445,6 +447,9 @@ class SSHAction(actions.Action):
             if parent_exc:
                 # The full error message needs to be logged regardless
                 LOG.exception(message + " Exception: %s", str(parent_exc))
+            # New behavior: return result even on error if flag is set
+            if self.return_result_on_error and result is not None:
+                return result
             raise exc.ActionException(message)
 
         try:
@@ -456,13 +461,29 @@ class SSHAction(actions.Action):
             for host_name in self.host:
                 self.params['host'] = host_name
 
-                status_code, result = self._execute_cmd_method(**self.params)
+                if self.return_result_on_error:
+                    # Execute command - always get the result data and stderr
+                    status_code, stdout, stderr = self._execute_cmd_method(
+                        raise_when_error=False, get_stderr=True, **self.params)
 
-                if status_code > 0:
-                    return raise_exc()
-                else:
+                    # Always build consistent result structure
+                    result = {
+                        'stdout': stdout,
+                        'stderr': stderr,
+                        'exit_code': status_code
+                    }
+
                     results.append(result)
 
+                else:
+                    status_code, result = self._execute_cmd_method(
+                        **self.params)
+
+                    if status_code > 0:
+                        return raise_exc()
+                    results.append(result)
+
+            # return result(s) as a dict if host was a dict
             if len(results) > 1:
                 return results
 
