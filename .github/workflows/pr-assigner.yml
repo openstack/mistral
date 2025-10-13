@@ -28,4 +28,4 @@ jobs:
 
       - uses: netcracker/qubership-workflow-hub/actions/pr-assigner@0f2be042d7c833c6bf60df85732609b7991fb821 #2.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
