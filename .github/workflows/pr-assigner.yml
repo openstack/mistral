@@ -1,0 +1,31 @@
+name: PR Auto-Assignment
+run-name: "Assigning reviewers for PR #${{ github.event.pull_request.number }}"
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  pr-auto-assign:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if PR is from a fork
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.event.pull_request.base.repo.full_name }}" ]; then
+            echo "⚠️ Pull request is from a fork — skipping assignee assignment (no write permissions)."
+            exit 0
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: netcracker/qubership-workflow-hub/actions/pr-assigner@0f2be042d7c833c6bf60df85732609b7991fb821 #2.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
