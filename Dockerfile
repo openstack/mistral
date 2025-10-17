@@ -11,7 +11,7 @@ RUN BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
     COMMIT_DATE=$(date) && \
     echo "{ \"git\": { \"branch\": \"$BRANCH\", \"id\": \"$ID\", \"time\": \"$COMMIT_DATE\" }}" > /repo/version.json
 
-FROM python:3.10.17-alpine3.22
+FROM python:3.10.19-alpine3.22
 
 LABEL "maintainer"="Vadim Zelenevskii wortellen@gmail.com"
 
@@ -104,7 +104,7 @@ COPY requirements.txt requirements.txt
 COPY nc_requirements.txt nc_requirements.txt
 
 # hadolint ignore=DL3013
-RUN pip install --upgrade pip==23.3 wheel && \
+RUN pip install --upgrade pip==25.2 wheel && \
     pip install -r requirements.txt && \
     pip install -r nc_requirements.txt
 
