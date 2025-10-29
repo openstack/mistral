@@ -1,4 +1,4 @@
-FROM alpine:3.10 AS builder
+FROM alpine:3.22 AS gitmeta
 
 WORKDIR /repo
 
@@ -10,6 +10,33 @@ RUN BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
     ID=$(git rev-parse HEAD) && \
     COMMIT_DATE=$(date) && \
     echo "{ \"git\": { \"branch\": \"$BRANCH\", \"id\": \"$ID\", \"time\": \"$COMMIT_DATE\" }}" > /repo/version.json
+
+FROM python:3.10.19-alpine3.22 AS wheelhouse
+
+RUN python --version && pip --version
+
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.22/main/' > /etc/apk/repositories && \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.22/community/' >> /etc/apk/repositories
+
+RUN apk add --no-cache \
+    alpine-sdk \
+    libffi-dev \
+    libpq-dev \
+    libxml2-dev \
+    libxslt-dev \
+    yaml-dev \
+    gcc \
+    make \
+    musl-dev \
+    libuv-dev \
+    librdkafka-dev
+
+WORKDIR /wheels
+COPY requirements.txt nc_requirements.txt /tmp/
+RUN python --version && pip --version && \
+    pip install --no-cache-dir --upgrade pip==23.3 wheel && \
+    pip wheel --no-cache-dir -r /tmp/requirements.txt    -w /wheels && \
+    pip wheel --no-cache-dir -r /tmp/nc_requirements.txt -w /wheels
 
 FROM python:3.10.19-alpine3.22
 
@@ -62,56 +89,33 @@ ENV MISTRAL_HOME=/opt/mistral \
     PGSSLKEY="/opt/mistral/mount_configs/tls/tls.key" \
     PGSSLROOTCERT="/opt/mistral/mount_configs/tls/ca.crt"
 
-RUN python --version && pip --version
-
 RUN mkdir -p "${CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}/custom"
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.20/main/' > /etc/apk/repositories && \
-    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.20/community/' >> /etc/apk/repositories
-
-# hadolint ignore=DL3008, DL3009, DL3018
-RUN apk add --no-cache \
-    alpine-sdk \
-    libffi-dev \
-    libpq-dev \
-    libxml2-dev \
-    libxslt-dev \
-    yaml-dev \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.20/community/' >> /etc/apk/repositories && \
+    apk add --no-cache \
     gettext \
     procps \
-    #       crudini \
     curl \
     git \
-    gcc \
-    make \
-    musl-dev \
     libuv \
-    libuv-dev \
     librdkafka \
-    librdkafka-dev \
     bash \
     postgresql-client
 
-RUN apk update --no-cache
-
 WORKDIR $CONFIGS_HOME
-
-COPY --from=builder /repo/version.json /opt/mistral/version.json
-
-COPY requirements.txt requirements.txt
-COPY nc_requirements.txt nc_requirements.txt
-
-# hadolint ignore=DL3013
-RUN pip install --upgrade pip==25.2 wheel && \
-    pip install -r requirements.txt && \
-    pip install -r nc_requirements.txt
-
 COPY . $MISTRAL_HOME
 
-# hadolint ignore=SC2086, DL3013
-RUN pip install --no-dependencies --no-cache-dir -e $MISTRAL_HOME && \
+COPY --from=gitmeta /repo/version.json /opt/mistral/version.json
+
+COPY requirements.txt nc_requirements.txt ./
+COPY --from=wheelhouse /wheels /wheels
+RUN pip install --no-cache-dir --upgrade pip==23.3 wheel && \
+    pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
+    pip install --no-cache-dir --no-index --find-links=/wheels -r nc_requirements.txt && \
+    pip install --no-dependencies --no-cache-dir -e $MISTRAL_HOME && \
     cp -r $MISTRAL_HOME/config/* $CONFIGS_HOME && \
     chmod -R 777 $CONFIGS_HOME && chmod 777 $CONFIGS_HOME
 
