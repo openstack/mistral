@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The `std.ssh` action has a new `return_result_on_error` parameter. When it
+    is set, the std.ssh action also returns with SUCCESS state when the remote
+    command returns non-zero. Users of the std.ssh action should then use the
+    return value structure to decide if the workflow should fail.
