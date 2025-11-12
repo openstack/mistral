@@ -25,9 +25,9 @@ WHERE datname = '$DB_NAME'
 ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = true;
 EOF
 then
-  echo "Closed active connections to $DB_NAME successfully."
+  echo "Closed existing connections to $DB_NAME."
 else
-  echo "Error closing active connections to $DB_NAME."
+  echo "Error closing existing connections to $DB_NAME."
   exit 1
 fi
 
