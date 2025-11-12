@@ -14,6 +14,25 @@ DB_PORT=${PG_PORT:-5432}
 
 export PGPASSWORD="${DB_PASSWORD}"
 
+if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -d postgres <<EOF
+ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = false;
+
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = '$DB_NAME'
+  AND pid <> pg_backend_pid();
+
+ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = true;
+EOF
+then
+  echo "Closed active connections to $DB_NAME successfully."
+else
+  echo "Error closing active connections to $DB_NAME."
+  exit 1
+fi
+
+
+
 if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"; then
   echo "Database $DB_NAME successfully deleted."
 else
