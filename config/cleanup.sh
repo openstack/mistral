@@ -22,7 +22,6 @@ FROM pg_stat_activity
 WHERE datname = '$DB_NAME'
   AND pid <> pg_backend_pid();
 
-ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = true;
 EOF
 then
   echo "Closed existing connections to $DB_NAME."
