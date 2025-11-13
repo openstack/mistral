@@ -87,7 +87,8 @@ ENV MISTRAL_HOME=/opt/mistral \
     PGSSLMODE="prefer" \
     PGSSLCERT="/opt/mistral/mount_configs/tls/tls.crt" \
     PGSSLKEY="/opt/mistral/mount_configs/tls/tls.key" \
-    PGSSLROOTCERT="/opt/mistral/mount_configs/tls/ca.crt"
+    PGSSLROOTCERT="/opt/mistral/mount_configs/tls/ca.crt" \
+    PBR_VERSION="19.0.0"
 
 RUN mkdir -p "${CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}" && \
@@ -112,7 +113,7 @@ COPY --from=gitmeta /repo/version.json /opt/mistral/version.json
 
 COPY requirements.txt nc_requirements.txt ./
 COPY --from=wheelhouse /wheels /wheels
-RUN pip install --no-cache-dir --upgrade pip==23.3 wheel && \
+RUN pip install --no-cache-dir --upgrade pip==25.3 wheel && \
     pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
     pip install --no-cache-dir --no-index --find-links=/wheels -r nc_requirements.txt && \
     pip install --no-dependencies --no-cache-dir -e $MISTRAL_HOME && \

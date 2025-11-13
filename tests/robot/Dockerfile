@@ -39,6 +39,7 @@ COPY . ${ROBOT_HOME}
 RUN set -x && apk upgrade --no-cache --available
 
 RUN set -x \
+    && pip3 install --upgrade pip==25.3 wheel \
     && pip3 install -r ${ROBOT_HOME}/requirements.txt \
     && rm -rf /var/cache/apk/*
 
