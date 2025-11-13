@@ -2355,9 +2355,16 @@ class KubernetesHelper:
         return len(exists) != 0
 
     def should_cleanup(self):
-        return self._spec.get('mistralCommonParams', {}).get('cleanup', False)
+        spec = self._spec or {}
+        cleanup_flag = bool((spec.get('mistralCommonParams') or {})
+                            .get('cleanup', False))
+        if not cleanup_flag:
+            return False
+        dr_mode = str(((spec.get('disasterRecovery') or {})
+                       .get('mode') or '')).strip().lower()
+        return dr_mode != 'standby'
 
-    def integration_tests_enabled(self):
+def integration_tests_enabled(self):
         enabled = self._spec['integrationTests']['enabled']
         if type(enabled) is bool:
             return enabled
