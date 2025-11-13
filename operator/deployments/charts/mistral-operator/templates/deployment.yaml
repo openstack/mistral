@@ -196,7 +196,7 @@ spec:
         {{- end }}
         {{- if eq (include "bluegreenAgent.enabled" .) "true" }}
         - name: bluegreen-agent
-          image: {{ .Values.bluegreenAgent.image }}
+          image: {{ template "mistral.blueGreenAgentImage" . }}
           {{ if .Values.bluegreenAgent }}
           imagePullPolicy: {{ default "IfNotPresent" .Values.bluegreenAgent.imagePullPolicy }}
           securityContext:
