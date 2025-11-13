@@ -21,6 +21,7 @@ mistral:
   dockerImage: "ghcr.io/netcracker/qubership-mistral:main"
   cloudIntegrationEnabled: true
   liteEnabled: false
+  imagePullPolicy: IfNotPresent
   ingress:
     enabled: False
     host: ""

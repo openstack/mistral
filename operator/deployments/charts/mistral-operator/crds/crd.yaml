@@ -49,6 +49,8 @@ spec:
                       type: boolean
                     cloudCoreIntegrationEnabled:
                       type: boolean
+                    imagePullPolicy:
+                      type: string
                     ingress:
                       properties:
                         enabled:

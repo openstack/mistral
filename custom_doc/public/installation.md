@@ -268,36 +268,37 @@ The different parameteres are described below.
 
 The general parameters used for the configurations are specified in the following table.
 
-|Parameter   |Type  |Mandatory| Default value                 |Description                                                        |
-|------------|------|---------|-------------------------------|-------------------------------------------------------------------|
-|mistral.dockerImage     |string|yes      |                               |This parameter specifies the Mistral image.|
-|mistralCommonParams.debugLog|bool|no| 'False'                       |This parameter specifies whether the debug log is enabled.|
-|mistralCommonParams.postgres.host|string|yes| 'pg-patroni.postgres-service' |This parameter specifies the Postrges host.|
-|mistralCommonParams.postgres.port|int|yes| 5432                          |This parameter specifies the Postgres port.|
-|mistralCommonParams.postgres.dbName|string|yes| 'mistral'                     |This parameter specifies the Postgres database name.|
-|mistralCommonParams.postgres.idleTimeout|string|yes| '30s'                         | This parameter specifies the timeout for queries in state idle in transaction session. Use '0' as value to disable the timeout. |
-|secrets.pgAdminPassword|string|yes| ''                            |This parameter specifies the Postgres admin password.|
-|secrets.pgAdminUser|string|yes| 'postgres'                    |This parameter specifies the Postgres admin user.|
-|secrets.pgPassword|string|yes| 'mistral_password'            |This parameter specifies the Postgres password.|
-|secrets.pgUser|string|yes| 'mistral_user'                |This parameter specifies the Postgres user.|
-|mistralCommonParams.rabbit.host|string|yes| 'rabbitmq.rabbitmq'           |This parameter specifies the RabbitMQ host.|
-|mistralCommonParams.rabbit.port|int|yes| 5672                          |This parameter specifies the RabbitMQ port.|
-|mistralCommonParams.rabbit.vhost|string|yes| '/'                           |This parameter specifies the RabbitMQ virtual host.|
-|mistralCommonParams.queueNamePrefix|string|no| 'mistral'                     |This parameter specifies the RabbitMQ queue name prefix.|
-|secrets.rabbitAdminPassword|string|yes| 'admin'                       |This parameter specifies the RabbitMQ admin password.|
-|secrets.rabbitAdminUser|string|yes| 'admin'                       |This parameter specifies the RabbitMQ admin user.|
-|secrets.rabbitPassword|string|yes| 'mistral_password'            |This parameter specifies the RabbitMQ password.|
-|secrets.rabbitUser|string|yes| 'mistral_user'                |This parameter specifies the RabbitMQ user.|
-|mistralCommonParams.securityProfile|string|no| prod                          |This parameter specifies the security profile.|
-|mistralCommonParams.cleanup|bool|no| ''                            |This Parameter Allows deploy Mistral with cleaning up DB, Kafka topic and Rabbit|
-|mistralCustomParams|string|no| ''                            |This parameter specifies the Mistral custom parameters config map (**custom-mistral.conf**).|
-|mistralCustomApiParams|string|no| ''                            |This parameter specifies the Mistral API custom parameters config map (**custom-mistral.conf**).|
-|mistralCustomEngineParams |string|no| ''                            |This parameter specifies the Mistral Engine custom parameters config map (**custom-mistral.conf**).|
-|mistralCustomExecutorParams |string|no| ''                            |This parameter specifies the Mistral Executor custom parameters config map (**custom-mistral.conf**).|
-|mistralCustomNotifierParams |string|no| ''                            |This parameter specifies the Mistral Notifier custom parameters config map (**custom-mistral.conf**).|
-|mistral.disruptionBudget.enabled       |bool   |no       | false                         |Enable PodDisruptionBudget for Mistral pods.                             |
-|mistral.disruptionBudget.maxUnavailable|int    |no       | 0                             |The maximal number of pods that can be unavailable after the eviction.    |
-|mistral.disruptionBudget.minAvailable  |int    |no       | 0                             |The minimal number of pods that must be available after the eviction.     |
+|Parameter   |Type  | Mandatory | Default value                 | Description                                                                                                                     |
+|------------|------|-----------|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+|mistral.dockerImage     |string| yes       |                               | This parameter specifies the Mistral image.                                                                                     |
+|mistral.imagePullPolicy     |string| no        |                               | This parameter specifies the Mistral imagePullPolicy.                                                                           |
+|mistralCommonParams.debugLog|bool| no        | 'False'                       | This parameter specifies whether the debug log is enabled.                                                                      |
+|mistralCommonParams.postgres.host|string| yes       | 'pg-patroni.postgres-service' | This parameter specifies the Postrges host.                                                                                     |
+|mistralCommonParams.postgres.port|int| yes       | 5432                          | This parameter specifies the Postgres port.                                                                                     |
+|mistralCommonParams.postgres.dbName|string| yes       | 'mistral'                     | This parameter specifies the Postgres database name.                                                                            |
+|mistralCommonParams.postgres.idleTimeout|string| yes       | '30s'                         | This parameter specifies the timeout for queries in state idle in transaction session. Use '0' as value to disable the timeout. |
+|secrets.pgAdminPassword|string| yes       | ''                            | This parameter specifies the Postgres admin password.                                                                           |
+|secrets.pgAdminUser|string| yes       | 'postgres'                    | This parameter specifies the Postgres admin user.                                                                               |
+|secrets.pgPassword|string| yes       | 'mistral_password'            | This parameter specifies the Postgres password.                                                                                 |
+|secrets.pgUser|string| yes       | 'mistral_user'                | This parameter specifies the Postgres user.                                                                                     |
+|mistralCommonParams.rabbit.host|string| yes       | 'rabbitmq.rabbitmq'           | This parameter specifies the RabbitMQ host.                                                                                     |
+|mistralCommonParams.rabbit.port|int| yes       | 5672                          | This parameter specifies the RabbitMQ port.                                                                                     |
+|mistralCommonParams.rabbit.vhost|string| yes       | '/'                           | This parameter specifies the RabbitMQ virtual host.                                                                             |
+|mistralCommonParams.queueNamePrefix|string| no        | 'mistral'                     | This parameter specifies the RabbitMQ queue name prefix.                                                                        |
+|secrets.rabbitAdminPassword|string| yes       | 'admin'                       | This parameter specifies the RabbitMQ admin password.                                                                           |
+|secrets.rabbitAdminUser|string| yes       | 'admin'                       | This parameter specifies the RabbitMQ admin user.                                                                               |
+|secrets.rabbitPassword|string| yes       | 'mistral_password'            | This parameter specifies the RabbitMQ password.                                                                                 |
+|secrets.rabbitUser|string| yes       | 'mistral_user'                | This parameter specifies the RabbitMQ user.                                                                                     |
+|mistralCommonParams.securityProfile|string| no        | prod                          | This parameter specifies the security profile.                                                                                  |
+|mistralCommonParams.cleanup|bool| no        | ''                            | This Parameter Allows deploy Mistral with cleaning up DB, Kafka topic and Rabbit                                                |
+|mistralCustomParams|string| no        | ''                            | This parameter specifies the Mistral custom parameters config map (**custom-mistral.conf**).                                    |
+|mistralCustomApiParams|string| no        | ''                            | This parameter specifies the Mistral API custom parameters config map (**custom-mistral.conf**).                                |
+|mistralCustomEngineParams |string| no        | ''                            | This parameter specifies the Mistral Engine custom parameters config map (**custom-mistral.conf**).                             |
+|mistralCustomExecutorParams |string| no        | ''                            | This parameter specifies the Mistral Executor custom parameters config map (**custom-mistral.conf**).                           |
+|mistralCustomNotifierParams |string| no        | ''                            | This parameter specifies the Mistral Notifier custom parameters config map (**custom-mistral.conf**).                           |
+|mistral.disruptionBudget.enabled       |bool   | no        | false                         | Enable PodDisruptionBudget for Mistral pods.                                                                                    |
+|mistral.disruptionBudget.maxUnavailable|int    | no        | 0                             | The maximal number of pods that can be unavailable after the eviction.                                                          |
+|mistral.disruptionBudget.minAvailable  |int    | no        | 0                             | The minimal number of pods that must be available after the eviction.                                                           |
 
 **Note**: If you want to deploy Mistral's manifest and use a different Mistral's docker image, use `mistralImage` instead of `mistral.dockerImage`.
 

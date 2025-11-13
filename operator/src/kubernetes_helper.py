@@ -596,7 +596,7 @@ class KubernetesHelper:
             }, kubernetes_prefix=server), name=name, namespace=self._workspace)
         mistral_image = self._spec['mistral']['dockerImage']
         image_pull_policy = 'Always' if 'latest' in mistral_image.lower() \
-            else 'IfNotPresent'
+            else self._spec['mistral']['imagePullPolicy']
 
         container_resources = \
             V1ResourceRequirements(

@@ -17,6 +17,7 @@ spec:
   mistral:
     dockerImage: {{ template "mistral.dockerImage" . }}
     liteEnabled: {{ default "false" .Values.mistral.liteEnabled }}
+    imagePullPolicy: {{ default "IfNotPresent" .Values.mistral.imagePullPolicy }}
     ingress:
       enabled: {{ default "false" .Values.mistral.ingress.enabled }}
       host: {{ .Values.mistral.ingress.host }}
