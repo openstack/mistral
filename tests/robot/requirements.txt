@@ -10,3 +10,4 @@ tabulate
 google-auth<2.7.0
 setuptools==80.9.0
 eventlet>=0.40.3
+urllib3>=2.5.0
