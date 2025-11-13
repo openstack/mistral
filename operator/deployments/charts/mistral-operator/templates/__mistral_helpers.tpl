@@ -10,15 +10,17 @@ Find mistral operator image in various places
 */}}
 {{- define "mistral.operatorImage" -}}
   {{- if .Values.deployDescriptor -}}
-    {{- if hasKey .Values.deployDescriptor "bluegreen-agent" -}}
-      {{- printf "%s" .Values.deployDescriptor "bluegreen-agent" "image" -}}
+    {{- if hasKey .Values.deployDescriptor "mistral-operator" -}}
+      {{- printf "%s" .Values.deployDescriptor "mistral-operator" "image" -}}
+    {{- else if hasKey .Values.deployDescriptor "mistral-operator-image" -}}
+      {{- printf "%s" .Values.deployDescriptor "mistral-operator-image" "image" -}}
     {{- else -}}
-      {{- printf "%s" .Values.deployDescriptor.bluegreenagento.image -}}
+      {{- printf "%s" .Values.deployDescriptor.mistralOperator.image -}}
     {{- end -}}
   {{- else if .Values.mistralOperatorImage -}}
     {{- printf "%s" .Values.mistralOperatorImage -}}
   {{- else -}}
-    {{- printf "%s" .Values.bluegreenAgent.image -}}
+    {{- printf "%s" .Values.operatorImage -}}
   {{- end -}}
 {{- end -}}
 
@@ -27,17 +29,15 @@ Find mistral bluegreenagent image in various places
 */}}
 {{- define "mistral.blueGreenAgentImage" -}}
   {{- if .Values.deployDescriptor -}}
-    {{- if hasKey .Values.deployDescriptor "mistral-operator" -}}
-      {{- printf "%s" .Values.deployDescriptor "mistral-operator" "image" -}}
-    {{- else if hasKey .Values.deployDescriptor "mistral-operator-image" -}}
-      {{- printf "%s" .Values.deployDescriptor "mistral-operator-image" "image" -}}
+    {{- if hasKey .Values.deployDescriptor "bluegreen-agent" -}}
+      {{- printf "%s" .Values.deployDescriptor "bluegreen-agent" "image" -}}
     {{- else -}}
-      {{- printf "%s" .Values.deployDescriptor.mistralOperator.image -}}
+      {{- printf "%s" .Values.deployDescriptor.bluegreenagento.image -}}
     {{- end -}}
   {{- else if .Values.bluegreenAgento -}}
     {{- printf "%s" .Values.bluegreenAgento -}}
   {{- else -}}
-    {{- printf "%s" .Values.operatorImage -}}
+    {{- printf "%s" .Values.bluegreenAgent.image -}}
   {{- end -}}
 {{- end -}}
 
