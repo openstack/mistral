@@ -152,7 +152,7 @@ jobs:
         #continue-on-error: true
         uses: netcracker/chart-releaser-action@main
         with:
-          charts_dir: deployments/charts
+          charts_dir: operator/deployments/charts
           release_name_template: "{{ .Version }}"
           skip_existing: true
           skip_upload: true
