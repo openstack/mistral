@@ -9,7 +9,7 @@
     {
       "name": "qubership-mistral-operator-transfer",
       "file": "operator/docker-transfer/Dockerfile",
-      "context": "operator"
+      "context": "."
     },
     {
       "name": "qubership-mistral-operator-bluegreen-agent",
