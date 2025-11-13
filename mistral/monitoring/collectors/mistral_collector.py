@@ -19,12 +19,13 @@ from mistral.db.v2 import api as db_api
 from mistral.monitoring import base
 from mistral.workflow import states
 
-from opensource_version import MISTRAL_VERSION
+from pbr.version import VersionInfo
 from oslo_config import cfg
 from oslo_log import log as logging
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
+MISTRAL_VERSION = VersionInfo('mistral').release_string()
 
 TASK_STATES = [
     states.IDLE,
