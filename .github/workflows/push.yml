@@ -34,7 +34,7 @@ jobs:
             context: operator/bluegreen-agent
           - name: qubership-mistral-operator-transfer
             file: operator/docker-transfer/Dockerfile
-            context: ""
+            context: operator
           - name: qubership-mistral
             file: Dockerfile
             context: .
