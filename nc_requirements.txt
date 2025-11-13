@@ -6,7 +6,7 @@ kubernetes
 psycopg2
 py_mini_racer
 prometheus_client
-setuptools==78.1.1
+setuptools==80.9.0
 urllib3==2.5.0
 # tls issue
 oslo.service==3.4.0
