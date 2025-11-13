@@ -2364,7 +2364,7 @@ class KubernetesHelper:
                        .get('mode') or '')).strip().lower()
         return dr_mode != 'standby'
 
-def integration_tests_enabled(self):
+    def integration_tests_enabled(self):
         enabled = self._spec['integrationTests']['enabled']
         if type(enabled) is bool:
             return enabled
