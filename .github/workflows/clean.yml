@@ -10,6 +10,15 @@ jobs:
       fail-fast: false
       matrix:
         component:
+          - name: qubership-mistral-operator
+            file: operator/Dockerfile
+            context: operator
+          - name: qubership-mistral-operator-bluegreen-agent
+            file: operator/bluegreen-agent/Dockerfile
+            context: operator/bluegreen-agent
+          - name: qubership-mistral-operator-transfer
+            file: operator/docker-transfer/Dockerfile
+            context: ""
           - name: qubership-mistral
             file: Dockerfile
             context: .

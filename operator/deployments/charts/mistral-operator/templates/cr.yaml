@@ -1,0 +1,412 @@
+apiVersion: qubership.org/v2
+kind: MistralService
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "argocd.argoproj.io/hook": "PostSync"
+spec:
+  operatorId: {{ template "mistral.operatorId" . }}
+{{ if .Values.labels }}
+  labels:
+{{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{ end }}
+  mistral:
+    dockerImage: {{ template "mistral.dockerImage" . }}
+    liteEnabled: {{ default "false" .Values.mistral.liteEnabled }}
+    ingress:
+      enabled: {{ default "false" .Values.mistral.ingress.enabled }}
+      host: {{ .Values.mistral.ingress.host }}
+    cloudCoreIntegrationEnabled: {{ default "false" .Values.CLOUD_CORE_INTEGRATION_ENABLED }}
+    lastUpdate: {{ now }}
+    tls:
+      enabled: {{ default "false" .Values.mistral.tls.enabled }}
+      services:
+        api:
+          enabled: {{ default "false" .Values.mistral.tls.services.api.enabled }}
+        monitoring:
+          enabled: {{ default "false" .Values.mistral.tls.services.monitoring.enabled }}
+        postgres:
+          sslmode: {{ default "prefer" .Values.mistral.tls.services.postgres.sslmode }}
+        rabbitmq:
+          enabled: {{ default "false" .Values.mistral.tls.services.rabbitmq.enabled }}
+        kafka:
+          enabled: {{ default "false" .Values.mistral.tls.services.kafka.enabled }}
+  {{- if (eq (include "mistral.enableDisasterRecovery" .) "true") }}
+  disasterRecovery:
+    mode: {{ .Values.disasterRecovery.mode }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.disasterRecovery.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.disasterRecovery.priorityClassName }}
+    priorityClassName: {{ .Values.disasterRecovery.priorityClassName }}
+    {{- end }}
+  {{- end }}
+  deploymentSessionId: {{ .Values.DEPLOYMENT_SESSION_ID }}
+  kubernetesLabels:
+    mistralOperator:
+      name: {{ default "mistral-operator" .Values.kubernetesLabels.mistralOperator.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralOperator.component }}
+      {{ if .Values.kubernetesLabels.mistralOperator.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralOperator.instance }}
+      {{ else }}
+      instance: mistral-operator-{{ .Release.Namespace }}
+      {{ end }}
+      version: {{ include "mistralOperator.version" . }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralOperator.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralOperator.managedBy }}
+    mistralApi:
+      name: {{ default "mistral-api" .Values.kubernetesLabels.mistralApi.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralApi.component }}
+      {{ if .Values.kubernetesLabels.mistralApi.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralApi.instance }}
+      {{ else }}
+      instance: mistral-api-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralApi.version }}
+      version: {{ .Values.kubernetesLabels.mistralApi.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralApi.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralApi.managedBy }}
+    mistralEngine:
+      name: {{ default "mistral-engine" .Values.kubernetesLabels.mistralEngine.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralEngine.component }}
+      {{ if .Values.kubernetesLabels.mistralEngine.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralEngine.instance }}
+      {{ else }}
+      instance: mistral-engine-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralEngine.version }}
+      version: {{ .Values.kubernetesLabels.mistralEngine.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralEngine.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralEngine.managedBy }}
+    mistralExecutor:
+      name: {{ default "mistral-executor" .Values.kubernetesLabels.mistralExecutor.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralExecutor.component }}
+      {{ if .Values.kubernetesLabels.mistralExecutor.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralExecutor.instance }}
+      {{ else }}
+      instance: mistral-executor-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralExecutor.version }}
+      version: {{ .Values.kubernetesLabels.mistralExecutor.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralExecutor.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralExecutor.managedBy }}
+    mistralNotifier:
+      name: {{ default "mistral-notifier" .Values.kubernetesLabels.mistralNotifier.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralNotifier.component }}
+      {{ if .Values.kubernetesLabels.mistralNotifier.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralNotifier.instance }}
+      {{ else }}
+      instance: mistral-notifier-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralNotifier.version }}
+      version: {{ .Values.kubernetesLabels.mistralNotifier.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralNotifier.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralNotifier.managedBy }}
+    mistralMonitoring:
+      name: {{ default "mistral-monitoring" .Values.kubernetesLabels.mistralMonitoring.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralMonitoring.component }}
+      {{ if .Values.kubernetesLabels.mistralMonitoring.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralMonitoring.instance }}
+      {{ else }}
+      instance: mistral-monitoring-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralMonitoring.version }}
+      version: {{ .Values.kubernetesLabels.mistralMonitoring.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralMonitoring.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralMonitoring.managedBy }}
+    mistralUpdateDbJob:
+      name: {{ default "mistral-update-db-job" .Values.kubernetesLabels.mistralUpdateDbJob.name }}
+      component: {{ default "job" .Values.kubernetesLabels.mistralUpdateDbJob.component }}
+      {{ if .Values.kubernetesLabels.mistralUpdateDbJob.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralUpdateDbJob.instance }}
+      {{ else }}
+      instance: mistral-update-db-job-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralUpdateDbJob.version }}
+      version: {{ .Values.kubernetesLabels.mistralUpdateDbJob.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralUpdateDbJob.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralUpdateDbJob.managedBy }}
+    mistralDrJob:
+      name: {{ default "mistral-dr-job" .Values.kubernetesLabels.mistralDrJob.name }}
+      component: {{ default "job" .Values.kubernetesLabels.mistralDrJob.component }}
+      {{ if .Values.kubernetesLabels.mistralDrJob.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralDrJob.instance }}
+      {{ else }}
+      instance: mistral-dr-job-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralDrJob.version }}
+      version: {{ .Values.kubernetesLabels.mistralDrJob.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralDrJob.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralDrJob.managedBy }}
+    mistralTests:
+      name: {{ default "mistral-tests" .Values.kubernetesLabels.mistralTests.name }}
+      component: {{ default "backend" .Values.kubernetesLabels.mistralTests.component }}
+      {{ if .Values.kubernetesLabels.mistralTests.instance }}
+      instance: {{ .Values.kubernetesLabels.mistralTests.instance }}
+      {{ else }}
+      instance: mistral-tests-{{ .Release.Namespace }}
+      {{ end }}
+      {{ if .Values.kubernetesLabels.mistralTests.version }}
+      version: {{ .Values.kubernetesLabels.mistralTests.version }}
+      {{ else }}
+      version: {{ .Chart.AppVersion }}
+      {{ end }}
+      partOf: {{ default "mistral" .Values.kubernetesLabels.mistralTests.partOf }}
+      managedBy: {{ default "Helm" .Values.kubernetesLabels.mistralTests.managedBy }}
+  integrationTests:
+    enabled: {{ .Values.integrationTests.enabled }}
+    waitTestResultOnJob: {{ .Values.integrationTests.waitTestResultOnJob }}
+    waitTestResultTimeout: {{ .Values.integrationTests.waitTestResultTimeout }}
+    runTestsOnly: {{ .Values.integrationTests.runTestsOnly }}
+    runBenchmarks: {{ .Values.integrationTests.runBenchmarks }}
+    dockerImage: {{ template "mistral.testsImage" . }}
+    {{ if .Values.integrationTests.fsGroup }}
+    fsGroup: {{ .Values.integrationTests.fsGroup }}
+    {{ end }}
+    {{ if .Values.integrationTests.runAsUser }}
+    runAsUser: {{ .Values.integrationTests.runAsUser }}
+    {{ end }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.integrationTests.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    mistralReadyTimeout: {{ .Values.integrationTests.mistralReadyTimeout }}
+    {{ if .Values.integrationTests.prometheusUrl }}
+    prometheusUrl: {{ .Values.integrationTests.prometheusUrl }}
+    {{ end }}
+    {{- if .Values.integrationTests.priorityClassName }}
+    priorityClassName: {{ .Values.integrationTests.priorityClassName }}
+    {{- end }}
+  mistralCommonParams:
+    secret_change: {{ .Values.mistralCommonParams.secret_change }}
+    auth:
+      enable: {{ .Values.mistralCommonParams.auth.enable }}
+      type: {{ .Values.mistralCommonParams.auth.type }}
+      cloudCoreUsername: {{ .Values.mistralCommonParams.auth.cloudCoreUsername }}
+    dbaas:
+      agentUrl: {{ .Values.mistralCommonParams.dbaas.agentUrl }}
+      aggregatorUrl: {{ .Values.mistralCommonParams.dbaas.aggregatorUrl }}
+    debugLog: {{ .Values.mistralCommonParams.debugLog }}
+    externalMistralUrl: {{ .Values.mistralCommonParams.externalMistralUrl }}
+    guaranteedNotifierEnabled: {{ .Values.mistralCommonParams.guaranteedNotifierEnabled }}
+    idpServer: {{ .Values.mistralCommonParams.idpServer }}
+    idpExternalServer: {{ .Values.mistralCommonParams.idpExternalServer }}
+    idpUserPrecreated: {{ .Values.mistralCommonParams.idpUserPrecreated }}
+    multitenancyEnabled: {{ .Values.mistralCommonParams.multitenancyEnabled }}
+    osMistralUrl: {{ .Values.mistralCommonParams.osMistralUrl }}
+    postgres:
+      dbName: {{ (include "mistral.pgDbName" .) }}
+      host: {{ (include "mistral.pgHost" .) }}
+      port: {{ (include "mistral.pgPort" .) }}
+      idleTimeout: {{ (include "mistral.idleTimeout" .) }}
+    queueNamePrefix: {{ .Values.mistralCommonParams.queueNamePrefix }}
+    rabbit:
+      host: {{ (include "mistral.rabbitHost" .) }}
+      port: {{ (include "mistral.rabbitPort" .) }}
+      vhost: {{ (include "mistral.rabbitmqVHost" .) }}
+    kafkaNotifications:
+      enabled: {{ .Values.mistralCommonParams.kafkaNotifications.enabled }}
+      host: {{ (include "mistral.kafkaHost" .) }}
+      topic: {{ (include "mistral.kafkaTopic" .) }}
+      topicPartitionsCount: {{ .Values.mistralCommonParams.kafkaNotifications.topicPartitionsCount }}
+      consumerGroupId: {{ .Values.mistralCommonParams.kafkaNotifications.consumerGroupId }}
+      securityEnabled: {{ .Values.mistralCommonParams.kafkaNotifications.securityEnabled }}
+    rpcImplementation: {{ .Values.mistralCommonParams.rpcImplementation }}
+    securityProfile: {{ .Values.mistralCommonParams.securityProfile }}
+    usePypy: {{ .Values.mistralCommonParams.usePypy }}
+    cleanup: {{ default "false" (include "mistral.cleanup" . | trim) }}
+  mistralApi:
+    replicas: {{ default "1" .Values.mistralApi.replicas }}
+    resources:
+      requests:
+        cpu: {{ default "200m" .Values.mistralApi.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralApi.resources.requests.memory }}
+      limits:
+        cpu: {{ default "200m" .Values.mistralApi.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralApi.resources.limits.memory }}
+    {{ if .Values.mistralApi.affinity }}
+    affinity: {{ .Values.mistralApi.affinity | toJson }}
+    {{ end }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralApi.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralApi.priorityClassName }}
+    priorityClassName: {{ .Values.mistralApi.priorityClassName }}
+    {{- end }}
+  mistralMonitoring:
+    replicas: {{ default "1" .Values.mistralMonitoring.replicas }}
+    resources:
+      requests:
+        cpu: {{ default "100m" .Values.mistralMonitoring.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralMonitoring.resources.requests.memory }}
+      limits:
+        cpu: {{ default "100m" .Values.mistralMonitoring.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralMonitoring.resources.limits.memory }}
+    {{ if .Values.mistralMonitoring.affinity }}
+    affinity: {{ .Values.mistralMonitoring.affinity | toJson }}
+    {{ end }}
+    recoveryInterval: {{ .Values.mistralMonitoring.recoveryInterval }}
+    hangInterval: {{ .Values.mistralMonitoring.hangInterval }}
+    recoveryEnabled: {{ .Values.mistralMonitoring.recoveryEnabled }}
+    monitoringExecutionDelay: {{ .Values.mistralMonitoring.monitoringExecutionDelay }}
+    monitoringEnabled: {{ .Values.mistralMonitoring.monitoringEnabled }}
+    metricCollectionInterval: {{ .Values.mistralMonitoring.metricCollectionInterval }}
+    prometheusEnabled: {{ .Values.mistralMonitoring.prometheusEnabled }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralMonitoring.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralMonitoring.priorityClassName }}
+    priorityClassName: {{ .Values.mistralMonitoring.priorityClassName }}
+    {{- end }}
+  mistralExecutor:
+    replicas: {{ default "1" .Values.mistralExecutor.replicas }}
+    resources:
+      requests:
+        cpu: {{ default "200m" .Values.mistralExecutor.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralExecutor.resources.requests.memory }}
+      limits:
+        cpu: {{ default "200m" .Values.mistralExecutor.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralExecutor.resources.limits.memory }}
+    {{ if .Values.mistralExecutor.affinity }}
+    affinity: {{ .Values.mistralExecutor.affinity | toJson }}
+    {{ end }}
+    loggingProxyAdminUrl: {{ .Values.mistralExecutor.loggingProxyAdminUrl }}
+    certificateStore: {{ .Values.mistralExecutor.certificateStore }}
+    retrieverPort: {{ .Values.mistralExecutor.retrieverPort }}
+    httpProxy: {{ .Values.mistralExecutor.httpProxy }}
+    httpsProxy: {{ .Values.mistralExecutor.httpsProxy }}
+    noProxy: {{ .Values.mistralExecutor.noProxy }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralExecutor.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralExecutor.priorityClassName }}
+    priorityClassName: {{ .Values.mistralExecutor.priorityClassName }}
+    {{- end }}
+  mistralEngine:
+    replicas: {{ default "1" .Values.mistralEngine.replicas }}
+    resources:
+      requests:
+        cpu: {{ default "200m" .Values.mistralEngine.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralEngine.resources.requests.memory }}
+      limits:
+        cpu: {{ default "200m" .Values.mistralEngine.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralEngine.resources.limits.memory }}
+    {{ if .Values.mistralEngine.affinity }}
+    affinity: {{ .Values.mistralEngine.affinity | toJson }}
+    {{ end }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralEngine.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralEngine.priorityClassName }}
+    priorityClassName: {{ .Values.mistralEngine.priorityClassName }}
+    {{- end }}
+  mistralNotifier:
+    replicas: {{ default "1" .Values.mistralNotifier.replicas }}
+    resources:
+      requests:
+        cpu: {{ default "100m" .Values.mistralNotifier.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralNotifier.resources.requests.memory }}
+      limits:
+        cpu: {{ default "100m" .Values.mistralNotifier.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralNotifier.resources.limits.memory }}
+    {{ if .Values.mistralNotifier.affinity }}
+    affinity: {{ .Values.mistralNotifier.affinity | toJson }}
+    {{ end }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralNotifier.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralNotifier.priorityClassName }}
+    priorityClassName: {{ .Values.mistralNotifier.priorityClassName }}
+    {{- end }}
+  mistralUpdateDbPod:
+    memoryLimit: {{ default "300m" .Values.mistralUpdateDbPod.memoryLimit }}
+    mountConfigsHome: {{ .Values.mistralUpdateDbPod.mountConfigsHome }}
+    args: {{ .Values.mistralUpdateDbPod.args }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralUpdateDbPod.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralUpdateDbPod.priorityClassName }}
+    priorityClassName: {{ .Values.mistralUpdateDbPod.priorityClassName }}
+    {{- end }}
+  {{- if or (eq (include "mistral.cleanup" . | trim) "true") (eq (include "mistral.cleanup" . | trim) "True") }}
+  mistralCleanupDbPod:
+    memoryLimit: {{ default "300m" .Values.mistralCleanupDbPod.memoryLimit }}
+    mountConfigsHome: {{ .Values.mistralCleanupDbPod.mountConfigsHome }}
+    args: {{ .Values.mistralCleanupDbPod.args }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralCleanupDbPod.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralCleanupDbPod.priorityClassName }}
+    priorityClassName: {{ .Values.mistralCleanupDbPod.priorityClassName }}
+    {{- end }}
+  {{- end }}
+  mistralLite:
+    includeLocalRmq: {{default "false" .Values.mistralLite.includeLocalRmq }}
+    resources:
+      requests:
+        cpu: {{ default "300m" .Values.mistralLite.resources.requests.cpu }}
+        memory: {{ default "300Mi" .Values.mistralLite.resources.requests.memory }}
+      limits:
+        cpu: {{ default "300m" .Values.mistralLite.resources.limits.cpu }}
+        memory: {{ default "300Mi" .Values.mistralLite.resources.limits.memory }}
+    rabbitmq:
+      {{ if .Values.mistralLite.rabbitmq.fsGroup }}
+      fsGroup: {{ .Values.mistralLite.rabbitmq.fsGroup }}
+      {{ end }}
+      {{ if .Values.mistralLite.rabbitmq.runAsUser }}
+      runAsUser: {{ .Values.mistralLite.rabbitmq.runAsUser }}
+      {{ end }}
+      dockerImage: {{ default "ghcr.io/netcracker/qubership-rabbitmq:main" .Values.mistralLite.rabbitmq.dockerImage }}
+      resources:
+        cpu: {{ default "300m" .Values.mistralLite.rabbitmq.resources.cpu }}
+        memory: {{ default "300Mi" .Values.mistralLite.rabbitmq.resources.memory }}
+    securityContext:
+      {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
+      {{- with .Values.mistralLite.securityContext }}
+      {{ toYaml . | indent 6 }}
+      {{- end }}
+    {{- if .Values.mistralLite.priorityClassName }}
+    priorityClassName: {{ .Values.mistralLite.priorityClassName }}
+    {{- end }}

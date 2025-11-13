@@ -1,0 +1,260 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mistral-operator
+  labels:
+    name: mistral-operator
+    app.kubernetes.io/name: {{ default "mistral-operator" .Values.kubernetesLabels.mistralOperator.name }}
+    app.kubernetes.io/component: {{ default "operator" .Values.kubernetesLabels.mistralOperator.component }}
+    {{ if .Values.kubernetesLabels.mistralOperator.instance }}
+    app.kubernetes.io/instance: {{ .Values.kubernetesLabels.mistralOperator.instance }}
+    {{ else }}
+    app.kubernetes.io/instance: mistral-operator-{{ .Release.Namespace }}
+    {{ end }}
+    app.kubernetes.io/version: {{ include "mistralOperator.version" . }}
+    app.kubernetes.io/part-of: {{ default "mistral" .Values.kubernetesLabels.mistralOperator.partOf }}
+    app.kubernetes.io/managed-by: {{ default "Helm" .Values.kubernetesLabels.mistralOperator.managedBy }}
+    app.kubernetes.io/technology: {{ default "python" .Values.kubernetesLabels.mistralOperator.technology }}
+    deployment.netcracker.com/session-id: "{{ .Values.DEPLOYMENT_SESSION_ID }}"
+  {{- with .Values.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mistral-operator
+  template:
+    metadata:
+      labels:
+        name: mistral-operator
+        app.kubernetes.io/name: {{ default "mistral-operator" .Values.kubernetesLabels.mistralOperator.name }}
+        app.kubernetes.io/component: {{ default "operator" .Values.kubernetesLabels.mistralOperator.component }}
+        {{ if .Values.kubernetesLabels.mistralOperator.instance }}
+        app.kubernetes.io/instance: {{ .Values.kubernetesLabels.mistralOperator.instance }}
+        {{ else }}
+        app.kubernetes.io/instance: mistral-operator-{{ .Release.Namespace }}
+        {{ end }}
+        app.kubernetes.io/version: {{ include "mistralOperator.version" . }}
+        app.kubernetes.io/part-of: {{ default "mistral" .Values.kubernetesLabels.mistralOperator.partOf }}
+        app.kubernetes.io/managed-by: {{ default "Helm" .Values.kubernetesLabels.mistralOperator.managedBy }}
+        app.kubernetes.io/technology: {{ default "python" .Values.kubernetesLabels.mistralOperator.technology }}
+        deployment.netcracker.com/session-id: "{{ .Values.DEPLOYMENT_SESSION_ID }}"
+{{- with .Values.labels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+    spec:
+      serviceAccountName: mistral-operator
+      volumes:
+        - name: idp-api-certs
+          configMap:
+            name: idp-ca.crt
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{ if .Values.SSL_SECRET }}
+        - name: sslsecret
+          secret:
+            secretName: {{ .Values.SSL_SECRET }}
+        {{ end }}
+        {{- if and (eq (include "mistral.enableTls" .) "true") (include "mistral.tlsSecretName" .) }}
+        - name: mistral-tls-certs
+          secret:
+            secretName: {{ template "mistral.tlsSecretName" . }}
+        {{- end }}
+      {{- if .Values.operator.affinity }}
+      affinity:
+        {{ .Values.operator.affinity | toJson }}
+      {{- end }}
+      securityContext:
+        {{- include "restricted.globalPodSecurityContext" . | nindent 8 }}
+      {{- if .Values.operator.priorityClassName }}
+      priorityClassName: {{ .Values.operator.priorityClassName }}
+      {{- end }}
+
+      containers:
+        - name: mistral-operator
+          image: {{ template "mistral.operatorImage" . }}
+          {{ if .Values.operator }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.operator.imagePullPolicy }}
+          securityContext:
+            {{- include "restricted.globalContainerSecurityContext" . | nindent 12 }}
+          resources:
+            limits:
+              cpu: {{ default "100m" .Values.operator.resources.limits.cpu  }}
+              memory: {{ default "100Mi" .Values.operator.resources.limits.memory }}
+            requests:
+              cpu: {{ default "100m" .Values.operator.resources.requests.cpu }}
+              memory: {{ default "100Mi" .Values.operator.resources.requests.memory }}
+          {{ end }}
+          livenessProbe:
+            exec:
+              command: [
+                "/bin/sh",
+                "-c",
+                "/opt/operator/liveness_probe.sh"
+              ]
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command: [
+                "echo",
+                "ready"
+              ]
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
+            successThreshold: 1
+          env:
+            - name: OPERATOR_ID
+              value: {{ template "mistral.operatorId" . }}
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_DELETE_RESOURCES
+              value: "False"
+            - name: IDP_SECRET_API_GROUP
+              value: {{ .Values.disasterRecovery.siteManagerApiGroup }}
+          volumeMounts:
+            - name: idp-api-certs
+              mountPath: /opt/operator/mount_configs
+            {{ if .Values.SSL_SECRET }}
+            - name: sslsecret
+              mountPath: /opt/operator/mount_secrets
+            {{ end }}
+            {{- if and (eq (include "mistral.enableTls" .) "true") (include "mistral.tlsSecretName" .) }}
+            - name: mistral-tls-certs
+              mountPath: /tls
+            {{- end }}
+        {{- if (eq (include "mistral.enableDisasterRecovery" .) "true") }}
+        - name: mistral-disaster-recovery
+          image: {{ template "disasterRecovery.image" . }}
+          imagePullPolicy: Always
+          {{- if eq (include "disasterRecovery.enableTls" .) "true" }}
+          volumeMounts:
+            - name: mistral-tls-certs
+              mountPath: /tls
+          {{- end }}
+          ports:
+            - containerPort: 8068
+              protocol: TCP
+              name: dr
+          resources:
+            limits:
+              cpu: {{ default "32m" .Values.disasterRecovery.resources.limits.cpu  }}
+              memory: {{ default "32Mi" .Values.disasterRecovery.resources.limits.memory }}
+            requests:
+              cpu: {{ default "10m" .Values.disasterRecovery.resources.requests.cpu }}
+              memory: {{ default "10Mi" .Values.disasterRecovery.resources.requests.memory }}
+          securityContext:
+            {{- include "restricted.globalContainerSecurityContext" . | nindent 12 }}
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- if eq (include "disasterRecovery.enableTls" .) "true" }}
+            - name: TLS_ENABLED
+              value: "true"
+            - name: CERTS_PATH
+              value: "/tls/"
+            {{- end }}
+            - name: SERVER_PORT
+              value: "8068"
+            - name: RESOURCE_FOR_DR
+              value: "qubership.org v2 mistralservices mistral-service"
+            - name: USE_DEFAULT_PATHS
+              value: "true"
+            - name: HEALTH_MAIN_SERVICES_ACTIVE
+              value: "deployment mistral-api,deployment mistral-engine,deployment mistral-executor,deployment mistral-notifier,deployment mistral-monitoring"
+            - name: HEALTH_MAIN_SERVICES_STANDBY
+              value: "deployment mistral-api,deployment mistral-engine,deployment mistral-executor,deployment mistral-notifier,deployment mistral-monitoring"
+            - name: HEALTH_MAIN_SERVICES_DISABLED
+              value: "deployment mistral-api,deployment mistral-engine,deployment mistral-executor,deployment mistral-notifier,deployment mistral-monitoring"
+            {{- if .Values.disasterRecovery.httpAuth.enabled}}
+            - name: SITE_MANAGER_NAMESPACE
+              value: {{ .Values.disasterRecovery.httpAuth.smNamespace | quote }}
+            - name: SITE_MANAGER_SERVICE_ACCOUNT_NAME
+              value: {{ include "disasterRecovery.siteManagerServiceAccount" . }}
+            {{- if .Values.disasterRecovery.httpAuth.smSecureAuth }}
+            - name: SITE_MANAGER_CUSTOM_AUDIENCE
+              value: {{ .Values.disasterRecovery.httpAuth.customAudience }}
+            {{- end }}
+            - name: TREAT_STATUS_AS_FIELD
+              value: "true"
+            {{- end }}
+        {{- end }}
+        {{- if eq (include "bluegreenAgent.enabled" .) "true" }}
+        - name: bluegreen-agent
+          image: {{ .Values.bluegreenAgent.image }}
+          {{ if .Values.bluegreenAgent }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.bluegreenAgent.imagePullPolicy }}
+          securityContext:
+            {{- include "restricted.globalContainerSecurityContext" . | nindent 12 }}
+          resources:
+            limits:
+              cpu: {{ .Values.bluegreenAgent.resources.limits.cpu }}
+              memory: {{ .Values.bluegreenAgent.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.bluegreenAgent.resources.requests.cpu }}
+              memory: {{ .Values.bluegreenAgent.resources.requests.memory }}
+          {{ end }}
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+              name: bluegreen-agent
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: DEBUG_LOG
+              valueFrom:
+                configMapKeyRef:
+                  name: mistral-common-params
+                  key: debug-log
+            - name: PG_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: mistral-common-params
+                  key: pg-host
+            - name: PG_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: mistral-common-params
+                  key: pg-port
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mistral-secret
+                  key: pg-admin-user
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mistral-secret
+                  key: pg-admin-password
+            - name: PG_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mistral-common-params
+                  key: pg-db-name
+            {{- if and .Values.mistral.tls.enabled .Values.mistral.tls.services.bluegreen.enabled }}
+            - name: TLS_ENABLED
+              value: "true"
+            {{- end }}
+          volumeMounts:
+            {{- if and (eq (include "mistral.enableTls" .) "true") (include "mistral.tlsSecretName" .) }}
+            - name: mistral-tls-certs
+              mountPath: /tls
+            {{- end }}
+        {{- end }}

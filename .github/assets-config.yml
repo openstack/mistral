@@ -1,0 +1,4 @@
+archives:
+  - source: docs
+    outputName: docs
+    archiveType: tar

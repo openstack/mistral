@@ -1,0 +1,28 @@
+{{- if and (eq (include "mistral.enableDisasterRecovery" . ) "true") .Values.disasterRecovery.siteManagerEnabled }}
+apiVersion: {{ .Values.disasterRecovery.siteManagerApiGroup }}/v3
+kind: SiteManager
+metadata:
+  name: mistral-{{ .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mistral
+    release: {{ .Release.Name }}
+spec:
+  sitemanager:
+    module: "stateful"
+    {{- with .Values.disasterRecovery.afterServices }}
+    after:
+      {{- range . }}
+      - {{ . }}
+      {{- end }}
+    {{- else }}
+    after: []
+    {{- end }}
+    before: []
+    sequence: ["standby", "active"]
+    allowedStandbyStateList: ["down"]
+    timeout: {{ default 360 .Values.disasterRecovery.timeout }}
+    parameters:
+      serviceEndpoint: "{{ template "disasterRecovery.protocol" . }}mistral-disaster-recovery.{{ .Release.Namespace }}.svc.cluster.local:8068/sitemanager"
+      healthzEndpoint: "{{ template "disasterRecovery.protocol" . }}mistral-disaster-recovery.{{ .Release.Namespace }}.svc.cluster.local:8068/healthz"
+{{- end }}

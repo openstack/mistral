@@ -1,0 +1,12 @@
+{{ if .Values.mistralMonitoring.prometheusEnabled }}
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: mistral-grafana-dashboard
+  labels:
+    app: grafana
+spec:
+  name: dashboard-with-plugins.json
+  json: >
+{{ .Files.Get "monitoring/grafana-dashboard.json" | indent 4 }}
+{{ end }}

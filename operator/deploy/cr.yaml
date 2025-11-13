@@ -1,0 +1,111 @@
+apiVersion: qubership.org/v1
+kind: MistralService
+metadata:
+  name: mistral-service
+spec:
+  mistral:
+    liteEnabled: false
+    dockerImage: "ghcr.io/netcracker/qubership-mistral"
+  mistralCommonParams:
+    auth:
+      enable: 'False'
+      type: 'mitreid'
+    dbaas:
+      agentUrl: 'http://dbaas-agent:8080'
+      aggregatorUrl: ''
+    debugLog: 'False'
+    externalMistralUrl: ''
+    guaranteedNotifierEnabled: 'False'
+    idpServer: ''
+    multitenancyEnabled: 'False'
+    osMistralUrl: 'http://mistral.mistral:8989/v2'
+    postgres:
+      dbName: 'mistraldb'
+      host: 'pg.pg.svc'
+      port: '5432'
+    queueNamePrefix: 'mistral'
+    rabbit:
+      host: 'rabbitmq.rabbitmq.svc'
+      port: '5672'
+      vhost: '/'
+    rpcImplementation: 'oslo'
+    securityProfile: 'prod'
+    usePypy: 'False'
+    zipkin:
+      logLevel: 'all'
+      url: ''
+  mistralCustomParams: ''
+  mistralApi:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 300Mi
+      limits:
+        cpu: 200m
+        memory: 300Mi
+  mistralMonitoring:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 300Mi
+      limits:
+        cpu: 100m
+        memory: 300Mi
+    recoveryInterval: '30'
+    hangInterval: '300'
+    recoveryEnabled: 'True'
+    monitoringExecutionDelay: '600'
+    monitoringEnabled: 'True'
+    metricCollectionInterval: '30'
+  mistralExecutor:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 300Mi
+      limits:
+        cpu: 200m
+        memory: 300Mi
+    certificateStore: 'http://certificate-store:8080'
+    retrieverPort: '8777'
+    httpProxy: ''
+    httpsProxy: ''
+    noProxy: ''
+  mistralEngine:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 300Mi
+      limits:
+        cpu: 200m
+        memory: 300Mi
+  mistralNotifier:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 300Mi
+      limits:
+        cpu: 100m
+        memory: 300Mi
+  mistralUpdateDbPod:
+    memoryLimit: 300Mi
+    mountConfigsHome: '/opt/mistral/mount_configs'
+    args: './upgrade_db.sh'
+  mistralLite:
+    includeLocalRmq: false
+    resources:
+      requests:
+        cpu: 200m
+        memory: 300Mi
+      limits:
+        cpu: 200m
+        memory: 300Mi
+    rabbitmq:
+      dockerImage: ghcr.io/netcracker/qubership-rabbitmq
+      resources:
+        cpu: 300m
+        memory: 300Mi

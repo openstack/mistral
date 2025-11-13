@@ -1,0 +1,17 @@
+{{- if (eq (include "mistral.enableDisasterRecovery" .) "true") }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: mistral-operator
+  name: mistral-disaster-recovery
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: dr
+    port: 8068
+    protocol: TCP
+    targetPort: 8068
+  selector:
+    name: mistral-operator
+{{- end }}

@@ -18,6 +18,7 @@ The repository stucture is described below.
 - `./custom_doc` - internal documentation
 - `./doc` - opensource docs
 - `./mistral` - contains Mistral's source code 
+- `./operator` - contains source code and build for mistral operator 
 - `./playbooks` - ansible playbooks
 - `./rally-jobs` - this directory contains rally tasks and plugins that are run by OpenStack CI
 - `./tests` - directory with junit and robot tests
@@ -25,7 +26,7 @@ The repository stucture is described below.
 
 ## How to Start
 
-Refer to the Mistral Operator's [Guide](https://github.com/Netcracker/qubership-mistral-operator/blob/main/README.md)
+Refer to the Mistral Operator's [Guide](/operator/README.md)
 
 ### How to Debug
 

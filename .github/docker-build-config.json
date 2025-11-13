@@ -1,0 +1,21 @@
+{
+  "components": [
+    {
+      "name": "qubership-mistral-operator",
+      "file": "operator/Dockerfile",
+      "context": "operator"
+    },
+
+    {
+      "name": "qubership-mistral-operator-transfer",
+      "file": "operator/docker-transfer/Dockerfile",
+      "context": "operator"
+    },
+    {
+      "name": "qubership-mistral-operator-bluegreen-agent",
+      "file": "operator/bluegreen-agent/Dockerfile",
+      "context": "operator/bluegreen-agent"
+    }
+  ],
+  "platforms": "linux/amd64,linux/arm64"
+}

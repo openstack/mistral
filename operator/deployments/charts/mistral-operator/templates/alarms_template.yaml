@@ -1,0 +1,254 @@
+{{- if .Values.mistralMonitoring.prometheusEnabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/component: monitoring
+    role: alert-rules
+  name: mistral-alert
+spec:
+  groups:
+  - name: {{ .Release.Namespace }}-{{ .Release.Name }}
+    rules:
+    - alert: MistralAPIDegraded
+      annotations:
+        description: 'Mistral API degraded, there are unavailable API pods'
+        summary: Mistral API degraded
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-api"} != kube_deployment_status_replicas{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-api"}
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralAPIDown
+      annotations:
+        description: 'Mistral API down, there are no available API pods'
+        summary: Mistral API down
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-api"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralAPICPULoad
+      annotations:
+        description: 'Mistral API use 90% of CPU limit'
+        summary: Mistral API use 90% of CPU limit
+      expr: max(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", container="mistral-api"}[1m])) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-api", resource="cpu"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-api", resource="cpu"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralAPIMemoryLoad
+      annotations:
+        description: 'Mistral API use 90% of memory limit'
+        summary: Mistral API use 90% of memory limit
+      expr: max(container_memory_usage_bytes{namespace="{{ .Release.Namespace }}", container="mistral-api"}) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-api", resource="memory"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-api", resource="memory"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralEngineDegraded
+      annotations:
+        description: 'Mistral Engine degraded, there are unavailable Engine pods'
+        summary: Mistral Engine degraded
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-engine"} != kube_deployment_status_replicas{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-engine"}
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralEngineDown
+      annotations:
+        description: 'Mistral Engine down, there are no available Engine pods'
+        summary: Mistral Engine down
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-engine"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralEngineOverloaded
+      annotations:
+        description: 'Mistral Engine overloaded, there are lots of unprocessed RPC messages'
+        summary: Mistral Engine overloaded
+      expr: rabbitmq_queues{namespace="{{ .Release.Namespace }}",queue="_mistral_engine"} > 50
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralEngineCPULoad
+      annotations:
+        description: 'Mistral Engine use 90% of CPU limit'
+        summary: Mistral Engine use 90% of CPU limit
+      expr: max(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", container="mistral-engine"}[1m])) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-engine", resource="cpu"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-engine", resource="cpu"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralEngineMemoryLoad
+      annotations:
+        description: 'Mistral Engine use 90% of memory limit'
+        summary: Mistral Engine use 90% of memory limit
+      expr: max(container_memory_usage_bytes{namespace="{{ .Release.Namespace }}", container="mistral-engine"}) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-engine", resource="memory"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-engine", resource="memory"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralExecutorDegraded
+      annotations:
+        description: 'Mistral Executor degraded, there are unavailable Executor pods'
+        summary: Mistral Executor degraded
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-executor"} != kube_deployment_status_replicas{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-executor"}
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralExecutorDown
+      annotations:
+        description: 'Mistral Executor down, there are no available Executor pods'
+        summary: Mistral Executor down
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-executor"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralExecutorOverloaded
+      annotations:
+        description: 'Mistral Executor overloaded, there are lots of unprocessed RPC messages'
+        summary: Mistral Executor overloaded
+      expr: rabbitmq_queues{namespace="{{ .Release.Namespace }}",queue="_mistral_executor"} > 50
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralExecutorCPULoad
+      annotations:
+        description: 'Mistral Executor use 90% of CPU limit'
+        summary: Mistral Executor use 90% of CPU limit
+      expr: max(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", container="mistral-executor"}[1m])) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-executor", resource="cpu"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-executor", resource="cpu"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralExecutorMemoryLoad
+      annotations:
+        description: 'Mistral Executor use 90% of memory limit'
+        summary: Mistral Executor use 90% of memory limit
+      expr: max(container_memory_usage_bytes{namespace="{{ .Release.Namespace }}", container="mistral-executor"}) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-executor", resource="memory"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-executor", resource="memory"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralNotifierDegraded
+      annotations:
+        description: 'Mistral Notifier degraded, there are unavailable Notifier pods'
+        summary: Mistral Notifier degraded
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-notifier"} != kube_deployment_status_replicas{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-notifier"}
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralNotifierDown
+      annotations:
+        description: 'Mistral Notifier down, there are no available Notifier pods'
+        summary: Mistral Notifier down
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-notifier"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralNotifierOverloaded
+      annotations:
+        description: 'Mistral Notifier overloaded, there are lots of unprocessed RPC messages'
+        summary: Mistral Notifier overloaded
+      expr: rabbitmq_queues{namespace="{{ .Release.Namespace }}",queue="_mistral_notifier"} > 50
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralNotifierCPULoad
+      annotations:
+        description: 'Mistral Notifier use 90% of CPU limit'
+        summary: Mistral Notifier use 90% of CPU limit
+      expr: max(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", container="mistral-notifier"}[1m])) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-notifier", resource="cpu"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-notifier", resource="cpu"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralNotifierMemoryLoad
+      annotations:
+        description: 'Mistral Notifier use 90% of memory limit'
+        summary: Mistral Notifier use 90% of memory limit
+      expr: max(container_memory_usage_bytes{namespace="{{ .Release.Namespace }}", container="mistral-notifier"}) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-notifier", resource="memory"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-notifier", resource="memory"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralMonitoringDegraded
+      annotations:
+        description: 'Mistral Monitoring degraded, there are unavailable Monitoring pods'
+        summary: Mistral Monitoring degraded
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-monitoring"} != kube_deployment_status_replicas{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-monitoring"}
+      for: 2m
+      labels:
+        severity: major
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralMonitoringDown
+      annotations:
+        description: 'Mistral Monitoring down, there are no available Monitoring pods'
+        summary: Mistral Monitoring down
+      expr: kube_deployment_status_replicas_available{exported_namespace="{{ .Release.Namespace }}", deployment="mistral-monitoring"} == 0
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralMonitoringCPULoad
+      annotations:
+        description: 'Mistral Monitoring use 90% of CPU limit'
+        summary: Mistral Monitoring use 90% of CPU limit
+      expr: max(rate(container_cpu_usage_seconds_total{namespace="{{ .Release.Namespace }}", container="mistral-monitoring"}[1m])) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-monitoring", resource="cpu"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-monitoring", resource="cpu"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: MistralMonitoringMemoryLoad
+      annotations:
+        description: 'Mistral Monitoring use 90% of memory limit'
+        summary: Mistral Monitoring use 90% of memory limit
+      expr: max(container_memory_usage_bytes{namespace="{{ .Release.Namespace }}", container="mistral-monitoring"}) / max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-monitoring", resource="memory"}) > 0.90 and max(kube_pod_container_resource_limits{namespace="{{ .Release.Namespace }}", container="mistral-monitoring", resource="memory"}) > -1
+      for: 2m
+      labels:
+        severity: warning
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+    - alert: RabbitMQDown
+      annotations:
+        description: 'RabbitMQ down'
+        summary: RabbitMQ down
+      expr: rabbitmq_status{namespace="{{ .Release.Namespace }}"} == 2
+      for: 2m
+      labels:
+        severity: critical
+        namespace: {{ .Release.Namespace }}
+        service: {{ .Release.Name }}
+{{- end }}

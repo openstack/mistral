@@ -1,0 +1,19 @@
+{{- if eq (include "bluegreenAgent.enabled" .) "true" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluegreen-agent
+  labels:
+    name: bluegreen-agent
+    {{- with .Values.labels }}
+    {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: bluegreen
+  selector:
+    name: mistral-operator
+{{- end }}

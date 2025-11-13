@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+if ! whoami &> /dev/null; then
+  if [ -w /etc/passwd ]; then
+    echo "${USER_NAME:-operator}:x:$(id -u):$(id -g):${USER_NAME:-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
+  fi
+fi
+exec "$@"

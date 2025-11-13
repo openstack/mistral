@@ -1,0 +1,13 @@
+---
+
+charts:
+  - name: qubership-mistral-operator
+    chart_file: operator/deployments/charts/mistral-operator/Chart.yaml
+    values_file: operator/deployments/charts/mistral-operator/values.yaml
+    image:
+      - ghcr.io/netcracker/qubership-mistral-operator:${release}
+      - ghcr.io/netcracker/qubership-mistral-operator-bluegreen-agent:${release}
+      - ghcr.io/netcracker/qubership-mistral-operator-transfer:${release}
+      - ghcr.io/netcracker/qubership-mistral:${release}
+      - ghcr.io/netcracker/qubership-mistral-tests:${release}
+      - ghcr.io/netcracker/qubership-disaster-recovery-daemon:v0.4.5

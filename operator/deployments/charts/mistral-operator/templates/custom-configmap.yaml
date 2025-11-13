@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-mistral.conf
+data:
+  custom-config: |
+    {{ tpl .Values.mistralCustomParams . | nindent 4 }}
+  custom-config-api: |
+    {{ tpl .Values.mistralCustomApiParams . | nindent 4 }}
+  custom-config-engine: |
+    {{ tpl .Values.mistralCustomEngineParams . | nindent 4 }}
+  custom-config-executor: |
+    {{ tpl .Values.mistralCustomExecutorParams . | nindent 4 }}
+  custom-config-notifier: |
+    {{ tpl .Values.mistralCustomNotifierParams . | nindent 4 }}

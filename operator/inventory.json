@@ -1,0 +1,14 @@
+{
+  "id": "mistral-operator",
+  "name": "mistral-operator",
+  "dnsName": "mistral-operator",
+  "type": "backend",
+  "language": [
+    "Python"
+  ],
+  "thirdparty": {
+    "PostgreSQL": {
+      "mandatory": true
+    }
+  }
+}

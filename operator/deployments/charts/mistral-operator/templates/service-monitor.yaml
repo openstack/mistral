@@ -1,0 +1,40 @@
+{{ if .Values.mistralMonitoring.prometheusEnabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mistral-service-monitor
+  labels:
+    k8s-app: mistral-service-monitor
+    app.kubernetes.io/name: mistral-service-monitor
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: platform-monitoring
+    app.kubernetes.io/managed-by: platform-monitoring-operator
+spec:
+  endpoints:
+  - interval: {{ .Values.mistralMonitoring.metricCollectionInterval }}s
+    port: 9090-tcp
+    path: /metrics
+    scheme: {{ include "mistral.monitoringScheme" .}}
+    {{ if .Values.mistral.tls.enabled }}
+    tlsConfig:     # <-- Need to add this section
+      ca:
+        secret:
+          name: {{ include "mistral.tlsSecretName" .}}
+          key: ca.crt
+      cert:
+        secret:
+          name: {{ include "mistral.tlsSecretName" .}}
+          key: tls.crt
+      keySecret:
+        name: {{ include "mistral.tlsSecretName" .}}
+        key: tls.key
+      serverName: mistral-monitoring
+    {{ end }}
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+    - {{ default "mistral" .Release.Namespace }}
+  selector:
+    matchLabels:
+      app: mistral-monitoring
+{{ end }}

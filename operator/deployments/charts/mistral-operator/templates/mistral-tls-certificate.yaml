@@ -1,0 +1,24 @@
+{{- $install := and .Values.mistral.tls.enabled .Values.mistral.tls.generateCerts.enabled }}
+{{- if and $install (eq (include "services.certProvider" .) "cert-manager") }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mistral-tls-certificate
+spec:
+  secretName: {{ template "mistral.tlsSecretName" . }}
+  duration: {{ default 365 .Values.mistral.tls.generateCerts.duration | mul 24 }}h
+  commonName: mistral-ca
+  isCA: true
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  dnsNames:
+{{ ( include "mistral.certDnsNames" . | indent 4) }}
+  ipAddresses:
+{{ ( include "mistral.certIpAddresses" . | indent 4) }}
+  issuerRef:
+    name: {{ .Values.mistral.tls.generateCerts.clusterIssuerName }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+{{- end }}

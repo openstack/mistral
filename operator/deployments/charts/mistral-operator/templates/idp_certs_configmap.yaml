@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: idp-ca.crt
+data:
+  ca.crt: |
+    {{ tpl .Values.mistralCommonParams.auth.certs . | nindent 4 }}

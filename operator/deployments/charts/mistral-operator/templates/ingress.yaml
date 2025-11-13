@@ -1,0 +1,31 @@
+{{- if .Values.mistral.ingress.enabled }}
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  annotations:
+    {{- if (eq (include "mistral.enableTls" .) "true") }}
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/ssl-passthrough: 'true'
+    {{- end }}
+  name: mistral
+  labels:
+    app: mistral
+spec:
+  {{- if (eq (include "mistral.enableTls" .) "true") }}
+  tls:
+    - hosts:
+        - {{ (include "mistral.ingressHost" .) | quote }}
+      secretName: {{ template "mistral.tlsSecretName" . }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.mistral.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: mistral
+                port:
+                  number: 8989
+  {{- end }}

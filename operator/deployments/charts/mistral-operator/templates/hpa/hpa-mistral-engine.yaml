@@ -1,0 +1,33 @@
+{{ if .Values.HPA_ENABLED }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: 'mistral-engine-cpu-hpa'
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: 'mistral-engine'
+  minReplicas: {{ .Values.HPA_MIN_REPLICAS }}
+  maxReplicas: {{ .Values.HPA_MAX_REPLICAS }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.HPA_AVG_CPU_UTILIZATION }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: {{ .Values.HPA_SCALING_UP_INTERVAL }}
+      policies:
+        - type: Percent
+          value: {{ .Values.HPA_SCALING_UP_PERCENT }}
+          periodSeconds: {{ .Values.HPA_SCALING_UP_INTERVAL }}
+    scaleDown:
+      stabilizationWindowSeconds: {{ .Values.HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS }}
+      policies:
+        - type: Percent
+          value: {{ .Values.HPA_SCALING_DOWN_PERCENT }}
+          periodSeconds: {{ .Values.HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS }}
+{{ end }}

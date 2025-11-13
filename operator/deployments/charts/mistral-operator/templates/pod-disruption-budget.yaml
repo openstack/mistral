@@ -1,0 +1,17 @@
+{{- if and .Values.mistral.disruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "mistral-operator.name" . }}-pdb
+  labels:
+    app.kubernetes.io/part-of: mistral
+spec:
+{{- if .Values.mistral.disruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.mistral.disruptionBudget.minAvailable }}
+{{- else if .Values.mistral.disruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.mistral.disruptionBudget.maxUnavailable }}
+{{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: mistral
+{{- end }}

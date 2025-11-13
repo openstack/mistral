@@ -1,0 +1,15 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mistralservices.qubership.org
+spec:
+  scope: Namespaced
+  group: qubership.org
+  version: v1
+  names:
+    kind: MistralService
+    plural: mistralservices
+    singular: mistralservice
+    shortNames:
+      - mistral
+      - mistrals

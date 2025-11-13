@@ -1,0 +1,48 @@
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
+
+
+categories:
+  - title: '💣 Breaking Changes'
+    labels:
+      - breaking-change
+  - title: '💡 New Features'
+    labels:
+      - feature
+      - enhancement
+  - title: '🐞 Bug Fixes'
+    labels:
+      - bug
+      - fix
+      - bugfix
+  - title: '⚙️ Technical Debt'
+    labels:
+      - refactor
+  - title: '📝 Documentation'
+    labels:
+      - documentation
+
+change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
+no-changes-template: 'No significant changes'
+
+template: |
+  ## 🚀 Release
+
+  ### What's Changed
+  $CHANGES
+
+  ---
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+
+version-resolver:
+  major:
+    labels:
+      - major
+  minor:
+    labels:
+      - minor
+  patch:
+    labels:
+      - patch
+  default: patch

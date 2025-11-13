@@ -1,0 +1,488 @@
+## Default values for helm-chart.
+## This is a YAML-formatted file.
+## Declare variables to be passed into your templates.
+
+# Name of MistralService Custom Resource
+name: mistral-service
+
+operatorImage: "ghcr.io/netcracker/qubership-mistral-operator:main"
+operator:
+  imagePullPolicy: IfNotPresent
+  priorityClassName: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 300Mi
+
+mistral:
+  dockerImage: "ghcr.io/netcracker/qubership-mistral:main"
+  cloudIntegrationEnabled: true
+  liteEnabled: false
+  ingress:
+    enabled: False
+    host: ""
+  tls:
+    enabled: false
+    secretName: "mistral-tls-secret"
+    certificates:
+      ca: ""
+      crt: ""
+      key: ""
+    generateCerts:
+      enabled: true
+      certProvider: cert-manager
+      clusterIssuerName: qa-issuer-self
+      duration: 365
+    services:
+      api:
+        enabled: true
+      monitoring:
+        enabled: true
+      postgres:
+        sslmode: verify-full
+      rabbitmq:
+        enabled: true
+      kafka:
+        enabled: true
+      bluegreen:
+        enabled: true
+      disasterRecovery:
+        enabled: true
+    subjectAlternativeName:
+      additionalDnsNames: []
+      additionalIpAddresses: []
+  disruptionBudget:
+    enabled: false
+    maxUnavailable: 0
+#    or
+#    minAvailable: 2
+
+CLOUD_CORE_INTEGRATION_ENABLED: False
+
+DEPLOYMENT_SESSION_ID: "default-session-id"
+kubernetesLabels:
+  mistralOperator:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralApi:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralEngine:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralExecutor:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralNotifier:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralMonitoring:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralUpdateDbJob:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralDrJob:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+  mistralTests:
+    name: ""
+    component: ""
+    instance: ""
+    version: ""
+    managedBy: ""
+    partOf: ""
+    technology: ""
+
+disasterRecovery:
+  image: ghcr.io/netcracker/disaster-recovery-daemon:main
+  httpAuth:
+    enabled: false
+    smSecureAuth: false
+    smNamespace: "site-manager"
+    smServiceAccountName: ""
+    restrictedEnvironment: false
+    customAudience: "sm-services"
+  mode: ""
+  siteManagerEnabled: false
+  timeout: 360
+  siteManagerApiGroup: "qubership.org"
+  afterServices: []
+  resources:
+    limits:
+      cpu: 32m
+      memory: 32Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
+  securityContext: {}
+  priorityClassName: ""
+
+integrationTests:
+  enabled: False
+  runTestsOnly: False
+  runBenchmarks: False
+  waitTestResultOnJob: False
+  waitTestResultTimeout: 900
+  dockerImage: "ghcr.io/netcracker/qubership-mistral-tests:main"
+  mistralReadyTimeout: 90
+  securityContext: {}
+  prometheusUrl: ''
+  priorityClassName: ""
+
+bluegreenAgent:
+  enabled: False
+  image: "ghcr.io/netcracker/qubership-mistral-operator-bluegreen-agent:main"
+  imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 50m
+      memory: 100Mi
+    requests:
+      cpu: 50m
+      memory: 100Mi
+
+mistralCommonParams:
+  secret_change: 1
+  auth:
+    enable: 'False'
+    type: 'keycloak-oidc'
+    certs: ''
+    cloudCoreUsername: ''
+  dbaas:
+    agentUrl: 'http://dbaas-agent:8080'
+    aggregatorUrl: ''
+  debugLog: 'False'
+  externalMistralUrl: ''
+  guaranteedNotifierEnabled: 'False'
+  idpServer: 'http://identity-provider:8080'
+  idpExternalServer: 'http://identity-provider:8080'
+  idpUserPrecreated: 'False'
+  multitenancyEnabled: 'False'
+  osMistralUrl: 'http://mistral.mistral:8989/v2'
+  postgres:
+    dbName: ''
+    host: 'pg-patroni.postgresql'
+    port: '5432'
+    idleTimeout: '30s'
+  kafkaNotifications:
+    enabled: 'True'
+    host: 'kafka.kafka:9092'
+    topic: ''
+    topicPartitionsCount: '2'
+    consumerGroupId: 'notification_consumer_group'
+    securityEnabled: 'True'
+  queueNamePrefix: 'mistral'
+  rabbit:
+    host: 'rabbitmq.rabbitmq'
+    port: '5672'
+    vhost: ''
+  rpcImplementation: 'oslo'
+  securityProfile: 'prod'
+  usePypy: 'False'
+  cleanup: ''
+
+# Horizontal Pod Autoscaler (HPA)
+HPA_ENABLED: False
+HPA_MIN_REPLICAS: 1
+HPA_MAX_REPLICAS: 3
+HPA_AVG_CPU_UTILIZATION: 85
+HPA_SCALING_UP_PERCENT: 95
+HPA_SCALING_UP_INTERVAL: 120
+HPA_SCALING_DOWN_PERCENT: 25
+HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: 300
+
+DEPLOY_MODE: ""
+
+mistralCustomParams: ""
+# mistralCustomParams: |
+#   [DEFAULT]
+#   debug = False
+
+mistralCustomApiParams: ""
+# mistralCustomApiParams: |
+#   [DEFAULT]
+#   debug = False
+
+mistralCustomEngineParams: ""
+# mistralCustomEngineParams: |
+#   [DEFAULT]
+#   debug = False
+
+mistralCustomExecutorParams: ""
+# mistralCustomExecutorParams: |
+#   [DEFAULT]
+#   debug = False
+
+mistralCustomNotifierParams: ""
+# mistralCustomNotifierParams: |
+#   [DEFAULT]
+#   debug = False
+
+
+mistralApi:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  affinity:
+    podAntiAffinity:
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #         - key: name
+      #           operator: In
+      #           values:
+      #             - mistral-api
+      #     topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - mistral-api
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  securityContext: {}
+  priorityClassName: ""
+
+mistralMonitoring:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  affinity:
+    podAntiAffinity:
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #         - key: name
+      #           operator: In
+      #           values:
+      #             - mistral-monitoring
+      #     topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - mistral-monitoring
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  recoveryInterval: '30'
+  hangInterval: '300'
+  recoveryEnabled: 'True'
+  monitoringExecutionDelay: '600'
+  monitoringEnabled: 'False'
+  metricCollectionInterval: '30'
+  prometheusEnabled: true
+  securityContext: {}
+  priorityClassName: ""
+
+mistralExecutor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  affinity:
+    podAntiAffinity:
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #         - key: name
+      #           operator: In
+      #           values:
+      #             - mistral-executor
+      #     topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - mistral-executor
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  loggingProxyAdminUrl: ''
+  certificateStore: 'http://certificate-store:8080'
+  retrieverPort: '8777'
+  httpProxy: ''
+  httpsProxy: ''
+  noProxy: ''
+  securityContext: {}
+  priorityClassName: ""
+
+mistralEngine:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 300m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  affinity:
+    podAntiAffinity:
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #         - key: name
+      #           operator: In
+      #           values:
+      #             - mistral-engine
+      #     topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - mistral-engine
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  securityContext: {}
+  priorityClassName: ""
+
+mistralNotifier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  affinity:
+    podAntiAffinity:
+      # requiredDuringSchedulingIgnoredDuringExecution:
+      #   - labelSelector:
+      #       matchExpressions:
+      #         - key: name
+      #           operator: In
+      #           values:
+      #             - mistral-notifier
+      #     topologyKey: kubernetes.io/hostname
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - mistral-notifier
+            topologyKey: kubernetes.io/hostname
+          weight: 1
+  securityContext: {}
+  priorityClassName: ""
+
+mistralUpdateDbPod:
+  memoryLimit: 300Mi
+  mountConfigsHome: '/opt/mistral/mount_configs'
+  args: './upgrade_db.sh'
+  securityContext: {}
+  priorityClassName: ""
+
+mistralCleanupDbPod:
+  memoryLimit: 300Mi
+  mountConfigsHome: '/opt/mistral/mount_configs'
+  args: './cleanup.sh'
+  securityContext: {}
+  priorityClassName: ""
+
+mistralLite:
+  includeLocalRmq: false
+  resources:
+    requests:
+      cpu: 500m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi
+  rabbitmq:
+    dockerImage: ghcr.io/netcracker/qubership-rabbitmq
+    resources:
+      cpu: 300m
+      memory: 300Mi
+  securityContext: {}
+  priorityClassName: ""
+
+secrets:
+  idpRegistrationToken: 'null'
+  idpClientId: 'null'
+  idpClientSecret: 'null'
+  idpJwkExp: 'null'
+  idpJwkMod: 'null'
+  idpUserRobot: 'null'
+  idpPasswordRobot: 'null'
+  pgAdminPassword: 'null'
+  pgAdminUser: 'null'
+  pgPassword: 'mistral_password'
+  pgUser: 'mistral_user'
+  rabbitAdminPassword: 'null'
+  rabbitAdminUser: 'null'
+  rabbitPassword: 'mistral_password'
+  rabbitUser: 'mistral_user'
+  kafkaSaslPlainUsername: 'null'
+  kafkaSaslPlainPassword: 'null'

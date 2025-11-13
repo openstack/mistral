@@ -7,7 +7,7 @@
 # Packages
 *.egg*
 dist
-build
+# build
 .venv
 venv
 eggs
