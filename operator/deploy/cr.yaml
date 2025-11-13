@@ -1,4 +1,4 @@
-apiVersion: qubership.org/v1
+apiVersion: netcracker.com/v1
 kind: MistralService
 metadata:
   name: mistral-service

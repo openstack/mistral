@@ -149,7 +149,7 @@ disasterRecovery:
   mode: ""
   siteManagerEnabled: false
   timeout: 360
-  siteManagerApiGroup: "qubership.org"
+  siteManagerApiGroup: "netcracker.com"
   afterServices: []
   resources:
     limits:

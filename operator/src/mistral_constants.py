@@ -151,7 +151,7 @@ class Status:
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 CR_VERSION = "v2"
-CR_GROUP = "qubership.org"
+CR_GROUP = "netcracker.com"
 CR_PLURAL = "mistralservices"
 CR_NAME = "mistral-service"
 ALPH = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#~=_!"
@@ -159,7 +159,7 @@ POSITIVE_VALUES = ('true', 'True', 'yes', 'Yes')
 OPERATOR_NEED_TO_DELETE_RESOURCES = os.getenv(
     "OPERATOR_DELETE_RESOURCES", "False")
 IDP_SECRET_API_GROUP = os.getenv(
-    "IDP_SECRET_API_GROUP", "qubership.org")
+    "IDP_SECRET_API_GROUP", "netcracker.com")
 ADDITIONAL_CONFIGS_FILE_PATH = 'custom-mistral-service.conf'
 CUSTOM_CONFIG = "custom-config"
 CUSTOM_CONFIG_API = "custom-config-api"

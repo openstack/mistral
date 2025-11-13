@@ -5,7 +5,7 @@ metadata:
   name: mistral-operator
 rules:
 - apiGroups:
-  - qubership.org
+  - netcracker.com
   resources:
   - "*"
   verbs:

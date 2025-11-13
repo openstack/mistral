@@ -1,4 +1,4 @@
-apiVersion: qubership.org/v2
+apiVersion: netcracker.com/v2
 kind: MistralService
 metadata:
   name: {{ .Values.name }}

@@ -450,7 +450,6 @@ Find mistral tests image in open source values.
   {{- printf "%s" .Values.integrationTests.dockerImage -}}
 {{- end -}}
 
-
 {{/*
 Find disaster recovery image in open source values.
 */}}

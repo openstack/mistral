@@ -172,7 +172,7 @@ spec:
             - name: SERVER_PORT
               value: "8068"
             - name: RESOURCE_FOR_DR
-              value: "qubership.org v2 mistralservices mistral-service"
+              value: "netcracker.com v2 mistralservices mistral-service"
             - name: USE_DEFAULT_PATHS
               value: "true"
             - name: HEALTH_MAIN_SERVICES_ACTIVE

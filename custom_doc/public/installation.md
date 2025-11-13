@@ -35,7 +35,7 @@ If Mistral is installed to the cloud with security restrictions and/or a deploy 
     name: deploy-user-role
   rules:
   - apiGroups:
-    - qubership.org
+    - netcracker.com
     resources:
     - "*"
     verbs:

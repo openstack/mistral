@@ -1,10 +1,10 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: mistralservices.qubership.org
+  name: mistralservices.netcracker.com
 spec:
   scope: Namespaced
-  group: qubership.org
+  group: netcracker.com
   version: v1
   names:
     kind: MistralService
