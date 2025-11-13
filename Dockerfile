@@ -34,7 +34,7 @@ RUN apk add --no-cache \
 WORKDIR /wheels
 COPY requirements.txt nc_requirements.txt /tmp/
 RUN python --version && pip --version && \
-    pip install --no-cache-dir --upgrade pip==23.3 wheel && \
+    pip install --no-cache-dir --upgrade pip==25.3 wheel && \
     pip wheel --no-cache-dir -r /tmp/requirements.txt    -w /wheels && \
     pip wheel --no-cache-dir -r /tmp/nc_requirements.txt -w /wheels
 
