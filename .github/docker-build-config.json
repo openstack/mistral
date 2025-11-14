@@ -15,6 +15,16 @@
       "name": "qubership-mistral-operator-bluegreen-agent-img",
       "file": "operator/bluegreen-agent/Dockerfile",
       "context": "operator/bluegreen-agent"
+    },
+    {
+      "name": "qubership-mistral",
+      "file": "Dockerfile",
+      "context": "."
+    },
+    {
+      "name": "qubership-mistral-tests",
+      "file": "tests/robot/Dockerfile",
+      "context": "tests/robot"
     }
   ],
   "platforms": "linux/amd64,linux/arm64"
