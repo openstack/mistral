@@ -156,7 +156,7 @@ def on_update(body, meta, spec, status, old, new, diff, **kwargs):
         return
     kub_helper = KubernetesHelper(spec)
 
-    mode = spec.get('disasterRecovery').get('mode', None)
+    mode = spec.get('disasterRecovery', {}).get('mode')
     if mode == 'standby' or mode == 'disable':
         kub_helper.update_status(
             MC.Status.SUCCESSFUL,
