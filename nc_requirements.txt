@@ -4,7 +4,7 @@ Flask
 gevent
 jsonschema<4.6.0
 kubernetes
-psycopg2-binary
+psycopg2
 py_mini_racer
 prometheus_client
 setuptools==70.0.0
