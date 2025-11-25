@@ -34,3 +34,15 @@ class MistralHTTPAction(std_actions.MistralHTTPAction):
             self.headers = secure_request.set_auth_token(self.headers or {})
 
         return super(MistralHTTPAction, self).run(context)
+
+class TransparentAuthHTTPAction(std_actions.HTTPAction):
+
+    def run(self, context):
+        if cfg.CONF.oauth2.security_profile == 'prod':
+            self.headers = self.headers or {}
+            sec_ctx = context.security
+            self.headers.update({
+                'Authorization': f'Bearer {sec_ctx.auth_token}'
+            })
+
+        return super(TransparentAuthHTTPAction, self).run(context)

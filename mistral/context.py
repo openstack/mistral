@@ -132,6 +132,12 @@ class MistralContext(oslo_context.RequestContext):
     def from_environ(cls, headers, env):
         kwargs = _extract_mistral_auth_params(headers)
 
+        try:
+            token = _get_bearer_token(headers, env)
+            env.setdefault('HTTP_X_AUTH_TOKEN', token)
+        except Exception as e:
+            LOG.warning("Failed to pre-populate environ from Bearer token: %s", e)
+
         token_info = env.get('keystone.token_info', {})
         if not kwargs['is_target']:
             kwargs['service_catalog'] = token_info.get('token', {})
@@ -227,6 +233,13 @@ def _extract_service_catalog_from_headers(headers):
         return jsonutils.loads(decoded_catalog)
     else:
         return None
+
+
+def _get_bearer_token(headers, env):
+    auth = headers.get('Authorization') or env.get('HTTP_AUTHORIZATION')
+    if not auth or not auth.startswith('Bearer '):
+        return None
+    return auth.split(' ', 1)[1].strip()
 
 
 class RpcContextSerializer(messaging.Serializer):
