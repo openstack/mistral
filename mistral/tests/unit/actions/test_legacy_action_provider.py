@@ -1,4 +1,5 @@
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -135,13 +136,14 @@ class LegacyActionProviderTest(base.BaseTest):
         provider = legacy.LegacyActionProvider()
 
         action_descs = provider.find_all()
-
         prefix = 'mistral.actions.std_actions'
+        prefix_oauth2 = 'mistral.actions.oauth2'
 
         self.assertTrue(
             all(
                 [
-                    a_d.action_class.__module__ == prefix
+                    a_d.action_class.__module__ == prefix or
+                    a_d.action_class.__module__ == prefix_oauth2
                     for a_d in action_descs
                 ]
             )

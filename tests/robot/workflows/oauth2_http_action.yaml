@@ -1,0 +1,12 @@
+version: '2.0'
+
+oauth2_http_action:
+  input:
+    - url
+  output:
+    result: <% task(task1).result %>
+  tasks:
+    task1:
+      action: oauth2.http
+      input:
+        url: <% $.url %>

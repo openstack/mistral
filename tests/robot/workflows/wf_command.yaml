@@ -1,0 +1,15 @@
+version: '2.0'
+wf_command:
+  type: direct
+  input:
+    - command
+  tasks:
+    task1:
+      action: std.echo output='1'
+      on-complete:
+        - fail: <% $.command = failed %>
+        - succeed: <% $.command = succeed %>
+        - pause: <% $.command = paused %>
+        - task2
+    task2:
+      action: std.echo output='2'

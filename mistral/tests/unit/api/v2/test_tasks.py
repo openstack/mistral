@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ WF_EX = models.WorkflowExecution(
     state_info=None,
     input={'foo': 'bar'},
     output={},
-    params={'env': {'k1': 'abc'}},
+    params={'env': {'k1': 'abc'}, 'read_only': False},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
@@ -123,6 +124,9 @@ TASK = {
     'processed': True
 }
 
+RO_WF_EX = copy.deepcopy(WF_EX)
+RO_WF_EX['params'] = {'read_only': True}
+
 TASK_WITHOUT_RESULT = copy.deepcopy(TASK)
 del TASK_WITHOUT_RESULT['result']
 
@@ -157,6 +161,7 @@ SKIP_TASK = {
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 TASK_EX.workflow_execution = WF_EX
+MOCK_WF_EX_RO = mock.MagicMock(return_value=RO_WF_EX)
 MOCK_TASK = mock.MagicMock(return_value=TASK_EX)
 MOCK_TASKS = mock.MagicMock(return_value=[TASK_EX])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
@@ -274,6 +279,22 @@ class TestTasksController(base.APITest):
             skip=False,
             env=None
         )
+
+    @mock.patch('mistral.db.v2.api.get_task_execution',
+                mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX]))
+    @mock.patch(
+        'mistral.db.v2.api.get_workflow_execution',
+        mock.MagicMock(return_value=RO_WF_EX)
+    )
+    @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX_RO)
+    def test_put_rerun_case_fail_due_to_read_only(self):
+        params = copy.deepcopy(RERUN_TASK)
+        params['reset'] = True
+
+        resp = self.app.put_json('/v2/tasks/123', params=params,
+                                 expect_errors=True)
+
+        self.assertEqual(400, resp.status_int)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(

@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -85,7 +86,8 @@ class TaskSpec(base.BaseSpec):
             "fail-on": types.EXPRESSION_OR_BOOLEAN,
             "target": types.NONEMPTY_STRING,
             "keep-result": types.EXPRESSION_OR_BOOLEAN,
-            "safe-rerun": types.EXPRESSION_OR_BOOLEAN
+            "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
+            "safe-input": types.EXPRESSION_OR_BOOLEAN
         },
         "additionalProperties": False,
         "anyOf": [
@@ -136,6 +138,7 @@ class TaskSpec(base.BaseSpec):
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)
         self._safe_rerun = data.get('safe-rerun')
+        self._safe_input = data.get('safe-input')
 
         self._process_action_and_workflow()
 
@@ -158,6 +161,7 @@ class TaskSpec(base.BaseSpec):
         self.validate_expr(self._data.get('publish-on-skip', {}))
         self.validate_expr(self._data.get('keep-result', {}))
         self.validate_expr(self._data.get('safe-rerun', {}))
+        self.validate_expr(self._data.get('safe-input', {}))
 
     def _validate_name(self):
         task_name = self._data.get('name')
@@ -275,6 +279,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_safe_rerun(self):
         return self._safe_rerun
+
+    def get_safe_input(self):
+        return self._safe_input
 
     def get_type(self):
         return (WORKFLOW_TASK_TYPE if self._workflow

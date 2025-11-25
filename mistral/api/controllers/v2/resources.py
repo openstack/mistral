@@ -2,6 +2,7 @@
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -459,6 +460,9 @@ class Execution(resource.Resource):
 
     published_global = types.jsontype
 
+    sync = wsme.wsattr(bool)
+    force = wsme.wsattr(bool)
+
     @classmethod
     def sample(cls):
         return cls(
@@ -494,7 +498,8 @@ class Execution(resource.Resource):
                 ]
             },
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
+            sync=True
         )
 
 
@@ -1033,3 +1038,111 @@ class ExecutionReport(resource.Resource):
         sample.root_workflow_execution = WorkflowExecutionReportEntry.sample()
 
         return sample
+
+
+class ExecutionErrorReportEntry(resource.Resource):
+    """Execution error report entry resource."""
+
+    id = wtypes.text
+    parent_id = wtypes.text
+    type = wtypes.text
+    name = wtypes.text
+    error = wtypes.text
+
+    attributes = wtypes.text
+    params = wtypes.text
+    idx = wtypes.IntegerType(minimum=0)
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id="8d16810c-5055-4f6e-a2b1-c50a0d1ad4f2",
+            parent_id="",
+            type="workflow",
+            name="error_wf",
+            error="Failure caused by error in tasks: t_fail-on, t_failed-sub"
+        )
+
+
+class ExecutionErrorsReport(resource.Resource):
+    """Execution errors report resource."""
+
+    errors = [ExecutionErrorReportEntry]
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            errors=[ExecutionErrorReportEntry.sample()]
+        )
+
+
+class TasksStatisticsResource(resource.Resource):
+
+    TOTAL = wtypes.IntegerType(minimum=0)
+    RUNNING = wtypes.IntegerType(minimum=0)
+    SUCCESS = wtypes.IntegerType(minimum=0)
+    ERROR = wtypes.IntegerType(minimum=0)
+    IDLE = wtypes.IntegerType(minimum=0)
+    PAUSED = wtypes.IntegerType(minimum=0)
+    SKIPPED = wtypes.IntegerType(minimum=0)
+    CANCELLED = wtypes.IntegerType(minimum=0)
+
+    def __init__(self, **kw):
+        for state in ['TOTAL', 'RUNNING', 'SUCCESS', 'ERROR',
+                      'IDLE', 'PAUSED', 'SKIPPED', 'CANCELLED']:
+            setattr(self, state, 0)
+
+    def set_statistics(self, total_tasks, tasks_group_by_state):
+        self.TOTAL = total_tasks
+        for state, count in tasks_group_by_state:
+            if hasattr(self, state):
+                setattr(self, state, count)
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            TOTAL=10,
+            RUNNING=3,
+            SUCCESS=5,
+            ERROR=2,
+            IDLE=0,
+            PAUSED=0,
+            SKIPPED=0,
+            CANCELLED=0
+        )
+
+
+class WithItemsStatisticsResource(resource.Resource):
+    TOTAL = wtypes.IntegerType(minimum=0)
+    RUNNING = wtypes.IntegerType(minimum=0)
+    SUCCESS = wtypes.IntegerType(minimum=0)
+    ERROR = wtypes.IntegerType(minimum=0)
+    IDLE = wtypes.IntegerType(minimum=0)
+    PAUSED = wtypes.IntegerType(minimum=0)
+    SKIPPED = wtypes.IntegerType(minimum=0)
+    CANCELLED = wtypes.IntegerType(minimum=0)
+
+    def __init__(self, **kw):
+        super(WithItemsStatisticsResource, self).__init__(**kw)
+        for state in ['TOTAL', 'RUNNING', 'SUCCESS', 'ERROR',
+                      'IDLE', 'PAUSED', 'SKIPPED', 'CANCELLED']:
+            setattr(self, state, 0)
+
+    def set_statistics(self, total_items, items_group_by_state):
+        self.TOTAL = total_items
+        for state, count in items_group_by_state:
+            if hasattr(self, state):
+                setattr(self, state, count)
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            TOTAL=10,
+            RUNNING=3,
+            SUCCESS=5,
+            ERROR=2,
+            IDLE=0,
+            PAUSED=0,
+            SKIPPED=0,
+            CANCELLED=0
+        )

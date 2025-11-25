@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +18,9 @@
 
 IDLE = 'IDLE'
 """Task is not started yet."""
+
+PLANNED = 'PLANNED'
+"""Workflow execution is created, but not started yet."""
 
 WAITING = 'WAITING'
 """
@@ -49,6 +53,7 @@ SKIPPED = 'SKIPPED'
 
 _ALL = [
     IDLE,
+    PLANNED,
     WAITING,
     RUNNING,
     RUNNING_DELAYED,
@@ -60,7 +65,8 @@ _ALL = [
 ]
 
 _VALID_TRANSITIONS = {
-    IDLE: [RUNNING, ERROR, CANCELLED],
+    IDLE: [RUNNING, ERROR, CANCELLED, PLANNED],
+    PLANNED: [RUNNING, ERROR, CANCELLED],
     WAITING: [RUNNING],
     RUNNING: [PAUSED, RUNNING_DELAYED, SUCCESS, ERROR, CANCELLED],
     RUNNING_DELAYED: [RUNNING, ERROR, CANCELLED],
@@ -107,6 +113,10 @@ def is_idle(state):
 
 def is_paused(state):
     return state == PAUSED
+
+
+def is_planned(state):
+    return state == PLANNED
 
 
 def is_paused_or_completed(state):

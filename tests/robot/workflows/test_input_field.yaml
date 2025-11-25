@@ -1,0 +1,7 @@
+version: 2
+test_input_field:
+  input:
+    - context
+  tasks:
+    task1:
+      action: std.echo output="<% $.context %>"

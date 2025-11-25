@@ -1,3 +1,5 @@
+# Modified in 2025 by NetCracker Technology Corp.
+#
 # Copyright (c) 2016 Intel Corporation
 # All Rights Reserved.
 #
@@ -13,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+import eventlet
 from unittest import mock
 
 from mistral.db.v2 import api as db_api
@@ -25,7 +29,8 @@ from mistral.workflow import states
 
 
 def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
-                   target=None, async_=True, timeout=None):
+                   target=None, async_=True, deadline=None, timeout=None,
+                   async_heartbeats_enabled=False):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
@@ -34,11 +39,22 @@ def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
         action_ex_id,
         safe_rerun,
         exec_ctx,
-        redelivered=True
+        redelivered=True,
+        deadline=deadline,
+        timeout=timeout,
+        async_heartbeats_enabled=async_heartbeats_enabled
     )
 
 
+def _sleep_run(*args, **kwargs):
+    # A message was delivered in a first executor. But he died.
+    eventlet.sleep(2)
+    # And then message was redelivered to the second executor.
+    _run_at_target(*args, **kwargs)
+
+
 MOCK_RUN_AT_TARGET = mock.MagicMock(side_effect=_run_at_target)
+MOCK_SLEEP_RUN = mock.MagicMock(side_effect=_sleep_run)
 
 
 class TestSafeRerun(base.EngineTestCase):

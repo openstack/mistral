@@ -17,12 +17,12 @@
 
 import abc
 from collections import abc as collections_abc
-import copy
 import json
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
 from mistral.engine import actions
 from mistral.engine import dispatcher
@@ -34,6 +34,7 @@ from mistral import expressions as expr
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
 from mistral.services import actions as action_service
+from mistral.services.kafka_notifications import send_notification
 from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
@@ -91,29 +92,47 @@ class Task(object, metaclass=abc.ABCMeta):
         if not filtered_publishers:
             return
 
-        data = {
+        root_execution_id = self.wf_ex.root_execution_id or self.wf_ex.id
+
+        notification_data = {
             "id": self.task_ex.id,
             "name": self.task_ex.name,
             "workflow_execution_id": self.task_ex.workflow_execution_id,
             "workflow_name": self.task_ex.workflow_name,
             "workflow_namespace": self.task_ex.workflow_namespace,
             "workflow_id": self.task_ex.workflow_id,
+            "root_execution_id": root_execution_id,
             "state": self.task_ex.state,
             "state_info": self.task_ex.state_info,
             "type": self.task_ex.type,
             "project_id": self.task_ex.project_id,
             "created_at": utils.datetime_to_str(self.task_ex.created_at),
-            "updated_at": utils.datetime_to_str(self.task_ex.updated_at),
-            "started_at": utils.datetime_to_str(self.task_ex.started_at),
-            "finished_at": utils.datetime_to_str(self.task_ex.finished_at)
+            "updated_at": utils.datetime_to_str(self.task_ex.updated_at)
+        }
+
+        if 'params' in self.wf_ex and 'headers' in self.wf_ex['params']:
+            notification_data['headers'] = self.wf_ex['params']['headers']
+
+        kafka_data = {
+            'rpc_ctx': auth_ctx.ctx().to_dict(),
+            'ex_id': self.task_ex.id,
+            'data': notification_data,
+            'event': event,
+            'timestamp': self.task_ex.updated_at,
+            'publishers': filtered_publishers
         }
 
         def _send_notification():
+            if cfg.CONF.kafka_notifications.enabled:
+                delivered = send_notification(kafka_data)
+                if delivered:
+                    return
+
             notifier.notify(
-                self.task_ex.id,
-                data,
+                notification_data["id"],
+                notification_data,
                 event,
-                self.task_ex.updated_at,
+                notification_data["updated_at"],
                 filtered_publishers
             )
 
@@ -282,7 +301,21 @@ class Task(object, metaclass=abc.ABCMeta):
                     state=states.WAITING,
                     state_info=msg
                 )
-            elif self.task_ex.state != states.WAITING:
+                return
+
+            if self.task_ex.state == states.SUCCESS and hasattr(
+                    self.task_spec, "get_join"):
+                # NOTE(vgvoleg): in case of join: 1 or something else
+                # instead of "all" we have to check if this task
+                # is already completed. If so, we have to suggest that
+                # it  was the last active branch and we should check
+                # if we are ready to complete workflow or no.
+                join = self.task_spec.get_join()
+                if join != "all":
+                    self.register_workflow_completion_check(force=True)
+                    return
+
+            if self.task_ex.state != states.WAITING:
                 self.set_state(states.WAITING, msg)
 
     def reset(self):
@@ -354,7 +387,7 @@ class Task(object, metaclass=abc.ABCMeta):
         return True
 
     @profiler.trace('task-complete')
-    def complete(self, state, state_info=None, skip=False):
+    def complete(self, state, state_info=None, skip=False, force=False):
         """Complete task and set specified state.
 
         Method sets specified task state and runs all necessary post
@@ -363,6 +396,8 @@ class Task(object, metaclass=abc.ABCMeta):
 
         :param state: New task state.
         :param state_info: New state information (i.e. error message).
+        :param force: If force equals True, task doesn't execute a after
+               complete policy
         """
 
         assert self.task_ex
@@ -388,12 +423,13 @@ class Task(object, metaclass=abc.ABCMeta):
                 if hasattr(ex, 'output'):
                     ex.output = {}
 
-        if not states.is_skipped(state):
-            self._after_task_complete()
+        if not force:
+            if not states.is_skipped(state):
+                self._after_task_complete()
 
-        # Ignore DELAYED state.
-        if self.task_ex.state == states.RUNNING_DELAYED:
-            return
+            # Ignore DELAYED state.
+            if self.task_ex.state == states.RUNNING_DELAYED:
+                return
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
@@ -431,7 +467,7 @@ class Task(object, metaclass=abc.ABCMeta):
 
         dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
 
-    def register_workflow_completion_check(self):
+    def register_workflow_completion_check(self, force=False):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         # Register an asynchronous command to check workflow completion
@@ -440,7 +476,7 @@ class Task(object, metaclass=abc.ABCMeta):
         def _check():
             wf_handler.check_and_complete(self.wf_ex.id)
 
-        if wf_ctrl.may_complete_workflow(self.task_ex):
+        if force or wf_ctrl.may_complete_workflow(self.task_ex):
             post_tx_queue.register_operation(_check, in_tx=True)
 
     @profiler.trace('task-update')
@@ -513,6 +549,12 @@ class Task(object, metaclass=abc.ABCMeta):
         if self.triggered_by:
             values['runtime_context']['triggered_by'] = self.triggered_by
 
+        if states.is_idle(state):
+            values['runtime_context']['recovery'] = {}
+            values['runtime_context']['recovery']['first_run'] = self.first_run
+            values['runtime_context']['recovery']['rerun'] = self.rerun
+            values['runtime_context']['recovery']['reset'] = self.reset_flag
+
         LOG.info("Create task execution [task_name=%s, task_ex_id=%s, "
                  "wf_ex_id=%s]", task_name, task_id, self.wf_ex.id)
 
@@ -559,6 +601,22 @@ class Task(object, metaclass=abc.ABCMeta):
 
         return False
 
+    def _get_safe_input(self):
+        safe_input = self.task_spec.get_safe_input()
+
+        if safe_input is not None:
+            return safe_input
+
+        task_default = self.wf_spec.get_task_defaults()
+
+        if task_default:
+            default_safe_input = task_default.get_safe_input()
+
+            if default_safe_input is not None:
+                return default_safe_input
+
+        return False
+
     def _get_action_defaults(self):
         action_name = self.task_spec.get_action_name()
 
@@ -585,6 +643,10 @@ class RegularTask(Task):
 
         if state == states.SUCCESS:
             state_info = None
+        elif state == states.CANCELLED:
+            action_info = action_ex.get('state_info')
+
+            state_info = str(action_info) if action_info else None
         else:
             action_result = action_ex.output.get('result')
 
@@ -609,6 +671,7 @@ class RegularTask(Task):
             return
 
         if states.is_idle(self.task_ex.state):
+            self.task_ex['runtime_context']['recovery'] = None
             # Set the RUNNING state and trigger all operations
             # related to the state change.
             self.set_state(
@@ -660,8 +723,8 @@ class RegularTask(Task):
             if self.task_ex.state != states.RUNNING:
                 return
 
-        self._update_inbound_context()
         self._update_triggered_by()
+        self._update_inbound_context()
         self._reset_actions()
         self._schedule_actions()
 
@@ -693,7 +756,16 @@ class RegularTask(Task):
 
     def _schedule_actions(self):
         # Regular task schedules just one action.
-        input_dict = self._get_action_input()
+        try:
+            input_dict = self._get_action_input()
+        except exc.YaqlEvaluationException as e:
+            # TODO(vgvoleg): probably there is a better way to do this
+            if self._get_safe_input():
+                self.complete(states.ERROR, e.message)
+                return
+            else:
+                raise e
+
         target = self._get_target(input_dict)
 
         action = self._build_action()
@@ -703,6 +775,7 @@ class RegularTask(Task):
                 input_dict,
                 target,
                 safe_rerun=self._get_safe_rerun(),
+                deadline=self._get_deadline(),
                 timeout=self._get_timeout()
             )
         except exc.MistralException as e:
@@ -809,21 +882,35 @@ class RegularTask(Task):
 
         return res
 
+    def _get_deadline(self):
+        context_timeout = self.task_ex.runtime_context.get(
+            'timeout_task_policy'
+        )
+
+        if context_timeout:
+            return context_timeout['deadline']
+        else:
+            return None
+
+    def _get_retry_no(self):
+        context_timeout = self.task_ex.runtime_context.get(
+            'retry_task_policy'
+        )
+
+        if context_timeout:
+            return context_timeout['retry_no']
+        else:
+            return 0
+
     def _get_timeout(self):
-        timeout = self.task_spec.get_policies().get_timeout()
+        context_timeout = self.task_ex.runtime_context.get(
+            'timeout_task_policy'
+        )
 
-        if not isinstance(timeout, (int, float)):
-            wf_ex = self.task_ex.workflow_execution
-
-            ctx_view = data_flow.ContextView(
-                self.task_ex.in_context,
-                wf_ex.context,
-                wf_ex.input
-            )
-
-            timeout = expr.evaluate_recursively(data=timeout, context=ctx_view)
-
-        return timeout if timeout > 0 else None
+        if context_timeout:
+            return context_timeout['timeout']
+        else:
+            return None
 
 
 class WithItemsTask(RegularTask):
@@ -833,57 +920,65 @@ class WithItemsTask(RegularTask):
     """
 
     _CONCURRENCY = 'concurrency'
-    _CAPACITY = 'capacity'
     _COUNT = 'count'
     _WITH_ITEMS = 'with_items'
 
     _DEFAULT_WITH_ITEMS = {
         _COUNT: 0,
-        _CONCURRENCY: 0,
-        _CAPACITY: 0
+        _CONCURRENCY: 0
     }
 
     @profiler.trace('with-items-task-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex):
         assert self.task_ex
 
-        with db_api.named_lock('with-items-%s' % self.task_ex.id):
-            # NOTE: We need to refresh task execution object right
-            # after the lock is acquired to make sure that we're
-            # working with a fresh state of its runtime context.
-            # Otherwise, SQLAlchemy session can contain a stale
-            # cached version of it so that we don't modify actual
-            # values (i.e. capacity).
-            db_api.refresh(self.task_ex)
+        if self.is_completed():
+            return
 
-            if self.is_completed():
-                return
+        index = action_ex.runtime_context['index']
 
-            self._increase_capacity()
+        if index >= self._get_with_items_count() - self._get_concurrency():
+            with db_api.named_lock('with-items-%s' % self.task_ex.id):
+                # NOTE: We need to refresh task execution object right
+                # after the lock is acquired to make sure that we're
+                # working with a fresh state of its runtime context.
+                # Otherwise, SQLAlchemy session can contain a stale
+                # cached version of it so that we don't modify actual
+                # values.
+                db_api.refresh(self.task_ex)
 
-            if self.is_with_items_completed():
-                state = self._get_final_state()
+                finished = self.task_ex.runtime_context.get(
+                    'finished_branches', []
+                )
+                finished.append(index % self._get_concurrency())
 
-                # TODO(rakhmerov): Here we can define more informative messages
-                # in cases when action is successful and when it's not.
-                # For example, in state_info we can specify the cause action.
-                # The use of action_ex.output.get('result') for state_info is
-                # not accurate because there could be action executions that
-                # had failed or was cancelled prior to this action execution.
-                state_info = {
-                    states.SUCCESS: None,
-                    states.ERROR: 'One or more actions had failed.',
-                    states.CANCELLED: 'One or more actions was cancelled.'
-                }
+                self.task_ex.runtime_context['finished_branches'] = finished
 
-                self.complete(state, state_info[state])
+                if self.is_with_items_completed():
+                    state = self._get_final_state()
 
-                return
+                    # TODO(rakhmerov): Here we can define more informative
+                    # messages in cases when action is successful and when
+                    # it's not. For example, in state_info we can specify the
+                    # cause action. The use of action_ex.output.get('result')
+                    # for state_info is not accurate because there could be
+                    # action executions that had failed or was cancelled
+                    # prior to this action execution.
+                    state_info = {
+                        states.SUCCESS: None,
+                        states.ERROR: 'One or more actions had failed.',
+                        states.CANCELLED: 'One or more actions was cancelled.'
+                    }
 
-            if self._has_more_iterations() and self._get_concurrency():
-                self._schedule_actions()
+                    self.complete(state, state_info[state])
 
-    def _schedule_actions(self):
+                    return
+
+        if self._has_more_iterations(index) and self._get_concurrency() \
+                and not self.wf_ex.params.get('recursive_terminate'):
+            self._schedule_actions(prev_index=index)
+
+    def _schedule_actions(self, prev_index=-1):
         with_items_values = self._get_with_items_values()
 
         if self._is_new():
@@ -891,7 +986,7 @@ class WithItemsTask(RegularTask):
 
             self._prepare_runtime_context(action_count)
 
-        input_dicts = self._get_input_dicts(with_items_values)
+        input_dicts = self._get_input_dicts(with_items_values, prev_index)
 
         if not input_dicts:
             self.complete(states.SUCCESS)
@@ -909,10 +1004,10 @@ class WithItemsTask(RegularTask):
                     target,
                     index=i,
                     safe_rerun=self._get_safe_rerun(),
-                    timeout=self._get_timeout()
+                    deadline=self._get_deadline(),
+                    retry_no=self._get_retry_no()
                 )
 
-                self._decrease_capacity(1)
         except exc.MistralException as e:
             self.complete(states.ERROR, e.message)
             return
@@ -968,7 +1063,7 @@ class WithItemsTask(RegularTask):
 
         return result
 
-    def _get_input_dicts(self, with_items_values):
+    def _get_input_dicts(self, with_items_values, prev_index=-1):
         """Calculate input dictionaries for another portion of actions.
 
         :return: a list of tuples containing indexes and
@@ -976,7 +1071,23 @@ class WithItemsTask(RegularTask):
         """
         result = []
 
-        for i in self._get_next_indexes():
+        concurrency = self._get_concurrency()
+        count = self._get_with_items_count()
+
+        if prev_index >= 0:
+            ctx = {}
+
+            index = prev_index + concurrency
+
+            for k, v in with_items_values.items():
+                ctx.update({k: v[index]})
+
+            ctx = utils.merge_dicts(ctx, self.ctx)
+
+            result.append((index, self._get_action_input(ctx)))
+            return result
+
+        for i in range(min(count, concurrency)):
             ctx = {}
 
             for k, v in with_items_values.items():
@@ -997,119 +1108,100 @@ class WithItemsTask(RegularTask):
     def _get_with_items_count(self):
         return self._get_with_items_context()[self._COUNT]
 
-    def _get_with_items_capacity(self):
-        return self._get_with_items_context()[self._CAPACITY]
-
     def _get_concurrency(self):
-        return self.task_ex.runtime_context.get(self._CONCURRENCY)
+        return self.task_ex.runtime_context.get(self._CONCURRENCY, 50)
 
     def is_with_items_completed(self):
-        find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
+        cancelled_count = db_api.get_sub_executions_count(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=True,
+            states=[states.CANCELLED]
+        )
 
-        if list(filter(find_cancelled, self.task_ex.executions)):
+        if cancelled_count:
             return True
 
-        execs = list([t for t in self.task_ex.executions if t.accepted])
-        count = self._get_with_items_count() or 1
+        accepted_count = db_api.get_sub_executions_count(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow')
+        )
+
+        count = self._get_with_items_count()
+        if not count:
+            with_items_values = self._get_with_items_values()
+            count = len(next(iter(with_items_values.values())))
+        count = count or 1
 
         # We need to make sure that method on_action_complete() has been
         # called for every action. Just looking at number of actions and
         # their 'accepted' flag is not enough because action gets accepted
         # before on_action_complete() is called for it. This call is
         # mandatory in order to do all needed processing from task
-        # perspective. So we can simply check if capacity is fully reset
-        # to its initial state.
-        full_capacity = (
-            not self._get_concurrency() or
-            self._get_with_items_capacity() == self._get_concurrency()
-        )
+        # perspective.
 
-        return count == len(execs) and full_capacity
+        finished = self.task_ex.runtime_context.get('finished_branches')
+
+        all_branches_finished = set(finished) == set(range(
+            min(count, self._get_concurrency())))
+
+        return count == accepted_count and all_branches_finished
 
     def _get_final_state(self):
-        find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
-        find_error = lambda x: x.accepted and x.state == states.ERROR
+        cancelled_count = db_api.get_sub_executions_count(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=True,
+            states=[states.CANCELLED]
+        )
 
-        if list(filter(find_cancelled, self.task_ex.executions)):
+        if cancelled_count:
             return states.CANCELLED
-        elif list(filter(find_error, self.task_ex.executions)):
+
+        error_count = db_api.get_sub_executions_count(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=True,
+            states=[states.ERROR]
+        )
+        if error_count:
             return states.ERROR
-        else:
-            return states.SUCCESS
 
-    def _get_accepted_executions(self):
+        return states.SUCCESS
+
+    def _get_accepted_executions(self, retry_no=0):
         # Choose only if not accepted but completed.
-        return list(
-            [x for x in self.task_ex.executions
-             if x.accepted and states.is_completed(x.state)]
+        exs = db_api.get_accepted_executions_indexes(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=True
         )
 
-    def _get_unaccepted_executions(self):
+        return [ex[0] for ex in exs if ex[1] == retry_no]
+
+    def _get_unaccepted_executions(self, retry_no=0):
         # Choose only if not accepted but completed.
-        return list(
-            filter(
-                lambda x: not x.accepted and states.is_completed(x.state),
-                self.task_ex.executions
-            )
+        exs = db_api.get_accepted_executions_indexes(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=False
         )
+
+        return [ex[0] for ex in exs if ex[1] == retry_no]
 
     def _get_next_start_index(self):
-        f = lambda x: (
-            x.accepted or
-            states.is_running(x.state) or
-            states.is_idle(x.state)
+        count = db_api.get_sub_executions_count(
+            id=self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            states=[
+                states.RUNNING,
+                states.RUNNING_DELAYED,
+                states.IDLE
+            ],
+            or_=True
         )
 
-        return len(list(filter(f, self.task_ex.executions)))
-
-    def _get_next_indexes(self):
-        capacity = self._get_with_items_capacity()
-        count = self._get_with_items_count()
-
-        def _get_indexes(exs):
-            return sorted(set([ex.runtime_context['index'] for ex in exs]))
-
-        accepted = _get_indexes(self._get_accepted_executions())
-        unaccepted = _get_indexes(self._get_unaccepted_executions())
-
-        candidates = sorted(list(set(unaccepted) - set(accepted)))
-
-        if candidates:
-            indices = copy.copy(candidates)
-
-            if max(candidates) < count - 1:
-                indices += list(range(max(candidates) + 1, count))
-        else:
-            i = self._get_next_start_index()
-
-            indices = list(range(i, count))
-
-        return indices[:capacity]
-
-    def _increase_capacity(self):
-        ctx = self._get_with_items_context()
-        concurrency = self._get_concurrency()
-
-        if concurrency and ctx[self._CAPACITY] < concurrency:
-            ctx[self._CAPACITY] += 1
-
-            self.task_ex.runtime_context.update({self._WITH_ITEMS: ctx})
-
-    def _decrease_capacity(self, count):
-        ctx = self._get_with_items_context()
-
-        capacity = ctx[self._CAPACITY]
-
-        if capacity is not None:
-            if capacity >= count:
-                ctx[self._CAPACITY] -= count
-            else:
-                raise RuntimeError(
-                    "Can't decrease with-items capacity"
-                    " [capacity=%s, count=%s]" % (capacity, count)
-                )
-
-        self.task_ex.runtime_context.update({self._WITH_ITEMS: ctx})
+        return count
 
     def _is_new(self):
         return not self.task_ex.runtime_context.get(self._WITH_ITEMS)
@@ -1120,16 +1212,24 @@ class WithItemsTask(RegularTask):
         if not runtime_ctx.get(self._WITH_ITEMS):
             # Prepare current indexes and parallel limitation.
             runtime_ctx[self._WITH_ITEMS] = {
-                self._CAPACITY: self._get_concurrency(),
                 self._COUNT: action_count
             }
 
-    def _has_more_iterations(self):
+    def _has_more_iterations(self, index=-1):
         # See action executions which have been already
         # accepted or are still running.
-        action_exs = list(filter(
-            lambda x: x.accepted or x.state == states.RUNNING,
-            self.task_ex.executions
-        ))
 
-        return self._get_with_items_count() > len(action_exs)
+        total_count = self._get_with_items_count()
+
+        if index > 0:
+            return total_count > index + self._get_concurrency()
+
+        count = db_api.get_sub_executions_count(
+            self.task_ex.id,
+            workflow=self.task_ex.spec.get('workflow'),
+            accepted=True,
+            states=[states.RUNNING],
+            or_=True
+        )
+
+        return self._get_with_items_count() > count

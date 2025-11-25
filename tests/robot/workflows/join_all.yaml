@@ -1,0 +1,28 @@
+version: 2
+join_all:
+  tasks:
+    task1:
+      action: std.noop
+      on-success:
+        - task2
+        - task3
+        - task4
+    task2:
+      action: std.sleep seconds=1
+      on-success:
+        - task5
+    task3:
+      action: std.sleep seconds=2
+      on-success:
+        - task5
+    task4:
+      action: std.sleep seconds=3
+      on-success:
+        - task5
+    task5:
+      on-success:
+        - task6
+      join: all
+
+    task6:
+      action: std.noop

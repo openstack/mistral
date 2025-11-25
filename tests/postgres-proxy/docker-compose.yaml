@@ -1,0 +1,21 @@
+version: '3.0'
+
+services:
+  
+  proxy:
+    build: .
+    ports:
+      - "5433:5433"
+    environment:
+      POSTGRES_URL: "postgres:5432"
+    networks:
+      - postgres
+
+  postgres:
+    image: postgres:10.1-alpine
+    networks:
+      - postgres
+
+networks:
+  postgres:
+

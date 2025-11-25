@@ -1,4 +1,5 @@
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -43,6 +44,8 @@ def log_event(ctx, ex_id, data, event, timestamp, **kwargs):
 
 class NotifyEventsTest(base.NotifierTestCase):
     def setUp(self):
+        self.override_config('noop_execution', 'remote', 'executor')
+
         super(NotifyEventsTest, self).setUp()
 
         self.publishers = {
@@ -1048,7 +1051,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             task_exs = wf_ex.task_executions
 
         self.assertEqual(states.CANCELLED, wf_ex.state)
-        self.assertIsNone(wf_ex.state_info)
+        self.assertEqual('Workflow was cancelled.', wf_ex.state_info)
         self.assertEqual(1, len(task_exs))
 
         t1_ex = self._assert_single_item(task_exs, name='t1')

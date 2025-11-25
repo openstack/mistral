@@ -86,7 +86,7 @@ SUB_WF_EX = models.WorkflowExecution(
     context={},
     input={'foo': 'bar'},
     output={},
-    params={'env': {'k1': 'abc'}},
+    params={'env': {'k1': 'abc'}, 'read_only': False},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
     task_execution_id=uuidutils.generate_uuid()
@@ -98,7 +98,7 @@ SUB_WF_EX_JSON = {
     'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
     'input': '{"foo": "bar"}',
     'output': '{}',
-    'params': '{"env": {"k1": "abc"}}',
+    'params': '{"env": {"k1": "abc"}, "read_only": false}',
     'state': 'RUNNING',
     'state_info': None,
     'created_at': '1970-01-01 00:00:00',
@@ -115,11 +115,22 @@ SUB_WF_EX_JSON_WITH_DESC['description'] = SUB_WF_EX.description
 UPDATED_WF_EX = copy.deepcopy(WF_EX)
 UPDATED_WF_EX['state'] = states.PAUSED
 
+UPDATED_WF_EX_RO = copy.deepcopy(WF_EX)
+UPDATED_WF_EX_RO['state'] = states.ERROR
+UPDATED_WF_EX_RO['params'] = {'read_only': True}
+
+UPDATED_WF_EX_ERROR = copy.deepcopy(WF_EX)
+UPDATED_WF_EX_ERROR['state'] = states.ERROR
+
 UPDATED_WF_EX_JSON = copy.deepcopy(WF_EX_JSON)
 UPDATED_WF_EX_JSON['state'] = states.PAUSED
 
 UPDATED_WF_EX_ENV = copy.deepcopy(UPDATED_WF_EX)
 UPDATED_WF_EX_ENV['params'] = {'env': {'k1': 'def'}}
+
+UPDATED_WF_EX_READ_ONLY = copy.deepcopy(UPDATED_WF_EX)
+UPDATED_WF_EX_READ_ONLY['params'] = {'read_only': True}
+UPDATED_WF_EX_READ_ONLY['state'] = states.ERROR
 
 UPDATED_WF_EX_ENV_DESC = copy.deepcopy(UPDATED_WF_EX)
 UPDATED_WF_EX_ENV_DESC['description'] = 'foobar'
@@ -276,7 +287,13 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected_exec, resp.json)
-        mock_stop_wf.assert_called_once_with('123', 'ERROR', 'Force')
+        mock_stop_wf.assert_called_once_with(
+            '123',
+            'ERROR',
+            'Force',
+            True,
+            False
+        )
 
     @mock.patch.object(
         db_api,
@@ -308,7 +325,9 @@ class TestExecutionsController(base.APITest):
         mock_stop_wf.assert_called_once_with(
             '123',
             'CANCELLED',
-            'Cancelled by user.'
+            'Cancelled by user.',
+            True,
+            False
         )
 
     @mock.patch.object(
@@ -390,9 +409,16 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected_exec, resp.json)
-        mock_stop_wf.assert_called_once_with('123', 'ERROR', None)
+        mock_stop_wf.assert_called_once_with(
+            '123',
+            'ERROR',
+            None,
+            True,
+            False
+        )
 
-    @mock.patch('mistral.db.v2.api.get_workflow_execution')
+    @mock.patch('mistral.db.v2.api.get_workflow_execution',
+                return_value=WF_EX)
     @mock.patch(
         'mistral.db.v2.api.update_workflow_execution',
         return_value=WF_EX
@@ -407,7 +433,8 @@ class TestExecutionsController(base.APITest):
         mock_ensure.assert_called_once_with(
             '123',
             fields=(models.WorkflowExecution.id,
-                    models.WorkflowExecution.root_execution_id)
+                    models.WorkflowExecution.root_execution_id,
+                    models.WorkflowExecution.params)
         )
         mock_update.assert_called_once_with('123', update_params)
 
@@ -441,9 +468,9 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(
-        db_api,
+        sql_db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
     )
     def test_put_empty(self):
         resp = self.app.put_json('/v2/executions/123', {}, expect_errors=True)
@@ -973,22 +1000,46 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch('mistral.db.v2.api.get_workflow_executions')
-    @mock.patch('mistral.context.MistralContext.from_environ')
-    def test_get_all_filter_by_project_id(self, mock_context, mock_get_execs):
-        admin_ctx = unit_base.get_context(admin=True)
-        mock_context.return_value = admin_ctx
+    @mock.patch.object(
+        sql_db_api,
+        'get_workflow_execution',
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX_ERROR))
+    )
+    @mock.patch.object(rpc_clients.EngineClient,
+                       'update_wf_ex_to_read_only',
+                       return_value=copy.deepcopy(UPDATED_WF_EX_READ_ONLY))
+    def test_put_read_only(self, mock_update_read_only):
+        update_exec = {'params': '{"read_only": true}'}
 
-        fake_project_id = uuidutils.generate_uuid()
-
-        resp = self.app.get('/v2/executions?project_id=%s' % fake_project_id)
-
+        resp = self.app.put_json('/v2/executions/123', update_exec)
         self.assertEqual(200, resp.status_int)
+        self.assertEqual(update_exec['params'], resp.json['params'])
 
-        self.assertTrue(mock_get_execs.call_args[1].get('insecure', False))
-        self.assertTrue(
-            mock_get_execs.call_args[1].get('project_id', fake_project_id)
+    @mock.patch.object(
+        sql_db_api,
+        'get_workflow_execution',
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
+    )
+    def test_put_read_only_fail_wrong_state(self):
+        update_exec = {'params': '{"read_only": true}'}
+
+        resp = self.app.put_json('/v2/executions/123', update_exec,
+                                 expect_errors=True)
+        print(resp)
+        self.assertEqual(400, resp.status_int)
+
+        @mock.patch.object(
+            sql_db_api,
+            'get_workflow_execution',
+            mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX_RO))
         )
+        def test_put_read_only_fail_already_read_only(self):
+            update_exec = {'params': '{"read_only": true}'}
+
+            resp = self.app.put_json('/v2/executions/123', update_exec,
+                                     expect_errors=True)
+            print(resp)
+            self.assertEqual(400, resp.status_int)
 
     def test_get_all_with_nulls_not_valid(self):
         resp = self.app.get(
@@ -1046,3 +1097,142 @@ class TestExecutionsController(base.APITest):
             logging_values = ctx.get_logging_values()
             self.assertEqual(exp_root_execution_id,
                              logging_values["root_execution_id"])
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_headers_propagation_disabled(self, start_wf_func):
+        self.override_config(
+            'enabled',
+            False,
+            group='headers_propagation'
+        )
+        headers = {'Header1': "qwerty", 'Header2': "123",
+                   'Wrongheader': "wow"}
+
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
+
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body, headers=headers)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
+        start_wf_func.assert_called_once_with(
+            expected_json['workflow_id'],
+            '',
+            wf_ex_dict['id'],
+            json.loads(expected_json['input']),
+            **kwargs
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_headers_propagation_enabled_wrong_headers_skip(self,
+                                                            start_wf_func):
+        self.override_config(
+            'enabled',
+            True,
+            group='headers_propagation'
+        )
+        self.override_config(
+            'template',
+            'Header*',
+            group='headers_propagation'
+        )
+        headers = {'Header1': "qwerty", 'Header2': "123",
+                   'Wrongheader': "wow"}
+        excepted_headers = {'Header1': 'qwerty', 'Header2': '123'}
+
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
+
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body, headers=headers)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
+        start_wf_func.assert_called_once_with(
+            expected_json['workflow_id'],
+            '',
+            wf_ex_dict['id'],
+            json.loads(expected_json['input']),
+            headers=excepted_headers,
+            **kwargs
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_headers_propagation_enabled_multiple_headers(self, start_wf_func):
+        self.override_config(
+            'enabled',
+            True,
+            group='headers_propagation'
+        )
+        self.override_config(
+            'template',
+            'Header*, New*',
+            group='headers_propagation'
+        )
+        headers = {'Header1': "qwerty", 'Header2': "123",
+                   'Newheader1': "wow", 'Newheader2': "wow"}
+        excepted_headers = {'Header1': 'qwerty', 'Header2': '123',
+                            'Newheader1': "wow", 'Newheader2': "wow"}
+
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
+
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body, headers=headers)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
+        start_wf_func.assert_called_once_with(
+            expected_json['workflow_id'],
+            '',
+            wf_ex_dict['id'],
+            json.loads(expected_json['input']),
+            headers=excepted_headers,
+            **kwargs
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_headers_propagation_enabled_template_default(self, start_wf_func):
+        self.override_config(
+            'enabled',
+            True,
+            group='headers_propagation'
+        )
+        headers = {'Header1': "qwerty", 'Header2': "123",
+                   'Wrongheader': "wow"}
+
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
+
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body, headers=headers)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
+        args = start_wf_func.call_args
+        self.assertTrue(headers.items() <= args[1]['headers'].items())

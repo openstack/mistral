@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 - Huawei Technologies Co. Ltd
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -128,7 +129,7 @@ class WorkflowController(object):
             mistral.workflow.commands.WorkflowCommand).
         """
 
-        if self._is_completed():
+        if self._is_completed() or self._is_marked_cancelled():
             return []
 
         return self._find_next_commands(task_ex)
@@ -282,6 +283,15 @@ class WorkflowController(object):
             commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
             for t in self._get_task_executions(state=states.IDLE)
         ]
+
+    def _is_marked_cancelled(self):
+        """Determines if workflow marked as cancelled.
+
+        :return: True if this workflow is marked as cancelled.
+        """
+        if 'cancelled' not in self.wf_ex.params:
+            return False
+        return self.wf_ex.params['cancelled']
 
     def _is_completed(self):
         return states.is_completed(self.wf_ex.state)

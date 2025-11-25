@@ -1,0 +1,15 @@
+version: '2.0'
+parallel_branches:
+  tasks:
+    task1:
+      action: std.echo
+      input:
+        output: aa
+      publish:
+        var1: <% task(task1).result %>
+    task2:
+      action: std.echo
+      input:
+        output: bb
+      publish:
+        var2: <% task(task2).result %>

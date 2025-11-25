@@ -1,0 +1,10 @@
+version: '2.0'
+publish_on_error:
+  output-on-error:
+    out: <% $.hi %>
+  tasks:
+    task1:
+      action: std.fail
+      publish-on-error:
+        hi: hello_from_error
+        err: <% task(task1).result %>

@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2026 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,8 +14,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from builtins import TimeoutError
+import datetime
+from eventlet import timeout as eventlet_timeout
 from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
+from oslo_utils import timeutils
 from osprofiler import profiler
 
 from mistral import context
@@ -30,10 +35,20 @@ LOG = logging.getLogger(__name__)
 class DefaultExecutor(base.Executor):
     def __init__(self):
         self._engine_client = rpc.get_engine_client()
+        self.running_actions = {}
+
+    @profiler.trace('default-executor-interrupt-action', hide_args=True)
+    def interrupt_action(self, action_ex_id):
+        LOG.info("Received request to interrupt action " + action_ex_id)
+        if action_ex_id in self.running_actions:
+            self.running_actions[action_ex_id].interrupted = True
+        else:
+            self.running_actions[action_ex_id] = True
 
     @profiler.trace('default-executor-run-action', hide_args=True)
     def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
-                   redelivered=False, target=None, async_=True, timeout=None):
+                   redelivered=False, target=None, async_=True,
+                   deadline=None, timeout=None):
         """Runs action.
 
         :param action: Action to run.
@@ -46,8 +61,10 @@ class DefaultExecutor(base.Executor):
         :param target: Target (group of action executors).
         :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
-        :param timeout: a period of time in seconds after which execution of
-            action will be interrupted
+        :param deadline: a deadline after which execution of action will be
+                         interrupted
+        :param timeout: a timeout after which execution of action will be
+                         interrupted
         :return: Action result.
         """
 
@@ -60,6 +77,7 @@ class DefaultExecutor(base.Executor):
                 exec_ctx,
                 redelivered,
                 safe_rerun,
+                deadline,
                 timeout
             )
         finally:
@@ -67,7 +85,7 @@ class DefaultExecutor(base.Executor):
 
     def _do_run_action(self, action, action_ex_id, exec_ctx,
                        redelivered, safe_rerun,
-                       timeout):
+                       deadline, timeout):
         def send_error_back(error_msg):
             error_result = mistral_lib.Result(error=error_msg)
 
@@ -98,6 +116,11 @@ class DefaultExecutor(base.Executor):
             return send_error_back(msg)
 
         # Run action.
+        if action_ex_id in self.running_actions:
+            action.interrupted = True
+            self.running_actions[action_ex_id] = action
+        else:
+            self.running_actions[action_ex_id] = action
         try:
             # NOTE(d0ugal): If the action is a subclass of mistral-lib we
             # know that it expects to be passed an ActionContext.
@@ -114,7 +137,16 @@ class DefaultExecutor(base.Executor):
                 args=[action.run, context.ctx(), action_ctx, result_ptr]
             )
             thread.start()
-            thread.join(timeout=timeout)
+            if timeout:
+                timeout_seconds = timeout
+            elif deadline is None:
+                timeout_seconds = None
+            else:
+                deadline = timeutils.parse_isotime(deadline)
+                timeout_seconds = (deadline.replace(tzinfo=None) -
+                                   datetime.datetime.now()).total_seconds()
+
+            thread.join(timeout=timeout_seconds)
             # Get back result
             result = result_ptr.get('r')
 
@@ -137,7 +169,7 @@ class DefaultExecutor(base.Executor):
                 LOG.warning("The action %s timed out, we are now waiting for "
                             "the action thread to finish...", (action_ex_id))
                 thread.join()
-                raise Exception("Timeout after %s seconds" % (timeout))
+                raise TimeoutError("Action timed out after %s seconds" % (timeout))
 
             # Note: it's made for backwards compatibility with already
             # existing Mistral actions which don't return result as
@@ -151,8 +183,19 @@ class DefaultExecutor(base.Executor):
                 "msg='%s']" % (action, action_ex_id, e)
             )
             LOG.warning(msg, exc_info=True)
+
+            if type(e) is TimeoutError:
+                LOG.info(
+                    "Interrupting action via timeout [action_ex_id=%s]" %
+                    action_ex_id
+                )
+                self.interrupt_action(action_ex_id)
+
+            del self.running_actions[action_ex_id]
+
             return send_error_back(msg)
 
+        del self.running_actions[action_ex_id]
         # Send action result.
         try:
             if action_ex_id and (action.is_sync() or result.is_error()):

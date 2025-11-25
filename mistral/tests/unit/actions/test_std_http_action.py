@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -64,6 +65,8 @@ class HTTPActionTest(base.BaseTest):
     def test_http_action(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         action = std.HTTPAction(
             url=URL,
@@ -104,6 +107,8 @@ class HTTPActionTest(base.BaseTest):
     def test_http_action_error_result(self, mocked_method):
         mocked_method.return_value = get_error_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         action = std.HTTPAction(
             url=URL,
@@ -122,6 +127,8 @@ class HTTPActionTest(base.BaseTest):
     def test_http_action_with_auth(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         action = std.HTTPAction(
             url=URL,
@@ -138,6 +145,8 @@ class HTTPActionTest(base.BaseTest):
     def test_http_action_with_headers(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         headers = {'int_header': 33, 'bool_header': True,
                    'float_header': 3.0, 'regular_header': 'teststring'}
@@ -169,7 +178,11 @@ class HTTPActionTest(base.BaseTest):
             mocked_method.return_value = get_fake_response(
                 content=content, code=200
             )
-            result = action.run(mock.Mock())
+            mock_ctx = mock.Mock()
+            mock_headers = {}
+            mock_ctx.execution.workflow_propagated_headers = mock_headers
+
+            result = action.run(mock_ctx)
             self.assertEqual(content, result['content'])
 
         invoke(None)
@@ -186,6 +199,9 @@ class HTTPActionTest(base.BaseTest):
             content='', code=200, encoding=None
         )
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
+
         result = action.run(mock_ctx)
 
         self.assertIsNone(result['encoding'])
@@ -206,6 +222,8 @@ class HTTPActionTest(base.BaseTest):
             content='', code=201
         )
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
             action.run(mock_ctx)
@@ -236,6 +254,8 @@ class HTTPActionTest(base.BaseTest):
             content='', code=200
         )
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
             action.run(mock_ctx)
@@ -262,6 +282,8 @@ class HTTPActionTest(base.BaseTest):
             content=sensitive_data, code=200
         )
         mock_ctx = mock.Mock()
+        mock_headers = {}
+        mock_ctx.execution.workflow_propagated_headers = mock_headers
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
             action.run(mock_ctx)
@@ -272,3 +294,24 @@ class HTTPActionTest(base.BaseTest):
         msg = "Response body hidden due to action_logging configuration."
         self.assertNotIn(sensitive_data, log)
         self.assertIn(msg, log)
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_get_headers_from_context(self, mocked_method):
+        headers = {'Header1': "qwerty", 'Header2': "123",
+                   'Header3': "wow"}
+
+        mocked_method.return_value = get_success_fake_response()
+        mock_ctx = mock.Mock()
+        mock_ctx.execution.workflow_propagated_headers = headers
+
+        action = std.HTTPAction(
+            url=URL,
+            method='GET',
+            headers=headers.copy(),
+        )
+        result = action.run(mock_ctx)
+
+        self.assertIn('headers', result)
+
+        args, kwargs = mocked_method.call_args
+        self.assertEqual(headers, kwargs['headers'])

@@ -1,0 +1,11 @@
+tornado
+python-jenkins
+python-dateutil!=2.8.1
+requests
+PyYAML
+# dictdiffer>=0.7.1
+openshift
+aiohttp
+tabulate
+google-auth<2.7.0
+setuptools==70.0.0

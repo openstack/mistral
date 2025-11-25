@@ -1,0 +1,13 @@
+certifi==2024.2.2
+confluent-kafka==1.6.1
+Flask
+gevent
+jsonschema<4.6.0
+kubernetes
+psycopg2-binary
+py_mini_racer
+prometheus_client
+setuptools==70.0.0
+urllib3==1.26.18
+# tls issue
+oslo.service==3.4.0

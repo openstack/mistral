@@ -1,0 +1,15 @@
+version: '2.0'
+
+wf_with_nested_wf:
+  input:
+    - url
+  output:
+    result: <% task(task1).result %>
+  tasks:
+    task1:
+      workflow: http_action
+      input:
+        url: <% $.url %>
+      on-success: task2
+    task2:
+      action: std.fail

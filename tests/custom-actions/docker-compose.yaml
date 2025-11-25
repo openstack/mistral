@@ -1,0 +1,28 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:9.6.2-alpine
+    network_mode: "host"
+
+  rabbit:
+    image: rabbitmq:3.6-management-alpine
+    network_mode: "host"
+
+  mistral:
+    build: .
+    network_mode: "host"
+    restart: always
+    entrypoint: sh upgrade_db_and_start.sh
+    environment:
+      - SERVER=all
+      - RABBIT_HOST=localhost
+      - RABBIT_PORT=5672
+      - PG_HOST=localhost
+      - PG_PORT=5432
+      - PG_DB_NAME=mistral_mis
+      - DEBUG_LOG=False
+      - SECURITY_PROFILE=prod
+      - AUTH_ENABLE=True
+      - IDP_SERVER=http://identity-provider:8080
+      - IDP_CLIENT_ID=42faf500-f109-4d4f-9760-a7bd0db89710
+      - IDP_CLIENT_SECRET=IIejXh7-8PiMYHlntVLfdv8oeIltUWOhj-X6j8fv7aJpIsuQolRTJkdvEBNDwZD1odl1Vg_TqRehbZpla1_uhw

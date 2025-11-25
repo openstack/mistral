@@ -1,0 +1,9 @@
+version: '2.0'
+
+task_skip_with_on_success:
+  tasks:
+    task1:
+      action: std.fail
+      on-success: task2
+    task2:
+      action: std.noop

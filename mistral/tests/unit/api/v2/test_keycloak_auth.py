@@ -1,4 +1,5 @@
 # Copyright 2017 - Nokia Networks
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -82,6 +83,7 @@ MOCK_WF = mock.MagicMock(return_value=WF_DB)
 # Set up config options.
 AUTH_URL = 'https://my.keycloak.com:8443/auth'
 REALM_NAME = 'my_realm'
+IDP_URL = "http://idp:8080"
 
 USER_INFO_ENDPOINT = (
     "%s/realms/%s/protocol/openid-connect/userinfo" % (AUTH_URL, REALM_NAME)
@@ -105,6 +107,7 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
         super(TestKeyCloakOIDCAuth, self).setUp()
 
         self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.override_config('idp_url', IDP_URL, group='oauth2')
 
         self.auth_handler = keycloak.KeycloakAuthHandler()
 
@@ -203,7 +206,8 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
         # Imitate failure response from KeyCloak.
         req_mock.get(
-            'https://127.0.0.1:9080',
+            'http://idp:8080/auth/realms/my_realm/protocol/'
+            'openid-connect/certs',
             status_code=401,
             reason='Access token is invalid',
             headers=WWW_AUTHENTICATE_HEADER
@@ -256,6 +260,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
         self.override_config('auth_enable', True, group='pecan')
         self.override_config('auth_type', 'keycloak-oidc')
         self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.override_config('idp_url', IDP_URL, group='oauth2')
 
         self.app = pecan.testing.load_test_app(
             dict(pecan_app.get_pecan_config())
@@ -369,6 +374,7 @@ class TestKeyCloakOIDCAuthApp(base.DbTestCase):
         self.override_config('auth_enable', True, group='pecan')
         self.override_config('auth_type', 'keycloak-oidc')
         self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.override_config('idp_url', IDP_URL, group='oauth2')
 
         self.app = pecan.testing.load_test_app(
             dict(pecan_app.get_pecan_config())

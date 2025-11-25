@@ -1,5 +1,6 @@
 # Copyright 2016 - Nokia Networks
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -157,9 +158,11 @@ def _process_commands(wf_ex, cmds):
 
             task = task_handler.create_task(cmd, first_run)
 
+            if task.waiting:
+                continue
+
             def _start_task(_task=task, _first_run=first_run, _reset=reset):
                 rpc.get_engine_client().start_task(
-                    wf_spec=_task.wf_spec,
                     task_ex_id=_task.task_ex.id,
                     first_run=_first_run,
                     waiting=_task.waiting,
@@ -176,3 +179,6 @@ def _process_commands(wf_ex, cmds):
             wf_handler.set_workflow_state(wf_ex, cmd.new_state, cmd.msg)
         else:
             raise exc.MistralError('Unsupported workflow command: %s' % cmd)
+
+    if wf_ex.params.get('terminate_to_error'):
+        wf_handler.check_and_complete(wf_ex_id=wf_ex.id)

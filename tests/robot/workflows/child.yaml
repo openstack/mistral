@@ -1,0 +1,11 @@
+version: '2.0'
+child:
+  input:
+    - in_var
+  output:
+    out_var: <% $.var_task %>
+  tasks:
+    task1:
+      action: std.echo output='stub'
+      publish:
+        var_task: <% task().result %>

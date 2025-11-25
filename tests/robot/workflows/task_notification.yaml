@@ -1,0 +1,10 @@
+version: '2.0'
+
+task_notification:
+  tasks:
+    task1:
+      action: std.fail
+      wait-after: 5
+      on-error: task2
+    task2:
+      action: std.sleep seconds=3

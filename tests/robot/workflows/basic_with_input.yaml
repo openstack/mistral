@@ -1,0 +1,8 @@
+version: '2.0'
+
+basic_with_input:
+  input:
+   - context
+  tasks:
+    task1:
+      action: std.echo output="message"

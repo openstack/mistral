@@ -1,0 +1,7 @@
+version: '2.0'
+sub_wf:
+  tasks:
+    task1:
+      on-success: [task2]
+    task2:
+      action: std.noop

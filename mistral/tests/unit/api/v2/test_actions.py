@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -508,7 +509,7 @@ class TestActionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(2, len(resp.json['actions']))
         self.assertEqual(resp.json['actions'][0]['name'], 'my_action')
-        self.assertEqual(resp.json['actions'][1]['name'], 'std.async_noop')
+        self.assertEqual(resp.json['actions'][1]['name'], 'oauth2.http')
 
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(

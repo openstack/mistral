@@ -1,0 +1,15 @@
+version: 2
+NotificationWorkflow:
+  output:
+    result: <% $.taskResult %>
+  tasks:
+    task1:
+      action: std.fail
+      on-error:
+        - task2
+    task2:
+      action: std.echo
+      input:
+        output: result
+      publish:
+        taskResult: <% task().result %>

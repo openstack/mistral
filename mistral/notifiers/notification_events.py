@@ -1,4 +1,5 @@
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,7 +16,9 @@
 from mistral.workflow import states
 
 
+WORKFLOW_PLANNED = 'WORKFLOW_PLANNED'
 WORKFLOW_LAUNCHED = 'WORKFLOW_LAUNCHED'
+
 WORKFLOW_SUCCEEDED = 'WORKFLOW_SUCCEEDED'
 WORKFLOW_FAILED = 'WORKFLOW_FAILED'
 WORKFLOW_CANCELLED = 'WORKFLOW_CANCELLED'
@@ -24,6 +27,7 @@ WORKFLOW_RESUMED = 'WORKFLOW_RESUMED'
 WORKFLOW_RERUN = 'WORKFLOW_RERUN'
 
 WORKFLOWS = [
+    WORKFLOW_PLANNED,
     WORKFLOW_LAUNCHED,
     WORKFLOW_SUCCEEDED,
     WORKFLOW_FAILED,
@@ -55,6 +59,26 @@ TASKS = [
 
 EVENTS = WORKFLOWS + TASKS
 
+FINISHED_EVENTS = [
+    WORKFLOW_SUCCEEDED,
+    WORKFLOW_FAILED,
+    WORKFLOW_CANCELLED,
+    TASK_SUCCEEDED,
+    TASK_FAILED,
+    TASK_SKIPPED,
+    TASK_CANCELLED
+]
+
+FINISHED_EVENTS = [
+    WORKFLOW_SUCCEEDED,
+    WORKFLOW_FAILED,
+    WORKFLOW_CANCELLED,
+    TASK_SUCCEEDED,
+    TASK_FAILED,
+    TASK_SKIPPED,
+    TASK_CANCELLED
+]
+
 # Describes what state transition matches to what event.
 _TASK_EVENT_MAP = {
     states.RUNNING: {
@@ -80,6 +104,9 @@ _WF_EVENT_MAP = {
         states.PAUSED: WORKFLOW_RESUMED,
         states.ERROR: WORKFLOW_RERUN
 
+    },
+    states.PLANNED: {
+        'ANY': WORKFLOW_PLANNED
     },
     states.SUCCESS: {'ANY': WORKFLOW_SUCCEEDED},
     states.ERROR: {'ANY': WORKFLOW_FAILED},
@@ -113,3 +140,7 @@ def identify_task_event(from_state, to_state):
 
 def identify_workflow_event(from_state, to_state):
     return _identify_event(from_state, to_state, _WF_EVENT_MAP)
+
+
+def is_finished_event(event):
+    return event in FINISHED_EVENTS

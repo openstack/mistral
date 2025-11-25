@@ -1,0 +1,89 @@
+title Request: create workflow
+
+User->Mistral API:Create workflow
+note over User, Mistral API 
+In addition to regular parameters required
+for workflow creation, User should send
+Authorization header with IDP token,
+for example:
+Authorization: Bearer eyJWxn..Yz-Q
+end note
+
+Mistral API->Identity Provider: Token gets validated in IDP
+
+Identity Provider->Mistral API: 
+
+Mistral API->RabbitMQ: Send workflow creation message to Rabbit
+note over Mistral API, RabbitMQ
+* WF definition YAML
+* Context which contains tenant id
+end note
+
+RabbitMQ->Mistral Engine: Forward message
+Mistral Engine->Mistral Engine: Workflow creation logic
+
+alt If connection is NOT cached yet
+    Mistral Engine->Application DBAAS agent: Get connection credentials
+    note over Mistral Engine, Application DBAAS agent
+    Call to DBaaS Agent to get/create Tenant DB.
+    Parameters:
+    * tenant_id
+	* microserviceName
+    * isServiceDb = false in this case
+    * namespace - Openshift project where Mistral is deployed
+    Example:
+    URL: PUT http://db-aggregator/api/v1/dbaas/${NAMESPACE}/databases
+    ```json
+    {
+      "classifier": {
+        "dbClassifier": "${tenant_id}",
+        "microserviceName": "mistral",
+        "isServiceDb": false,
+		"namespace": ${namespace}
+      },
+      "namePrefix": "mistral",
+      "type": "postgresql"
+   }
+   ```
+    end note
+    Application DBAAS agent->DBAAS aggregator:
+    DBAAS aggregator->Mistral Engine: Result response
+    Mistral Engine->Mistral Engine: Put connection credentials to cache
+    Mistral Engine->PostreSQL: Upgrade Tenant DB if necessary
+
+    Mistral Engine->Application DBAAS agent: Get connection credentials for Service DB
+    note over Mistral Engine, Application DBAAS agent
+    Call to DBaaS Agent to get Service DB credentials.
+    Parameters:
+    * tenant_id = mistral
+	* microserviceName = mistral
+    * isServiceDb = true in this case
+    * namespace - Openshift project where Mistral is deployed
+    Example:
+    URL: PUT http://db-aggregator/api/v1/dbaas/${NAMESPACE}/databases
+    ```json
+    {
+      "classifier": {
+        "dbClassifier": "mistral",
+        "microserviceName": "mistral",
+        "isServiceDb": true,
+		"namespace": ${namespace}
+      },
+      "namePrefix": "mistral",
+      "type": "postgresql"
+   }
+   ```
+    end note
+    Application DBAAS agent->DBAAS aggregator:
+    DBAAS aggregator->Mistral Engine: Result response
+    Mistral Engine->PostreSQL: Connect to Service DB and store new tenant information
+
+end
+
+Mistral Engine->Mistral Engine: Get connection credentials from cache
+Mistral Engine->PostreSQL: Connect to Tenant DB
+Mistral Engine->PostreSQL: Store workflow execution
+
+Mistral Engine->RabbitMQ: Return created workflow execution in message
+RabbitMQ->Mistral API: Forward message
+Mistral API->User: Return created workflow execution to user

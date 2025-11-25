@@ -1,0 +1,6 @@
+version: '2.0'
+
+wf_pause_notification:
+  tasks:
+    task1:
+      action: std.async_noop

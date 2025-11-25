@@ -1,0 +1,17 @@
+version: 2
+with_items:
+  output:
+    vm_ids: <% $.vm_ids %>
+  input:
+    - vm_names
+  tasks:
+    task1:
+      on-success:
+        - task2
+    task2:
+      with-items: vm_name in <% $.vm_names %>
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      publish:
+        vm_ids: <% task().result %>

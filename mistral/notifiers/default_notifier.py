@@ -1,4 +1,5 @@
 # Copyright 2018 - Extreme Networks, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,7 +18,10 @@ import copy
 from oslo_log import log as logging
 
 from mistral import context as auth_ctx
+from mistral.db.v2 import api as db_api
+from mistral.exceptions import ApplicationContextNotFoundException
 from mistral.notifiers import base
+from mistral.notifiers import notification_events as event_base
 
 
 LOG = logging.getLogger(__name__)
@@ -27,9 +31,31 @@ class DefaultNotifier(base.Notifier):
     """Local notifier that process notification request."""
 
     def notify(self, ex_id, data, event, timestamp, publishers):
-        ctx = auth_ctx.ctx()
+        try:
+            ctx = auth_ctx.ctx()
+        except ApplicationContextNotFoundException:
+            ctx = None
 
         data['event'] = event
+
+        with db_api.transaction():
+            if event in event_base.TASKS:
+                if event_base.is_finished_event(event):
+                    task_ex = db_api.get_task_execution(data['id'])
+                    data['published'] = task_ex.published
+                else:
+                    data['published'] = {}
+                wf_ex = db_api.get_workflow_execution(
+                    data['workflow_execution_id']
+                )
+                data['workflow_execution_input'] = wf_ex.input
+            if event in event_base.WORKFLOWS:
+                wf_ex = db_api.get_workflow_execution(data['id'])
+                if event_base.is_finished_event(event):
+                    data['output'] = wf_ex.output
+                else:
+                    data['output'] = {}
+                data['input'] = wf_ex.input
 
         for entry in publishers:
             params = copy.deepcopy(entry)

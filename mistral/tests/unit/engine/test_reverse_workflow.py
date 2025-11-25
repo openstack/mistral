@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -84,6 +85,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual(wf_input, wf_ex.input)
         self.assertDictEqual(
             {
+                'read_only': False,
                 'task_name': 'task1',
                 'namespace': '',
                 'env': {}
@@ -127,6 +129,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual(wf_input, wf_ex.input)
         self.assertDictEqual(
             {
+                'read_only': False,
                 'task_name': 'task2',
                 'namespace': '',
                 'env': {}

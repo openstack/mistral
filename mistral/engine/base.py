@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2017 - Brocade Communications Systems, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -123,7 +124,7 @@ class Engine(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def stop_workflow(self, wf_ex_id, state, message):
+    def stop_workflow(self, wf_ex_id, state, message, force):
         """Stops workflow.
 
         :param wf_ex_id: Workflow execution id.
@@ -132,6 +133,15 @@ class Engine(object, metaclass=abc.ABCMeta):
         :param message: Optional information string.
 
         :return: Workflow execution.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def update_wf_ex_to_read_only(self, wf_ex_id):
+        """Rerun workflow from the specified task.
+
+        :param wf_ex_id: Workflow execution id.
+        :return: Workflow execution object.
         """
         raise NotImplementedError
 

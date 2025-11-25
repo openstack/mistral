@@ -1,0 +1,16 @@
+---
+version: '2.0'
+js_2:
+  input:
+    - value
+  output:
+    res: <% $.res %>
+  tasks:
+    echo:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+            return {"res" : $.value}
+      publish:
+        res: <% task().result.res %>

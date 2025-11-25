@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -235,7 +236,14 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(project_id, wf2_ex.project_id)
         self.assertIsNotNone(wf2_ex)
         self.assertDictEqual({}, wf2_ex.input)
-        self.assertDictEqual({'namespace': '', 'env': {}}, wf2_ex.params)
+        self.assertDictEqual(
+            {
+                'read_only': False,
+                'namespace': '',
+                'env': {}
+            },
+            wf2_ex.params
+        )
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -356,7 +364,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertIsNotNone(wf2_ex)
         self.assertDictEqual({}, wf2_ex.input)
         self.assertDictEqual(
-            {'env': env, 'namespace': ''},
+            {'read_only': False, 'env': env, 'namespace': ''},
             wf2_ex.params
         )
 

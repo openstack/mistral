@@ -380,3 +380,31 @@ Task skip could be performed by following request::
       "id": "<task-id>",
       "state": "SKIPPED"
     }
+
+Headers Propagation
+-------------------
+
+Headers that were used in request to start execution, can be propagated
+into actions and notifications.
+In actions, they will be available via action context:
+
+.. code-block:: python
+
+    class TestHeadersAction(actions.Action):
+        def __init__(self):
+            self.headers = None
+
+        def run(self, context):
+            self.headers = context.execution.headers
+
+To configure this feature, you should define `headers_propagation` section
+in your **config file**:
+
+.. code-block:: cfg
+
+    [headers_propagation]
+    enabled = True
+    template = Regex1, Regex2, Regex3
+
+Be sure not to use `.*`, otherwise you can ruin your http actions
+(for example, by propagation 'Content-Length' header).

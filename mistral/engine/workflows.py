@@ -2,6 +2,7 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,6 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import dispatcher
@@ -32,6 +34,7 @@ from mistral.lang import parser as spec_parser
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
 from mistral.rpc import clients as rpc
+from mistral.services.kafka_notifications import send_notification
 from mistral.services import triggers
 from mistral.services import workflows as wf_service
 from mistral.utils import wf_trace
@@ -42,8 +45,11 @@ from mistral.workflow import states
 from mistral_lib import actions as ml_actions
 from mistral_lib import utils
 
-
 LOG = logging.getLogger(__name__)
+
+_START_WORKFLOW_PATH = (
+    'mistral.engine.workflows._start_workflow'
+)
 
 
 class Workflow(object, metaclass=abc.ABCMeta):
@@ -55,7 +61,6 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
     def __init__(self, wf_ex=None):
         self.wf_ex = wf_ex
-
         if wf_ex:
             # We're processing a workflow that's already in progress.
             self.wf_spec = spec_parser.get_workflow_spec_by_execution_id(
@@ -88,34 +93,54 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if not filtered_publishers:
             return
 
-        data = {
+        root_execution_id = self.wf_ex.root_execution_id or self.wf_ex.id
+
+        notification_data = {
             "id": self.wf_ex.id,
             "name": self.wf_ex.name,
             "workflow_name": self.wf_ex.workflow_name,
             "workflow_namespace": self.wf_ex.workflow_namespace,
             "workflow_id": self.wf_ex.workflow_id,
+            "root_execution_id": root_execution_id,
             "state": self.wf_ex.state,
             "state_info": self.wf_ex.state_info,
             "project_id": self.wf_ex.project_id,
             "task_execution_id": self.wf_ex.task_execution_id,
-            "root_execution_id": self.wf_ex.root_execution_id,
+            "params": self.wf_ex.params,
             "created_at": utils.datetime_to_str(self.wf_ex.created_at),
             "updated_at": utils.datetime_to_str(self.wf_ex.updated_at)
         }
 
+        if 'params' in self.wf_ex and 'headers' in self.wf_ex['params']:
+            notification_data['headers'] = self.wf_ex['params']['headers']
+
+        kafka_data = {
+            'rpc_ctx': auth_ctx.ctx().to_dict(),
+            'ex_id': self.wf_ex.id,
+            'data': notification_data,
+            'event': event,
+            'timestamp': self.wf_ex.updated_at,
+            'publishers': filtered_publishers
+        }
+
         def _send_notification():
+            if cfg.CONF.kafka_notifications.enabled:
+                delivered = send_notification(kafka_data)
+                if delivered:
+                    return
+
             notifier.notify(
-                self.wf_ex.id,
-                data,
+                notification_data["id"],
+                notification_data,
                 event,
-                self.wf_ex.updated_at,
+                notification_data["updated_at"],
                 filtered_publishers
             )
-
         post_tx_queue.register_operation(_send_notification)
 
     @profiler.trace('workflow-start')
-    def start(self, wf_def, wf_ex_id, input_dict, desc='', params=None):
+    def start(self, wf_def, wf_ex_id, input_dict, desc='', params=None,
+              is_planned=False):
         """Start workflow.
 
         :param wf_def: Workflow definition.
@@ -127,13 +152,9 @@ class Workflow(object, metaclass=abc.ABCMeta):
         :raises
         """
 
-        assert not self.wf_ex
-
-        # New workflow execution.
-        self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf_def.id,
-            wf_def.updated_at
-        )
+        if ((self.wf_ex is not None and not is_planned) or
+           (is_planned and self.wf_ex is None)):
+            raise AssertionError("Impossible state")
 
         wf_trace.info(
             self.wf_ex,
@@ -141,15 +162,21 @@ class Workflow(object, metaclass=abc.ABCMeta):
             (wf_def.name, utils.cut(input_dict))
         )
 
-        self.validate_input(input_dict)
+        if not is_planned:
+            # New workflow execution.
+            self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+                wf_def.id,
+                wf_def.updated_at
+            )
 
-        self._create_execution(
-            wf_def,
-            wf_ex_id,
-            self.prepare_input(input_dict),
-            desc,
-            params
-        )
+            self.validate_input(input_dict)
+            self._create_execution(
+                wf_def,
+                wf_ex_id,
+                self.prepare_input(input_dict),
+                desc,
+                params
+            )
 
         self.set_state(states.RUNNING)
 
@@ -160,11 +187,12 @@ class Workflow(object, metaclass=abc.ABCMeta):
             wf_ctrl.continue_workflow()
         )
 
-    def stop(self, state, msg=None):
+    def stop(self, state, msg=None, sync=True, force=False):
         """Stop workflow.
 
         :param state: New workflow state.
         :param msg: Additional explaining message.
+        :param sync: Mode to update wf state.
         """
         assert self.wf_ex
 
@@ -173,7 +201,10 @@ class Workflow(object, metaclass=abc.ABCMeta):
         elif state == states.ERROR:
             self._fail_workflow(self._get_final_context(), msg)
         elif state == states.CANCELLED:
-            self._cancel_workflow(msg)
+            if sync:
+                self._cancel_workflow(self._get_final_context(), msg, force)
+            else:
+                self._mark_workflow_cancelled(msg)
 
     def pause(self, msg=None):
         """Pause workflow.
@@ -350,8 +381,9 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         return final_ctx
 
-    def _create_execution(self, wf_def, wf_ex_id, input_dict, desc, params):
-        values = {
+    def _create_execution(self, wf_def, wf_ex_id, input_dict, desc,
+                          params, state=states.IDLE):
+        wf_body = {
             'id': wf_ex_id,
             'name': wf_def.name,
             'description': desc,
@@ -360,17 +392,28 @@ class Workflow(object, metaclass=abc.ABCMeta):
             'workflow_namespace': wf_def.namespace,
             'workflow_id': wf_def.id,
             'spec': self.wf_spec.to_dict(),
-            'state': states.IDLE,
+            'state': state,
             'output': {},
             'task_execution_id': params.get('task_execution_id'),
             'root_execution_id': params.get('root_execution_id'),
             'runtime_context': {'index': params.get('index', 0)}
         }
+        retry_no = None
+        task_ex_id = params.get('task_execution_id')
+        if task_ex_id:
+            task_ex = db_api.get_task_execution(task_ex_id)
+            retry_policy = task_ex['runtime_context'].get('retry_task_policy')
+            if retry_policy:
+                retry_no = retry_policy['retry_no']
+        if retry_no:
+            wf_body['runtime_context']['retry_no'] = retry_no
+        else:
+            wf_body['runtime_context']['retry_no'] = 0
 
         if wf_def.workbook_name:
-            values['runtime_context']['wb_name'] = wf_def.workbook_name
+            wf_body['runtime_context']['wb_name'] = wf_def.workbook_name
 
-        self.wf_ex = db_api.create_workflow_execution(values)
+        self.wf_ex = db_api.create_workflow_execution(wf_body)
 
         LOG.info("Created workflow execution [workflow_name=%s, wf_ex_id=%s, "
                  "task_execution_id=%s, root_execution_id=%s]", wf_def.name,
@@ -380,6 +423,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         self.wf_ex.input = input_dict or {}
 
         params['env'] = _get_environment(params)
+        params['read_only'] = False
 
         self.wf_ex.params = params
 
@@ -451,6 +495,10 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         if states.is_paused_or_completed(self.wf_ex.state):
             return 0
+        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+        if (states.is_planned(self.wf_ex.state) and
+                not wf_ctrl._is_marked_cancelled()):
+            return 0
 
         # Workflow is not completed if there are any incomplete task
         # executions.
@@ -471,23 +519,53 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # wrong.
         db_api.expire_all()
 
-        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
-
         if wf_ctrl.any_cancels():
-            msg = _build_cancel_info_message(wf_ctrl, self.wf_ex)
+            final_context = wf_ctrl.evaluate_workflow_final_context()
 
-            self._cancel_workflow(msg)
+            self._cancel_workflow(
+                final_context,
+                msg=_build_cancel_info_message(wf_ctrl, self.wf_ex)
+            )
+        elif wf_ctrl._is_marked_cancelled():
+            final_context = wf_ctrl.evaluate_workflow_final_context()
+
+            self._cancel_workflow(final_context)
         elif wf_ctrl.all_errors_handled():
             ctx = wf_ctrl.evaluate_workflow_final_context()
 
             self._succeed_workflow(ctx)
         else:
-            msg = _build_fail_info_message(wf_ctrl, self.wf_ex)
+            if self.wf_ex.params.get('terminate_to_error'):
+                msg = "Workflow was terminated to error."
+            else:
+                msg = _build_fail_info_message(wf_ctrl, self.wf_ex)
             final_context = wf_ctrl.evaluate_workflow_final_context()
 
             self._fail_workflow(final_context, msg)
 
         return 0
+
+    def plan(self, wf_def, wf_ex_id, input_dict,
+             desc, params):
+        """Create workflow execution in planned state.
+
+        The method set wf_spec to Workflow obj and creates
+        workflow execution with planned state in database.
+        """
+        # New workflow execution.
+        self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
+        self.validate_input(input_dict)
+        self._create_execution(
+            wf_def,
+            wf_ex_id,
+            self.prepare_input(input_dict),
+            desc,
+            params
+        )
+        self.set_state(states.PLANNED)
 
     def _succeed_workflow(self, final_context, msg=None):
         output = data_flow.evaluate_workflow_output(
@@ -499,6 +577,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # Set workflow execution to success after output is evaluated.
         if not self.set_state(states.SUCCESS, msg):
             return
+        self.wf_ex.params['read_only'] = True
 
         self.wf_ex.output = output
 
@@ -551,21 +630,46 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
 
-    def _cancel_workflow(self, msg):
+    def _mark_workflow_cancelled(self, msg=None):
         if states.is_completed(self.wf_ex.state):
             return
 
-        if not self.set_state(states.CANCELLED, state_info=msg):
+        self.wf_ex.params['cancelled'] = True
+
+        if states.is_paused(self.wf_ex.state):
+            wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+            final_context = wf_ctrl.evaluate_workflow_final_context()
+            self._cancel_workflow(final_context, msg)
+
+    def _cancel_workflow(self, final_context, msg=None, force=False):
+        if states.is_completed(self.wf_ex.state):
             return
 
-        # When we set an ERROR state we should safely set output value getting
-        # w/o exceptions due to field size limitations.
-        msg = utils.cut_by_kb(
-            msg,
-            cfg.CONF.engine.execution_field_size_limit_kb
+        msg = "Workflow was cancelled." if not msg else msg
+
+        if not self.set_state(states.CANCELLED, state_info=msg):
+            return
+        self.wf_ex.params['read_only'] = True
+
+        self.wf_ex.output = data_flow.evaluate_workflow_output(
+            self.wf_ex,
+            {},
+            final_context
         )
 
-        self.wf_ex.output = {'result': msg}
+        if force:
+            tasks_ex = db_api.get_incomplete_task_executions(
+                workflow_execution_id=self.wf_ex.id
+            )
+
+            from mistral.engine import action_handler as a_h
+            from mistral.engine import task_handler as t_h
+
+            for task_ex in tasks_ex:
+                task = t_h.build_task_from_execution(self.wf_spec, task_ex)
+                task.set_state(states.ERROR, 'Task was failed due '
+                               'to workflow force cancel.')
+                a_h.cancel_incomplete_actions(task_ex.id)
 
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()

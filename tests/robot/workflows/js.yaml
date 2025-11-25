@@ -1,0 +1,17 @@
+---
+version: '2.0'
+js:
+  input:
+    - x
+    - y
+  output:
+    z: <% $.z %>
+  tasks:
+    sum_two_numbers:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          return $.x + $.y;
+      publish:
+        z: <% task().result %>

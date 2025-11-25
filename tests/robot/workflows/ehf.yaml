@@ -1,0 +1,17 @@
+version: 2
+ehf:
+  tasks:
+    task1:
+      action: std.fail
+      on-error:
+        - task2
+      on-success:
+        - task3
+      on-complete:
+        - task4
+    task2:
+      action: std.noop
+    task3:
+      action: std.noop
+    task4:
+      action: std.noop

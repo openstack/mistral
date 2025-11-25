@@ -1,0 +1,38 @@
+version: '2.0'
+pause_mode:
+  tasks:
+    task1:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10
+      on-success: [task2]
+    task2:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10
+      on-success: [task3]
+    task3:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10
+      on-success: [task4]
+    task4:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10
+      on-success: [task5]
+    task5:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10
+      on-success: [task6]
+    task6:
+      action: std.sleep seconds=10
+      retry:
+        count: 10
+        delay: 10

@@ -1,0 +1,593 @@
+version: 2
+ha_parent:
+  input:
+    - echo_url
+    - async_url
+  output:
+    task0: <% $.task0 %>
+    task1: <% $.task1 %>
+    task10: <% $.task10 %>
+    task11: <% $.task11 %>
+    task12: <% $.task12 %>
+    task13: <% $.task13 %>
+    task14: <% $.task14 %>
+    task15: <% $.task15 %>
+    task16: <% $.task16 %>
+    task17: <% $.task17 %>
+    task18: <% $.task18 %>
+    task19: <% $.task19 %>
+    task2: <% $.task2 %>
+    task20: <% $.task20 %>
+    task21: <% $.task21 %>
+    task22: <% $.task22 %>
+    task23: <% $.task23 %>
+    task24: <% $.task24 %>
+    task25: <% $.task25 %>
+    task26: <% $.task26 %>
+    task27: <% $.task27 %>
+    task28: <% $.task28 %>
+    task29: <% $.task29 %>
+    task3: <% $.task3 %>
+    task30: <% $.task30 %>
+    task31: <% $.task31 %>
+    task32: <% $.task32 %>
+    task33: <% $.task33 %>
+    task34: <% $.task34 %>
+    task35: <% $.task35 %>
+    task36: <% $.task36 %>
+    task37: <% $.task37 %>
+    task38: <% $.task38 %>
+    task39: <% $.task39 %>
+    task4: <% $.task4 %>
+    task40: <% $.task40 %>
+    task41: <% $.task41 %>
+    task42: <% $.task42 %>
+    task43: <% $.task43 %>
+    task5: <% $.task5 %>
+    task6: <% $.task6 %>
+    task7: <% $.task7 %>
+    task8: <% $.task8 %>
+    task9: <% $.task9 %>
+  tasks:
+    task0:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task1
+      publish:
+        task0: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task1:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task10
+      publish:
+        task1: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task2:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task3
+      publish:
+        task2: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task3:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task10
+      publish:
+        task3: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task4:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task5
+      publish:
+        task4: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task5:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task10
+      publish:
+        task5: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task6:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task7
+      publish:
+        task6: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task7:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task10
+      publish:
+        task7: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task8:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task9
+      publish:
+        task8: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task9:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task10
+      publish:
+        task9: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task10:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task11
+        - task13
+        - task15
+        - task17
+        - task19
+      join: all
+      publish:
+        task10: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task11:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task12
+      publish:
+        task11: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task12:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task21
+      publish:
+        task12: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task13:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task14
+      publish:
+        task13: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task14:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task21
+      publish:
+        task14: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task15:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task16
+      publish:
+        task15: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task16:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task21
+      publish:
+        task16: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task17:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task18
+      publish:
+        task17: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task18:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task21
+      publish:
+        task18: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task19:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task20
+      publish:
+        task19: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task20:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task21
+      publish:
+        task20: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task21:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task22
+        - task24
+        - task26
+        - task28
+        - task30
+      join: all
+      publish:
+        task21: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task22:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task23
+      publish:
+        task22: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task23:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task32
+      publish:
+        task23: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task24:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task25
+      publish:
+        task24: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task25:
+      with-items: 'vm_name in <% ["x1", "x2", "x3", "x4", "x5"] %>'
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      on-success:
+        - task32
+      publish:
+        task25: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task26:
+      with-items: 'vm_name in <% ["x1", "x2", "x3", "x4", "x5"] %>'
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      on-success:
+        - task27
+      publish:
+        task26: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task27:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task32
+      publish:
+        task27: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task28:
+      with-items: 'vm_name in <% ["x1", "x2", "x3", "x4", "x5"] %>'
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      on-success:
+        - task29
+      publish:
+        task28: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task29:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task32
+      publish:
+        task29: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task30:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task31
+      publish:
+        task30: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task31:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task32
+      publish:
+        task31: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task32:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task33
+        - task35
+        - task37
+        - task39
+        - task41
+      join: all
+      publish:
+        task32: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task33:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task34
+      publish:
+        task33: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task34:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task43
+      publish:
+        task34: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task35:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task36
+      publish:
+        task35: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task36:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task43
+      publish:
+        task36: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task37:
+      with-items: 'vm_name in <% ["x1", "x2", "x3", "x4", "x5"] %>'
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      on-success:
+        - task38
+      publish:
+        task37: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task38:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task43
+      publish:
+        task38: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task39:
+      workflow: ha_child
+      input:
+        echo_url: <% $.echo_url %>
+        async_url: <% $.async_url %>
+      on-success:
+        - task40
+      publish:
+        task39: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task40:
+      with-items: 'vm_name in <% ["x1", "x2", "x3", "x4", "x5"] %>'
+      action: std.echo
+      input:
+        output: <% $.vm_name %>
+      on-success:
+        - task43
+      publish:
+        task40: <% task().result %>
+      retry:
+        count: 5
+        delay: 0
+    task41:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      on-success:
+        - task42
+      publish:
+        task41: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task42:
+      action: std.mistral_http
+      input:
+        url: <% $.async_url %>
+        body: <% task().name %>
+      on-success:
+        - task43
+      publish:
+        task42: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0
+    task43:
+      action: std.http
+      input:
+        url: <% $.echo_url %>
+        body: <% task().name %>
+      join: all
+      publish:
+        task43: <% task().result["content"] %>
+      retry:
+        count: 5
+        delay: 0

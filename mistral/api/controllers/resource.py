@@ -1,4 +1,5 @@
 # Copyright 2013 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -91,6 +92,8 @@ class ResourceList(Resource):
 
     next = wtypes.text
     """A link to retrieve the next subset of the resource list"""
+
+    total = wtypes.IntegerType(minimum=0)
 
     @property
     def collection(self):

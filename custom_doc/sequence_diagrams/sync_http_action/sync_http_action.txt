@@ -1,0 +1,37 @@
+Control Client as client
+participant MistralAPI as api
+participant MistralEngine as engine
+participant MistralExecutor as executor
+participant RabbitMQ as rabbit
+participant Service as service
+client -> api: <create-execution>
+activate api
+api -> rabbit: run workflow
+activate rabbit
+rabbit -> engine:
+activate engine
+engine --> rabbit: return created execution
+rabbit -> api
+deactivate rabbit 
+api -> client: RUNNING
+deactivate api
+engine -> rabbit: run sync http action
+deactivate engine
+activate rabbit
+rabbit -> executor:
+deactivate rabbit
+activate executor
+executor -> service: http request
+activate service
+service -> executor
+deactivate service
+executor -> rabbit: done
+deactivate executor
+activate rabbit
+rabbit -> engine:
+deactivate rabbit
+engine -> engine: complete task
+engine -> engine: complete workflow
+note left
+         via scheduler
+end note

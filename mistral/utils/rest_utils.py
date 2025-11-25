@@ -2,6 +2,7 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Nokia, Inc.
 # Copyright 2022 - NetCracker Technology Corp.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -143,9 +144,9 @@ def filters_to_dict(**kwargs):
 
 
 def get_all(list_cls, cls, get_all_function, get_function,
-            resource_function=None, marker=None, limit=None,
-            sort_keys=None, sort_dirs=None, fields=None,
-            all_projects=False, **filters):
+            resource_function=None, get_count_function=None,
+            marker=None, limit=None, sort_keys=None, sort_dirs=None,
+            fields=None, all_projects=False, **filters):
     """Return a list of cls.
 
     :param list_cls: REST Resource collection class (e.g.: Actions,
@@ -254,7 +255,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     else:
         r.call(_get_all_function)
 
-    return list_cls.convert_with_links(
+    res = list_cls.convert_with_links(
         rest_resources,
         limit,
         pecan.request.application_url,
@@ -263,6 +264,13 @@ def get_all(list_cls, cls, get_all_function, get_function,
         fields=','.join(fields) if fields else '',
         **filters
     )
+
+    if get_count_function:
+        with db_api.transaction():
+            total_count = get_count_function(**filters)
+        res.total = total_count
+
+    return res
 
 
 class MistralRetrying(tenacity.Retrying):

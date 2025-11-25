@@ -1,0 +1,8 @@
+version: 2
+retry_flow:
+  tasks:
+    task1:
+      action: std.fail
+      retry:
+        delay: 0
+        count: 3

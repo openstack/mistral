@@ -1,4 +1,5 @@
 # Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,5 +17,9 @@
 import setuptools
 
 setuptools.setup(
-    setup_requires=['pbr>=2.0.0'],
-    pbr=True)
+    setup_requires=[
+        'setuptools==70.0.0',
+        'pbr>=2.0.0'
+    ],
+    pbr=True
+)

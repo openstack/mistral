@@ -1,0 +1,14 @@
+version: 2
+ActionInterruptWorkflow:
+  tasks:
+    task1:
+      action: std.http
+      input:
+        url: 'http://localhost:8080/mistral/action_interrupt'
+      on-error:
+        - task2
+      timeout: 5
+    task2:
+      action: std.echo
+      input:
+        output: result

@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +14,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
+
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import base
 from mistral.engine import post_tx_queue
 from mistral.engine import workflow_handler as wf_handler
 from mistral import expressions
+from mistral.lang import parser as spec_parser
 from mistral.scheduler import base as sched_base
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral_lib import actions as mistral_lib
+
+import datetime
+LOG = logging.getLogger(__name__)
 
 
 _CONTINUE_TASK_PATH = 'mistral.engine.policies._continue_task'
@@ -421,7 +429,7 @@ class TimeoutPolicy(base.TaskPolicy):
 
     def before_task_start(self, task):
         super(TimeoutPolicy, self).before_task_start(task)
-
+        task_ex = task.task_ex
         # No timeout if delay is 0
         if self.delay == 0:
             return
@@ -438,6 +446,23 @@ class TimeoutPolicy(base.TaskPolicy):
         )
 
         sched.schedule(job)
+
+        context_key = 'timeout_task_policy'
+
+        runtime_context = _ensure_context_has_key(
+            task_ex.runtime_context,
+            context_key
+        )
+
+        deadline = (datetime.datetime.now() + datetime.timedelta(
+            seconds=self.delay)).isoformat()
+
+        runtime_context[context_key] = {
+            'deadline': deadline,
+            'timeout': self.delay
+        }
+
+        task_ex.runtime_context = runtime_context
 
         wf_trace.info(
             task.task_ex,
@@ -553,12 +578,35 @@ def _complete_task(task_ex_id, state, state_info):
 @db_utils.retry_on_db_error
 @post_tx_queue.run
 def _fail_task_if_incomplete(task_ex_id, timeout):
+    from mistral.engine import action_handler
     from mistral.engine import task_handler
-
+    from mistral.lang.v2 import tasks as lang_tasks
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)
 
         if not states.is_completed(task_ex.state):
+            task_spec = spec_parser.get_task_spec(task_ex.spec)
+
+            task_simple = True
+            if task_spec.get_type() == lang_tasks.WORKFLOW_TASK_TYPE:
+                task_simple = False
+            if task_spec.get_with_items():
+                task_simple = False
+            actions = task_ex.action_executions
+            if actions and not actions[0].is_sync:
+                for action in actions:
+                    try:
+                        result = mistral_lib.Result(
+                            error="Action timed out"
+                        )
+                        action_handler.on_action_complete(action, result)
+                    except ValueError as e:
+                        LOG.error(e)
+                task_simple = False
+
+            if task_simple:
+                return
+
             msg = 'Task timed out [timeout(s)=%s].' % timeout
 
-            task_handler.complete_task(task_ex, states.ERROR, msg)
+            task_handler.complete_task(task_ex, states.ERROR, msg, force=True)

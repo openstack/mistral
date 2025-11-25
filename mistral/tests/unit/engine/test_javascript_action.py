@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -80,7 +81,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.SUCCESS, task_ex.state)
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual({'recovery': None}, task_ex.runtime_context)
 
         self.assertEqual(length / 2, task_ex.published['res'])
 
@@ -155,6 +156,6 @@ class JavaScriptEngineTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.SUCCESS, task_ex.state)
-        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertDictEqual({'recovery': None}, task_ex.runtime_context)
 
         self.assertEqual(length / 2, task_ex.published['res'])

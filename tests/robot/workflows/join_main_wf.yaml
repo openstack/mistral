@@ -1,0 +1,10 @@
+version: '2.0'
+join_main_wf:
+  tasks:
+    task1:
+      on-success: [join_task]
+    task2:
+      on-success: [join_task]
+    join_task:
+      join: all
+      workflow: failed_sub_wf

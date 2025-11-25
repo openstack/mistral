@@ -1,0 +1,8 @@
+version: '2.0'
+failed_sub_wf:
+  tasks:
+    task1:
+      action: not_exist
+      on-success: [task2]
+    task2:
+      action: std.noop

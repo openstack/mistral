@@ -1,0 +1,5 @@
+version: 2
+test spaces:
+  tasks:
+    task1:
+      action: std.noop

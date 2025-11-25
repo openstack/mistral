@@ -3,6 +3,7 @@
 # Copyright 2017 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2020 Nokia Software.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -159,6 +160,42 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
+    def plan_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
+                      wf_input=None, description='', async_=False, **params):
+        """Plans workflow sending a request to engine over RPC.
+
+        :param wf_identifier: Workflow identifier.
+        :param wf_namespace: Workflow namespace.
+        :param wf_input: Workflow input data as a dictionary.
+        :param wf_ex_id: Workflow execution id. If passed, it will be set
+            in the new execution object.
+        :param description: Execution description.
+        :param async_: If True, start workflow in asynchronous mode
+            (w/o waiting for completion).
+        :param params: Additional workflow type specific parameters.
+        :return: Workflow execution.
+        """
+        call = self._client.async_call if async_ else self._client.sync_call
+        LOG.info(
+            "Send RPC request 'plan_workflow'[workflow_identifier=%s, "
+            "workflow_input=%s, description=%s, params=%s]",
+            wf_identifier,
+            wf_input,
+            description,
+            params
+        )
+        return call(
+            auth_ctx.ctx(),
+            'plan_workflow',
+            wf_identifier=wf_identifier,
+            wf_namespace=wf_namespace,
+            wf_ex_id=wf_ex_id,
+            wf_input=wf_input or {},
+            description=description,
+            params=params
+        )
+
+    @base.wrap_messaging_exception
     def start_task(self, task_ex_id, first_run, waiting,
                    triggered_by, rerun, reset, **params):
         """Starts task sending a request to engine over RPC.
@@ -303,6 +340,20 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
+    def update_wf_ex_to_read_only(self, wf_ex_id):
+        """Stops the workflow with the given execution id.
+
+        :param wf_ex_id: Workflow execution id.
+        :return: Workflow execution.
+        """
+
+        return self._client.sync_call(
+            auth_ctx.ctx(),
+            'update_wf_ex_to_read_only',
+            wf_ex_id=wf_ex_id,
+        )
+
+    @base.wrap_messaging_exception
     def rerun_workflow(self, task_ex_id, reset=True, skip=False, env=None):
         """Rerun the workflow.
 
@@ -354,25 +405,31 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
-    def stop_workflow(self, wf_ex_id, state, message=None):
+    def stop_workflow(self, wf_ex_id, state, message=None,
+                      sync=True, force=False):
         """Stops workflow execution with given status.
 
         Once stopped, the workflow is complete with SUCCESS or ERROR,
         and can not be resumed.
 
         :param wf_ex_id: Workflow execution id
-        :param state: State assigned to the workflow: SUCCESS or ERROR
+        :param state: State assigned to the workflow: SUCCESS,
+        ERROR or CANCELLED
         :param message: Optional information string
+        :param sync: Optional mode to update workflow state
+        :param force: Optional flag to set if workflow state
+        should be updated immidiately or not
 
         :return: Workflow execution, model.Execution
         """
 
         LOG.info(
             "Send RPC request 'stop_workflow'[execution_id=%s,"
-            " state=%s, message=%s]",
+            " state=%s, message=%s, force=%s]",
             wf_ex_id,
             state,
-            message
+            message,
+            force
         )
 
         return self._client.sync_call(
@@ -380,7 +437,9 @@ class EngineClient(eng.Engine):
             'stop_workflow',
             wf_ex_id=wf_ex_id,
             state=state,
-            message=message
+            message=message,
+            sync=sync,
+            force=force
         )
 
     @base.wrap_messaging_exception
@@ -433,7 +492,8 @@ class ExecutorClient(exe.Executor):
 
     @profiler.trace('executor-client-run-action')
     def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
-                   redelivered=False, target=None, async_=True, timeout=None):
+                   redelivered=False, target=None, async_=True,
+                   deadline=None, timeout=None):
         """Sends a request to run action to executor.
 
         :param action: Action to run.
@@ -447,8 +507,10 @@ class ExecutorClient(exe.Executor):
         :param target: Target (group of action executors).
         :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
-        :param timeout: a period of time in seconds after which execution of
-            action will be interrupted
+        :param deadline: a deadline after which execution of action will be
+                         interrupted.
+        :param timeout: a timeout after which execution of action will be
+                         interrupted.
         :return: Action result.
         """
         rpc_kwargs = {
@@ -456,6 +518,7 @@ class ExecutorClient(exe.Executor):
             'action_ex_id': action_ex_id,
             'safe_rerun': safe_rerun,
             'exec_ctx': exec_ctx,
+            'deadline': deadline,
             'timeout': timeout
         }
 
@@ -471,6 +534,26 @@ class ExecutorClient(exe.Executor):
         )
 
         return rpc_client_method(auth_ctx.ctx(), 'run_action', **rpc_kwargs)
+
+    @profiler.trace('executor-client-interrupt-action')
+    def interrupt_action(self, action_ex_id):
+        """Sends a request to run action to executor.
+
+        :param action_ex_id: Action execution id.
+        :return: Action result.
+        """
+
+        LOG.debug(
+            "Sending an action interrupt to executor [action_ex_id=%s]",
+            action_ex_id
+        )
+
+        return self._client.async_call(
+            auth_ctx.ctx(),
+            'interrupt_action',
+            fanout=True,
+            action_ex_id=action_ex_id,
+        )
 
 
 class EventEngineClient(evt_eng.EventEngine):

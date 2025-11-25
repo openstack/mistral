@@ -1,0 +1,10 @@
+version: '2.0'
+main_wf:
+  tasks:
+    task1:
+      on-success: [task2]
+    task2:
+      workflow: sub_wf
+      on-success: [task3]
+    task3:
+      action: std.noop

@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Modified in 2025 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -25,6 +26,7 @@ import yaml
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services.workflows import get_workflow_definition_checksum
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
 from mistral.utils import safe_yaml
@@ -207,6 +209,7 @@ FIRST_WF_DEF = yaml.dump({
     'version': '2.0',
     'wf1': WFS_YAML['wf1']
 })
+
 SECOND_WF_DEF = yaml.dump({
     'version': '2.0',
     'wf2': WFS_YAML['wf2']
@@ -224,14 +227,15 @@ FIRST_WF_DICT = {
     },
     'version': '2.0'
 }
+
 FIRST_WF = {
     'name': 'wf1',
     'tags': [],
     'definition': FIRST_WF_DEF,
+    'checksum': get_workflow_definition_checksum(FIRST_WF_DEF),
     'spec': FIRST_WF_DICT,
     'scope': 'private',
     'namespace': '',
-    'checksum': '1b786ecb96b9358f67718a407c274885',
     'is_system': False
 }
 
@@ -251,10 +255,10 @@ SECOND_WF = {
     'name': 'wf2',
     'tags': [],
     'definition': SECOND_WF_DEF,
+    'checksum': get_workflow_definition_checksum(SECOND_WF_DEF),
     'spec': SECOND_WF_DICT,
     'scope': 'private',
     'namespace': '',
-    'checksum': '5803661ccfdf226c95254b2a8a295226',
     'is_system': False
 }
 

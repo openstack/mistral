@@ -1,0 +1,7 @@
+dr_site_manager->config-prepare: launch
+config-prepare->config-prepare: some steps
+config-prepare->dr_site_manager: exit 0
+
+dr_site_manager->Mistral DR script: launch
+Mistral DR script -> Openshift: Add `do-not-start` openshift selector
+Mistral DR script -> dr_site_manager: exit 0

@@ -1,0 +1,11 @@
+version: '2.0'
+
+task_skip_with_on_skip:
+  tasks:
+    task1:
+      action: std.fail
+      on-skip: task2
+      publish-on-skip:
+        hi: hello_from_skip
+    task2:
+      action: std.noop

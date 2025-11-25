@@ -1,5 +1,6 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Modified in 2026 by NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -150,7 +151,13 @@ tests = [
     ({'safe-rerun': '<% false %>'}, False),
     ({'safe-rerun': '<% true %>'}, False),
     ({'safe-rerun': '<% * %>'}, True),
-    ({'safe-rerun': None}, True)
+    ({'safe-rerun': None}, True),
+    ({'safe-input': True}, False),
+    ({'safe-input': False}, False),
+    ({'safe-input': '<% false %>'}, False),
+    ({'safe-input': '<% true %>'}, False),
+    ({'safe-input': '<% * %>'}, True),
+    ({'safe-input': None}, True)
 ]
 
 for index, test in enumerate(tests):
