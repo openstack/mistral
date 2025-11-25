@@ -27,6 +27,7 @@ The topics covered in this section are as follows:
     * [Termination of Workflow Execution to CANCELLED](#termination-of-workflow-execution-to-cancelled)
     * [Mechanism to Execute std.noop Actions Inside Engine](#mechanism-to-execute-std-noop-actions-inside-engine)
     * [Mistral Smoke Test](#mistral-smoke-test)
+    * [M2M Token Transparency](#m2m-token-transparency)
     * [Headers Propagation](#headers-propagation)
     * [Action Timeout](#action-timeout)
     * [Workflow Definition Checksum](#workflow-definition-checksum)
@@ -1323,6 +1324,26 @@ Where,
 * `e2e_smoke_threshold` - Specifies how many times the smoke workflow should be completed.
 
 You can also see the smoke test results on the monitoring dashboard.
+
+## M2M Token Transparency
+
+Authentication tokens that were used to request workflow execution, can be used to authenticate against the API endpoints the task calls.
+Normally the auth token is rotated by mistral before calling the endpoint.
+
+The oauth2.transparent_http action passes on the token used to authenticate against mistral to the API endpoint being called. This is done by accessing the Authorization header stored in security context.
+
+```text
+class TransparentAuthHTTPAction(std_actions.HTTPAction):
+    def run(self, context):
+        if cfg.CONF.oauth2.security_profile == 'prod':
+            self.headers = self.headers or {}
+            sec_ctx = context.security
+            self.headers.update({
+                'Authorization': f'Bearer {sec_ctx.auth_token}'
+            })
+        return super(TransparentAuthHTTPAction, self).run(context)
+```
+
 
 ## Headers Propagation
 
