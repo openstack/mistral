@@ -49,7 +49,6 @@ class MonitoringServer(service_base.MistralService):
 
     def __init__(self, setup_profiler=True):
         super(MonitoringServer, self).__init__(
-            'monitoring_group',
             setup_profiler
         )
         collectors = entry_points(group='monitoring.metric_collector')
