@@ -9,7 +9,7 @@ prometheus_client
 setuptools==80.9.0
 urllib3==2.5.0
 # tls issue
-oslo.service >= 4.2.2
+oslo.service>=4.2.2
 fastapi
 uvicorn
 Jinja2==3.1.6
