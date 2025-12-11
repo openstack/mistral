@@ -147,7 +147,7 @@ class TestErrorsReportController(base.APITest, engine_base.EngineTestCase):
             name='std.sleep',
             type='ACTION',
             parent_id=task_error_obj['id'],
-            error='Action timed out'
+            error='Action timed out after 1 seconds'
         )
 
     def test_wf_with_task_fail_on(self):

@@ -143,8 +143,8 @@ class LocalNotifServerTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
-            (t2_ex.id, events.TASK_SUCCEEDED)
+            (t2_ex.id, events.TASK_SUCCEEDED),
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
         ]
 
         self.assertFalse(r_notif.RemoteNotifier.notify.called)
@@ -295,7 +295,7 @@ class HeadersPropagationTest(base.NotifierTestCase):
             notify=notif_options,
             **self.params
         )
-        self.assertFalse(d_notif.DefaultNotifier.notify.call_args)
+        mock_notify.assert_called_once()
 
         self.await_workflow_success(wf_ex.id)
 
