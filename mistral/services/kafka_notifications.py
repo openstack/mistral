@@ -271,6 +271,16 @@ def init_consume_loop(notifier):
     global __NOTIFIER
     __NOTIFIER = notifier
 
+    try:
+        consumer = _get_consumer()
+        consumer.poll(timeout=1.0)
+        LOG.info("Kafka consumer initialized and consumer group registered")
+    except Exception as e:
+        LOG.warning(
+            "Failed to initialize Kafka consumer during startup: %s. "
+            "Will retry in consume loop.", e
+        )
+
     eventlet.spawn(_consume_loop)
 
 
