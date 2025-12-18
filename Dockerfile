@@ -88,7 +88,7 @@ ENV MISTRAL_HOME=/opt/mistral \
     PGSSLCERT="/opt/mistral/mount_configs/tls/tls.crt" \
     PGSSLKEY="/opt/mistral/mount_configs/tls/tls.key" \
     PGSSLROOTCERT="/opt/mistral/mount_configs/tls/ca.crt" \
-    PBR_VERSION="19.0.0"
+    PBR_VERSION="21.0.0"
 
 RUN mkdir -p "${CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}" && \
