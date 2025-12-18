@@ -22,10 +22,10 @@ from confluent_kafka import Producer
 
 
 import datetime
-import eventlet
 from eventlet import Semaphore
 import json
 import sys
+import threading
 import time
 
 from mistral import context as auth_ctx
@@ -188,16 +188,9 @@ def listen_notifications():
     last_commit_time = datetime.datetime.now()
     idle_iterations_timeout = 30
     idle_iterations = 0
-    sleep_iteration = 0
     msg_count = 0
     while True:
         try:
-            if sleep_iteration == 10:
-                sleep_iteration = 0
-                eventlet.sleep(0.3)
-            else:
-                sleep_iteration += 1
-
             msg = _get_consumer().poll(timeout=consumer_poll_timeout)
             curr_time = datetime.datetime.now()
             if msg is None:
@@ -207,7 +200,7 @@ def listen_notifications():
                         "No messages for the long time,"
                         " reconnecting...")
                     _reset_consumer()
-                    eventlet.sleep(1)
+                    time.sleep(1)
                 idle_iterations += 1
 
             elif msg.error():
@@ -256,7 +249,7 @@ def listen_notifications():
                 "Something went wrong with kafka consumer,"
                 " reconnecting in 5 seconds...")
             _reset_consumer()
-            eventlet.sleep(5)
+            time.sleep(5)
 
 
 def _consume_loop():
@@ -281,7 +274,9 @@ def init_consume_loop(notifier):
             "Will retry in consume loop.", e
         )
 
-    eventlet.spawn(_consume_loop)
+    consumer_thread = threading.Thread(target=_consume_loop, daemon=True)
+    consumer_thread.start()
+    LOG.info("Kafka consumer thread started")
 
 
 def _get_admin_client():
