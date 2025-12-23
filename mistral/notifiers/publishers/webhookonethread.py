@@ -18,6 +18,7 @@ from eventlet import sleep as eventlet_sleep
 import json
 from oslo_config import cfg
 import requests
+from requests.exceptions import ChunkedEncodingError
 from six.moves import http_client
 
 from oslo_log import log as logging
@@ -61,7 +62,8 @@ class WebhookOneThreadPublisher(base.NotificationPublisher):
                     resp = requests.post(
                         url,
                         data=json.dumps(data),
-                        headers=headers
+                        headers=headers,
+                        stream=True
                     )
 
                     if resp.status_code in [http_client.OK,
@@ -72,14 +74,22 @@ class WebhookOneThreadPublisher(base.NotificationPublisher):
                             " number_of_retry=%s]",
                             data["name"], event, ex_id, url, retry_count
                         )
+                        try:
+                            resp.content
+                        except ChunkedEncodingError:
+                            pass
                         return
                     else:
+                        try:
+                            error_text = resp.text
+                        except ChunkedEncodingError:
+                            error_text = f"HTTP {resp.status_code}"
                         LOG.error(
                             "Message not delivered: "
                             "[event=%s:%s, ex_id=%s, url=%s, status_code=%s, "
                             "text=%s, number_of_retry=%s]",
                             data["name"], event, ex_id, url, resp.status_code,
-                            resp.text, retry_count
+                            error_text, retry_count
                         )
                 except BaseException as e:
                     LOG.error(
