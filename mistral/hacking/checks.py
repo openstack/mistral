@@ -27,10 +27,6 @@ import re
 
 from hacking import core
 
-oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
-oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
-oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
-
 
 @core.flake8ext
 def no_assert_equal_true_false(logical_line):
@@ -60,25 +56,6 @@ def no_assert_true_false_is_not(logical_line):
         yield (0, "M320: assertTrue(A is|is not B) or "
                "assertFalse(A is|is not B) sentences must not be used. "
                "Use assertIs(A, B) or assertIsNot(A, B) instead")
-
-
-@core.flake8ext
-def check_oslo_namespace_imports(logical_line):
-    if re.match(oslo_namespace_imports_from_dot, logical_line):
-        msg = ("O323: '%s' must be used instead of '%s'.") % (
-            logical_line.replace('oslo.', 'oslo_'),
-            logical_line)
-        yield (0, msg)
-    elif re.match(oslo_namespace_imports_from_root, logical_line):
-        msg = ("O323: '%s' must be used instead of '%s'.") % (
-            logical_line.replace('from oslo import ', 'import oslo_'),
-            logical_line)
-        yield (0, msg)
-    elif re.match(oslo_namespace_imports_dot, logical_line):
-        msg = ("O323: '%s' must be used instead of '%s'.") % (
-            logical_line.replace('import', 'from').replace('.', ' import '),
-            logical_line)
-        yield (0, msg)
 
 
 class BaseASTChecker(ast.NodeVisitor):
