@@ -4,8 +4,6 @@ metadata:
   name: {{ .Values.name }}
   labels:
     app.kubernetes.io/instance: {{ .Release.Name }}
-  annotations:
-    "argocd.argoproj.io/hook": "PostSync"
 spec:
   operatorId: {{ template "mistral.operatorId" . }}
 {{ if .Values.labels }}
@@ -20,7 +18,9 @@ spec:
     imagePullPolicy: {{ default "IfNotPresent" .Values.mistral.imagePullPolicy }}
     ingress:
       enabled: {{ default "false" .Values.mistral.ingress.enabled }}
+      {{- if .Values.mistral.ingress.host }}
       host: {{ .Values.mistral.ingress.host }}
+      {{- end}}
     cloudCoreIntegrationEnabled: {{ default "false" .Values.CLOUD_CORE_INTEGRATION_ENABLED }}
     lastUpdate: {{ now }}
     tls:
@@ -211,12 +211,18 @@ spec:
     auth:
       enable: {{ .Values.mistralCommonParams.auth.enable }}
       type: {{ .Values.mistralCommonParams.auth.type }}
+      {{- if .Values.mistralCommonParams.auth.cloudCoreUsername }}
       cloudCoreUsername: {{ .Values.mistralCommonParams.auth.cloudCoreUsername }}
+      {{- end}}
     dbaas:
       agentUrl: {{ .Values.mistralCommonParams.dbaas.agentUrl }}
+      {{- if .Values.mistralCommonParams.dbaas.aggregatorUrl }}
       aggregatorUrl: {{ .Values.mistralCommonParams.dbaas.aggregatorUrl }}
+      {{- end}}
     debugLog: {{ .Values.mistralCommonParams.debugLog }}
+    {{- if .Values.mistralCommonParams.externalMistralUrl }}
     externalMistralUrl: {{ .Values.mistralCommonParams.externalMistralUrl }}
+    {{- end}}
     guaranteedNotifierEnabled: {{ .Values.mistralCommonParams.guaranteedNotifierEnabled }}
     idpServer: {{ .Values.mistralCommonParams.idpServer }}
     idpExternalServer: {{ .Values.mistralCommonParams.idpExternalServer }}
@@ -303,12 +309,20 @@ spec:
     {{ if .Values.mistralExecutor.affinity }}
     affinity: {{ .Values.mistralExecutor.affinity | toJson }}
     {{ end }}
+    {{- if .Values.mistralExecutor.loggingProxyAdminUrl}}
     loggingProxyAdminUrl: {{ .Values.mistralExecutor.loggingProxyAdminUrl }}
+    {{- end}}
     certificateStore: {{ .Values.mistralExecutor.certificateStore }}
     retrieverPort: {{ .Values.mistralExecutor.retrieverPort }}
+    {{- if .Values.mistralExecutor.httpProxy}}
     httpProxy: {{ .Values.mistralExecutor.httpProxy }}
+    {{- end}}
+    {{- if .Values.mistralExecutor.httpsProxy}}
     httpsProxy: {{ .Values.mistralExecutor.httpsProxy }}
+    {{- end}}
+    {{- if .Values.mistralExecutor.noProxy}}
     noProxy: {{ .Values.mistralExecutor.noProxy }}
+    {{- end}}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
       {{- with .Values.mistralExecutor.securityContext }}
