@@ -12,7 +12,7 @@ This section describes metrics and their meanings.
 
 An overview of the Mistral dashboard is given below.
 
-![Overview](/docs/public/images/grafana_overview.PNG)
+![Overview](/custom_doc/public/images/grafana_overview.PNG)
 
 * `Mistral Cluster Status` - Displays the Mistral cluster status (Up, Degraded, Down).
 * `Maintenance status` - Displays the Mistral maintenance mode status.
@@ -26,7 +26,7 @@ An overview of the Mistral dashboard is given below.
 
 The following images displays the Mistral applications status:
 
-![Mistral Apps Status](/docs/public/images/mistral_apps_status.PNG)
+![Mistral Apps Status](/custom_doc/public/images/mistral_apps_status.PNG)
 
 * `Mistral API Status` - Displays the Mistral API status (Up, Degraded, Down).
 * `Mistral Executor Status` - Displays the Mistral executor status (Up, Degraded, Down).
@@ -45,7 +45,7 @@ The following images displays the Mistral applications status:
 
 The following images displays the total Mistral entities:
 
-![Total Mistral Entities](/docs/public/images/grafana_total_mistral_entities.PNG)
+![Total Mistral Entities](/custom_doc/public/images/grafana_total_mistral_entities.PNG)
 
 * `Workflow count by state` - Displays the workflows count by state.
 * `Task count by state` - Displays the tasks count by state.
@@ -58,7 +58,7 @@ The following images displays the total Mistral entities:
 
 The following images displays the Mistral CPU usage:
 
-![Mistral CPU Usage](/docs/public/images/grafana_mistral_cpu_usage.PNG)
+![Mistral CPU Usage](/custom_doc/public/images/grafana_mistral_cpu_usage.PNG)
 
 * `Mistral Engine CPU Usage` - Displays the Mistral Engine CPU usage in cores, CPU limit, and CPU requested for each engine pod.
 * `Mistral API CPU Usage` - Displays the Mistral API CPU usage in cores, CPU limit, and CPU requested for each API pod.
@@ -70,7 +70,7 @@ The following images displays the Mistral CPU usage:
 
 The following images displays the Mistral MEM usage:
 
-![Mistral MEM Usage](/docs/public/images/grafana_mistral_mem_usage.PNG)
+![Mistral MEM Usage](/custom_doc/public/images/grafana_mistral_mem_usage.PNG)
 
 * `Mistral Engine MEM Usage` - Displays the Mistral Engine memory usage in MiB, memory limit, and memory requested for each Engine pod.
 * `Mistral Executor MEM Usage` - Displays the Mistral Executor memory usage in MiB, memory limit, and memory requested for each Executor pod.
@@ -82,7 +82,7 @@ The following images displays the Mistral MEM usage:
 
 The following images displays the RabbitMQ details:
 
-![RabbitMQ](/docs/public/images/grafana_rabbitmq.PNG)
+![RabbitMQ](/custom_doc/public/images/grafana_rabbitmq.PNG)
 
 * `RabbitMQ Status` - Displays the RabbitMQ status (Up, Down).
 * `Mistral Engine Messages Count` - Displays the number of messages in Mistral engine queue.

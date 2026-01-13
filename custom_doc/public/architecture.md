@@ -20,7 +20,7 @@ A few basic concepts that one has to understand before going through the Mistral
 
 The following image illustrates an example of Workflow.
 
-![Workflow Example](/docs/public/images/workflow.png)
+![Workflow Example](/custom_doc/public/images/workflow.png)
 
 ## Structure
 
@@ -36,7 +36,7 @@ To communicate between these instances, Mistral uses RabbitMQ, or in some cases 
 
 A high-level scheme of the Mistral application is presented in the following image:
 
-![Application Overview](/docs/public/images/mistral_architecture.png)
+![Application Overview](/custom_doc/public/images/mistral_architecture.png)
 
 The Mistral deployment also includes the following components:
 
@@ -90,7 +90,7 @@ The supported deployment schemes are described below.
 
 The HA deployment scheme is shown below.
 
-![HA Deployment Scheme](/docs/public/images/ha_scheme.png)
+![HA Deployment Scheme](/custom_doc/public/images/ha_scheme.png)
 
 From the above image, the main features of the Mistral K8s HA deployment are as follows:
 
@@ -104,7 +104,7 @@ From the above image, the main features of the Mistral K8s HA deployment are as 
 
 The HA deployment scheme is shown below.
 
-![DR Deployment Scheme](/docs/public/images/dr_scheme.png)
+![DR Deployment Scheme](/custom_doc/public/images/dr_scheme.png)
 
 From the above image, the main features of the Mistral K8s DR deployment are as follows:
 
