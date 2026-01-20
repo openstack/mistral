@@ -12,3 +12,4 @@ websocket-client<1.4.0
 certifi>=2023.7.22
 
 setuptools>=80.9.0
+pyasn1>=0.6.2
