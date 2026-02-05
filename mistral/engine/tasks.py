@@ -1104,13 +1104,13 @@ class WithItemsTask(RegularTask):
     def is_index_invalid(self, index):
         with db_api.named_lock('with-items-%s' % self.task_ex.id):
 
-            exs = db_api.get_accepted_executions_indexes(
+            indices = db_api.get_accepted_executions_indexes(
                 id=self.task_ex.id,
                 workflow=self.task_ex.spec.get('workflow'),
                 accepted=True
             )
 
-            finished = [ex[0] for ex in exs]
+            finished = [idx[0] for idx in indices]
             
             return index in finished
 
