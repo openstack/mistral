@@ -272,7 +272,7 @@ mistralApi:
       memory: 350Mi
     limits:
       cpu: 400m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -304,7 +304,7 @@ mistralMonitoring:
       memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -343,7 +343,7 @@ mistralExecutor:
       memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -381,7 +381,7 @@ mistralEngine:
       memory: 750Mi
     limits:
       cpu: 1
-      memory: 1Gi
+      memory: 750Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -413,7 +413,7 @@ mistralNotifier:
       memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
