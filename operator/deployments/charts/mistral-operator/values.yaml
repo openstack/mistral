@@ -171,7 +171,7 @@ integrationTests:
   dockerImage: "ghcr.io/netcracker/qubership-mistral-tests:main"
   mistralReadyTimeout: 90
   securityContext: {}
-  prometheusUrl: ''
+  prometheusUrl: ""
   priorityClassName: ""
 
 bluegreenAgent:
@@ -189,42 +189,42 @@ bluegreenAgent:
 mistralCommonParams:
   secret_change: 1
   auth:
-    enable: 'False'
-    type: 'keycloak-oidc'
-    certs: ''
-    cloudCoreUsername: ''
+    enable: "False"
+    type: "keycloak-oidc"
+    certs: ""
+    cloudCoreUsername: ""
   dbaas:
-    agentUrl: 'http://dbaas-agent:8080'
-    aggregatorUrl: ''
-  debugLog: 'False'
-  externalMistralUrl: ''
-  guaranteedNotifierEnabled: 'False'
-  idpServer: 'http://identity-provider:8080'
-  idpExternalServer: 'http://identity-provider:8080'
-  idpUserPrecreated: 'False'
-  multitenancyEnabled: 'False'
-  osMistralUrl: 'http://mistral.mistral:8989/v2'
+    agentUrl: "http://dbaas-agent:8080"
+    aggregatorUrl: ""
+  debugLog: "False"
+  externalMistralUrl: ""
+  guaranteedNotifierEnabled: "False"
+  idpServer: "http://identity-provider:8080"
+  idpExternalServer: "http://identity-provider:8080"
+  idpUserPrecreated: "False"
+  multitenancyEnabled: "False"
+  osMistralUrl: "http://mistral.mistral:8989/v2"
   postgres:
-    dbName: ''
-    host: 'pg-patroni.postgresql'
-    port: '5432'
-    idleTimeout: '30s'
+    dbName: ""
+    host: "pg-patroni.postgresql"
+    port: "5432"
+    idleTimeout: "30s"
   kafkaNotifications:
-    enabled: 'True'
-    host: 'kafka.kafka:9092'
-    topic: ''
-    topicPartitionsCount: '2'
-    consumerGroupId: 'notification_consumer_group'
-    securityEnabled: 'True'
-  queueNamePrefix: 'mistral'
+    enabled: "True"
+    host: "kafka.kafka:9092"
+    topic: ""
+    topicPartitionsCount: "2"
+    consumerGroupId: "notification_consumer_group"
+    securityEnabled: "True"
+  queueNamePrefix: "mistral"
   rabbit:
-    host: 'rabbitmq.rabbitmq'
-    port: '5672'
-    vhost: ''
-  rpcImplementation: 'oslo'
-  securityProfile: 'prod'
-  usePypy: 'False'
-  cleanup: ''
+    host: "rabbitmq.rabbitmq"
+    port: "5672"
+    vhost: ""
+  rpcImplementation: "oslo"
+  securityProfile: "prod"
+  usePypy: "False"
+  cleanup: ""
 
 # Horizontal Pod Autoscaler (HPA)
 HPA_ENABLED: False
@@ -264,16 +264,15 @@ mistralCustomNotifierParams: ""
 #   [DEFAULT]
 #   debug = False
 
-
 mistralApi:
   replicas: 1
   resources:
     requests:
-      cpu: 200m
-      memory: 500Mi
+      cpu: 150m
+      memory: 350Mi
     limits:
-      cpu: 500m
-      memory: 500Mi
+      cpu: 400m
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -301,11 +300,11 @@ mistralMonitoring:
   replicas: 1
   resources:
     requests:
-      cpu: 200m
-      memory: 500Mi
+      cpu: 150m
+      memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -326,12 +325,12 @@ mistralMonitoring:
                     - mistral-monitoring
             topologyKey: kubernetes.io/hostname
           weight: 1
-  recoveryInterval: '30'
-  hangInterval: '300'
-  recoveryEnabled: 'True'
-  monitoringExecutionDelay: '600'
-  monitoringEnabled: 'False'
-  metricCollectionInterval: '30'
+  recoveryInterval: "30"
+  hangInterval: "300"
+  recoveryEnabled: "True"
+  monitoringExecutionDelay: "600"
+  monitoringEnabled: "False"
+  metricCollectionInterval: "30"
   prometheusEnabled: true
   securityContext: {}
   priorityClassName: ""
@@ -341,10 +340,10 @@ mistralExecutor:
   resources:
     requests:
       cpu: 200m
-      memory: 500Mi
+      memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -365,12 +364,12 @@ mistralExecutor:
                     - mistral-executor
             topologyKey: kubernetes.io/hostname
           weight: 1
-  loggingProxyAdminUrl: ''
-  certificateStore: 'http://certificate-store:8080'
-  retrieverPort: '8777'
-  httpProxy: ''
-  httpsProxy: ''
-  noProxy: ''
+  loggingProxyAdminUrl: ""
+  certificateStore: "http://certificate-store:8080"
+  retrieverPort: "8777"
+  httpProxy: ""
+  httpsProxy: ""
+  noProxy: ""
   securityContext: {}
   priorityClassName: ""
 
@@ -379,10 +378,10 @@ mistralEngine:
   resources:
     requests:
       cpu: 300m
-      memory: 1Gi
+      memory: 750Mi
     limits:
       cpu: 1
-      memory: 1Gi
+      memory: 750Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -410,11 +409,11 @@ mistralNotifier:
   replicas: 1
   resources:
     requests:
-      cpu: 200m
-      memory: 500Mi
+      cpu: 150m
+      memory: 350Mi
     limits:
       cpu: 500m
-      memory: 500Mi
+      memory: 350Mi
   affinity:
     podAntiAffinity:
       # requiredDuringSchedulingIgnoredDuringExecution:
@@ -440,15 +439,15 @@ mistralNotifier:
 
 mistralUpdateDbPod:
   memoryLimit: 300Mi
-  mountConfigsHome: '/opt/mistral/mount_configs'
-  args: './upgrade_db.sh'
+  mountConfigsHome: "/opt/mistral/mount_configs"
+  args: "./upgrade_db.sh"
   securityContext: {}
   priorityClassName: ""
 
 mistralCleanupDbPod:
   memoryLimit: 300Mi
-  mountConfigsHome: '/opt/mistral/mount_configs'
-  args: './cleanup.sh'
+  mountConfigsHome: "/opt/mistral/mount_configs"
+  args: "./cleanup.sh"
   securityContext: {}
   priorityClassName: ""
 
@@ -470,20 +469,20 @@ mistralLite:
   priorityClassName: ""
 
 secrets:
-  idpRegistrationToken: 'null'
-  idpClientId: 'null'
-  idpClientSecret: 'null'
-  idpJwkExp: 'null'
-  idpJwkMod: 'null'
-  idpUserRobot: 'null'
-  idpPasswordRobot: 'null'
-  pgAdminPassword: 'null'
-  pgAdminUser: 'null'
-  pgPassword: 'mistral_password'
-  pgUser: 'mistral_user'
-  rabbitAdminPassword: 'null'
-  rabbitAdminUser: 'null'
-  rabbitPassword: 'mistral_password'
-  rabbitUser: 'mistral_user'
-  kafkaSaslPlainUsername: 'null'
-  kafkaSaslPlainPassword: 'null'
+  idpRegistrationToken: "null"
+  idpClientId: "null"
+  idpClientSecret: "null"
+  idpJwkExp: "null"
+  idpJwkMod: "null"
+  idpUserRobot: "null"
+  idpPasswordRobot: "null"
+  pgAdminPassword: "null"
+  pgAdminUser: "null"
+  pgPassword: "mistral_password"
+  pgUser: "mistral_user"
+  rabbitAdminPassword: "null"
+  rabbitAdminUser: "null"
+  rabbitPassword: "mistral_password"
+  rabbitUser: "mistral_user"
+  kafkaSaslPlainUsername: "null"
+  kafkaSaslPlainPassword: "null"
