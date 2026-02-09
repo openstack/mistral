@@ -18,7 +18,7 @@ import setuptools
 
 setuptools.setup(
     setup_requires=[
-        'setuptools==80.10.2',
+        'setuptools==82.0.0',
         'pbr>=2.0.0'
     ],
     pbr=True
