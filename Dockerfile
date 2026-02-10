@@ -116,7 +116,7 @@ COPY --from=wheelhouse /wheels /wheels
 RUN pip install --no-cache-dir --upgrade pip==25.3 wheel && \
     pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt && \
     pip install --no-cache-dir --no-index --find-links=/wheels -r nc_requirements.txt && \
-    pip install --no-dependencies --no-cache-dir -e $MISTRAL_HOME && \
+    pip install --no-dependencies --no-cache-dir --no-build-isolation -e $MISTRAL_HOME && \
     cp -r $MISTRAL_HOME/config/* $CONFIGS_HOME && \
     chmod -R 777 $CONFIGS_HOME && chmod 777 $CONFIGS_HOME
 
