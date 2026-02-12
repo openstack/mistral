@@ -4,10 +4,10 @@ on:
     types: [created]
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
-      - '**'
+      - "**"
   workflow_dispatch:
     inputs:
       publish_docker:
@@ -73,13 +73,13 @@ jobs:
           no-cache: true
           context: ${{ matrix.component.context }}
           file: ${{ matrix.component.file }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ env.PUSH }}
           tags: ghcr.io/${{ env.GITHUB_GROUP }}/${{ matrix.component.name }}:${{ env.TAG_NAME }}
           provenance: false
       - uses: actions/delete-package-versions@v5
         with:
           package-name: ${{ matrix.component.name }}
-          package-type: 'container'
+          package-type: "container"
           package-version-ids: ${{ steps.get-ids-for-delete.outputs.ids-for-delete }}
         if: ${{ steps.get-ids-for-delete.outputs.ids-for-delete != '' }}
