@@ -5,7 +5,6 @@
       "file": "operator/Dockerfile",
       "context": "operator"
     },
-
     {
       "name": "qubership-mistral-operator-transfer-img",
       "file": "operator/docker-transfer/Dockerfile",
@@ -27,5 +26,5 @@
       "context": "tests/robot"
     }
   ],
-  "platforms": "linux/amd64,linux/arm64"
+  "platforms": "linux/amd64"
 }
