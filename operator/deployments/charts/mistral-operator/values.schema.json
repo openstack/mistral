@@ -33,10 +33,10 @@
                     "type": "string"
                 },
                 "cloudIntegrationEnabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "liteEnabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "imagePullPolicy": {
                     "type": "string"
@@ -46,7 +46,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "enabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "host": {
                             "type": "string"
@@ -58,7 +58,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "enabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "secretName": {
                             "type": "string"
@@ -83,7 +83,7 @@
                             "additionalProperties": false,
                             "properties": {
                                 "enabled": {
-                                    "type": "boolean"
+                                    "$ref": "#/definitions/booleanOrString"
                                 },
                                 "certProvider": {
                                     "type": "string"
@@ -104,7 +104,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -113,7 +113,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -131,7 +131,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -140,7 +140,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -149,7 +149,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -158,7 +158,7 @@
                                     "type": "object",
                                     "properties": {
                                         "enabled": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/booleanOrString"
                                         }
                                     },
                                     "additionalProperties": false
@@ -190,7 +190,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "enabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "maxUnavailable": {
                             "type": "integer"
@@ -203,7 +203,7 @@
             }
         },
         "CLOUD_CORE_INTEGRATION_ENABLED": {
-            "type": "boolean"
+            "$ref": "#/definitions/booleanOrString"
         },
         "DEPLOYMENT_SESSION_ID": {
             "type": "string"
@@ -253,10 +253,10 @@
                     "additionalProperties": false,
                     "properties": {
                         "enabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "smSecureAuth": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "smNamespace": {
                             "type": "string"
@@ -265,7 +265,7 @@
                             "type": "string"
                         },
                         "restrictedEnvironment": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "customAudience": {
                             "type": "string"
@@ -276,7 +276,7 @@
                     "type": "string"
                 },
                 "siteManagerEnabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "timeout": {
                     "type": "integer"
@@ -306,16 +306,16 @@
             "additionalProperties": true,
             "properties": {
                 "enabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "runTestsOnly": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "runBenchmarks": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "waitTestResultOnJob": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "waitTestResultTimeout": {
                     "type": "integer"
@@ -342,7 +342,7 @@
             "additionalProperties": false,
             "properties": {
                 "enabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "image": {
                     "type": "string"
@@ -367,7 +367,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "enable": {
-                            "type": "string"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "type": {
                             "type": "string"
@@ -393,13 +393,13 @@
                     }
                 },
                 "debugLog": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "externalMistralUrl": {
                     "type": "string"
                 },
                 "guaranteedNotifierEnabled": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "idpServer": {
                     "type": "string"
@@ -408,10 +408,10 @@
                     "type": "string"
                 },
                 "idpUserPrecreated": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "multitenancyEnabled": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "osMistralUrl": {
                     "type": "string"
@@ -439,7 +439,7 @@
                     "additionalProperties": false,
                     "properties": {
                         "enabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         },
                         "host": {
                             "type": "string"
@@ -454,7 +454,7 @@
                             "type": "string"
                         },
                         "securityEnabled": {
-                            "type": "boolean"
+                            "$ref": "#/definitions/booleanOrString"
                         }
                     }
                 },
@@ -483,7 +483,7 @@
                     "type": "string"
                 },
                 "usePypy": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "cleanup": {
                     "type": "string"
@@ -491,7 +491,7 @@
             }
         },
         "HPA_ENABLED": {
-            "type": "boolean"
+            "$ref": "#/definitions/booleanOrString"
         },
         "HPA_MIN_REPLICAS": {
             "type": "integer"
@@ -573,19 +573,19 @@
                     "type": "string"
                 },
                 "recoveryEnabled": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "monitoringExecutionDelay": {
                     "type": "string"
                 },
                 "monitoringEnabled": {
-                    "type": "string"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "metricCollectionInterval": {
                     "type": "string"
                 },
                 "prometheusEnabled": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "securityContext": {
                     "type": "object"
@@ -714,7 +714,7 @@
             "additionalProperties": false,
             "properties": {
                 "includeLocalRmq": {
-                    "type": "boolean"
+                    "$ref": "#/definitions/booleanOrString"
                 },
                 "resources": {
                     "$ref": "#/definitions/resources"
@@ -873,6 +873,16 @@
                     "type": "string"
                 }
             }
+        },
+        "booleanOrString": {
+            "anyOf": [
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "string"
+                }
+            ]
         }
     }
 }
