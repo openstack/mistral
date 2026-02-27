@@ -12,7 +12,7 @@
         },
         "operator": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
                 "imagePullPolicy": {
                     "type": "string"
@@ -427,7 +427,14 @@
                             "type": "string"
                         },
                         "port": {
-                            "type": "string"
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
                         },
                         "idleTimeout": {
                             "type": "string"
@@ -469,7 +476,14 @@
                             "type": "string"
                         },
                         "port": {
-                            "type": "string"
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
                         },
                         "vhost": {
                             "type": "string"
