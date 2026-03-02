@@ -1,0 +1,902 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Mistral Operator Helm values schema",
+    "type": "object",
+    "additionalProperties": true,
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "operatorImage": {
+            "type": "string"
+        },
+        "operator": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "imagePullPolicy": {
+                    "type": "string"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                }
+            }
+        },
+        "mistral": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dockerImage": {
+                    "type": "string"
+                },
+                "cloudIntegrationEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "liteEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "imagePullPolicy": {
+                    "type": "string"
+                },
+                "ingress": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "host": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "tls": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "secretName": {
+                            "type": "string"
+                        },
+                        "certificates": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "ca": {
+                                    "type": "string"
+                                },
+                                "crt": {
+                                    "type": "string"
+                                },
+                                "key": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "generateCerts": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "enabled": {
+                                    "$ref": "#/definitions/booleanOrString"
+                                },
+                                "certProvider": {
+                                    "type": "string"
+                                },
+                                "clusterIssuerName": {
+                                    "type": "string"
+                                },
+                                "duration": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "services": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "api": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "monitoring": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "postgres": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sslmode": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "rabbitmq": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "kafka": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "bluegreen": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                },
+                                "disasterRecovery": {
+                                    "type": "object",
+                                    "properties": {
+                                        "enabled": {
+                                            "$ref": "#/definitions/booleanOrString"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            }
+                        },
+                        "subjectAlternativeName": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "additionalDnsNames": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "additionalIpAddresses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "disruptionBudget": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "maxUnavailable": {
+                            "type": "integer"
+                        },
+                        "minAvailable": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "CLOUD_CORE_INTEGRATION_ENABLED": {
+            "$ref": "#/definitions/booleanOrString"
+        },
+        "DEPLOYMENT_SESSION_ID": {
+            "type": "string"
+        },
+        "kubernetesLabels": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "mistralOperator": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralApi": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralEngine": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralExecutor": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralNotifier": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralMonitoring": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralUpdateDbJob": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralDrJob": {
+                    "$ref": "#/definitions/labelObject"
+                },
+                "mistralTests": {
+                    "$ref": "#/definitions/labelObject"
+                }
+            }
+        },
+        "disasterRecovery": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "httpAuth": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "smSecureAuth": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "smNamespace": {
+                            "type": "string"
+                        },
+                        "smServiceAccountName": {
+                            "type": "string"
+                        },
+                        "restrictedEnvironment": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "customAudience": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "siteManagerEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "timeout": {
+                    "type": "integer"
+                },
+                "siteManagerApiGroup": {
+                    "type": "string"
+                },
+                "afterServices": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "integrationTests": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "enabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "runTestsOnly": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "runBenchmarks": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "waitTestResultOnJob": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "waitTestResultTimeout": {
+                    "type": "integer"
+                },
+                "dockerImage": {
+                    "type": "string"
+                },
+                "mistralReadyTimeout": {
+                    "type": "integer"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "prometheusUrl": {
+                    "type": "string"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "bluegreenAgent": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "imagePullPolicy": {
+                    "type": "string"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                }
+            }
+        },
+        "mistralCommonParams": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "secret_change": {
+                    "type": "integer"
+                },
+                "auth": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enable": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "certs": {
+                            "type": "string"
+                        },
+                        "cloudCoreUsername": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "dbaas": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "agentUrl": {
+                            "type": "string"
+                        },
+                        "aggregatorUrl": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "debugLog": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "externalMistralUrl": {
+                    "type": "string"
+                },
+                "guaranteedNotifierEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "idpServer": {
+                    "type": "string"
+                },
+                "idpExternalServer": {
+                    "type": "string"
+                },
+                "idpUserPrecreated": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "multitenancyEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "osMistralUrl": {
+                    "type": "string"
+                },
+                "postgres": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "dbName": {
+                            "type": "string"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "idleTimeout": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "kafkaNotifications": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        },
+                        "host": {
+                            "type": "string"
+                        },
+                        "topic": {
+                            "type": "string"
+                        },
+                        "topicPartitionsCount": {
+                            "type": "integer"
+                        },
+                        "consumerGroupId": {
+                            "type": "string"
+                        },
+                        "securityEnabled": {
+                            "$ref": "#/definitions/booleanOrString"
+                        }
+                    }
+                },
+                "queueNamePrefix": {
+                    "type": "string"
+                },
+                "rabbit": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "host": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "vhost": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "rpcImplementation": {
+                    "type": "string"
+                },
+                "securityProfile": {
+                    "type": "string"
+                },
+                "usePypy": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "cleanup": {
+                    "type": "string"
+                }
+            }
+        },
+        "HPA_ENABLED": {
+            "$ref": "#/definitions/booleanOrString"
+        },
+        "HPA_MIN_REPLICAS": {
+            "type": "integer"
+        },
+        "HPA_MAX_REPLICAS": {
+            "type": "integer"
+        },
+        "HPA_AVG_CPU_UTILIZATION": {
+            "type": "integer"
+        },
+        "HPA_SCALING_UP_PERCENT": {
+            "type": "integer"
+        },
+        "HPA_SCALING_UP_INTERVAL": {
+            "type": "integer"
+        },
+        "HPA_SCALING_DOWN_PERCENT": {
+            "type": "integer"
+        },
+        "HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS": {
+            "type": "integer"
+        },
+        "HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS": {
+            "type": "integer"
+        },
+        "DEPLOY_MODE": {
+            "type": "string"
+        },
+        "mistralCustomParams": {
+            "type": "string"
+        },
+        "mistralCustomApiParams": {
+            "type": "string"
+        },
+        "mistralCustomEngineParams": {
+            "type": "string"
+        },
+        "mistralCustomExecutorParams": {
+            "type": "string"
+        },
+        "mistralCustomNotifierParams": {
+            "type": "string"
+        },
+        "mistralApi": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "affinity": {
+                    "type": "object"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralMonitoring": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "recoveryInterval": {
+                    "type": "string"
+                },
+                "hangInterval": {
+                    "type": "string"
+                },
+                "recoveryEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "monitoringExecutionDelay": {
+                    "type": "string"
+                },
+                "monitoringEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "metricCollectionInterval": {
+                    "type": "string"
+                },
+                "prometheusEnabled": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralExecutor": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "loggingProxyAdminUrl": {
+                    "type": "string"
+                },
+                "certificateStore": {
+                    "type": "string"
+                },
+                "retrieverPort": {
+                    "type": "string"
+                },
+                "httpProxy": {
+                    "type": "string"
+                },
+                "httpsProxy": {
+                    "type": "string"
+                },
+                "noProxy": {
+                    "type": "string"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralEngine": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralNotifier": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "replicas": {
+                    "type": "integer"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralUpdateDbPod": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "memoryLimit": {
+                    "type": "string"
+                },
+                "mountConfigsHome": {
+                    "type": "string"
+                },
+                "args": {
+                    "type": "string"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralCleanupDbPod": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "memoryLimit": {
+                    "type": "string"
+                },
+                "mountConfigsHome": {
+                    "type": "string"
+                },
+                "args": {
+                    "type": "string"
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "mistralLite": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "includeLocalRmq": {
+                    "$ref": "#/definitions/booleanOrString"
+                },
+                "resources": {
+                    "$ref": "#/definitions/resources"
+                },
+                "rabbitmq": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "dockerImage": {
+                            "type": "string"
+                        },
+                        "resources": {
+                            "$ref": "#/definitions/resources"
+                        }
+                    }
+                },
+                "securityContext": {
+                    "type": "object"
+                },
+                "priorityClassName": {
+                    "type": "string"
+                }
+            }
+        },
+        "secrets": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "idpRegistrationToken": {
+                    "type": "string"
+                },
+                "idpClientId": {
+                    "type": "string"
+                },
+                "idpClientSecret": {
+                    "type": "string"
+                },
+                "idpJwkExp": {
+                    "type": "string"
+                },
+                "idpJwkMod": {
+                    "type": "string"
+                },
+                "idpUserRobot": {
+                    "type": "string"
+                },
+                "idpPasswordRobot": {
+                    "type": "string"
+                },
+                "pgAdminPassword": {
+                    "type": "string"
+                },
+                "pgAdminUser": {
+                    "type": "string"
+                },
+                "pgPassword": {
+                    "type": "string"
+                },
+                "pgUser": {
+                    "type": "string"
+                },
+                "rabbitAdminPassword": {
+                    "type": "string"
+                },
+                "rabbitAdminUser": {
+                    "type": "string"
+                },
+                "rabbitPassword": {
+                    "type": "string"
+                },
+                "rabbitUser": {
+                    "type": "string"
+                },
+                "kafkaSaslPlainUsername": {
+                    "type": "string"
+                },
+                "kafkaSaslPlainPassword": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "required": [
+        "name",
+        "operatorImage",
+        "mistral"
+    ],
+    "definitions": {
+        "resources": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "requests": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "cpu": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "limits": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "cpu": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "labelObject": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                },
+                "instance": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "managedBy": {
+                    "type": "string"
+                },
+                "partOf": {
+                    "type": "string"
+                },
+                "technology": {
+                    "type": "string"
+                }
+            }
+        },
+        "booleanOrString": {
+            "anyOf": [
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        }
+    }
+}

@@ -345,7 +345,7 @@ DNS names used to generate SSL certificate with "Subject Alternative Name" field
   {{- $mistralName := "mistral" -}}
   {{- $mistralMonitoringName := "mistral-monitoring" -}}
   {{- $dnsNames := list "localhost" $mistralName $mistralMonitoringName (printf "%s.%s" $mistralName .Release.Namespace) (printf "%s.%s.svc.cluster.local" $mistralName .Release.Namespace) (printf "%s.%s.svc" $mistralName .Release.Namespace) (printf "%s.%s" $mistralMonitoringName .Release.Namespace) (printf "%s.%s.svc.cluster.local" $mistralMonitoringName .Release.Namespace) (printf "%s.%s.svc" $mistralMonitoringName .Release.Namespace) -}}
-  {{ if (eq .Values.mistral.ingress.enabled true) }}
+  {{ if eq (toString .Values.mistral.ingress.enabled) "true" }}
   {{- $dnsNames = append $dnsNames .Values.mistral.ingress.host -}}
   {{- end -}}
   {{- $dnsNames = concat $dnsNames .Values.mistral.tls.subjectAlternativeName.additionalDnsNames -}}
