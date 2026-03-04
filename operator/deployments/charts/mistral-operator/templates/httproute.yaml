@@ -1,0 +1,51 @@
+{{- $mistralEnabled := .Values.mistral.ingress.enabled -}}
+{{- $isK8s := eq .Values.PAAS_PLATFORM "KUBERNETES" -}}
+{{- $tlsNotRequired := and (not .Values.mistral.tls.enabled) -}}
+{{- $tlsConfigured := and .Values.mistral.tls.enabled (or .Values.mistral.tls.generateCerts.enabled (eq (include "mistral.certificatesSpecified" .) "true")) -}}
+{{- if and $mistralEnabled $isK8s (or $tlsNotRequired $tlsConfigured) -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mistral
+  labels:
+    app: mistral
+spec:
+  parentRefs:
+    - name: {{ .Values.GatewayAPI.gatewayName }}
+      namespace: {{ .Values.GatewayAPI.gatewayNamespace }}
+
+  hostnames:
+    - {{ include "mistral.ingressHost" . | quote }}
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: mistral
+          port: 8989
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mistral-redirect
+  labels:
+    app: mistral
+spec:
+  parentRefs:
+    - name: {{ .Values.GatewayAPI.gatewayName }}
+      namespace: {{ .Values.GatewayAPI.gatewayNamespace }}
+      port: 80
+
+  hostnames:
+    - {{ include "mistral.ingressHost" . | quote }}
+
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+{{- end }}

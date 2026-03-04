@@ -1,0 +1,19 @@
+{{- if and .Values.mistral.ingress.enabled .Values.mistral.tls.enabled (or .Values.mistral.tls.generateCerts.enabled (eq (include "mistral.certificatesSpecified" .) "true")) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1/BackendTLSPolicy")  (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: mistral
+  labels:
+    app: mistral
+spec:
+  targetRefs:
+    - group: ""
+      kind: Service
+      name: mistral
+  validation:
+    hostname: - {{ include "mistral.ingressHost" . | quote }}
+    caCertificateRefs:
+    - group: ""
+      kind: Secret
+      name: {{ .Values.mistral.tls.generateCerts.enabled | ternary "mistral-tls-secret" .Values.mistral.tls.secretName }}
+{{- end }}

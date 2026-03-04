@@ -530,6 +530,10 @@ The Integration Tests parameters are as follows:
 |secrets.idpUserRobot|string|no|'null'|This parameter specifies the IDP user for testing.|
 |secrets.idpPasswordRobot|string|no|'null'|This parameter specifies the IDP password for testing.|
 
+## Gateway API Parameters
+| GatewayAPI.gatewayName | Name of the Gateway | default-external-gateway |
+| GatewayAPI.gatewayNamespace | Namespace of the Gateway | envoy-gateway |
+
 # Installation
 
 The installation process is described below.

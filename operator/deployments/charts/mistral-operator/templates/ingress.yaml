@@ -7,6 +7,7 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     nginx.ingress.kubernetes.io/ssl-passthrough: 'true'
     {{- end }}
+    gateway-api-converter.netcracker.com/ignore: "true"
   name: mistral
   labels:
     app: mistral
