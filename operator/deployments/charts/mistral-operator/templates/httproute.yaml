@@ -1,8 +1,9 @@
 {{- $mistralEnabled := .Values.mistral.ingress.enabled -}}
 {{- $isK8s := eq .Values.PAAS_PLATFORM "KUBERNETES" -}}
+{{- $isHTTProute := .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1/HTTPRoute" -}}
 {{- $tlsNotRequired := and (not .Values.mistral.tls.enabled) -}}
 {{- $tlsConfigured := and .Values.mistral.tls.enabled (or .Values.mistral.tls.generateCerts.enabled (eq (include "mistral.certificatesSpecified" .) "true")) -}}
-{{- if and $mistralEnabled $isK8s (or $tlsNotRequired $tlsConfigured) -}}
+{{- if and $mistralEnabled $isK8s $isHTTProute (or $tlsNotRequired $tlsConfigured) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

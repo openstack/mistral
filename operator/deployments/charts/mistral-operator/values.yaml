@@ -492,4 +492,4 @@ GatewayAPI:
   gatewayName: "default-external-gateway"
   gatewayNamespace: "envoy-gateway"
 
-PAAS_PLATFORM: "KUBERNETES"
+PAAS_PLATFORM: KUBERNETES

@@ -455,7 +455,14 @@
                             "type": "string"
                         },
                         "topicPartitionsCount": {
-                            "type": "integer"
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
                         },
                         "consumerGroupId": {
                             "type": "string"
