@@ -170,7 +170,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Assets
-        uses: netcracker/qubership-workflow-hub/actions/assets-action@2v.0.11
+        uses: netcracker/qubership-workflow-hub/actions/assets-action@v2.0.11
         with:
           tag: ${{ inputs.release }}
           item-path: .cr-release-packages/*.tgz
