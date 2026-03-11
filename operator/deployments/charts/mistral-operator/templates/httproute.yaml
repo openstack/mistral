@@ -1,8 +1,8 @@
 {{- $mistralEnabled := .Values.mistral.ingress.enabled -}}
-{{- $isK8s := eq .Values.PAAS_PLATFORM "KUBERNETES" -}}
-{{- $isHTTProute := .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1/HTTPRoute" -}}
-{{- $tlsNotRequired := and (not .Values.mistral.tls.enabled) -}}
-{{- if and $mistralEnabled $isK8s $isHTTProute $tlsNotRequired -}}
+{{- $isK8s := eq (.Values.PAAS_PLATFORM | default "KUBERNETES") "KUBERNETES" -}}
+{{- $isHTTProute := .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" -}}
+{{- $tlsRequired :=  .Values.mistral.tls.enabled -}}
+{{- if and $mistralEnabled ($isK8s) ($isHTTProute) (not $tlsRequired) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -25,9 +25,9 @@ spec:
       backendRefs:
         - name: mistral
           port: 8989
-
+{{- end }}
 ---
-{{- if .Values.mistral.tls.enabled -}}
+{{- if and $mistralEnabled ($isK8s) ($isHTTProute) ($tlsRequired) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -49,5 +49,4 @@ spec:
           requestRedirect:
             scheme: https
             statusCode: 301
-{{- end }}
 {{- end }}
