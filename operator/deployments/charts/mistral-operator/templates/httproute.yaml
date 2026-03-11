@@ -27,6 +27,7 @@ spec:
           port: 8989
 
 ---
+{{- if .Values.mistral.tls.enabled -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -48,4 +49,5 @@ spec:
           requestRedirect:
             scheme: https
             statusCode: 301
+{{- end }}
 {{- end }}
