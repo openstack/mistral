@@ -14,5 +14,5 @@ spec:
   rules:
     - backendRefs:
         - name: mistral
-          port: 8443
+          port: 8989
 {{ end }}

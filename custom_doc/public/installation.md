@@ -16,6 +16,21 @@ For successful Mistral installation, you need RabbitMQ and Postgres services up 
 
 For Mistral lite with local RabbitMQ container, you need only the Postgres service.
 
+For Mistral TLS case, In Gateway API, SSL Passthrough configuration is performed using TLSRoute. Cluster-admin must configure a dedicated TLS listener on Gateway for the TLSRoute as shown below:
+  ```yaml
+  spec:
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: passthrough.example.com
+    name: tls
+    port: 443
+    protocol: TLS
+    tls:
+      mode: Passthrough
+  ```
+
 ## Kubernetes
 
 If it is required to deploy two Mistral with different versions on one cloud, choose the CRD from Mistral with the highest version.
