@@ -1,8 +1,7 @@
 {{- $mistralEnabled := .Values.mistral.ingress.enabled -}}
 {{- $isK8s := eq (.Values.PAAS_PLATFORM | default "KUBERNETES") "KUBERNETES" -}}
-{{- $isHTTProute := .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" -}}
 {{- $tlsRequired :=  .Values.mistral.tls.enabled -}}
-{{- if and $mistralEnabled ($isK8s) ($isHTTProute) (not $tlsRequired) -}}
+{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" ) (not $tlsRequired) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -27,7 +26,7 @@ spec:
           port: 8989
 {{- end }}
 ---
-{{- if and $mistralEnabled ($isK8s) ($isHTTProute) ($tlsRequired) -}}
+{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") ($tlsRequired) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
