@@ -818,6 +818,22 @@
             }
         }
     },
+    "GatewayAPI": {
+        "type": "object",
+        "description": "Optional manual Gateway API overrides.",
+        "properties": {
+            "gatewayName": {
+                "type": "string",
+                "description": "Optional manual Gateway name override.",
+                "default": "default-external-gateway"
+            },
+            "gatewayNamespace": {
+                "type": "string",
+                "description": "Optional manual Gateway namespace override.",
+                "default": "gateway-system"
+            }
+        }
+    },
     "required": [
         "name",
         "operatorImage",

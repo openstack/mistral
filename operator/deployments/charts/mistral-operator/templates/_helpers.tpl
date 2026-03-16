@@ -545,3 +545,20 @@ Helm version for helm chart
   {{- template "truncateString" .Chart.Version -}}
 {{- end -}}
 {{- end -}}
+
+{{/* Gateway name for HTTPRoute parentRefs. */}}
+{{- define "mistral.gatewayApiName" -}}
+  {{- if .Values.mistral.cloudIntegrationEnabled -}}
+    {{- .Values.GATEWAY_SYSTEM_NAME | toString -}}
+  {{- else -}}
+    {{- .Values.GatewayAPI.gatewayName -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "mistral.gatewayApiNamespace" -}}
+  {{- if .Values.mistral.cloudIntegrationEnabled -}}
+    {{- .Values.GATEWAY_SYSTEM_NAMESPACE  | toString -}}
+  {{- else -}}
+    {{- .Values.GatewayAPI.gatewayNamespace -}}
+  {{- end -}}
+{{- end -}}

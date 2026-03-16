@@ -9,8 +9,8 @@ spec:
   hostnames:
     - {{ include "mistral.ingressHost" . | quote }}
   parentRefs:
-    - name: {{ .Values.GatewayAPI.gatewayName }}
-      namespace: {{ .Values.GatewayAPI.gatewayNamespace }}
+    - name: {{ default .Values.GatewayAPI.gatewayName (include "mistral.gatewayApiName" .)}}
+      namespace: {{ default .Values.GatewayAPI.gatewayNamespace (include "mistral.gatewayApiNamespace" .) }}
   rules:
     - backendRefs:
         - name: mistral

@@ -490,4 +490,4 @@ secrets:
 ## Configure Gateway API resources based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/gateway/
 GatewayAPI:
   gatewayName: "default-external-gateway"
-  gatewayNamespace: "envoy-gateway"
+  gatewayNamespace: "gateway-system"

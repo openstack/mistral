@@ -547,7 +547,7 @@ The Integration Tests parameters are as follows:
 
 ## Gateway API Parameters
 | GatewayAPI.gatewayName | Name of the Gateway | default-external-gateway |
-| GatewayAPI.gatewayNamespace | Namespace of the Gateway | envoy-gateway |
+| GatewayAPI.gatewayNamespace | Namespace of the Gateway | gateway-system |
 
 # Installation
 
