@@ -548,7 +548,7 @@ Helm version for helm chart
 
 {{/* Gateway name for HTTPRoute parentRefs. */}}
 {{- define "mistral.gatewayApiName" -}}
-  {{- if .Values.mistral.cloudIntegrationEnabled -}}
+  {{- if and (ne (.Values.GATEWAY_SYSTEM_NAME | toString) "<nil>") .Values.mistral.cloudIntegrationEnabled -}}
     {{- .Values.GATEWAY_SYSTEM_NAME | toString -}}
   {{- else -}}
     {{- .Values.GatewayAPI.gatewayName -}}
@@ -556,7 +556,7 @@ Helm version for helm chart
 {{- end -}}
 
 {{- define "mistral.gatewayApiNamespace" -}}
-  {{- if .Values.mistral.cloudIntegrationEnabled -}}
+  {{- if and (ne (.Values.GATEWAY_SYSTEM_NAMESPACE | toString) "<nil>") .Values.mistral.cloudIntegrationEnabled -}}
     {{- .Values.GATEWAY_SYSTEM_NAMESPACE  | toString -}}
   {{- else -}}
     {{- .Values.GatewayAPI.gatewayNamespace -}}

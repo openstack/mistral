@@ -10,8 +10,8 @@ metadata:
     app: mistral
 spec:
   parentRefs:
-    - name: {{ default .Values.GatewayAPI.gatewayName (include "mistral.gatewayApiName" .)}}
-      namespace: {{ default .Values.GatewayAPI.gatewayNamespace (include "mistral.gatewayApiNamespace" .) }}
+    - name: {{ (include "mistral.gatewayApiName" .) }}
+      namespace: {{ (include "mistral.gatewayApiNamespace" .) }}
 
   hostnames:
     - {{ include "mistral.ingressHost" . | quote }}
@@ -35,8 +35,8 @@ metadata:
     app: mistral
 spec:
   parentRefs:
-    - name: {{ default .Values.GatewayAPI.gatewayName (include "mistral.gatewayApiName" .)}}
-      namespace: {{ default .Values.GatewayAPI.gatewayNamespace (include "mistral.gatewayApiNamespace" .) }}
+    - name: {{ (include "mistral.gatewayApiName" .) }}
+      namespace: {{ (include "mistral.gatewayApiNamespace" .) }}
       port: 80
 
   hostnames:
