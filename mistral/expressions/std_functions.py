@@ -17,9 +17,11 @@
 
 import warnings
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import yaml
+from yaql.language import utils as yaql_utils
 
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
@@ -254,6 +256,10 @@ def _convert_to_user_model(task_ex):
     # Importing data_flow in order to break cycle dependency between modules.
     from mistral.workflow import data_flow
 
+    task_result = data_flow.get_task_execution_result(task_ex)
+    if cfg.CONF.yaql.convert_input_data:
+        task_result = yaql_utils.convert_input_data(task_result)
+
     # We don't use to_dict() db model method because not all fields
     # make sense for user.
     return {
@@ -262,7 +268,7 @@ def _convert_to_user_model(task_ex):
         'spec': task_ex.spec,
         'state': task_ex.state,
         'state_info': task_ex.state_info,
-        'result': data_flow.get_task_execution_result(task_ex),
+        'result': task_result,
         'published': task_ex.published,
         'type': task_ex.type,
         'workflow_execution_id': task_ex.workflow_execution_id,
