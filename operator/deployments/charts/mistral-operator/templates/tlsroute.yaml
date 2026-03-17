@@ -9,10 +9,15 @@ spec:
   hostnames:
     - {{ include "mistral.ingressHost" . | quote }}
   parentRefs:
-    - name: {{ (include "mistral.gatewayApiName" .) }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ (include "mistral.gatewayApiName" .) }}
       namespace: {{ (include "mistral.gatewayApiNamespace" .) }}
   rules:
     - backendRefs:
-        - name: mistral
+        - group: ''
+          kind: Service
+          name: mistral
           port: 8989
+          weight: 1
 {{ end }}
