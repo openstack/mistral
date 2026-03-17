@@ -1,0 +1,23 @@
+{{- if and .Values.mistral.ingress.enabled (.Values.mistral.tls.enabled) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1alpha3")  (eq (.Values.PAAS_PLATFORM | default "KUBERNETES") "KUBERNETES") -}}
+apiVersion: gateway.networking.k8s.io/v1alpha3
+kind: TLSRoute
+metadata:
+  name: mistral
+  labels:
+     app: mistral
+spec:
+  hostnames:
+    - {{ include "mistral.ingressHost" . | quote }}
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ (include "mistral.gatewayApiName" .) }}
+      namespace: {{ (include "mistral.gatewayApiNamespace" .) }}
+  rules:
+    - backendRefs:
+        - group: ''
+          kind: Service
+          name: mistral
+          port: 8989
+          weight: 1
+{{ end }}

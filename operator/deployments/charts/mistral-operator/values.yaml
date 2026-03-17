@@ -486,3 +486,8 @@ secrets:
   rabbitUser: "mistral_user"
   kafkaSaslPlainUsername: "null"
   kafkaSaslPlainPassword: "null"
+
+## Configure Gateway API resources based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/gateway/
+GatewayAPI:
+  gatewayName: "default-external-gateway"
+  gatewayNamespace: "gateway-system"

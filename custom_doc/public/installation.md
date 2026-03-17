@@ -16,6 +16,21 @@ For successful Mistral installation, you need RabbitMQ and Postgres services up 
 
 For Mistral lite with local RabbitMQ container, you need only the Postgres service.
 
+For Mistral TLS case, In Gateway API, SSL Passthrough configuration is performed using TLSRoute. Cluster-admin must configure a dedicated TLS listener on Gateway for the TLSRoute as shown below:
+  ```yaml
+  spec:
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: passthrough.example.com
+    name: tls
+    port: 443
+    protocol: TLS
+    tls:
+      mode: Passthrough
+  ```
+
 ## Kubernetes
 
 If it is required to deploy two Mistral with different versions on one cloud, choose the CRD from Mistral with the highest version.
@@ -529,6 +544,10 @@ The Integration Tests parameters are as follows:
 |integrationTests.priorityClassName|string|no|""|The priority class to be used to assign priority to Mistral Tests pod. Priority class should be created beforehand. For more information, refer to https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/.|
 |secrets.idpUserRobot|string|no|'null'|This parameter specifies the IDP user for testing.|
 |secrets.idpPasswordRobot|string|no|'null'|This parameter specifies the IDP password for testing.|
+
+## Gateway API Parameters
+| GatewayAPI.gatewayName | Name of the Gateway | default-external-gateway |
+| GatewayAPI.gatewayNamespace | Namespace of the Gateway | gateway-system |
 
 # Installation
 
