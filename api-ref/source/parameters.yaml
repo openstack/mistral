@@ -1,0 +1,1324 @@
+# variables in path
+action_identifier:
+  description: |
+    The name or UUID of the action.
+  in: path
+  required: true
+  type: string
+
+cron_trigger_identifier:
+  description: |
+    The name or UUID of the cron trigger.
+  in: path
+  required: true
+  type: string
+
+execution_id:
+  description: |
+    The UUID of the execution.
+  in: path
+  required: true
+  type: string
+
+task_id:
+  description: |
+    The UUID of the task execution.
+  in: path
+  required: true
+  type: string
+
+workbook_name:
+  description: |
+    The name of the workbook.
+  in: path
+  required: true
+  type: string
+
+workflow_identifier:
+  description: |
+    The name or UUID of the workflow.
+  in: path
+  required: true
+  type: string
+
+# variables in query
+action_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+action_filter_definition:
+  description: |
+    Filter by action definition.
+  in: query
+  required: false
+  type: string
+
+action_filter_description:
+  description: |
+    Filter by action description.
+  in: query
+  required: false
+  type: string
+
+action_filter_input:
+  description: |
+    Filter by action input.
+  in: query
+  required: false
+  type: string
+
+action_filter_is_system:
+  description: |
+    Filter by whether the action is a system action.
+  in: query
+  required: false
+  type: boolean
+
+action_filter_name:
+  description: |
+    Filter by action name.
+  in: query
+  required: false
+  type: string
+
+action_filter_scope:
+  description: |
+    Filter by action scope.
+  in: query
+  required: false
+  type: string
+
+action_filter_tags:
+  description: |
+    Filter by action tags.
+  in: query
+  required: false
+  type: string
+
+action_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+all_projects:
+  description: |
+    If set to ``true``, return resources from all projects. Admin only.
+  in: query
+  required: false
+  type: boolean
+
+cron_trigger_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_first_execution_time:
+  description: |
+    Filter by first execution time.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_name:
+  description: |
+    Filter by cron trigger name.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_next_execution_time:
+  description: |
+    Filter by next scheduled execution time.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_pattern:
+  description: |
+    Filter by cron pattern.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_remaining_executions:
+  description: |
+    Filter by remaining number of executions.
+  in: query
+  required: false
+  type: integer
+
+cron_trigger_filter_scope:
+  description: |
+    Filter by trigger scope.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_workflow_id:
+  description: |
+    Filter by the ID of the workflow associated with the trigger.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_workflow_input:
+  description: |
+    Filter by the workflow input.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_workflow_name:
+  description: |
+    Filter by the name of the workflow associated with the trigger.
+  in: query
+  required: false
+  type: string
+
+cron_trigger_filter_workflow_params:
+  description: |
+    Filter by the workflow parameters.
+  in: query
+  required: false
+  type: string
+
+execution_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+execution_filter_description:
+  description: |
+    Filter by execution description.
+  in: query
+  required: false
+  type: string
+
+execution_filter_include_output:
+  description: |
+    If set to ``true``, include the output field in the list response.
+    By default, the output field is not included in list results.
+  in: query
+  required: false
+  type: boolean
+
+execution_filter_input:
+  description: |
+    Filter by execution input.
+  in: query
+  required: false
+  type: string
+
+execution_filter_nulls:
+  description: |
+    Comma-separated list of field names that should be filtered as NULL.
+  in: query
+  required: false
+  type: string
+
+execution_filter_output:
+  description: |
+    Filter by execution output.
+  in: query
+  required: false
+  type: string
+
+execution_filter_params:
+  description: |
+    Filter by execution params.
+  in: query
+  required: false
+  type: string
+
+execution_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+execution_filter_root_execution_id:
+  description: |
+    Filter by root execution ID.
+  in: query
+  required: false
+  type: string
+
+execution_filter_state:
+  description: |
+    Filter by execution state. Valid values are ``IDLE``, ``RUNNING``,
+    ``SUCCESS``, ``ERROR``, ``PAUSED``, and ``CANCELLED``.
+  in: query
+  required: false
+  type: string
+
+execution_filter_state_info:
+  description: |
+    Filter by execution state info.
+  in: query
+  required: false
+  type: string
+
+execution_filter_tags:
+  description: |
+    Filter by execution tags.
+  in: query
+  required: false
+  type: string
+
+execution_filter_task_execution_id:
+  description: |
+    Filter by parent task execution ID.
+  in: query
+  required: false
+  type: string
+
+execution_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+execution_filter_workflow_id:
+  description: |
+    Filter by the ID of the workflow associated with the execution.
+  in: query
+  required: false
+  type: string
+
+execution_filter_workflow_name:
+  description: |
+    Filter by the name of the workflow associated with the execution.
+  in: query
+  required: false
+  type: string
+
+execution_force_delete:
+  description: |
+    If set to ``true``, force delete the execution even if it is running.
+  in: query
+  required: false
+  type: boolean
+
+fields:
+  description: |
+    Comma-separated list of fields to include in the response. If not
+    specified, all fields are returned.
+  in: query
+  required: false
+  type: string
+
+limit:
+  description: |
+    Maximum number of resources to return in a single result.
+  in: query
+  required: false
+  type: integer
+
+marker:
+  description: |
+    A resource UUID to use as a pagination marker. The list will contain
+    resources that come after the marker.
+  in: query
+  required: false
+  type: string
+
+namespace:
+  description: |
+    The namespace of the resource.
+  in: query
+  required: false
+  type: string
+
+scope:
+  description: |
+    The scope of the resource. Valid values are ``private`` and ``public``.
+  in: query
+  required: false
+  type: string
+
+skip_validation:
+  description: |
+    If set to ``true``, skip definition validation on create or update.
+  in: query
+  required: false
+  type: boolean
+
+sort_dirs:
+  description: |
+    Comma-separated list of sort directions. Each direction corresponds to
+    a key in ``sort_keys``. Valid values are ``asc`` and ``desc``.
+  in: query
+  required: false
+  type: string
+
+sort_keys:
+  description: |
+    Comma-separated list of sort keys. Each key specifies a column to sort by.
+  in: query
+  required: false
+  type: string
+
+task_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+task_filter_env:
+  description: |
+    Filter by task environment.
+  in: query
+  required: false
+  type: string
+
+task_filter_name:
+  description: |
+    Filter by task name.
+  in: query
+  required: false
+  type: string
+
+task_filter_processed:
+  description: |
+    Filter by whether the task has been processed.
+  in: query
+  required: false
+  type: boolean
+
+task_filter_published:
+  description: |
+    Filter by task published variables.
+  in: query
+  required: false
+  type: string
+
+task_filter_reset:
+  description: |
+    Filter by reset flag.
+  in: query
+  required: false
+  type: boolean
+
+task_filter_result:
+  description: |
+    Filter by task result.
+  in: query
+  required: false
+  type: string
+
+task_filter_state:
+  description: |
+    Filter by task state. Valid values are ``IDLE``, ``RUNNING``,
+    ``SUCCESS``, ``ERROR``, and ``DELAYED``.
+  in: query
+  required: false
+  type: string
+
+task_filter_state_info:
+  description: |
+    Filter by task state info.
+  in: query
+  required: false
+  type: string
+
+task_filter_tags:
+  description: |
+    Filter by task tags.
+  in: query
+  required: false
+  type: string
+
+task_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+task_filter_workflow_execution_id:
+  description: |
+    Filter by the workflow execution ID.
+  in: query
+  required: false
+  type: string
+
+task_filter_workflow_id:
+  description: |
+    Filter by the ID of the workflow associated with the task.
+  in: query
+  required: false
+  type: string
+
+task_filter_workflow_name:
+  description: |
+    Filter by the name of the workflow associated with the task.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_definition:
+  description: |
+    Filter by workbook definition.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_name:
+  description: |
+    Filter by workbook name.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_scope:
+  description: |
+    Filter by workbook scope.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_tags:
+  description: |
+    Filter by workbook tags.
+  in: query
+  required: false
+  type: string
+
+workbook_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_definition:
+  description: |
+    Filter by workflow definition.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_input:
+  description: |
+    Filter by workflow input.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_name:
+  description: |
+    Filter by workflow name.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_scope:
+  description: |
+    Filter by workflow scope.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_tags:
+  description: |
+    Filter by workflow tags.
+  in: query
+  required: false
+  type: string
+
+workflow_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+# variables in body
+action_created_at:
+  description: |
+    The date and time when the action was created.
+  in: body
+  required: true
+  type: string
+
+action_definition:
+  description: |
+    The action definition written in Mistral v2 DSL.
+  in: body
+  required: true
+  type: string
+
+action_description:
+  description: |
+    A description of the action. Inferred from the action definition
+    on creation.
+  in: body
+  required: false
+  type: string
+
+action_id:
+  description: |
+    The UUID of the action.
+  in: body
+  required: true
+  type: string
+
+action_input:
+  description: |
+    The input parameter definitions for the action.
+  in: body
+  required: false
+  type: string
+
+action_is_system:
+  description: |
+    Whether the action is a built-in system action.
+  in: body
+  required: false
+  type: boolean
+
+action_name:
+  description: |
+    The name of the action. Immutable; inferred from the action definition
+    on creation.
+  in: body
+  required: true
+  type: string
+
+action_namespace:
+  description: |
+    The namespace of the action.
+  in: body
+  required: false
+  type: string
+
+action_project_id:
+  description: |
+    The UUID of the project that owns the action.
+  in: body
+  required: false
+  type: string
+
+action_scope:
+  description: |
+    The scope of the action. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+action_tags:
+  description: |
+    A list of tags associated with the action.
+  in: body
+  required: false
+  type: array
+
+action_updated_at:
+  description: |
+    The date and time when the action was last updated.
+  in: body
+  required: false
+  type: string
+
+actions:
+  description: |
+    A list of action objects.
+  in: body
+  required: true
+  type: array
+
+cron_trigger_created_at:
+  description: |
+    The date and time when the cron trigger was created.
+  in: body
+  required: true
+  type: string
+
+cron_trigger_first_execution_time:
+  description: |
+    The date and time of the first execution. If not specified, the first
+    execution is determined by the cron pattern.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_id:
+  description: |
+    The UUID of the cron trigger.
+  in: body
+  required: true
+  type: string
+
+cron_trigger_name:
+  description: |
+    The name of the cron trigger.
+  in: body
+  required: true
+  type: string
+
+cron_trigger_name_create:
+  description: |
+    The name for the new cron trigger.
+  in: body
+  required: true
+  type: string
+
+cron_trigger_next_execution_time:
+  description: |
+    The date and time of the next scheduled execution.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_pattern:
+  description: |
+    The cron expression pattern (e.g., ``*/5 * * * *`` to run every
+    5 minutes). Uses standard cron syntax.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_project_id:
+  description: |
+    The UUID of the project that owns the cron trigger.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_remaining_executions:
+  description: |
+    The number of remaining executions for the trigger. Must be at
+    least 1. Once this reaches 0, the trigger is automatically removed.
+  in: body
+  required: false
+  type: integer
+
+cron_trigger_scope:
+  description: |
+    The scope of the cron trigger. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_updated_at:
+  description: |
+    The date and time when the cron trigger was last updated.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_workflow_id:
+  description: |
+    The UUID of the workflow to execute on trigger.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_workflow_id_create:
+  description: |
+    The UUID of the workflow to trigger. Either ``workflow_name`` or
+    ``workflow_id`` must be provided.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_workflow_input:
+  description: |
+    A JSON object containing input values for the triggered workflow
+    executions.
+  in: body
+  required: false
+  type: object
+
+cron_trigger_workflow_name:
+  description: |
+    The name of the workflow to execute on trigger.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_workflow_name_create:
+  description: |
+    The name of the workflow to trigger. Either ``workflow_name`` or
+    ``workflow_id`` must be provided.
+  in: body
+  required: false
+  type: string
+
+cron_trigger_workflow_params:
+  description: |
+    A JSON object containing parameters for the triggered workflow
+    executions.
+  in: body
+  required: false
+  type: object
+
+cron_triggers:
+  description: |
+    A list of cron trigger objects.
+  in: body
+  required: true
+  type: array
+
+execution_created_at:
+  description: |
+    The date and time when the execution was created.
+  in: body
+  required: true
+  type: string
+
+execution_description:
+  description: |
+    A description of the workflow execution.
+  in: body
+  required: false
+  type: string
+
+execution_description_update:
+  description: |
+    An updated description for the execution.
+  in: body
+  required: false
+  type: string
+
+execution_id_body:
+  description: |
+    The UUID of the execution. Immutable and auto-assigned, or can be
+    specified by the API client if using ``source_execution_id``.
+  in: body
+  required: true
+  type: string
+
+execution_input:
+  description: |
+    A JSON object containing the workflow input values.
+  in: body
+  required: false
+  type: object
+
+execution_output:
+  description: |
+    A JSON object containing the workflow output values.
+  in: body
+  required: false
+  type: object
+
+execution_params:
+  description: |
+    A JSON object defining workflow type specific parameters.
+    Supported keys include:
+
+    - ``task_name`` - the name of the target task (reverse workflows only).
+    - ``env`` - a string or JSON object containing environment variables.
+    - ``evaluate_env`` - controls recursive evaluation of ``env``.
+    - ``notify`` - a list of publishers to notify on state changes.
+  in: body
+  required: false
+  type: object
+
+execution_params_update:
+  description: |
+    A JSON object with updated parameters. Currently only ``env`` can be
+    updated this way.
+  in: body
+  required: false
+  type: object
+
+execution_project_id:
+  description: |
+    The UUID of the project that owns the execution.
+  in: body
+  required: false
+  type: string
+
+execution_published_global:
+  description: |
+    A JSON object containing globally published variables.
+  in: body
+  required: false
+  type: object
+
+execution_root_execution_id:
+  description: |
+    Reference to the root execution UUID.
+  in: body
+  required: false
+  type: string
+
+execution_source_execution_id:
+  description: |
+    Reference to a source workflow execution UUID. When specified, the API
+    replicates the source execution, copying the workflow, input, params,
+    and description.
+  in: body
+  required: false
+  type: string
+
+execution_state:
+  description: |
+    The current state of the execution. One of ``IDLE``, ``RUNNING``,
+    ``SUCCESS``, ``ERROR``, ``PAUSED``, or ``CANCELLED``.
+  in: body
+  required: true
+  type: string
+
+execution_state_info:
+  description: |
+    An optional state information string providing additional details
+    about the current state.
+  in: body
+  required: false
+  type: string
+
+execution_state_update:
+  description: |
+    The new state for the execution. Valid transitions: ``RUNNING`` to
+    ``PAUSED``, ``PAUSED`` to ``RUNNING``, or any running state to
+    ``CANCELLED``, ``SUCCESS``, or ``ERROR``.
+  in: body
+  required: false
+  type: string
+
+execution_tags:
+  description: |
+    A list of tags associated with the execution.
+  in: body
+  required: false
+  type: array
+
+execution_task_execution_id:
+  description: |
+    Reference to the parent task execution UUID.
+  in: body
+  required: false
+  type: string
+
+execution_updated_at:
+  description: |
+    The date and time when the execution was last updated.
+  in: body
+  required: false
+  type: string
+
+execution_workflow_id:
+  description: |
+    The UUID of the workflow associated with the execution.
+  in: body
+  required: false
+  type: string
+
+execution_workflow_id_create:
+  description: |
+    The UUID of the workflow to execute. Either ``workflow_id`` or
+    ``workflow_name`` must be provided.
+  in: body
+  required: false
+  type: string
+
+execution_workflow_name:
+  description: |
+    The name of the workflow associated with the execution.
+  in: body
+  required: false
+  type: string
+
+execution_workflow_name_create:
+  description: |
+    The name of the workflow to execute. Either ``workflow_id`` or
+    ``workflow_name`` must be provided.
+  in: body
+  required: false
+  type: string
+
+execution_workflow_namespace:
+  description: |
+    The namespace of the workflow associated with the execution.
+  in: body
+  required: false
+  type: string
+
+executions:
+  description: |
+    A list of execution objects.
+  in: body
+  required: true
+  type: array
+
+task_created_at:
+  description: |
+    The date and time when the task was created.
+  in: body
+  required: true
+  type: string
+
+task_env:
+  description: |
+    A JSON object containing environment variables for the task.
+  in: body
+  required: false
+  type: object
+
+task_finished_at:
+  description: |
+    The date and time when the task finished executing.
+  in: body
+  required: false
+  type: string
+
+task_id_body:
+  description: |
+    The UUID of the task execution.
+  in: body
+  required: true
+  type: string
+
+task_name:
+  description: |
+    The name of the task.
+  in: body
+  required: true
+  type: string
+
+task_processed:
+  description: |
+    Whether the task has been processed by the engine.
+  in: body
+  required: false
+  type: boolean
+
+task_project_id:
+  description: |
+    The UUID of the project that owns the task.
+  in: body
+  required: false
+  type: string
+
+task_published:
+  description: |
+    A JSON object containing published task variables.
+  in: body
+  required: false
+  type: object
+
+task_published_global:
+  description: |
+    A JSON object containing globally published task variables.
+  in: body
+  required: false
+  type: object
+
+task_reset:
+  description: |
+    If ``true``, reset the task state before rerunning. Required when
+    rerunning a task that is in ``ERROR`` state.
+  in: body
+  required: false
+  type: boolean
+
+task_result:
+  description: |
+    The result of the task execution.
+  in: body
+  required: false
+  type: string
+
+task_runtime_context:
+  description: |
+    A JSON object containing runtime context information.
+  in: body
+  required: false
+  type: object
+
+task_started_at:
+  description: |
+    The date and time when the task started executing.
+  in: body
+  required: false
+  type: string
+
+task_state:
+  description: |
+    The current state of the task. One of ``IDLE``, ``RUNNING``,
+    ``SUCCESS``, ``ERROR``, or ``DELAYED``.
+  in: body
+  required: true
+  type: string
+
+task_state_info:
+  description: |
+    An optional state information string providing additional details.
+  in: body
+  required: false
+  type: string
+
+task_state_update:
+  description: |
+    The new state for the task. Valid values are ``RUNNING`` (to rerun)
+    and ``SKIPPED`` (to skip).
+  in: body
+  required: false
+  type: string
+
+task_tags:
+  description: |
+    A list of tags associated with the task.
+  in: body
+  required: false
+  type: array
+
+task_type:
+  description: |
+    The type of the task (e.g., ``ACTION``, ``WORKFLOW``).
+  in: body
+  required: true
+  type: string
+
+task_updated_at:
+  description: |
+    The date and time when the task was last updated.
+  in: body
+  required: false
+  type: string
+
+task_workflow_execution_id:
+  description: |
+    The UUID of the workflow execution that the task belongs to.
+  in: body
+  required: true
+  type: string
+
+task_workflow_id:
+  description: |
+    The UUID of the workflow that the task belongs to.
+  in: body
+  required: true
+  type: string
+
+task_workflow_name:
+  description: |
+    The name of the workflow that the task belongs to.
+  in: body
+  required: true
+  type: string
+
+task_workflow_namespace:
+  description: |
+    The namespace of the workflow that the task belongs to.
+  in: body
+  required: false
+  type: string
+
+tasks:
+  description: |
+    A list of task objects.
+  in: body
+  required: true
+  type: array
+
+workbook_created_at:
+  description: |
+    The date and time when the workbook was created.
+  in: body
+  required: true
+  type: string
+
+workbook_definition:
+  description: |
+    The workbook definition written in Mistral v2 DSL.
+  in: body
+  required: true
+  type: string
+
+workbook_id:
+  description: |
+    The UUID of the workbook.
+  in: body
+  required: true
+  type: string
+
+workbook_name_body:
+  description: |
+    The name of the workbook.
+  in: body
+  required: true
+  type: string
+
+workbook_namespace:
+  description: |
+    The namespace of the workbook.
+  in: body
+  required: false
+  type: string
+
+workbook_project_id:
+  description: |
+    The UUID of the project that owns the workbook.
+  in: body
+  required: false
+  type: string
+
+workbook_scope:
+  description: |
+    The scope of the workbook. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+workbook_tags:
+  description: |
+    A list of tags associated with the workbook.
+  in: body
+  required: false
+  type: array
+
+workbook_updated_at:
+  description: |
+    The date and time when the workbook was last updated.
+  in: body
+  required: false
+  type: string
+
+workbooks:
+  description: |
+    A list of workbook objects.
+  in: body
+  required: true
+  type: array
+
+workflow_checksum:
+  description: |
+    MD5 checksum of the workflow definition.
+  in: body
+  required: false
+  type: string
+
+workflow_created_at:
+  description: |
+    The date and time when the workflow was created.
+  in: body
+  required: true
+  type: string
+
+workflow_definition:
+  description: |
+    The workflow definition written in Mistral v2 DSL.
+  in: body
+  required: true
+  type: string
+
+workflow_id:
+  description: |
+    The UUID of the workflow.
+  in: body
+  required: true
+  type: string
+
+workflow_input:
+  description: |
+    The input parameter definitions for the workflow.
+  in: body
+  required: false
+  type: string
+
+workflow_interface:
+  description: |
+    A dictionary containing the input and output interface of the workflow.
+  in: body
+  required: false
+  type: object
+
+workflow_name:
+  description: |
+    The name of the workflow.
+  in: body
+  required: true
+  type: string
+
+workflow_namespace:
+  description: |
+    The namespace of the workflow.
+  in: body
+  required: false
+  type: string
+
+workflow_project_id:
+  description: |
+    The UUID of the project that owns the workflow.
+  in: body
+  required: false
+  type: string
+
+workflow_scope:
+  description: |
+    The scope of the workflow. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+workflow_tags:
+  description: |
+    A list of tags associated with the workflow.
+  in: body
+  required: false
+  type: array
+
+workflow_updated_at:
+  description: |
+    The date and time when the workflow was last updated.
+  in: body
+  required: false
+  type: string
+
+workflows:
+  description: |
+    A list of workflow objects.
+  in: body
+  required: true
+  type: array
