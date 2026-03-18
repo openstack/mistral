@@ -11,6 +11,7 @@ RUN mkdir -p ${ROBOT_OUTPUT}
 
 COPY requirements.txt ${ROBOT_HOME}/requirements.txt
 COPY mistral_pods_checker.py ${ROBOT_HOME}/mistral_pods_checker.py
+COPY sitecustomize.py /tmp/sitecustomize.py
 COPY . ${ROBOT_HOME}
 
 # # Add necessary packages
@@ -42,6 +43,8 @@ RUN set -x \
     && pip3 install --upgrade pip==25.3 wheel \
     && pip3 install -r ${ROBOT_HOME}/requirements.txt \
     && rm -rf /var/cache/apk/*
+
+RUN python3 -c "import site, shutil; shutil.copy('/tmp/sitecustomize.py', site.getsitepackages()[0] + '/sitecustomize.py')"
 
 RUN chmod 777 ${ROBOT_HOME}/tests && chmod 777 ${ROBOT_OUTPUT}
 
