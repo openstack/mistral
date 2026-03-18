@@ -84,6 +84,15 @@ LIVENESS_PROBE_API = V1Probe(failure_threshold=12,
                              timeout_seconds=5,
                              tcp_socket=V1TCPSocketAction(port=8989))
 
+def get_liveness_probe_api(scheme):
+    return V1Probe(failure_threshold=12,
+                   initial_delay_seconds=0,
+                   period_seconds=5, success_threshold=1,
+                   timeout_seconds=5,
+                   http_get=V1HTTPGetAction(path='/v2',
+                                            port=8989,
+                                            scheme=scheme))
+
 READINESS_PROBE_MONITORING = V1Probe(failure_threshold=24,
                               initial_delay_seconds=0,
                               period_seconds=5, success_threshold=1,

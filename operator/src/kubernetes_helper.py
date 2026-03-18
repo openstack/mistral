@@ -955,7 +955,7 @@ class KubernetesHelper:
             pod_template_spec.spec.containers[0].readiness_probe = \
                 MC.get_readiness_probe_api(api_scheme)
             pod_template_spec.spec.containers[0].liveness_probe = \
-                MC.LIVENESS_PROBE_API
+                MC.get_liveness_probe_api(api_scheme)
             pod_template_spec.spec.priority_class_name = self.get_priority_class_name("mistralApi")
             mistral_volume_items.append(
                 V1KeyToPath(
