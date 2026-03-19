@@ -1236,7 +1236,7 @@ class WithItemsTask(RegularTask):
 
         total_count = self._get_with_items_count()
 
-        if index > 0:
+        if index >= 0:
             return total_count > index + self._get_concurrency()
 
         count = db_api.get_sub_executions_count(
