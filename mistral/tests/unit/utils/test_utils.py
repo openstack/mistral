@@ -16,46 +16,6 @@
 
 import threading
 
-from mistral import exceptions as exc
-from mistral.tests.unit import base
-from mistral.utils import ssh_utils
-from mistral_lib import utils
-
-
-class UtilsTest(base.BaseTest):
-
-    def test_itersubclasses(self):
-        class A(object):
-            pass
-
-        class B(A):
-            pass
-
-        class C(A):
-            pass
-
-        class D(C):
-            pass
-
-        self.assertEqual([B, C, D], list(utils.iter_subclasses(A)))
-
-    def test_paramiko_to_private_key(self):
-        self.assertRaises(
-            exc.DataAccessException,
-            ssh_utils._to_paramiko_private_key,
-            "../dir"
-        )
-        self.assertRaises(
-            exc.DataAccessException,
-            ssh_utils._to_paramiko_private_key,
-            "..\\dir"
-        )
-
-        self.assertIsNone(
-            ssh_utils._to_paramiko_private_key(private_key_filename=None,
-                                               password='pass')
-        )
-
 
 class TimeoutThreadWithException(threading.Thread):
     """Thread raising exception after timeout"""

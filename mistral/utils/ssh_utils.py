@@ -18,6 +18,11 @@ import io
 
 from oslo_log import log as logging
 import paramiko
+from paramiko.ecdsakey import ECDSAKey
+from paramiko.ed25519key import Ed25519Key
+from paramiko.rsakey import RSAKey
+from paramiko.ssh_exception import PasswordRequiredException
+from paramiko.ssh_exception import SSHException
 
 from mistral import exceptions as exc
 
@@ -40,10 +45,6 @@ def _read_paramimko_stream(recv_func):
 def _to_paramiko_private_key(private_key_filename,
                              private_key=None,
                              password=None):
-    if private_key:
-        return paramiko.RSAKey.from_private_key(
-            file_obj=io.StringIO(private_key),
-            password=password)
 
     if private_key_filename:
         if '../' in private_key_filename or '..\\' in private_key_filename:
@@ -57,9 +58,22 @@ def _to_paramiko_private_key(private_key_filename,
         else:
             private_key_path = KEY_PATH + private_key_filename
 
-        return paramiko.RSAKey(
-            filename=private_key_path,
-            password=password)
+    exception = None
+    for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
+        try:
+            if private_key:
+                return pkey_class.from_private_key(
+                    file_obj=io.StringIO(private_key),
+                    password=password)
+            if private_key_filename:
+                return pkey_class.from_private_key_file(
+                    filename=private_key_path,
+                    password=password
+                )
+        except (IOError, PasswordRequiredException, SSHException) as e:
+            exception = e
+    if exception is not None:
+        raise exception
 
     return None
 
