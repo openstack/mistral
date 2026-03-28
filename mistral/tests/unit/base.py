@@ -141,12 +141,6 @@ class BaseTest(base.BaseTestCase):
         except exception as e:
             self.assertIn(msg, e.message)
 
-    def assertListEqual(self, l1, l2):
-        super(BaseTest, self).assertListEqual(l1, l2)
-
-    def assertDictEqual(self, cmp1, cmp2):
-        super(BaseTest, self).assertDictEqual(cmp1, cmp2)
-
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]
 
