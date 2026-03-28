@@ -63,8 +63,8 @@ For Developers
 Workflow Visualization (CloudFlow)
 ==================================
 
-* `CloudFlow <https://github.com/nokia/CloudFlow>`_: If you're looking for
-  a nice workflow visualization tool then visit this web page. CloudFlow
+* `CloudFlow <https://github.com/arnaudmorin/CloudFlow>`_: If you're looking
+  for a nice workflow visualization tool then visit this web page. CloudFlow
   provides a nice UI for debugging and analysing workflow executions.
 
 Main Chapters
