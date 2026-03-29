@@ -89,8 +89,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.post(
             '/v2/actions',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
@@ -119,8 +118,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.post(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
@@ -143,7 +141,7 @@ class TestActionPolicy(base.APITest):
             {"actions:delete": "role:FAKE or rule:admin_or_owner"}
         )
 
-        resp = self.app.delete('/v2/actions/123', expect_errors=True)
+        resp = self.app.delete('/v2/actions/123')
 
         self.assertEqual(204, resp.status_int)
 
@@ -182,7 +180,7 @@ class TestActionPolicy(base.APITest):
             {"actions:list": "role:FAKE or rule:admin_or_owner"}
         )
 
-        resp = self.app.get('/v2/actions', expect_errors=True)
+        resp = self.app.get('/v2/actions')
 
         self.assertEqual(200, resp.status_int)
 
@@ -210,8 +208,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.put(
             '/v2/actions',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(200, resp.status_int)
@@ -240,8 +237,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.put(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(200, resp.status_int)
