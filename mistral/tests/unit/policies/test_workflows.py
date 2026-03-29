@@ -91,8 +91,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
@@ -124,8 +123,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
@@ -150,8 +148,7 @@ class TestWorkflowPolicy(base.APITest):
             {"workflows:delete": "role:FAKE or rule:admin_or_owner"}
         )
         resp = self.app.delete(
-            '/v2/workflows/123',
-            expect_errors=True
+            '/v2/workflows/123'
         )
 
         self.assertEqual(204, resp.status_int)
@@ -174,8 +171,7 @@ class TestWorkflowPolicy(base.APITest):
             {"workflows:get": "role:FAKE or rule:admin_or_owner"}
         )
         resp = self.app.get(
-            '/v2/workflows/123',
-            expect_errors=True
+            '/v2/workflows/123'
         )
 
         self.assertEqual(200, resp.status_int)
@@ -196,8 +192,7 @@ class TestWorkflowPolicy(base.APITest):
             {"workflows:list": "role:FAKE or rule:admin_or_owner"}
         )
         resp = self.app.get(
-            '/v2/workflows',
-            expect_errors=True
+            '/v2/workflows'
         )
 
         self.assertEqual(200, resp.status_int)
@@ -220,8 +215,7 @@ class TestWorkflowPolicy(base.APITest):
             "workflows:list:all_projects": "role:FAKE or rule:admin_or_owner"
         })
         resp = self.app.get(
-            '/v2/workflows?all_projects=1',
-            expect_errors=True
+            '/v2/workflows?all_projects=1'
         )
 
         self.assertEqual(200, resp.status_int)
@@ -251,8 +245,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(200, resp.status_int)
@@ -284,8 +277,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(200, resp.status_int)
