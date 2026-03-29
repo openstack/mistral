@@ -144,42 +144,6 @@ class JinjaEvaluatorTest(base.DbTestCase):
                           self._evaluator.validate,
                           {'a': 1})
 
-    def test_function_json_pp(self):
-        self.assertEqual('"3"', self._evaluator.evaluate('json_pp(_)', '3'))
-        self.assertEqual('3', self._evaluator.evaluate('json_pp(_)', 3))
-        self.assertEqual(
-            '[\n    1,\n    2\n]',
-            self._evaluator.evaluate('json_pp(_)', [1, 2])
-        )
-        self.assertEqual(
-            '{\n    "a": "b"\n}',
-            self._evaluator.evaluate('json_pp(_)', {'a': 'b'})
-        )
-        self.assertEqual(
-            '"Mistral\nis\nawesome"',
-            self._evaluator.evaluate(
-                'json_pp(_)', '\n'.join(['Mistral', 'is', 'awesome'])
-            )
-        )
-
-    def test_filter_json_pp(self):
-        self.assertEqual('"3"', self._evaluator.evaluate('_|json_pp', '3'))
-        self.assertEqual('3', self._evaluator.evaluate('_|json_pp', 3))
-        self.assertEqual(
-            '[\n    1,\n    2\n]',
-            self._evaluator.evaluate('_|json_pp', [1, 2])
-        )
-        self.assertEqual(
-            '{\n    "a": "b"\n}',
-            self._evaluator.evaluate('_|json_pp', {'a': 'b'})
-        )
-        self.assertEqual(
-            '"Mistral\nis\nawesome"',
-            self._evaluator.evaluate(
-                '_|json_pp', '\n'.join(['Mistral', 'is', 'awesome'])
-            )
-        )
-
     def test_function_uuid(self):
         uuid = self._evaluator.evaluate('uuid()', {})
 

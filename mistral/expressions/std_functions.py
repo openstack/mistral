@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import warnings
-
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import yaml
@@ -93,19 +91,6 @@ def execution_(context):
         'updated_at': wf_ex.updated_at.isoformat(' '),
         'root_execution_id': wf_ex.root_execution_id
     }
-
-
-def json_pp_(context, data=None):
-    warnings.warn(
-        "json_pp was deprecated in Queens and will be removed in the S cycle. "
-        "The json_dump expression function can be used for outputting JSON",
-        DeprecationWarning
-    )
-
-    return jsonutils.dumps(
-        data or context,
-        indent=4
-    ).replace("\\n", "\n").replace(" \n", "\n")
 
 
 def json_dump_(context, data):

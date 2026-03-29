@@ -42,7 +42,7 @@ class MistralLexer(lexer.RegexLexer):
         ],
         "expression": [
             (r'\$', token.Operator),
-            (r'\s(json_pp|task|tasks|execution|env|uuid)(?!\w)',
+            (r'\s(json_parse|json_dump|task|tasks|execution|env|uuid)(?!\w)',
                 token.Name.Builtin),
             lexer.include("generic"),
             (r'%>', token.Name.Entity, '#pop'),
