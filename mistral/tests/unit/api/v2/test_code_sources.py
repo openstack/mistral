@@ -42,6 +42,10 @@ class TestCodeSourcesController(base.APITest):
     def setUp(self):
         super(TestCodeSourcesController, self).setUp()
 
+        # Default policies restrict all code_source operations to admin.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         self.addCleanup(db_api.delete_code_sources)
 
     def test_post(self):

@@ -23,7 +23,7 @@ BASE_PATH = '/v2/code_sources'
 rules = [
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'create',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Create a new code source.',
         operations=[
             {
@@ -34,7 +34,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'delete',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Delete the named code source.',
         operations=[
             {
@@ -45,7 +45,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'get',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Return the named code source.',
         operations=[
             {
@@ -56,7 +56,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'list',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Return all code sources.',
         operations=[
             {
@@ -82,7 +82,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'update',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Update one or more code source.',
         operations=[
             {
