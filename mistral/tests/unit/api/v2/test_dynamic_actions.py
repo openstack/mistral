@@ -39,6 +39,11 @@ class TestDynamicActionsController(base.APITest):
     def setUp(self):
         super(TestDynamicActionsController, self).setUp()
 
+        # Default policies restrict all code_source and dynamic_action
+        # operations to admin.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.post(
             '/v2/code_sources?name=test_dummy_module',
             TEST_MODULE_TEXT
