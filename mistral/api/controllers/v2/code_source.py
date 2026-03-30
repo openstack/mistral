@@ -51,6 +51,9 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
 
         acl.enforce('code_sources:create', context.ctx())
 
+        if scope == 'public':
+            acl.enforce('code_sources:publicize', context.ctx())
+
         # Extract content directly from the request.
         content = pecan.request.text
 
@@ -86,6 +89,9 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         :param namespace: Optional. The namespace of the code source.
         """
         acl.enforce('code_sources:update', context.ctx())
+
+        if scope == 'public':
+            acl.enforce('code_sources:publicize', context.ctx())
 
         LOG.debug(
             'Updating code source [identifier(name or id)=%s, scope=%s,'
