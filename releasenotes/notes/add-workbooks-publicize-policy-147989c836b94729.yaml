@@ -1,0 +1,7 @@
+---
+security:
+  - |
+    Added a new ``workbooks:publicize`` policy (``admin_only``) and
+    enforcement on both create and update operations when scope is public.
+    Previously, any project owner could make workbooks public as there was
+    no publicize policy check on the workbook endpoints.

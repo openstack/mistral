@@ -269,6 +269,11 @@ class TestWorkbooksController(base.APITest):
         mock_wf.return_value = WF_DB
         mock_action.return_value = ACTION_DB
 
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.put(
             '/v2/workbooks?scope=public',
             UPDATED_WORKBOOK_DEF,
@@ -358,6 +363,11 @@ class TestWorkbooksController(base.APITest):
         mock_wb.return_value = WORKBOOK_DB
         mock_wf.return_value = WF_DB
         mock_action.return_value = ACTION_DB
+
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
             '/v2/workbooks?scope=public',
