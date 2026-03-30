@@ -63,6 +63,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=ENVIRONMENTS % 'publicize',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Make an environment publicly available.',
+        operations=[
+            {
+                'path': '/v2/environments',
+                'method': 'POST'
+            },
+            {
+                'path': '/v2/environments',
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update an environment.',

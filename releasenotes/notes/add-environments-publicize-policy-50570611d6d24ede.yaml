@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Added a new ``environments:publicize`` policy (``admin_only``) and
+    enforcement on both create and update operations when scope is public.
+    Previously, the environment POST endpoint did not accept the scope field
+    in the request body and neither POST nor PUT enforced a publicize policy,
+    allowing any user with update access to make environments public.
