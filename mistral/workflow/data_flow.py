@@ -302,7 +302,13 @@ def add_openstack_data_to_context(wf_ex):
         exec_ctx = auth_ctx.ctx()
 
         if exec_ctx:
-            wf_ex.context.update({'openstack': exec_ctx.to_dict()})
+            openstack_ctx = exec_ctx.to_dict()
+            if 'auth_token' in openstack_ctx:
+                openstack_ctx['auth_token'] = '***'
+            if 'service_catalog' in openstack_ctx:
+                openstack_ctx['service_catalog'] = '***'
+
+            wf_ex.context.update({'openstack': openstack_ctx})
 
 
 def add_execution_to_context(wf_ex):

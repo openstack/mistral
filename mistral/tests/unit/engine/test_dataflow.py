@@ -21,6 +21,8 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
+from unittest import mock
+
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base as engine_test_base
 from mistral import utils
@@ -1472,3 +1474,30 @@ class DataFlowTest(test_base.BaseTest):
         self.assertIn('"k1": "v1"', json_str)
         self.assertIn('"k1": "v1"', json_str)
         self.assertIn('"root"', json_str)
+
+    @mock.patch('mistral.workflow.data_flow.CONF')
+    @mock.patch('mistral.workflow.data_flow.auth_ctx')
+    def test_add_openstack_data_masks_sensitive_fields(
+        self, mock_auth, mock_conf
+    ):
+        mock_conf.pecan.auth_enable = True
+        mock_auth.ctx.return_value.to_dict.return_value = {
+            'auth_token': 'secret-token-value',
+            'project_id': 'my-project',
+            'user_id': 'my-user',
+            'service_catalog': '[{"type": "compute"}]',
+            'roles': 'admin',
+            'is_admin': True
+        }
+
+        wf_ex = models.WorkflowExecution()
+        wf_ex.context = {}
+
+        data_flow.add_openstack_data_to_context(wf_ex)
+
+        openstack_ctx = wf_ex.context['openstack']
+
+        self.assertEqual('***', openstack_ctx['auth_token'])
+        self.assertEqual('***', openstack_ctx['service_catalog'])
+        self.assertEqual('my-project', openstack_ctx['project_id'])
+        self.assertEqual('my-user', openstack_ctx['user_id'])

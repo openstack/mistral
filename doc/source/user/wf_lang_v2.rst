@@ -1551,9 +1551,12 @@ Workflow Language.
 OpenStack context
 ^^^^^^^^^^^^^^^^^
 
-OpenStack context is available by **$.openstack**. It contains **auth_token**,
-**project_id**, **user_id**, **service_catalog**, **user_name**,
-**project_name**, **roles**, **is_admin** properties.
+OpenStack context is available by **$.openstack**. It contains
+**project_id**, **user_id**, **user_name**, **project_name**, **roles**,
+**is_admin** properties.
+
+Note that **auth_token** and **service_catalog** are masked (set to ``***``)
+in the context for security reasons.
 
 
 Builtin functions in expressions

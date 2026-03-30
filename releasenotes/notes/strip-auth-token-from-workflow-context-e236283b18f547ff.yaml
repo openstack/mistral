@@ -1,0 +1,10 @@
+---
+security:
+  - |
+    The Keystone ``auth_token`` and ``service_catalog`` are now masked in
+    the workflow execution context (replaced with ``***``). Previously,
+    their real values were persisted in the database and accessible to
+    workflow authors via ``$.openstack.auth_token`` and
+    ``$.openstack.service_catalog`` YAQL expressions, which could allow
+    token exfiltration. Actions are not affected as they receive their
+    authentication token through the RPC context.
