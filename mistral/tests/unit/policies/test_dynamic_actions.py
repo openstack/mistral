@@ -34,6 +34,7 @@ class TestDynamicActionPolicy(base.APITest):
 
     Policies to test:
     - dynamic_actions:create
+    - dynamic_actions:publicize (on POST & PUT)
     - dynamic_actions:delete
     - dynamic_actions:get
     - dynamic_actions:list
@@ -108,6 +109,73 @@ class TestDynamicActionPolicy(base.APITest):
         )
 
         self.assertEqual(201, resp.status_int)
+
+    def test_dynamic_action_create_public_not_allowed(self):
+        # Default policy requires admin_only for publicize.
+        # A non-admin user should be denied.
+        resp = self.app.post_json(
+            '/v2/dynamic_actions',
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'code_source_id': self.code_source_id,
+                'scope': 'public'
+            },
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+
+    def test_dynamic_action_create_public_allowed(self):
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
+        resp = self.app.post_json(
+            '/v2/dynamic_actions',
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'code_source_id': self.code_source_id,
+                'scope': 'public'
+            }
+        )
+
+        self.assertEqual(201, resp.status_int)
+
+    def test_dynamic_action_update_public_not_allowed(self):
+        # Create as admin first, then try to update to public as non-admin.
+        self._create_dynamic_action_as_admin()
+
+        resp = self.app.put_json(
+            '/v2/dynamic_actions',
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'scope': 'public'
+            },
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+
+    def test_dynamic_action_update_public_allowed(self):
+        self._create_dynamic_action_as_admin()
+
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
+        resp = self.app.put_json(
+            '/v2/dynamic_actions',
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'scope': 'public'
+            }
+        )
+
+        self.assertEqual(200, resp.status_int)
 
     def test_dynamic_action_get_not_allowed(self):
         # Create as admin first, then try to get as non-admin.
