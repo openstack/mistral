@@ -50,6 +50,9 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('dynamic_actions:create', context.ctx())
 
+        if dyn_action.scope == 'public':
+            acl.enforce('dynamic_actions:publicize', context.ctx())
+
         LOG.debug('Creating dynamic action [action=%s]', dyn_action)
 
         if not dyn_action.code_source_id and not dyn_action.code_source_name:
@@ -74,6 +77,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
                 'name': dyn_action.name,
                 'namespace': dyn_action.namespace,
                 'class_name': dyn_action.class_name,
+                'scope': dyn_action.scope or 'private',
                 'code_source_id': code_source.id,
                 'code_source_name': code_source.name
             }
@@ -92,6 +96,9 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         :param dyn_action: Dynamic action to create.
         """
         acl.enforce('dynamic_actions:update', context.ctx())
+
+        if dyn_action.scope == 'public':
+            acl.enforce('dynamic_actions:publicize', context.ctx())
 
         LOG.debug('Updating dynamic action [action=%s]', dyn_action)
 
