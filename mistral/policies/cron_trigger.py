@@ -63,6 +63,17 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=CRON_TRIGGERS % 'publicize',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Make a cron trigger publicly available.',
+        operations=[
+            {
+                'path': '/v2/cron_triggers',
+                'method': 'POST'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all cron triggers of all projects.',
