@@ -41,10 +41,8 @@ class TestCodeSourcePolicy(base.APITest):
         self.addCleanup(db_api.delete_code_sources)
 
     def test_code_source_create_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"code_sources:create": "role:FAKE"}
-        )
-
+        # Default policy requires admin_only for create.
+        # A non-admin user should be denied.
         resp = self.app.post(
             '/v2/code_sources?name=%s&namespace=%s' %
             (MODULE_NAME, NAMESPACE),
@@ -56,9 +54,9 @@ class TestCodeSourcePolicy(base.APITest):
         self.assertEqual(403, resp.status_int)
 
     def test_code_source_create_allowed(self):
-        self.policy.change_policy_definition(
-            {"code_sources:create": "role:FAKE or rule:admin_or_owner"}
-        )
+        # Default policy requires admin_only. An admin should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
             '/v2/code_sources?name=%s&namespace=%s' %
@@ -124,7 +122,10 @@ class TestCodeSourcePolicy(base.APITest):
         self.assertEqual(403, resp.status_int)
 
     def test_code_source_update_public_allowed(self):
-        # Create a private code source first.
+        # Create a private code source as admin first.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         self.app.post(
             '/v2/code_sources?name=%s&namespace=%s' %
             (MODULE_NAME, NAMESPACE),
@@ -133,9 +134,6 @@ class TestCodeSourcePolicy(base.APITest):
         )
 
         # Update to public as admin.
-        self.ctx.is_admin = True
-        self.addCleanup(setattr, self.ctx, 'is_admin', False)
-
         resp = self.app.put(
             '/v2/code_sources?identifier=%s&namespace=%s&scope=public' %
             (MODULE_NAME, NAMESPACE),
