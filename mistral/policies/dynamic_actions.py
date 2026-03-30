@@ -66,6 +66,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=ACTIONS % 'publicize',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Make a dynamic action publicly available.',
+        operations=[
+            {
+                'path': BASE_PATH,
+                'method': 'POST'
+            },
+            {
+                'path': BASE_PATH,
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=ACTIONS % 'update',
         check_str=base.RULE_ADMIN_ONLY,
         description='Update one or more dynamic actions.',

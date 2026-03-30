@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Added a new ``dynamic_actions:publicize`` policy (``admin_only``) and
+    enforcement on both create and update operations when scope is public.
+    Previously, the dynamic actions POST endpoint did not persist the scope
+    field and neither POST nor PUT enforced a publicize policy, allowing
+    any user with create or update access to make dynamic actions public.
