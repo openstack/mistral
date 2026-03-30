@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Added a new ``cron_triggers:publicize`` policy (``admin_only``) and
+    enforcement on create when scope is public. Previously, the cron trigger
+    POST endpoint hardcoded the scope to ``private`` and ignored the scope
+    field from the request body, so cron triggers could never be created as
+    public. The scope field is now properly passed through to the database.
