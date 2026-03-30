@@ -72,6 +72,10 @@ class CronTriggersController(rest.RestController):
         LOG.debug('Create cron trigger: %s', cron_trigger)
 
         values = cron_trigger.to_dict()
+        scope = values.get('scope', 'private')
+
+        if scope == 'public':
+            acl.enforce('cron_triggers:publicize', context.ctx())
 
         db_model = rest_utils.rest_retry_on_db_error(
             triggers.create_cron_trigger
@@ -83,7 +87,8 @@ class CronTriggersController(rest.RestController):
             pattern=values.get('pattern'),
             first_time=values.get('first_execution_time'),
             count=values.get('remaining_executions'),
-            workflow_id=values.get('workflow_id')
+            workflow_id=values.get('workflow_id'),
+            scope=scope
         )
 
         return resources.CronTrigger.from_db_model(db_model)
