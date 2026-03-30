@@ -239,6 +239,11 @@ class TestActionsController(base.APITest):
         # Create an adhoc action for the purpose of the test.
         adhoc_actions.create_actions(ADHOC_ACTION_YAML)
 
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.put(
             '/v2/actions?scope=public',
             UPDATED_ADHOC_ACTION_YAML,
@@ -293,6 +298,11 @@ class TestActionsController(base.APITest):
         self.check_adhoc_action_json(resp.json['actions'][0])
 
     def test_post_public(self):
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.post(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,

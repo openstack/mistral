@@ -32,13 +32,17 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
-        name=EVENT_TRIGGERS % 'create:public',
+        name=EVENT_TRIGGERS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
-        description='Create a new event trigger for public usage.',
+        description='Make an event trigger publicly available.',
         operations=[
             {
                 'path': '/v2/event_triggers',
                 'method': 'POST'
+            },
+            {
+                'path': '/v2/event_triggers',
+                'method': 'PUT'
             }
         ]
     ),
