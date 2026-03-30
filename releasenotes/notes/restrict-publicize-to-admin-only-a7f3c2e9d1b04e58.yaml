@@ -1,0 +1,9 @@
+---
+security:
+  - |
+    The ``publicize`` policy for workflows, actions, and event triggers is now
+    restricted to admin users only (``admin_only``). Previously, any project
+    owner could make these resources public. A new ``code_sources:publicize``
+    policy has also been added with the same ``admin_only`` default, and
+    publicize checks are now enforced on both create and update operations for
+    code sources and event triggers where they were previously missing.

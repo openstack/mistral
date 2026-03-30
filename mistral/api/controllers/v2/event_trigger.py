@@ -68,7 +68,7 @@ class EventTriggersController(rest.RestController):
             )
 
         if values.get('scope') == 'public':
-            acl.enforce('event_triggers:create:public', auth_ctx.ctx())
+            acl.enforce('event_triggers:publicize', auth_ctx.ctx())
 
         LOG.debug('Create event trigger: %s', values)
 
@@ -100,6 +100,9 @@ class EventTriggersController(rest.RestController):
         acl.enforce('event_triggers:update', auth_ctx.ctx())
 
         values = event_trigger.to_dict()
+
+        if values.get('scope') == 'public':
+            acl.enforce('event_triggers:publicize', auth_ctx.ctx())
 
         for field in UPDATE_NOT_ALLOWED:
             if values.get(field):

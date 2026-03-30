@@ -383,6 +383,11 @@ class TestWorkflowsController(base.APITest):
     def test_put_public(self, mock_update):
         mock_update.return_value = UPDATED_WF_DB
 
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.put(
             '/v2/workflows?scope=public',
             UPDATED_WF_DEFINITION,
@@ -511,6 +516,11 @@ class TestWorkflowsController(base.APITest):
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_post_public(self, mock_mtd):
         mock_mtd.return_value = WF_DB
+
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
             '/v2/workflows?scope=public',

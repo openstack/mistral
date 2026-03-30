@@ -75,7 +75,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'publicize',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Make a workflow publicly available',
         operations=[
             {
