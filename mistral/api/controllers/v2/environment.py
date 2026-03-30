@@ -141,8 +141,11 @@ class EnvironmentController(rest.RestController):
 
         self._validate_environment(
             json.loads(wsme_pecan.pecan.request.body.decode()),
-            ['name', 'description', 'variables']
+            ['name', 'description', 'variables', 'scope']
         )
+
+        if env.scope == 'public':
+            acl.enforce('environments:publicize', context.ctx())
 
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.create_environment
@@ -173,6 +176,9 @@ class EnvironmentController(rest.RestController):
             definition,
             ['description', 'variables', 'scope']
         )
+
+        if env.scope == 'public':
+            acl.enforce('environments:publicize', context.ctx())
 
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.update_environment
