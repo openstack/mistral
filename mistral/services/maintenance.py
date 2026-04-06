@@ -204,7 +204,12 @@ def _resume_executions():
             return
 
         for ex in paused_executions:
-            _resume_execution(wf_ex_id=ex.id)
+            try:
+                _resume_execution(wf_ex_id=ex.id)
+            except BaseException as e:
+                LOG.error(str(e))
+
+
 
 
 def _resume_execution(wf_ex_id):
