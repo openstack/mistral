@@ -268,8 +268,8 @@ mistralApi:
   replicas: 1
   resources:
     requests:
-      cpu: 150m
-      memory: 350Mi
+      cpu: 100m
+      memory: 200Mi
     limits:
       cpu: 400m
       memory: 350Mi
@@ -300,8 +300,8 @@ mistralMonitoring:
   replicas: 1
   resources:
     requests:
-      cpu: 150m
-      memory: 350Mi
+      cpu: 100m
+      memory: 200Mi
     limits:
       cpu: 500m
       memory: 350Mi
@@ -339,8 +339,8 @@ mistralExecutor:
   replicas: 1
   resources:
     requests:
-      cpu: 200m
-      memory: 350Mi
+      cpu: 100m
+      memory: 200Mi
     limits:
       cpu: 500m
       memory: 350Mi
@@ -377,8 +377,8 @@ mistralEngine:
   replicas: 1
   resources:
     requests:
-      cpu: 300m
-      memory: 750Mi
+      cpu: 200m
+      memory: 256Mi
     limits:
       cpu: 1
       memory: 750Mi
@@ -409,8 +409,8 @@ mistralNotifier:
   replicas: 1
   resources:
     requests:
-      cpu: 150m
-      memory: 350Mi
+      cpu: 100m
+      memory: 200Mi
     limits:
       cpu: 500m
       memory: 350Mi
