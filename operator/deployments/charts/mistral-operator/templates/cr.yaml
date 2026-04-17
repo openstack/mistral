@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
+  {{- $platform := .Values.PAAS_PLATFORM | default "KUBERNETES" }}
   operatorId: {{ template "mistral.operatorId" . }}
 {{ if .Values.labels }}
   labels:
@@ -41,9 +42,7 @@ spec:
     mode: {{ .Values.disasterRecovery.mode }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.disasterRecovery.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.disasterRecovery.securityContext) | nindent 6 }}
     {{- if .Values.disasterRecovery.priorityClassName }}
     priorityClassName: {{ .Values.disasterRecovery.priorityClassName }}
     {{- end }}
@@ -188,17 +187,15 @@ spec:
     runTestsOnly: {{ .Values.integrationTests.runTestsOnly }}
     runBenchmarks: {{ .Values.integrationTests.runBenchmarks }}
     dockerImage: {{ template "mistral.testsImage" . }}
-    {{ if .Values.integrationTests.fsGroup }}
+    {{ if and (ne $platform "OPENSHIFT") .Values.integrationTests.fsGroup }}
     fsGroup: {{ .Values.integrationTests.fsGroup }}
     {{ end }}
-    {{ if .Values.integrationTests.runAsUser }}
+    {{ if and (ne $platform "OPENSHIFT") .Values.integrationTests.runAsUser }}
     runAsUser: {{ .Values.integrationTests.runAsUser }}
     {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.integrationTests.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.integrationTests.securityContext) | nindent 6 }}
     mistralReadyTimeout: {{ .Values.integrationTests.mistralReadyTimeout }}
     {{ if .Values.integrationTests.prometheusUrl }}
     prometheusUrl: {{ .Values.integrationTests.prometheusUrl }}
@@ -264,9 +261,7 @@ spec:
     {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralApi.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralApi.securityContext) | nindent 6 }}
     {{- if .Values.mistralApi.priorityClassName }}
     priorityClassName: {{ .Values.mistralApi.priorityClassName }}
     {{- end }}
@@ -291,9 +286,7 @@ spec:
     prometheusEnabled: {{ .Values.mistralMonitoring.prometheusEnabled }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralMonitoring.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralMonitoring.securityContext) | nindent 6 }}
     {{- if .Values.mistralMonitoring.priorityClassName }}
     priorityClassName: {{ .Values.mistralMonitoring.priorityClassName }}
     {{- end }}
@@ -325,9 +318,7 @@ spec:
     {{- end}}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralExecutor.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralExecutor.securityContext) | nindent 6 }}
     {{- if .Values.mistralExecutor.priorityClassName }}
     priorityClassName: {{ .Values.mistralExecutor.priorityClassName }}
     {{- end }}
@@ -345,9 +336,7 @@ spec:
     {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralEngine.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralEngine.securityContext) | nindent 6 }}
     {{- if .Values.mistralEngine.priorityClassName }}
     priorityClassName: {{ .Values.mistralEngine.priorityClassName }}
     {{- end }}
@@ -365,9 +354,7 @@ spec:
     {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralNotifier.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralNotifier.securityContext) | nindent 6 }}
     {{- if .Values.mistralNotifier.priorityClassName }}
     priorityClassName: {{ .Values.mistralNotifier.priorityClassName }}
     {{- end }}
@@ -377,9 +364,7 @@ spec:
     args: {{ .Values.mistralUpdateDbPod.args }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralUpdateDbPod.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralUpdateDbPod.securityContext) | nindent 6 }}
     {{- if .Values.mistralUpdateDbPod.priorityClassName }}
     priorityClassName: {{ .Values.mistralUpdateDbPod.priorityClassName }}
     {{- end }}
@@ -390,9 +375,7 @@ spec:
     args: {{ .Values.mistralCleanupDbPod.args }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralCleanupDbPod.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralCleanupDbPod.securityContext) | nindent 6 }}
     {{- if .Values.mistralCleanupDbPod.priorityClassName }}
     priorityClassName: {{ .Values.mistralCleanupDbPod.priorityClassName }}
     {{- end }}
@@ -407,10 +390,10 @@ spec:
         cpu: {{ default "300m" .Values.mistralLite.resources.limits.cpu }}
         memory: {{ default "300Mi" .Values.mistralLite.resources.limits.memory }}
     rabbitmq:
-      {{ if .Values.mistralLite.rabbitmq.fsGroup }}
+      {{ if and (ne $platform "OPENSHIFT") .Values.mistralLite.rabbitmq.fsGroup }}
       fsGroup: {{ .Values.mistralLite.rabbitmq.fsGroup }}
       {{ end }}
-      {{ if .Values.mistralLite.rabbitmq.runAsUser }}
+      {{ if and (ne $platform "OPENSHIFT") .Values.mistralLite.rabbitmq.runAsUser }}
       runAsUser: {{ .Values.mistralLite.rabbitmq.runAsUser }}
       {{ end }}
       dockerImage: {{ default "ghcr.io/netcracker/qubership-rabbitmq:main" .Values.mistralLite.rabbitmq.dockerImage }}
@@ -419,9 +402,7 @@ spec:
         memory: {{ default "300Mi" .Values.mistralLite.rabbitmq.resources.memory }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
-      {{- with .Values.mistralLite.securityContext }}
-      {{ toYaml . | indent 6 }}
-      {{- end }}
+      {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralLite.securityContext) | nindent 6 }}
     {{- if .Values.mistralLite.priorityClassName }}
     priorityClassName: {{ .Values.mistralLite.priorityClassName }}
     {{- end }}
