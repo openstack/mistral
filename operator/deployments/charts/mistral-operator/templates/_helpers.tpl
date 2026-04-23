@@ -65,8 +65,22 @@ Create the name of the service account to use
 
 {{- define "restricted.globalPodSecurityContext" -}}
 runAsNonRoot: true
+{{- $platform := .Values.PAAS_PLATFORM | default "KUBERNETES" -}}
+{{- if ne $platform "OPENSHIFT" }}
 seccompProfile:
   type: "RuntimeDefault"
+{{- end }}
+{{- end -}}
+
+{{- define "restricted.platformPodSecurityContext" -}}
+{{- $platform := .platform | default "KUBERNETES" -}}
+{{- $securityContext := .securityContext | default dict -}}
+{{- if eq $platform "OPENSHIFT" -}}
+  {{- $securityContext = omit $securityContext "seccompProfile" "runAsUser" "runAsGroup" "fsGroup" -}}
+{{- end -}}
+{{- if $securityContext -}}
+{{- toYaml $securityContext -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "restricted.globalContainerSecurityContext" -}}
