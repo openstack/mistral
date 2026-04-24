@@ -2454,6 +2454,8 @@ class KubernetesHelper:
             conditions.append(new_cond)
 
         current["conditions"] = conditions
+        if status_type == MC.Status.SUCCESSFUL:
+            current["deploymentSessionId"] = self._spec.get("deploymentSessionId", "")
         self.patch_custom_resource_status(current)
 
     def check_mistral_service_ready(self, service):
@@ -2461,13 +2463,14 @@ class KubernetesHelper:
             name=service,
             namespace=self._workspace
         )
-        ready_replicas = deployment.status.ready_replicas
+        ready_replicas = deployment.status.ready_replicas or 0
+        updated_replicas = deployment.status.updated_replicas or 0
         if service in MC.SERVICES_NAME_TO_SERVER:
             spec = self._spec['mistral' + MC.SERVICES_NAME_TO_SERVER[service]]
             replicas = int(spec['replicas'])
         else:
             replicas = 1
-        return ready_replicas == replicas
+        return ready_replicas == replicas and updated_replicas == replicas
 
     def wait_mistral_ready(self, check_interval=10):
         wait_time = self._spec['integrationTests']['mistralReadyTimeout']
