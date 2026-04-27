@@ -2454,6 +2454,8 @@ class KubernetesHelper:
             conditions.append(new_cond)
 
         current["conditions"] = conditions
+        if status_type == MC.Status.SUCCESSFUL:
+            current["deploymentSessionId"] = self._spec.get("deploymentSessionId", "")
         self.patch_custom_resource_status(current)
 
     def check_mistral_service_ready(self, service):
