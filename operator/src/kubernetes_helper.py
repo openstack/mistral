@@ -2463,14 +2463,13 @@ class KubernetesHelper:
             name=service,
             namespace=self._workspace
         )
-        ready_replicas = deployment.status.ready_replicas or 0
-        updated_replicas = deployment.status.updated_replicas or 0
+        ready_replicas = deployment.status.ready_replicas
         if service in MC.SERVICES_NAME_TO_SERVER:
             spec = self._spec['mistral' + MC.SERVICES_NAME_TO_SERVER[service]]
             replicas = int(spec['replicas'])
         else:
             replicas = 1
-        return ready_replicas == replicas and updated_replicas == replicas
+        return ready_replicas == replicas
 
     def wait_mistral_ready(self, check_interval=10):
         wait_time = self._spec['integrationTests']['mistralReadyTimeout']
