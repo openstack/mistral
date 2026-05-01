@@ -30,6 +30,7 @@ from urllib import parse
 
 from mistral._i18n import _
 from mistral import auth
+from mistral.auth import project_rules as auth_project_rules
 from mistral import exceptions as exc
 
 
@@ -118,8 +119,15 @@ class KeycloakAuthHandler(auth.AuthHandler):
 
             raise exc.UnauthorizedException()
 
+        # Resolve project_id via configured rules; fall back to extracting
+        # the realm name from the issuer URL when no rule matches.
+        project_id = auth_project_rules.resolve_project_id_from_config(decoded)
+
         req.headers["X-Identity-Status"] = "Confirmed"
-        req.headers["X-Project-Id"] = realm_name
+        if project_id is None:
+            req.headers["X-Project-Id"] = realm_name
+        else:
+            req.headers["X-Project-Id"] = project_id
         req.headers["X-Roles"] = roles
 
     @staticmethod

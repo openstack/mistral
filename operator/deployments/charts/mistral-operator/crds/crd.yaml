@@ -297,6 +297,9 @@ spec:
                         cloudCoreUsername:
                           type: string
                           nullable: true
+                        projectRules:
+                          type: string
+                          nullable: true
                       type: object
                     dbaas:
                       properties:
@@ -4855,6 +4858,9 @@ spec:
                           type: boolean
                         type:
                           type: string
+                        projectRules:
+                          type: string
+                          nullable: true
                       type: object
                     dbaas:
                       properties:

@@ -193,6 +193,10 @@ mistralCommonParams:
     type: "keycloak-oidc"
     certs: ""
     cloudCoreUsername: ""
+    projectRules:
+      - type: extract
+        field: "iss"
+        pattern: "*/realms/{value}"
   dbaas:
     agentUrl: "http://dbaas-agent:8080"
     aggregatorUrl: ""
