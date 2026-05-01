@@ -377,6 +377,32 @@
                         },
                         "cloudCoreUsername": {
                             "type": "string"
+                        },
+                        "projectRules": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": ["type", "field"],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": ["extract", "map"]
+                                    },
+                                    "field": {
+                                        "type": "string"
+                                    },
+                                    "pattern": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "string"
+                                    },
+                                    "project": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
