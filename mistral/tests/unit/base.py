@@ -16,9 +16,11 @@
 import datetime
 import importlib.resources
 import json
+import os
 import time
 from unittest import mock
 
+import fixtures
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base
@@ -98,6 +100,10 @@ class FakeHTTPResponse(object):
 class BaseTest(base.BaseTestCase):
     def setUp(self):
         super(BaseTest, self).setUp()
+
+        timeout = int(os.environ.get("OS_TEST_TIMEOUT", 0))
+        if timeout > 0:
+            self.useFixture(fixtures.Timeout(timeout, gentle=True))
 
         # By default, retain only built-in actions so that the unit tests
         # don't see unexpected actions (i.e. provided by action generators
