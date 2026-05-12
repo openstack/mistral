@@ -132,21 +132,6 @@ class BaseTest(base.BaseTestCase):
             cls
         )
 
-    def assertRaisesWithMessage(self, exception, msg, func, *args, **kwargs):
-        try:
-            func(*args, **kwargs)
-            self.fail()
-        except exception as e:
-            self.assertEqual(msg, e.message)
-
-    def assertRaisesWithMessageContaining(self, exception, msg, func, *args,
-                                          **kwargs):
-        try:
-            func(*args, **kwargs)
-            self.fail()
-        except exception as e:
-            self.assertIn(msg, e.message)
-
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]
 

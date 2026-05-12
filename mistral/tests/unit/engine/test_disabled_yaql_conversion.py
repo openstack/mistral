@@ -113,10 +113,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
 
         eng_svc = engine_server.get_oslo_service(setup_profiler=False)
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.MistralError,
-            "The config property 'yaql.convert_output_data' is set to False "
-            "so 'yaql.convert_input_data' must also be set to False.",
+            r"^The config property 'yaql\.convert_output_data' is set to "
+            r"False so 'yaql\.convert_input_data' must also be set to "
+            r"False\.$",
             eng_svc.start
         )
 
