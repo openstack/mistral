@@ -135,7 +135,7 @@ class BaseTest(base.BaseTestCase):
     def assertRaisesWithMessage(self, exception, msg, func, *args, **kwargs):
         try:
             func(*args, **kwargs)
-            self.assertFail()
+            self.fail()
         except exception as e:
             self.assertEqual(msg, e.message)
 
@@ -143,7 +143,7 @@ class BaseTest(base.BaseTestCase):
                                           **kwargs):
         try:
             func(*args, **kwargs)
-            self.assertFail()
+            self.fail()
         except exception as e:
             self.assertIn(msg, e.message)
 
