@@ -830,6 +830,12 @@ class KubernetesHelper:
                         key='auth-project-rules',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
+                name='DEFAULT_PROJECT_ID',
+                value_from=V1EnvVarSource(
+                    config_map_key_ref=V1ConfigMapKeySelector(
+                        key='default-project-id',
+                        name=MC.COMMON_CONFIGMAP))),
+            V1EnvVar(
                 name='CLEANUP',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -1384,6 +1390,12 @@ class KubernetesHelper:
                         key='auth-project-rules',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
+                name='DEFAULT_PROJECT_ID',
+                value_from=V1EnvVarSource(
+                    config_map_key_ref=V1ConfigMapKeySelector(
+                        key='default-project-id',
+                        name=MC.COMMON_CONFIGMAP))),
+            V1EnvVar(
                 name='EXTERNAL_MISTRAL_URL',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -1915,6 +1927,7 @@ class KubernetesHelper:
             'auth-enable': str(configmap['auth']['enable']),
             'auth-type': str(configmap['auth']['type']),
             'auth-project-rules': str(configmap['auth'].get('projectRules', '')),
+            'default-project-id': str(configmap.get('defaultProjectId', '')),
             'dbaas-agent-url': str(configmap['dbaas']['agentUrl']),
             'dbaas-aggregator-url': str(configmap['dbaas'].get('aggregatorUrl')),
             'debug-log': str(configmap['debugLog']),
@@ -2597,6 +2610,15 @@ class KubernetesHelper:
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='auth-project-rules',
+                        name=MC.COMMON_CONFIGMAP
+                    )
+                )
+            ),
+            V1EnvVar(
+                name='DEFAULT_PROJECT_ID',
+                value_from=V1EnvVarSource(
+                    config_map_key_ref=V1ConfigMapKeySelector(
+                        key='default-project-id',
                         name=MC.COMMON_CONFIGMAP
                     )
                 )

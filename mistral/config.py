@@ -69,6 +69,13 @@ auth_opts = [
     )
 ]
 
+default_project_id_opt = cfg.StrOpt(
+    'default_project_id',
+    help=_(
+        'Fallback project_id used when no project rule matches. '
+    )
+)
+
 action_providers_opts = [
     cfg.ListOpt(
         'allowlist',
@@ -1020,6 +1027,7 @@ RABBITMQ_GROUP = 'rabbitmq'
 
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
+CONF.register_opt(default_project_id_opt)
 CONF.register_opt(scheduler_type_opt)
 CONF.register_opt(js_impl_opt)
 CONF.register_opt(expiration_token_duration)
@@ -1067,6 +1075,7 @@ CLI_OPTS = [
 default_group_opts = CLI_OPTS + [
     wf_trace_log_name_opt,
     auth_type_opt,
+    default_project_id_opt,
     scheduler_type_opt,
     js_impl_opt,
     expiration_token_duration

@@ -301,6 +301,9 @@ spec:
                           type: string
                           nullable: true
                       type: object
+                    defaultProjectId:
+                      type: string
+                      nullable: true
                     dbaas:
                       properties:
                         agentUrl:
@@ -4862,6 +4865,9 @@ spec:
                           type: string
                           nullable: true
                       type: object
+                    defaultProjectId:
+                      type: string
+                      nullable: true
                     dbaas:
                       properties:
                         agentUrl:

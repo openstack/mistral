@@ -205,15 +205,14 @@ spec:
     {{- end }}
   mistralCommonParams:
     secret_change: {{ .Values.mistralCommonParams.secret_change }}
+    defaultProjectId: {{ .Values.mistralCommonParams.DEFAULT_PROJECT_ID | quote }}
     auth:
       enable: {{ .Values.mistralCommonParams.auth.enable }}
       type: {{ .Values.mistralCommonParams.auth.type }}
       {{- if .Values.mistralCommonParams.auth.cloudCoreUsername }}
       cloudCoreUsername: {{ .Values.mistralCommonParams.auth.cloudCoreUsername }}
       {{- end}}
-      {{- if .Values.mistralCommonParams.auth.projectRules }}
       projectRules: {{ .Values.mistralCommonParams.auth.projectRules | toJson | quote }}
-      {{- end}}
     dbaas:
       agentUrl: {{ .Values.mistralCommonParams.dbaas.agentUrl }}
       {{- if .Values.mistralCommonParams.dbaas.aggregatorUrl }}

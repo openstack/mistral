@@ -336,6 +336,7 @@ The Mistral Authentication parameters used for the configurations are specified 
 |mistralCommonParams.auth.type|string|no|'mitreid'|This parameter specifies the authentication type.|
 |mistralCommonParams.auth.certs|string|no|''|This parameter specifies the certificate to verify idpExternalServer.|
 |mistralCommonParams.auth.projectRules|list|no|`[{"type":"extract","field":"iss","pattern":"*/realms/{value}"}]`|This parameter specifies the rules for resolving the project ID from token claims. For more information, see [Project ID Resolution](#project-id-resolution).|
+|mistralCommonParams.DEFAULT_PROJECT_ID|string|yes|''|This parameter specifies the fallback project ID to use when authentication is not enabled or no project rule matches the token.|
 |mistralCommonParams.idpServer|string|no|''|This parameter specifies the IDP server.|
 |mistralCommonParams.idpExternalServer|string|no|''|This parameter specifies the IDP external server.|
 |mistralCommonParams.idpUserPrecreated|bool|no|'False'|This parameter specifies whether Mistral should use a precreated user with credentials stored in a specific secret, `idp-precreated-user`, with the `idp-client-id` and `idp-client-secret` fields.|
@@ -351,7 +352,7 @@ By default, Mistral derives the project ID from the Keycloak realm name in the t
 
 This behaviour is reflected in the default configuration in [values.yaml](/deployments/charts/mistral-operator/values.yaml):
 
-`mistralCommonParams.auth.projectRules` lets you override this behaviour by configuring a list of rules. Rules are evaluated in order; the first match wins. If no rule matches, Mistral falls back to extracting the realm name from the issuer URL, the same way it does by default.
+`mistralCommonParams.auth.projectRules` lets you override this behaviour by configuring a list of rules. Rules are evaluated in order, the first match wins. If no rule matches, Mistral uses `mistralCommonParams.DEFAULT_PROJECT_ID` as the project ID.
 
 ### Rule Type: extract
 
