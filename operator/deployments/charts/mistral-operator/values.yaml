@@ -188,7 +188,7 @@ bluegreenAgent:
 
 mistralCommonParams:
   secret_change: 1
-  DEFAULT_PROJECT_ID: "<default-project>"
+  defaultProjectId: "<default-project>"
   auth:
     enable: "False"
     type: "keycloak-oidc"

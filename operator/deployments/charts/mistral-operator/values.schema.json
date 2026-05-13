@@ -362,7 +362,7 @@
                 "secret_change": {
                     "type": "integer"
                 },
-                "DEFAULT_PROJECT_ID": {
+                "defaultProjectId": {
                     "type": "string"
                 },
                 "auth": {

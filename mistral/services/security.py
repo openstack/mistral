@@ -27,7 +27,7 @@ CONF = cfg.CONF
 CONF.import_opt('auth_enable', 'mistral.config', group='pecan')
 
 
-
+DEFAULT_PROJECT_ID = "<default-project>"
 
 def get_project_id():
     if CONF.pecan.auth_enable and auth_ctx.has_ctx():

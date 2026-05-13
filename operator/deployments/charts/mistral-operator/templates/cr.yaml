@@ -205,7 +205,7 @@ spec:
     {{- end }}
   mistralCommonParams:
     secret_change: {{ .Values.mistralCommonParams.secret_change }}
-    defaultProjectId: {{ .Values.mistralCommonParams.DEFAULT_PROJECT_ID | quote }}
+    defaultProjectId: {{ .Values.mistralCommonParams.defaultProjectId  | quote }}
     auth:
       enable: {{ .Values.mistralCommonParams.auth.enable }}
       type: {{ .Values.mistralCommonParams.auth.type }}
