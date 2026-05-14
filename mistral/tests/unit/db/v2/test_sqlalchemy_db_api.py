@@ -130,11 +130,11 @@ class WorkbookTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workbook(WORKBOOKS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for WorkbookDefinition "
-            "['name', 'namespace', 'project_id']:"
-            " my_workbook1, test, <default-project>",
+            r"^Duplicate entry for WorkbookDefinition "
+            r"\['name', 'namespace', 'project_id'\]:"
+            r" my_workbook1, test, <default-project>$",
             db_api.create_workbook,
             WORKBOOKS[0]
         )
@@ -704,10 +704,10 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for WorkflowDefinition ['name', 'namespace',"
-            " 'project_id']: my_wf1, , <default-project>",
+            r"^Duplicate entry for WorkflowDefinition \['name', 'namespace',"
+            r" 'project_id'\]: my_wf1, , <default-project>$",
             db_api.create_workflow_definition,
             WF_DEFINITIONS[0]
         )
@@ -716,10 +716,10 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workflow_definition(WF_DEFINITIONS[2])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for WorkflowDefinition ['name', 'namespace',"
-            " 'project_id']: my_wf3, mynamespace, <default-project>",
+            r"^Duplicate entry for WorkflowDefinition \['name', 'namespace',"
+            r" 'project_id'\]: my_wf3, mynamespace, <default-project>$",
             db_api.create_workflow_definition,
             WF_DEFINITIONS[2]
         )
@@ -1153,10 +1153,10 @@ class ActionDefinitionTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for Action ['name', 'namespace', 'project_id']:"
-            " action1, , <default-project>",
+            r"^Duplicate entry for Action \['name', 'namespace',"
+            r" 'project_id'\]: action1, , <default-project>$",
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )
@@ -2521,10 +2521,10 @@ class CronTriggerTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for cron trigger ['name', 'project_id']:"
-            " trigger1, <default-project>",
+            r"^Duplicate entry for cron trigger \['name', 'project_id'\]:"
+            r" trigger1, <default-project>$",
             db_api.create_cron_trigger,
             CRON_TRIGGERS[0]
         )
@@ -2864,10 +2864,10 @@ class EnvironmentTest(SQLAlchemyTest):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_environment(ENVIRONMENTS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for Environment ['name', 'project_id']: "
-            "env1, None",
+            r"^Duplicate entry for Environment \['name', 'project_id'\]: "
+            r"env1, None$",
             db_api.create_environment,
             ENVIRONMENTS[0]
         )
@@ -3179,11 +3179,11 @@ class ResourceMemberTest(SQLAlchemyTest):
     def test_create_resource_member_duplicate(self):
         db_api.create_resource_member(RESOURCE_MEMBERS[0])
 
-        self.assertRaisesWithMessage(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for ResourceMember ['resource_id',"
-            " 'resource_type', 'member_id']:"
-            " 123e4567-e89b-12d3-a456-426655440000, workflow, 99-88-33",
+            r"^Duplicate entry for ResourceMember \['resource_id',"
+            r" 'resource_type', 'member_id'\]:"
+            r" 123e4567-e89b-12d3-a456-426655440000, workflow, 99-88-33$",
             db_api.create_resource_member,
             RESOURCE_MEMBERS[0]
         )
@@ -3458,11 +3458,11 @@ class EventTriggerTest(SQLAlchemyTest):
     def test_create_event_trigger_duplicate(self):
         db_api.create_event_trigger(EVENT_TRIGGERS[0])
 
-        self.assertRaisesWithMessageContaining(
+        self.assertRaisesRegex(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for EventTrigger ['exchange', 'topic', 'event',"
-            " 'workflow_id', 'project_id']: openstack, notification,"
-            " compute.create_instance,",
+            r"^Duplicate entry for EventTrigger \['exchange', 'topic',"
+            r" 'event', 'workflow_id', 'project_id'\]:"
+            r" openstack, notification, compute.create_instance, .*$",
             db_api.create_event_trigger,
             EVENT_TRIGGERS[0]
         )
