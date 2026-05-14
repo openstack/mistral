@@ -31,7 +31,7 @@ All API v2 URLs are relative to API v2 root.
 Workbooks
 ---------
 
-.. autotype:: mistral.api.controllers.v2.resources.Workbook
+.. autoclass:: mistral.api.controllers.v2.resources.Workbook
    :members:
 
 `name` is immutable. tags is a list of values associated with a workbook that
@@ -40,7 +40,7 @@ Big Data processing workbooks etc.). Note that name and tags get inferred from
 workbook definition when Mistral service receives a POST request. So they
 can't be changed in another way.
 
-.. autotype:: mistral.api.controllers.v2.resources.Workbooks
+.. autoclass:: mistral.api.controllers.v2.resources.Workbooks
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.workbook:WorkbooksController
@@ -50,7 +50,7 @@ can't be changed in another way.
 Workflows
 ---------
 
-.. autotype:: mistral.api.controllers.v2.resources.Workflow
+.. autoclass:: mistral.api.controllers.v2.resources.Workflow
    :members:
 
 `name` is immutable. tags is a list of values associated with a workflow that
@@ -58,7 +58,7 @@ a user can use to group workflows by some criteria. Note that name and tags get
 inferred from workflow definition when Mistral service receives a POST request.
 So they can't be changed in another way.
 
-.. autotype:: mistral.api.controllers.v2.resources.Workflows
+.. autoclass:: mistral.api.controllers.v2.resources.Workflows
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.workflow:WorkflowsController
@@ -67,10 +67,10 @@ So they can't be changed in another way.
 Actions
 -------
 
-.. autotype:: mistral.api.controllers.v2.resources.Action
+.. autoclass:: mistral.api.controllers.v2.resources.Action
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.Actions
+.. autoclass:: mistral.api.controllers.v2.resources.Actions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.action:ActionsController
@@ -80,10 +80,10 @@ Actions
 Executions
 ----------
 
-.. autotype:: mistral.api.controllers.v2.resources.Execution
+.. autoclass:: mistral.api.controllers.v2.resources.Execution
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.Executions
+.. autoclass:: mistral.api.controllers.v2.resources.Executions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.execution:ExecutionsController
@@ -98,10 +98,10 @@ set of tasks. So Task is an instance of a task described in a Workflow that
 belongs to a particular execution.
 
 
-.. autotype:: mistral.api.controllers.v2.resources.Task
+.. autoclass:: mistral.api.controllers.v2.resources.Task
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.Tasks
+.. autoclass:: mistral.api.controllers.v2.resources.Tasks
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.task:TasksController
@@ -119,10 +119,10 @@ Execution is an instance of an action call described in a Workflow Task that
 belongs to a particular execution.
 
 
-.. autotype:: mistral.api.controllers.v2.resources.ActionExecution
+.. autoclass:: mistral.api.controllers.v2.resources.ActionExecution
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.ActionExecutions
+.. autoclass:: mistral.api.controllers.v2.resources.ActionExecutions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.action_execution:ActionExecutionsController
@@ -140,10 +140,10 @@ will run a specified workflow according to its properties: pattern,
 first_execution_time and remaining_executions.
 
 
-.. autotype:: mistral.api.controllers.v2.resources.CronTrigger
+.. autoclass:: mistral.api.controllers.v2.resources.CronTrigger
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.CronTriggers
+.. autoclass:: mistral.api.controllers.v2.resources.CronTriggers
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.cron_trigger:CronTriggersController
@@ -183,10 +183,10 @@ Example of creating action defaults
 
 Note: using CLI, Environment can be created via JSON or YAML file.
 
-.. autotype:: mistral.api.controllers.v2.resources.Environment
+.. autoclass:: mistral.api.controllers.v2.resources.Environment
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.Environments
+.. autoclass:: mistral.api.controllers.v2.resources.Environments
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.environment:EnvironmentController
@@ -226,10 +226,10 @@ create one or more dynamic actions using **POST /v2/dynamic-actions** and
 specifying the name of the action, its class name as it's declared in the
 source code, and the reference to the source code itself.
 
-.. autotype:: mistral.api.controllers.v2.resources.CodeSource
+.. autoclass:: mistral.api.controllers.v2.resources.CodeSource
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.CodeSources
+.. autoclass:: mistral.api.controllers.v2.resources.CodeSources
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.code_source:CodeSourcesController
@@ -249,10 +249,10 @@ implements the action, and then create the action using the method
 it's declared in the code source code, and the reference to the source code
 itself must be specified.
 
-.. autotype:: mistral.api.controllers.v2.resources.DynamicAction
+.. autoclass:: mistral.api.controllers.v2.resources.DynamicAction
    :members:
 
-.. autotype:: mistral.api.controllers.v2.resources.DynamicActions
+.. autoclass:: mistral.api.controllers.v2.resources.DynamicActions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.dynamic_action:DynamicActionsController
