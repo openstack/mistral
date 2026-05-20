@@ -21,7 +21,7 @@ class ContentTypeHook(hooks.PecanHook):
 
         This hook is needed for changing content type of
         responses but only for some HTTP methods. This is kind of
-        'hack' but it seems impossible using pecan/WSME to set different
+        workaround but it seems impossible using pecan/WSME to set different
         content types on request and response.
 
         :param content_type: Content-Type of the response.

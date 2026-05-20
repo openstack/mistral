@@ -57,8 +57,8 @@ class SendEmailActionTest(base.BaseTest):
         self.reply_to = ['reply-to@example.com']
         self.cc_addrs = ['copy@example.com']
         self.bcc_addrs = ['hidden_copy@example.com']
-        self.subject = "Multi word subject с русскими буквами"
-        self.body = "short multiline\nbody\nc русскими буквами"
+        self.subject = "Multi word subject with special characters"
+        self.body = "short multiline\nbody\nwith special characters"
         self.html_body = '<html><body><b>HTML</b> body</body></html>'
 
         self.smtp_server = 'mail.example.com:25'

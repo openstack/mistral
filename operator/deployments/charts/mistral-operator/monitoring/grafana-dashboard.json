@@ -2901,7 +2901,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "Сount of container restarts in each Mistral pod",
+      "description": "Count of container restarts in each Mistral pod",
       "fieldConfig": {
         "defaults": {
           "color": {

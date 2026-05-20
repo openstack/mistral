@@ -294,7 +294,7 @@ def error_handler(parser, message):
 
 if __name__ == '__main__':
     mitreid = MitreidLibrary(
-        idp_server='http://identity-management-security-services.ci-master.openshift.sdntest.netcracker.com',
-        client_register_token='qhpazpmb_mD0IbX3zzWFcevMOv8Qf03X')
+        idp_server='http://identity-management-security-services.example.com',
+        client_register_token='<client_register_token>')
     token = mitreid.get_token()
     print(token)
