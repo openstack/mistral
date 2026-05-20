@@ -297,7 +297,13 @@ spec:
                         cloudCoreUsername:
                           type: string
                           nullable: true
+                        projectRules:
+                          type: string
+                          nullable: true
                       type: object
+                    defaultProjectId:
+                      type: string
+                      nullable: true
                     dbaas:
                       properties:
                         agentUrl:
@@ -4855,7 +4861,13 @@ spec:
                           type: boolean
                         type:
                           type: string
+                        projectRules:
+                          type: string
+                          nullable: true
                       type: object
+                    defaultProjectId:
+                      type: string
+                      nullable: true
                     dbaas:
                       properties:
                         agentUrl:

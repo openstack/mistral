@@ -335,6 +335,8 @@ The Mistral Authentication parameters used for the configurations are specified 
 |mistralCommonParams.auth.enable|bool|no|'False'|This parameter specifies whether authentication is enabled.|
 |mistralCommonParams.auth.type|string|no|'mitreid'|This parameter specifies the authentication type.|
 |mistralCommonParams.auth.certs|string|no|''|This parameter specifies the certificate to verify idpExternalServer.|
+|mistralCommonParams.auth.projectRules|list|no|`[{"type":"extract","field":"iss","pattern":"*/realms/{value}"}]`|This parameter specifies the rules for resolving the project ID from token claims. For more information, see [Project ID Resolution](#project-id-resolution).|
+|mistralCommonParams.defaultProjectId|string|yes|''|This parameter specifies the fallback project ID to use when authentication is not enabled or no project rule matches the token.|
 |mistralCommonParams.idpServer|string|no|''|This parameter specifies the IDP server.|
 |mistralCommonParams.idpExternalServer|string|no|''|This parameter specifies the IDP external server.|
 |mistralCommonParams.idpUserPrecreated|bool|no|'False'|This parameter specifies whether Mistral should use a precreated user with credentials stored in a specific secret, `idp-precreated-user`, with the `idp-client-id` and `idp-client-secret` fields.|
@@ -343,6 +345,94 @@ The Mistral Authentication parameters used for the configurations are specified 
 |secrets.idpClientSecret|string|no|'null'|This parameter specifies the IDP client secret.|
 |secrets.idpJwkExp|string|no|'null'|This parameter specifies IDP JWK exp.|
 |secrets.idpJwkMod|string|no|'null'|This parameter specifies IDP JWK mod.|
+
+## Project ID Resolution
+
+By default, Mistral derives the project ID from the Keycloak realm name in the token's issuer (`iss`) claim. For example, a token with `"iss": "http://identity-provider:8080/auth/realms/cloud-common"` results in a project ID of `cloud-common`.
+
+This behaviour is reflected in the default configuration in [values.yaml](/deployments/charts/mistral-operator/values.yaml):
+
+`mistralCommonParams.auth.projectRules` lets you override this behaviour by configuring a list of rules. Rules are evaluated in order, the first match wins. If no rule matches, Mistral uses `mistralCommonParams.defaultProjectId` as the project ID.
+
+### Rule Type: extract
+
+Matches a pattern against a token field and uses the captured `{value}` directly as the project ID. Requires `type`, `field`, and `pattern`.
+
+```yaml
+mistralCommonParams:
+  auth:
+    projectRules:
+      - type: extract
+        field: "iss"
+        pattern: "*/realms/{value}"
+```
+
+With the above rule and a token containing `"iss": "http://identity-provider:8080/auth/realms/cloud-common"`, Mistral verifies that `*/realms/{value}` matches the issuer URL and derives `cloud-common` as the project ID.
+
+### Rule Type: map
+
+Compares the field value against a configured `value` and returns a fixed `project` as the project ID on match. Requires `type`, `field`, `value`, and `project`. `pattern` is optional — when provided, `{value}` is extracted from the field first and then compared; without a pattern, the field's raw value is compared directly.
+
+**With pattern:**
+
+```yaml
+mistralCommonParams:
+  auth:
+    projectRules:
+      - type: map
+        field: "iss"
+        pattern: "*/realms/{value}"
+        value: "1e1be22a-7b6e-4fd0-ac85-c2f880a70bb0"
+        project: "cloud-common"
+```
+
+With the above rule and a token containing `"iss": "https://gateway.example.com/auth/realms/1e1be22a-7b6e-4fd0-ac85-c2f880a70bb0"`, Mistral extracts `1e1be22a-7b6e-4fd0-ac85-c2f880a70bb0` from the issuer URL, matches it against the configured value, and uses `cloud-common` as the project ID.
+
+**Without pattern:**
+
+```yaml
+mistralCommonParams:
+  auth:
+    projectRules:
+      - type: map
+        field: "aud"
+        value: "account"
+        project: "cloud-common"
+```
+
+With the above rule and a token containing `"aud": "account"`, Mistral compares the raw field value directly against `account` and uses `cloud-common` as the project ID.
+
+### Index Notation for List Claims
+
+When a token claim contains a list of values, you can target a specific element using index notation on the `field`, for example `aud[0]`.
+
+```yaml
+mistralCommonParams:
+  auth:
+    projectRules:
+      - type: map
+        field: "aud[0]"
+        value: "account"
+        project: "cloud-common"
+```
+
+### Multiple Rules
+
+Rules are evaluated in order. The first matching rule is used and remaining rules are skipped.
+
+```yaml
+mistralCommonParams:
+  auth:
+    projectRules:
+      - type: map
+        field: "iss"
+        pattern: "*/realms/{value}"
+        value: "1e1be22a-7b6e-4fd0-ac85-c2f880a70bb0"
+        project: "cloud-common"
+      - type: extract
+        field: "iss"
+        pattern: "*/realms/{value}"
+```
 
 ## Kafka Notification Parameters
 
