@@ -185,7 +185,8 @@ def update_workflow_execution_env(wf_ex, env):
 
 
 def get_workflow_definition_checksum(definition):
-    return hashlib.md5(definition.encode('utf-8')).hexdigest()
+    return hashlib.md5(
+        definition.encode('utf-8'), usedforsecurity=False).hexdigest()
 
 
 def _get_workflow_values(wf_spec, definition, scope, namespace=None,

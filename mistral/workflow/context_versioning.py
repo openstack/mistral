@@ -60,7 +60,8 @@ def _get_published_keys_recursively(updated_keys, published, prefix=None):
         if not isinstance(published[key], dict):
             if cfg.CONF.context_versioning.hash_version_keys:
                 new_prefix = hashlib.md5(
-                    new_prefix.encode("utf-8")
+                    new_prefix.encode("utf-8"),
+                    usedforsecurity=False
                 ).hexdigest()
 
             updated_keys.append(new_prefix)

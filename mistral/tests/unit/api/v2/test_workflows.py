@@ -955,7 +955,7 @@ class TestWorkflowsController(base.APITest):
 
     def is_valid_checksum(self, checksum):
         try:
-            hashlib.md5(checksum.encode())
+            hashlib.md5(checksum.encode(), usedforsecurity=False)
             return True
         except Exception:
             return False
