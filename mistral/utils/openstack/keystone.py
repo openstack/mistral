@@ -42,8 +42,6 @@ def client():
 
     cl = ks_client.Client(session=session)
 
-    cl.management_url = auth_url
-
     return cl
 
 
@@ -72,8 +70,6 @@ def _admin_client(trust_id=None):
             auth_url=auth_url,
             trusts=trust_id
         )
-
-        cl.management_url = auth_url
 
         return cl
     else:
