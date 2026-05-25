@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fixed a keystone authentication failure when a workflow running under a
+    trust-scoped token triggers another keystone call (for example, creating
+    a cron trigger from within a workflow). The previous implementation
+    passed the user's token to ``keystoneclient.Client`` directly, which
+    internally issues ``POST /v3/auth/tokens`` to re-authenticate. Keystone
+    rejects this for trust-scoped tokens. The client now uses the
+    ``admin_token`` keystoneauth1 plugin, which consumes the existing token
+    without re-authenticating. See LP#2048851.
