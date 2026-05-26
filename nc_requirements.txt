@@ -2,7 +2,7 @@ certifi>=2024.7.4
 confluent-kafka==1.6.1
 gevent
 jsonschema<4.6.0
-kubernetes
+kubernetes<36
 psycopg2
 py_mini_racer
 prometheus_client
