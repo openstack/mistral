@@ -16,7 +16,7 @@
 #    under the License.
 
 
-import eventlet
+import time
 from unittest import mock
 
 from mistral.db.v2 import api as db_api
@@ -48,7 +48,7 @@ def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
 
 def _sleep_run(*args, **kwargs):
     # A message was delivered in a first executor. But he died.
-    eventlet.sleep(2)
+    time.sleep(2)
     # And then message was redelivered to the second executor.
     _run_at_target(*args, **kwargs)
 

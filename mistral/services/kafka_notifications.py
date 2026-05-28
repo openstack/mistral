@@ -22,7 +22,6 @@ from confluent_kafka import Producer
 
 
 import datetime
-from eventlet import Semaphore
 import json
 import sys
 import threading
@@ -40,7 +39,7 @@ __CONSUMER = None
 
 __NOTIFIER = None
 
-__sem = Semaphore()
+__sem = threading.Semaphore()
 
 __PRODUCER_CHECK_TIME = None
 

@@ -16,7 +16,7 @@
 import abc
 import threading
 
-import eventlet
+import time
 import six
 
 from oslo_log import log as logging
@@ -79,7 +79,7 @@ class MonitoringJob(object):
             )
 
             if self._was_executed:
-                eventlet.sleep(self._interval)
+                time.sleep(self._interval)
 
             try:
                 self._was_executed = True

@@ -13,8 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet.semaphore import Semaphore
-from eventlet import sleep as eventlet_sleep
+import threading
+import time
 import json
 from oslo_config import cfg
 import requests
@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 class WebhookOneThreadPublisher(base.NotificationPublisher):
     def __init__(self):
-        self._sem = Semaphore()
+        self._sem = threading.Semaphore()
 
     def publish(self, ctx, ex_id, data, event, timestamp, **kwargs):
         with self._sem:
@@ -100,7 +100,7 @@ class WebhookOneThreadPublisher(base.NotificationPublisher):
                     )
 
                 retry_count += 1
-                eventlet_sleep(polling_time)
+                time.sleep(polling_time)
 
             LOG.error(
                 'The number of retries is over: [url=%s, event=%s, ex_id=%s]',

@@ -1083,7 +1083,6 @@ default_group_opts = CLI_OPTS + [
 
 
 _DEFAULT_LOG_LEVELS = [
-    'eventlet.wsgi.server=WARN',
     'oslo_service.periodic_task=INFO',
     'oslo_service.loopingcall=INFO',
     'mistral.services.periodic=INFO',

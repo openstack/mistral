@@ -15,7 +15,7 @@
 import base64
 import time
 
-import eventlet
+import time
 from oslo_config import cfg
 from oslo_log import log
 import requests
@@ -52,7 +52,7 @@ def request_with_retry(url, method='GET', body=None):
                         'retrying %s of %s... \n exception: %s',
                         url, retry_count + 1, retry_limit, e)
             do_retry = True
-            eventlet.sleep(retry_interval)
+            time.sleep(retry_interval)
             retry_count = retry_count + 1
             continue
 
@@ -64,7 +64,7 @@ def request_with_retry(url, method='GET', body=None):
                         url, retry_count + 1, retry_limit,
                         resp.status_code)
             do_retry = True
-            eventlet.sleep(retry_interval)
+            time.sleep(retry_interval)
             retry_count = retry_count + 1
     return resp
 

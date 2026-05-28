@@ -14,7 +14,7 @@
 #    limitations under the License.
 import itertools
 
-import eventlet
+import time
 from unittest import mock
 
 from oslo_config import cfg
@@ -1451,7 +1451,7 @@ class PoliciesTest(base.EngineTestCase):
         counter = itertools.count()
 
         def raise_error_first_three_times(*args, **kwargs):
-            eventlet.sleep(0.7)
+            time.sleep(0.7)
 
             if next(counter) < 3:
                 raise Exception("expect result")

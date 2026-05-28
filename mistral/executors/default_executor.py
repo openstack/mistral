@@ -16,7 +16,6 @@
 
 from builtins import TimeoutError
 import datetime
-from eventlet import timeout as eventlet_timeout
 from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
 from oslo_utils import timeutils
