@@ -905,12 +905,29 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf_1_task_1_action_exs[0].id
             )
 
+        # NOTE(amorin) we need to await the wf to make sure it's actually
+        # running and avoid race condition with IDLE state
+        # See lp-2051040
+        self.await_workflow_state(wf_2_ex_1.id, states.RUNNING)
+
+        with db_api.transaction():
+            # Get again now that it's running
+            wf_2_ex_1 = db_api.get_workflow_execution(
+                wf_1_task_1_action_exs[0].id
+            )
+
             wf_2_ex_1_task_execs = wf_2_ex_1.task_executions
 
             wf_2_ex_1_task_1_ex = self._assert_single_item(
                 wf_2_ex_1.task_executions,
                 name='task1'
             )
+
+        # And wait for the task to be RUNNING
+        self.await_task_running(wf_2_ex_1_task_1_ex.id)
+
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
 
             wf_2_ex_1_task_1_action_exs = db_api.get_action_executions(
                 task_execution_id=wf_2_ex_1_task_1_ex.id

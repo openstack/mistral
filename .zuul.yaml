@@ -1,42 +1,4 @@
 - job:
-    name: mistral-rally-task
-    parent: rally-task-mistral
-    vars:
-      devstack_plugins:
-        rally-openstack: https://opendev.org/openstack/rally-openstack
-      rally_task: rally-jobs/task-mistral.yaml
-      devstack_localrc:
-        USE_PYTHON3: true
-      devstack_local_conf:
-        post-config:
-          $MISTRAL_CONF_FILE:
-            default:
-              oslo_rpc_executor: threading
-              rpc_message_ttl: 3000
-              rpc_response_timeout: 3000
-              default_log_levels: mistral=DEBUG,mistral.expressions=INFO,sqlalchemy=INFO
-            engine:
-              execution_field_size_limit_kb: 8192
-              execution_integrity_check_delay: -1
-            executor:
-              type: local
-            database:
-              max_pool_size: 100
-            scheduler:
-              fixed_delay: 2
-              random_depaly: 0
-              batch_size: 50
-            yaql:
-              convert_input_data: false
-              convert_output_data: false
-            pecan:
-              auth_enable: false
-    required-projects:
-      - openstack/rally-openstack
-      - openstack/mistral-lib
-      - openstack/mistral-extra
-
-- job:
     name: mistral-docker-buildimage
     parent: publish-openstack-artifacts
     run: playbooks/docker-buildimage/run.yaml
@@ -52,13 +14,6 @@
     timeout: 1800
     required-projects:
       - openstack/mistral
-
-# This job does not work. We can come back to it later.
-# - job:
-#     name: mistral-ha
-#     parent: legacy-base
-#     run: playbooks/legacy/mistral-ha/run
-#     timeout: 4200
 
 - job:
     name: mistral-tox-unit-mysql
@@ -93,7 +48,6 @@
     templates:
       - openstack-python3-jobs
       - publish-openstack-docs-pti
-      - check-requirements
       - release-notes-jobs-python3
     check:
       jobs:
@@ -104,33 +58,56 @@
               - ^.*\.rst$
               - ^doc/.*$
               - ^releasenotes/.*$
-        - mistral-devstack
-        - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
-        - mistral-devstack-kombu
-        - mistral-tox-unit-mysql
-        - mistral-tox-unit-postgresql
-        - mistral-rally-task:
-            voting: false
+        - mistral-devstack:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-tempest-ipv6-only:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-non-apache-tempest-ipv6-only:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-non-apache:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-kombu:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
     queue: mistral
     gate:
       jobs:
-        - mistral-devstack
-        - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
-        - mistral-devstack-non-apache
-        - mistral-devstack-kombu
-        - mistral-tox-unit-mysql
-        - mistral-tox-unit-postgresql
+        - mistral-devstack:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-tempest-ipv6-only:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-non-apache-tempest-ipv6-only:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-non-apache:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
+        - mistral-devstack-kombu:
+            required-projects:
+              - name: opendev.org/openstack/mistral-tempest-plugin
+                override-checkout: 2024.1-last
     post:
       jobs:
         - mistral-docker-buildimage:
             branches: master
     experimental:
       jobs:
+        - mistral-tox-unit-mysql
+        - mistral-tox-unit-postgresql
         - mistral-docker-buildimage-test:
             branches: master
-        # This job doesn't work yet.
-        # - mistral-ha:
-        #     voting: false
