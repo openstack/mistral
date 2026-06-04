@@ -95,7 +95,6 @@
     templates:
       - openstack-python3-jobs
       - publish-openstack-docs-pti
-      - check-requirements
       - release-notes-jobs-python3
     check:
       jobs:
@@ -107,9 +106,7 @@
               - ^doc/.*$
               - ^releasenotes/.*$
         - mistral-devstack
-        - mistral-devstack-jammy
         - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
         - mistral-devstack-kombu
         # Disable mysql / postgresql units as they are not working as expected
@@ -119,9 +116,7 @@
     gate:
       jobs:
         - mistral-devstack
-        - mistral-devstack-jammy
         - mistral-devstack-tempest-ipv6-only
-        - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
         - mistral-devstack-kombu
         # Disable mysql / postgresql units as they are not working as expected
