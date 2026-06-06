@@ -17,21 +17,30 @@ from keystoneauth1 import loading
 from keystoneclient.v3 import client as ks_client
 from oslo_config import cfg
 
-from mistral import context
+from mistral import context as auth_ctx
 
 CONF = cfg.CONF
 
 
 def client():
-    ctx = context.ctx()
-    auth_url = ctx.auth_uri or CONF.keystone_authtoken.www_authenticate_uri
+    ctx = auth_ctx.ctx()
 
-    cl = ks_client.Client(
-        user_id=ctx.user_id,
-        token=ctx.auth_token,
-        tenant_id=ctx.project_id,
-        auth_url=auth_url
-    )
+    # NOTE(amorin) admin_token plugin does no version discovery, so we have
+    # to hand it a fully-qualified v3 endpoint.
+    auth_url = CONF.keystone_authtoken.auth_url.rstrip('/')
+    if not auth_url.endswith('/v3'):
+        auth_url += '/v3'
+
+    # NOTE(amorin) use admin_token plugin to avoid re-authenticating
+    # which is not always possible
+    # See lp-2048851
+    loader = loading.get_plugin_loader('admin_token')
+    session_loader = loading.session.Session()
+
+    auth = loader.load_from_options(endpoint=auth_url, token=ctx.auth_token)
+    session = session_loader.load_from_options(auth=auth)
+
+    cl = ks_client.Client(session=session)
 
     cl.management_url = auth_url
 

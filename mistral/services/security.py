@@ -38,14 +38,15 @@ def get_project_id():
 
 
 def create_trust():
-    client = keystone.client()
-
     ctx = auth_ctx.ctx()
+
+    # Create a keystone client on behalf of end-user
+    client = keystone.client()
 
     trustee_id = keystone.client_for_admin().session.get_user_id()
 
     return client.trusts.create(
-        trustor_user=client.user_id,
+        trustor_user=ctx.user_id,
         trustee_user=trustee_id,
         impersonation=True,
         role_names=ctx.roles,
