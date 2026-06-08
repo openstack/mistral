@@ -6,6 +6,7 @@ ${AUTH_ENABLE}             %{AUTH_ENABLE}
 ${TENANT}                  system
 ${WORKFLOW_NAMESPACE}      tests
 ${KUBERNETES_NAMESPACE}    %{KUBERNETES_NAMESPACE}
+${MISTRAL_SERVICE_NAME}    %{MISTRAL_HOST}
 
 
 *** Settings ***
@@ -751,3 +752,10 @@ Test Hardcoded Images
     ${dd_images}=  Get Dd Images From Config Map  tests-config  ${KUBERNETES_NAMESPACE}
     Skip If  '${dd_images}' == '${None}'  There is no deployDescriptor, not possible to check case!
     Compare Images From Resources With Dd  ${dd_images}
+
+Test Container Hardening
+    [Tags]    mistral_container_hardening    mistral
+    ${part_of}=       Create List    mistral
+    ${exclusions}=    Create Dictionary
+    ...    _all=CH12
+    Check Container Hardening    ${part_of}    ${KUBERNETES_NAMESPACE }    ${exclusions}

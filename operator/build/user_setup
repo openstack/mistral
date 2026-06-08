@@ -6,8 +6,9 @@ mkdir -p ${HOME}
 chown ${USER_UID}:0 ${HOME}
 chmod ug+rwx ${HOME}
 
-# runtime user will need to be able to self-insert in /etc/passwd
-chmod g+rw /etc/passwd
+# pre-bake the passwd entry for USER_UID so that getpass.getuser() works under
+# readOnlyRootFilesystem: true (no runtime write to /etc/passwd needed)
+echo "${USER_NAME:-mistral-operator}:x:${USER_UID}:0:${USER_NAME:-mistral-operator} user:${HOME}:/sbin/nologin" >> /etc/passwd
 
 # no need for this script to remain in the image after running
 rm $0

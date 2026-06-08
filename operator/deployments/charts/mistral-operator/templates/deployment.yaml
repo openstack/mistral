@@ -62,12 +62,20 @@ spec:
           secret:
             secretName: {{ template "mistral.tlsSecretName" . }}
         {{- end }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
       {{- if .Values.operator.affinity }}
       affinity:
         {{ .Values.operator.affinity | toJson }}
       {{- end }}
       securityContext:
         {{- include "restricted.globalPodSecurityContext" . | nindent 8 }}
+        {{- if ne (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" }}
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        {{- end }}
       {{- if .Values.operator.priorityClassName }}
       priorityClassName: {{ .Values.operator.priorityClassName }}
       {{- end }}
@@ -75,10 +83,10 @@ spec:
       containers:
         - name: mistral-operator
           image: {{ template "mistral.operatorImage" . }}
-          {{ if .Values.operator }}
-          imagePullPolicy: {{ default "IfNotPresent" .Values.operator.imagePullPolicy }}
           securityContext:
             {{- include "restricted.globalContainerSecurityContext" . | nindent 12 }}
+          {{ if .Values.operator }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.operator.imagePullPolicy }}
           resources:
             limits:
               cpu: {{ default "100m" .Values.operator.resources.limits.cpu  }}
@@ -125,6 +133,8 @@ spec:
               value: "False"
             - name: IDP_SECRET_API_GROUP
               value: {{ .Values.disasterRecovery.siteManagerApiGroup }}
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
           volumeMounts:
             - name: idp-api-certs
               mountPath: /opt/operator/mount_configs
@@ -136,15 +146,19 @@ spec:
             - name: mistral-tls-certs
               mountPath: /tls
             {{- end }}
+            - name: tmp
+              mountPath: /tmp
         {{- if (eq (include "mistral.enableDisasterRecovery" .) "true") }}
         - name: mistral-disaster-recovery
           image: {{ template "disasterRecovery.image" . }}
           imagePullPolicy: Always
-          {{- if eq (include "disasterRecovery.enableTls" .) "true" }}
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if eq (include "disasterRecovery.enableTls" .) "true" }}
             - name: mistral-tls-certs
               mountPath: /tls
-          {{- end }}
+            {{- end }}
           ports:
             - containerPort: 8068
               protocol: TCP
@@ -163,6 +177,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
             {{- if eq (include "disasterRecovery.enableTls" .) "true" }}
             - name: TLS_ENABLED
               value: "true"
@@ -252,7 +268,11 @@ spec:
             - name: TLS_ENABLED
               value: "true"
             {{- end }}
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             {{- if and (eq (include "mistral.enableTls" .) "true") (include "mistral.tlsSecretName" .) }}
             - name: mistral-tls-certs
               mountPath: /tls

@@ -69,6 +69,21 @@ runAsNonRoot: true
 {{- if ne $platform "OPENSHIFT" }}
 seccompProfile:
   type: "RuntimeDefault"
+runAsUser: 1005000
+runAsGroup: 1005000
+fsGroup: 1005000
+{{- end }}
+{{- end -}}
+
+{{- define "restricted.integrationTestsPodSecurityContext" -}}
+runAsNonRoot: true
+{{- $platform := .Values.PAAS_PLATFORM | default "KUBERNETES" -}}
+{{- if ne $platform "OPENSHIFT" }}
+seccompProfile:
+  type: "RuntimeDefault"
+runAsUser: 1000
+runAsGroup: 1000
+fsGroup: 1000
 {{- end }}
 {{- end -}}
 
@@ -85,6 +100,7 @@ seccompProfile:
 
 {{- define "restricted.globalContainerSecurityContext" -}}
 allowPrivilegeEscalation: false
+readOnlyRootFilesystem: true
 capabilities:
   drop: ["ALL"]
 {{- end -}}

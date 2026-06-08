@@ -22,7 +22,7 @@ from kubernetes.client import V1ObjectMeta, V1EnvVar, V1Container, V1PodSpec, \
     V1Service, V1ServiceSpec, V1ServicePort, V1ConfigMapKeySelector, \
     V1ResourceFieldSelector, V1LabelSelector, V1Job, V1JobSpec, \
     V1DeleteOptions, V1ComponentCondition, V1ComponentStatus, V1SecurityContext, \
-    V1Capabilities, V1SeccompProfile, V1SecretVolumeSource
+    V1Capabilities, V1SeccompProfile, V1SecretVolumeSource, V1EmptyDirVolumeSource
 
 import mistral_constants as MC
 from rabbitmq_helper import RabbitMQHelper
@@ -62,7 +62,25 @@ class KubernetesHelper:
 
     def get_container_security_context(self):
         return V1SecurityContext(allow_privilege_escalation=False,
+                                 read_only_root_filesystem=True,
                                  capabilities=V1Capabilities(drop=["ALL"]))
+
+    @staticmethod
+    def _get_tmp_volume():
+        return V1Volume(name='tmp',
+                        empty_dir=V1EmptyDirVolumeSource(size_limit='100Mi'))
+
+    @staticmethod
+    def _get_tmp_volume_mount():
+        return V1VolumeMount(name='tmp', mount_path='/tmp')
+
+    @staticmethod
+    def _get_config_redirect_env():
+        return V1EnvVar(name='CONFIG', value='/tmp/mistral.conf')
+
+    @staticmethod
+    def _get_pythondontwritebytecode_env():
+        return V1EnvVar(name='PYTHONDONTWRITEBYTECODE', value='1')
 
     def get_priority_class_name(self, name):
         return self._spec[name].get('priorityClassName') or ""
@@ -199,6 +217,8 @@ class KubernetesHelper:
                     read_only=True
                 )
             )
+        volumes.append(self._get_tmp_volume())
+        volume_mounts.append(self._get_tmp_volume_mount())
 
         envs = [
             V1EnvVar(
@@ -357,6 +377,8 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='queue-name-prefix',
                         name=MC.COMMON_CONFIGMAP))),
+            self._get_pythondontwritebytecode_env(),
+            self._get_config_redirect_env(),
         ]
 
         if self.tls_enabled():
@@ -435,6 +457,8 @@ class KubernetesHelper:
         volume_mounts = \
             [V1VolumeMount(name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME,
                            mount_path=mounth_path)]
+        volumes.append(self._get_tmp_volume())
+        volume_mounts.append(self._get_tmp_volume_mount())
         job_pod_spec = V1PodSpec(
             containers=[
                 V1Container(
@@ -494,7 +518,9 @@ class KubernetesHelper:
                             value_from=V1EnvVarSource(
                                 secret_key_ref=V1SecretKeySelector(
                                     key='pg-admin-password',
-                                    name=MC.MISTRAL_SECRET)))
+                                    name=MC.MISTRAL_SECRET))),
+                        self._get_pythondontwritebytecode_env(),
+                        self._get_config_redirect_env(),
                     ],
                     args=['./dr.sh'],
                     resources=container_resources,
@@ -841,6 +867,8 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='cleanup',
                         name=MC.COMMON_CONFIGMAP))),
+            self._get_pythondontwritebytecode_env(),
+            self._get_config_redirect_env(),
         ]
 
         if self.tls_enabled():
@@ -921,6 +949,7 @@ class KubernetesHelper:
                     read_only=True
                 )
             )
+        mounts.append(self._get_tmp_volume_mount())
 
         pod_template_spec = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
@@ -1095,7 +1124,8 @@ class KubernetesHelper:
                     default_mode=416
                 ),
                 name=MC.MISTRAL_TLS_CONFIG_VOLUME
-            )
+            ),
+            self._get_tmp_volume(),
         ]
 
         spec = client.V1DeploymentSpec(
@@ -1416,6 +1446,8 @@ class KubernetesHelper:
                      value=None if no_proxy is None else str(no_proxy)),
             V1EnvVar(name='SKIP_RABBIT_USER_CREATION',
                      value='True'),
+            self._get_pythondontwritebytecode_env(),
+            self._get_config_redirect_env(),
         ]
 
         if self.tls_enabled():
@@ -1425,7 +1457,8 @@ class KubernetesHelper:
             name=MC.CUSTOM_CONFIGMAP,
             items=[V1KeyToPath(key=MC.CUSTOM_CONFIG, path=MC.CUSTOM_CONFIG_FILE_PATH)],
             default_mode=420),
-            name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME)]
+            name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME),
+            self._get_tmp_volume()]
 
         pod_template_spec = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
@@ -1449,7 +1482,7 @@ class KubernetesHelper:
                 volume_mounts=[V1VolumeMount(
                     mount_path='/opt/mistral/mount_configs/custom',
                     name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME
-                )],
+                ), self._get_tmp_volume_mount()],
                 ports=[V1ContainerPort(
                     container_port=8989,
                     protocol='TCP')],
@@ -2311,10 +2344,15 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='queue-name-prefix',
                         name=MC.COMMON_CONFIGMAP))),
+             self._get_pythondontwritebytecode_env(),
+             self._get_config_redirect_env(),
         ]
 
         if self.tls_enabled():
             envs.extend(self.get_tls_envs())
+
+        volumes.append(self._get_tmp_volume())
+        volume_mounts.append(self._get_tmp_volume_mount())
 
         job_pod_spec = V1PodSpec(
             containers=[
@@ -2743,14 +2781,23 @@ class KubernetesHelper:
                 ]
             )
 
+        container_envs.append(self._get_pythondontwritebytecode_env())
+
         meta = V1ObjectMeta(
             labels=self.get_labels({'app': MC.MISTRAL_TESTS}),
             name=MC.MISTRAL_TESTS,
             namespace=self._workspace
         )
 
-        volumes = []
-        volume_mounts = []
+        volumes = [
+            self._get_tmp_volume(),
+            V1Volume(name='robot-output',
+                     empty_dir=V1EmptyDirVolumeSource(size_limit='500Mi'))
+        ]
+        volume_mounts = [
+            self._get_tmp_volume_mount(),
+            V1VolumeMount(name='robot-output', mount_path='/opt/robot/output')
+        ]
         if self.is_secret_present(MC.MISTRAL_TLS_SECRET):
             volumes.append(
                 V1Volume(
