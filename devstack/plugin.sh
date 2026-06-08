@@ -172,7 +172,8 @@ function stop_mistral {
 
 function configure_tempest_for_mistral {
     if is_service_enabled tempest; then
-        iniset $TEMPEST_CONFIG mistral_api service_api_supported True
+        # nothing to do now
+        :
     fi
 }
 
