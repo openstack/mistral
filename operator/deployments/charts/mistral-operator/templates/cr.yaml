@@ -190,34 +190,6 @@ spec:
     securityContext:
       {{- include "restricted.integrationTestsPodSecurityContext" . | nindent 6 }}
       {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.integrationTests.securityContext) | nindent 6 }}
-
-    # Integration test pod container + mounts for readOnlyRootFilesystem readiness
-    template:
-      spec:
-        containers:
-          - name: integration-tests
-            image: {{ template "mistral.testsImage" . }}
-            env:
-              - name: PYTHONDONTWRITEBYTECODE
-                value: "1"
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop: ["ALL"]
-            volumeMounts:
-              - name: tmp
-                mountPath: /tmp
-              - name: robot-output
-                mountPath: {{ .Values.integrationTests.robotOutputPath | default "/opt/robot/output" }}
-        volumes:
-          - name: tmp
-            emptyDir:
-              sizeLimit: 100Mi
-          - name: robot-output
-            emptyDir:
-              sizeLimit: 100Mi
-
     mistralReadyTimeout: {{ .Values.integrationTests.mistralReadyTimeout }}
     {{ if .Values.integrationTests.prometheusUrl }}
     prometheusUrl: {{ .Values.integrationTests.prometheusUrl }}
