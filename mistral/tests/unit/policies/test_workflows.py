@@ -99,10 +99,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_workflow_create_public_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition({
-            "workflows:create": "role:FAKE or rule:admin_or_owner",
-            "workflows:publicize": "role:FAKE"
-        })
+        # Default policy requires admin_only for publicize.
+        # The default test context has is_admin=False, so a regular user
+        # (project owner) should be denied.
         resp = self.app.post(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
@@ -117,10 +116,11 @@ class TestWorkflowPolicy(base.APITest):
         spec_mock = mock_obj.return_value.get.return_value
         spec_mock.get.return_value = {}
 
-        self.policy.change_policy_definition({
-            "workflows:create": "role:FAKE or rule:admin_or_owner",
-            "workflows:publicize": "role:FAKE or rule:admin_or_owner"
-        })
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.post(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
@@ -259,10 +259,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_workflow_update_public_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition({
-            "workflows:update": "role:FAKE or rule:admin_or_owner",
-            "workflows:publicize": "role:FAKE"
-        })
+        # Default policy requires admin_only for publicize.
+        # The default test context has is_admin=False, so a regular user
+        # (project owner) should be denied.
         resp = self.app.put(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
@@ -277,10 +276,11 @@ class TestWorkflowPolicy(base.APITest):
         spec_mock = mock_obj.return_value.get.return_value
         spec_mock.get.return_value = {}
 
-        self.policy.change_policy_definition({
-            "workflows:update": "role:FAKE or rule:admin_or_owner",
-            "workflows:publicize": "role:FAKE or rule:admin_or_owner"
-        })
+        # Default policy requires admin_only for publicize.
+        # An admin user should be allowed.
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
         resp = self.app.put(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
