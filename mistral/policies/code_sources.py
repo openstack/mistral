@@ -66,6 +66,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=CODE_SOURCES % 'publicize',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Make a code source publicly available.',
+        operations=[
+            {
+                'path': BASE_PATH,
+                'method': 'POST'
+            },
+            {
+                'path': BASE_PATH,
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update one or more code source.',
