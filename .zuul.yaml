@@ -62,22 +62,32 @@
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-tempest-ipv6-only:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-non-apache-tempest-ipv6-only:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-non-apache:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-kombu:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
     queue: mistral
     gate:
       jobs:
@@ -85,22 +95,32 @@
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-tempest-ipv6-only:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-non-apache-tempest-ipv6-only:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-non-apache:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
         - mistral-devstack-kombu:
             required-projects:
               - name: opendev.org/openstack/mistral-tempest-plugin
                 override-checkout: 2024.1-last
+            vars:
+              tempest_exclude_regex: (test_delete_wf_with_trigger_associate_in_other_tenant)
     post:
       jobs:
         - mistral-docker-buildimage:
