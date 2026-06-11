@@ -63,6 +63,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=WORKBOOKS % 'publicize',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Make a workbook publicly available.',
+        operations=[
+            {
+                'path': '/v2/workbooks',
+                'method': 'POST'
+            },
+            {
+                'path': '/v2/workbooks',
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=WORKBOOKS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update an workbook.',
