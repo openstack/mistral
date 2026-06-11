@@ -23,7 +23,7 @@ BASE_PATH = '/v2/dynamic_actions'
 rules = [
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'create',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Create a new dynamic action.',
         operations=[
             {
@@ -34,7 +34,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'delete',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Delete the named dynamic action.',
         operations=[
             {
@@ -45,7 +45,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'get',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Return the named dynamic action.',
         operations=[
             {
@@ -56,7 +56,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'list',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Return all dynamic actions.',
         operations=[
             {
@@ -67,7 +67,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'update',
-        check_str=base.RULE_ADMIN_OR_OWNER,
+        check_str=base.RULE_ADMIN_ONLY,
         description='Update one or more dynamic actions.',
         operations=[
             {

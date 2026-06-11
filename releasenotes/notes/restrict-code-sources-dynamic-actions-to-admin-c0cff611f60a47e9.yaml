@@ -1,0 +1,9 @@
+---
+security:
+  - |
+    All ``code_sources`` and ``dynamic_actions`` API policies are now restricted
+    to admin users only (``admin_only``). Previously, these policies defaulted
+    to ``admin_or_owner``, allowing any project owner to create, read, update,
+    and delete code sources and dynamic actions. Operators who need to restore
+    the previous behavior can override the relevant policies in their
+    ``policy.yaml``.
