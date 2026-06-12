@@ -12,6 +12,7 @@ RUN mkdir -p ${ROBOT_OUTPUT}
 COPY requirements.txt ${ROBOT_HOME}/requirements.txt
 COPY mistral_pods_checker.py ${ROBOT_HOME}/mistral_pods_checker.py
 COPY sitecustomize.py /tmp/sitecustomize.py
+COPY entrypoint.sh /entrypoint.sh
 COPY . ${ROBOT_HOME}
 
 # # Add necessary packages
@@ -48,7 +49,12 @@ RUN python3 -c "import site, shutil; shutil.copy('/tmp/sitecustomize.py', site.g
 
 RUN chmod 777 ${ROBOT_HOME}/tests && chmod 777 ${ROBOT_OUTPUT}
 
+RUN chmod +x /entrypoint.sh
+
 USER 1000:0
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["run-robot"]
 
 # Expose the port
 EXPOSE 8080

@@ -75,6 +75,39 @@ class KubernetesHelper:
         return V1VolumeMount(name='tmp', mount_path='/tmp')
 
     @staticmethod
+    def _get_mistralsecret_volume():
+        return V1Volume(name="mistral-secrets",
+                        secret=V1SecretVolumeSource(
+                        secret_name=MC.MISTRAL_SECRET,
+                        default_mode=0o400))
+
+    @staticmethod
+    def _get_mistralsecret_volume_mount():
+        return V1VolumeMount(name='mistral-secrets', mount_path='/var/run/secrets/mistral', read_only=True)
+
+    @staticmethod
+    def _get_idp_precreateduser_secret_volume():
+        return V1Volume(name="idp-precreated-user-secrets",
+                        secret=V1SecretVolumeSource(
+                        secret_name="idp-precreated-user",
+                        default_mode=0o400))
+
+    @staticmethod
+    def _get_idp_precreateduser_volume_mount():
+        return V1VolumeMount(name='idp-precreated-user-secrets', mount_path='/var/run/secrets/idp-precreated-user', read_only=True)
+
+    @staticmethod
+    def _get_cloudcore_secret_volume():
+        return V1Volume(name="mistral-client-credentials",
+                        secret=V1SecretVolumeSource(
+                        secret_name=MC.CLOUD_CORE_SECRET,
+                        default_mode=0o400))
+
+    @staticmethod
+    def _get_cloudcore_volume_mount():
+        return V1VolumeMount(name='mistral-client-credentials', mount_path='/var/run/secrets/mistral-client-credentials', read_only=True)
+
+    @staticmethod
     def _get_config_redirect_env():
         return V1EnvVar(name='CONFIG', value='/tmp/mistral.conf')
 
@@ -222,18 +255,6 @@ class KubernetesHelper:
 
         envs = [
             V1EnvVar(
-                name='PG_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='PG_DB_NAME',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -252,47 +273,11 @@ class KubernetesHelper:
                         key='pg-port',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
-                name='PG_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='PG_IDLE_TIMEOUT',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='pg-idle-timeout',
                         name=MC.COMMON_CONFIGMAP))),
-            V1EnvVar(
-                name='RABBIT_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-password',
-                        name=MC.MISTRAL_SECRET))),
             V1EnvVar(
                 name='RABBIT_HOST',
                 value_from=V1EnvVarSource(
@@ -348,18 +333,6 @@ class KubernetesHelper:
                         key='kafka-security-enabled',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
-                name='KAFKA_SASL_PLAIN_USERNAME',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-username',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='GUARANTEED_NOTIFIER_ENABLED',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -383,6 +356,9 @@ class KubernetesHelper:
 
         if self.tls_enabled():
             envs.extend(self.get_tls_envs())
+
+        volumes.append(self._get_mistralsecret_volume())
+        volume_mounts.append(self._get_mistralsecret_volume_mount())
 
         job_pod_spec = V1PodSpec(
             containers=[
@@ -459,6 +435,8 @@ class KubernetesHelper:
                            mount_path=mounth_path)]
         volumes.append(self._get_tmp_volume())
         volume_mounts.append(self._get_tmp_volume_mount())
+        volumes.append(self._get_mistralsecret_volume())
+        volume_mounts.append(self._get_mistralsecret_volume_mount())
         job_pod_spec = V1PodSpec(
             containers=[
                 V1Container(
@@ -471,18 +449,6 @@ class KubernetesHelper:
                         V1EnvVar(
                             name='NOTIFIER_DISABLED',
                             value='True'),
-                        V1EnvVar(
-                            name='PG_USER',
-                            value_from=V1EnvVarSource(
-                                secret_key_ref=V1SecretKeySelector(
-                                    key='pg-user',
-                                    name=MC.MISTRAL_SECRET))),
-                        V1EnvVar(
-                            name='PG_PASSWORD',
-                            value_from=V1EnvVarSource(
-                                secret_key_ref=V1SecretKeySelector(
-                                    key='pg-password',
-                                    name=MC.MISTRAL_SECRET))),
                         V1EnvVar(
                             name='PG_DB_NAME',
                             value_from=V1EnvVarSource(
@@ -507,18 +473,6 @@ class KubernetesHelper:
                                 config_map_key_ref=V1ConfigMapKeySelector(
                                     key='pg-idle-timeout',
                                     name=MC.COMMON_CONFIGMAP))),
-                        V1EnvVar(
-                            name='PG_ADMIN_USER',
-                            value_from=V1EnvVarSource(
-                                secret_key_ref=V1SecretKeySelector(
-                                    key='pg-admin-user',
-                                    name=MC.MISTRAL_SECRET))),
-                        V1EnvVar(
-                            name='PG_ADMIN_PASSWORD',
-                            value_from=V1EnvVarSource(
-                                secret_key_ref=V1SecretKeySelector(
-                                    key='pg-admin-password',
-                                    name=MC.MISTRAL_SECRET))),
                         self._get_pythondontwritebytecode_env(),
                         self._get_config_redirect_env(),
                     ],
@@ -667,30 +621,6 @@ class KubernetesHelper:
                         key='idp-server',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
-                name='IDP_JWK_EXP',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-jwk-exp',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='IDP_JWK_MOD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-jwk-mod',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='RABBIT_HOST',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -708,18 +638,6 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='rabbit-vhost',
                         name=MC.COMMON_CONFIGMAP))),
-            V1EnvVar(
-                name='PG_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-password',
-                        name=MC.MISTRAL_SECRET))),
             V1EnvVar(
                 name='PG_DB_NAME',
                 value_from=V1EnvVarSource(
@@ -780,18 +698,6 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='kafka-security-enabled',
                         name=MC.COMMON_CONFIGMAP))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_USERNAME',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-username',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-password',
-                        name=MC.MISTRAL_SECRET))),
             V1EnvVar(
                 name='AUTH_ENABLE',
                 value_from=V1EnvVarSource(
@@ -875,56 +781,11 @@ class KubernetesHelper:
             container_envs.extend(self.get_tls_envs())
 
         if self.is_cloud_core_integration_enabled():
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='username',
-                                name='mistral-client-credentials'))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='password',
-                                name='mistral-client-credentials')))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='cloudcore'))
         elif self.is_auth_enabled() and self.is_idp_user_precreated():
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-id',
-                                name='idp-precreated-user'))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-secret',
-                                name='idp-precreated-user')))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='precreated'))
         else:
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-id',
-                                name=MC.MISTRAL_SECRET))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-secret',
-                                name=MC.MISTRAL_SECRET)))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='mistral-secret'))
 
         affinity = None
 
@@ -950,6 +811,11 @@ class KubernetesHelper:
                 )
             )
         mounts.append(self._get_tmp_volume_mount())
+        mounts.append(self._get_mistralsecret_volume_mount())
+        if self.is_cloud_core_integration_enabled():
+            mounts.append(self._get_cloudcore_volume_mount())
+        elif self.is_auth_enabled() and self.is_idp_user_precreated():
+            mounts.append(self._get_idp_precreateduser_volume_mount())
 
         pod_template_spec = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
@@ -1126,7 +992,12 @@ class KubernetesHelper:
                 name=MC.MISTRAL_TLS_CONFIG_VOLUME
             ),
             self._get_tmp_volume(),
+            self._get_mistralsecret_volume(),
         ]
+        if self.is_cloud_core_integration_enabled():
+            pod_template_spec.spec.volumes.append(self._get_cloudcore_secret_volume())
+        elif self.is_auth_enabled() and self.is_idp_user_precreated():
+            pod_template_spec.spec.volumes.append(self._get_idp_precreateduser_secret_volume())
 
         spec = client.V1DeploymentSpec(
             replicas=mistral_replicas,
@@ -1208,54 +1079,6 @@ class KubernetesHelper:
                         key='idp-server',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
-                name='IDP_CLIENT_ID',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-client-id',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='IDP_CLIENT_SECRET',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-client-secret',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='IDP_JWK_EXP',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-jwk-exp',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='IDP_JWK_MOD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-jwk-mod',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='KAFKA_NOTIFICATIONS_ENABLED',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -1285,42 +1108,6 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='kafka-security-enabled',
                         name=MC.COMMON_CONFIGMAP))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_USERNAME',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-username',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-password',
-                        name=MC.MISTRAL_SECRET))),
             V1EnvVar(
                 name='RABBIT_HOST',
                 value_from=V1EnvVarSource(
@@ -1453,12 +1240,15 @@ class KubernetesHelper:
         if self.tls_enabled():
             container_envs.extend(self.get_tls_envs())
 
+        container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='mistral-secret'))
+
         volumes = [V1Volume(config_map=V1ConfigMapVolumeSource(
             name=MC.CUSTOM_CONFIGMAP,
             items=[V1KeyToPath(key=MC.CUSTOM_CONFIG, path=MC.CUSTOM_CONFIG_FILE_PATH)],
             default_mode=420),
             name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME),
-            self._get_tmp_volume()]
+            self._get_tmp_volume(),
+            self._get_mistralsecret_volume()]
 
         pod_template_spec = V1PodTemplateSpec(
             metadata=V1ObjectMeta(
@@ -1482,7 +1272,7 @@ class KubernetesHelper:
                 volume_mounts=[V1VolumeMount(
                     mount_path='/opt/mistral/mount_configs/custom',
                     name=MC.MISTRAL_CUSTOM_CONFIG_VOLUME
-                ), self._get_tmp_volume_mount()],
+                ), self._get_tmp_volume_mount(), self._get_mistralsecret_volume_mount()],
                 ports=[V1ContainerPort(
                     container_port=8989,
                     protocol='TCP')],
@@ -2189,18 +1979,6 @@ class KubernetesHelper:
 
         envs = [
             V1EnvVar(
-                name='PG_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='PG_DB_NAME',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -2224,42 +2002,6 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='pg-idle-timeout',
                         name=MC.COMMON_CONFIGMAP))),
-            V1EnvVar(
-                name='PG_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='PG_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='pg-admin-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-user',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='RABBIT_ADMIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='rabbit-admin-password',
-                        name=MC.MISTRAL_SECRET))),
             V1EnvVar(
                 name='RABBIT_HOST',
                 value_from=V1EnvVarSource(
@@ -2315,18 +2057,6 @@ class KubernetesHelper:
                         key='kafka-security-enabled',
                         name=MC.COMMON_CONFIGMAP))),
             V1EnvVar(
-                name='KAFKA_SASL_PLAIN_USERNAME',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-username',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
-                name='KAFKA_SASL_PLAIN_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='kafka-sasl-plain-password',
-                        name=MC.MISTRAL_SECRET))),
-            V1EnvVar(
                 name='GUARANTEED_NOTIFIER_ENABLED',
                 value_from=V1EnvVarSource(
                     config_map_key_ref=V1ConfigMapKeySelector(
@@ -2353,6 +2083,8 @@ class KubernetesHelper:
 
         volumes.append(self._get_tmp_volume())
         volume_mounts.append(self._get_tmp_volume_mount())
+        volumes.append(self._get_mistralsecret_volume())
+        volume_mounts.append(self._get_mistralsecret_volume_mount())
 
         job_pod_spec = V1PodSpec(
             containers=[
@@ -2670,33 +2402,6 @@ class KubernetesHelper:
                     )
                 )
             ),
-            V1EnvVar(
-                name='CLIENT_REGISTRATION_TOKEN',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-registration-token',
-                        name=MC.MISTRAL_SECRET
-                    )
-                )
-            ),
-            V1EnvVar(
-                name='IDP_USER',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-user-robot',
-                        name=MC.MISTRAL_SECRET
-                    )
-                )
-            ),
-            V1EnvVar(
-                name='IDP_PASSWORD',
-                value_from=V1EnvVarSource(
-                    secret_key_ref=V1SecretKeySelector(
-                        key='idp-password-robot',
-                        name=MC.MISTRAL_SECRET
-                    )
-                )
-            )
         ]
 
         if tls_enabled and tls_api_enabled:
@@ -2730,56 +2435,11 @@ class KubernetesHelper:
             )
 
         if self.is_cloud_core_integration_enabled():
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='username',
-                                name='mistral-client-credentials'))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='password',
-                                name='mistral-client-credentials')))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='cloudcore'))
         elif self.is_auth_enabled() and self.is_idp_user_precreated():
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-id',
-                                name='idp-precreated-user'))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-secret',
-                                name='idp-precreated-user')))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='precreated'))
         else:
-            container_envs.extend(
-                [
-                    V1EnvVar(
-                        name='IDP_CLIENT_ID',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-id',
-                                name=MC.MISTRAL_SECRET))),
-                    V1EnvVar(
-                        name='IDP_CLIENT_SECRET',
-                        value_from=V1EnvVarSource(
-                            secret_key_ref=V1SecretKeySelector(
-                                key='idp-client-secret',
-                                name=MC.MISTRAL_SECRET)))
-                ]
-            )
+            container_envs.append(V1EnvVar(name='IDP_CREDS_SOURCE', value='mistral-secret'))
 
         container_envs.append(self._get_pythondontwritebytecode_env())
 
@@ -2791,13 +2451,21 @@ class KubernetesHelper:
 
         volumes = [
             self._get_tmp_volume(),
+            self._get_mistralsecret_volume(),
             V1Volume(name='robot-output',
                      empty_dir=V1EmptyDirVolumeSource(size_limit='500Mi'))
         ]
         volume_mounts = [
             self._get_tmp_volume_mount(),
+            self._get_mistralsecret_volume_mount(),
             V1VolumeMount(name='robot-output', mount_path='/opt/robot/output')
         ]
+        if self.is_cloud_core_integration_enabled():
+            volumes.append(self._get_cloudcore_secret_volume())
+            volume_mounts.append(self._get_cloudcore_volume_mount())
+        elif self.is_auth_enabled() and self.is_idp_user_precreated():
+            volumes.append(self._get_idp_precreateduser_secret_volume())
+            volume_mounts.append(self._get_idp_precreateduser_volume_mount())
         if self.is_secret_present(MC.MISTRAL_TLS_SECRET):
             volumes.append(
                 V1Volume(

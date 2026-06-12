@@ -65,6 +65,12 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 100Mi
+        {{- if eq (include "bluegreenAgent.enabled" .) "true" }}
+        - name: mistral-secrets
+          secret:
+            secretName: mistral-secret
+            defaultMode: 0400
+        {{- end }}
       {{- if .Values.operator.affinity }}
       affinity:
         {{ .Values.operator.affinity | toJson }}
@@ -249,16 +255,6 @@ spec:
                 configMapKeyRef:
                   name: mistral-common-params
                   key: pg-port
-            - name: PG_USER
-              valueFrom:
-                secretKeyRef:
-                  name: mistral-secret
-                  key: pg-admin-user
-            - name: PG_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mistral-secret
-                  key: pg-admin-password
             - name: PG_DB_NAME
               valueFrom:
                 configMapKeyRef:
@@ -273,6 +269,9 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            - name: mistral-secrets
+              mountPath: /var/run/secrets/mistral
+              readOnly: true
             {{- if and (eq (include "mistral.enableTls" .) "true") (include "mistral.tlsSecretName" .) }}
             - name: mistral-tls-certs
               mountPath: /tls
