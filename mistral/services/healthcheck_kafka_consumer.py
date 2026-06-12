@@ -4,6 +4,7 @@ from confluent_kafka.admin import AdminClient
 import os
 import sys
 
+_SECRETS_DIR = '/var/run/secrets/mistral'
 
 def get_env(name, default=None, required=True):
     val = os.getenv(name, default)
@@ -12,6 +13,13 @@ def get_env(name, default=None, required=True):
         sys.exit(1)
     return val
 
+def _read_secret(key, default=None):
+    path = os.path.join(_SECRETS_DIR, key)
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return default
 
 def main():
     kafka_host = get_env("KAFKA_HOST")
@@ -29,8 +37,8 @@ def main():
         conf.update({
             "sasl.mechanism": "SCRAM-SHA-512",
             "security.protocol": "SASL_PLAINTEXT",
-            "sasl.username": get_env("KAFKA_SASL_PLAIN_USERNAME"),
-            "sasl.password": get_env("KAFKA_SASL_PLAIN_PASSWORD"),
+            "sasl.username": _read_secret('kafka-sasl-plain-username'),
+            "sasl.password": _read_secret('kafka-sasl-plain-password'),
         })
 
     if tls_enabled:
