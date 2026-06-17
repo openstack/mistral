@@ -1,6 +1,13 @@
 REST API V2
 ===========
 
+.. note::
+
+   The complete, curated reference for the Mistral v2 REST API is published as
+   the `OpenStack Workflow Service API Reference
+   <https://docs.openstack.org/api-ref/workflow/>`_. The page below gives an
+   overview of the API and its resources.
+
 This API describes the ways of interacting with Mistral service via
 HTTP protocol using Representational State Transfer concept (ReST).
 

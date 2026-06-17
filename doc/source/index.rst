@@ -47,6 +47,9 @@ For End Users
   specification of the Mistral Workflow Language, this is it.
 * :doc:`user/rest_api_v2`: This is where you can find the full specification
   of the Mistral REST API.
+* `Mistral API Reference <https://docs.openstack.org/api-ref/workflow/>`_:
+  The complete, curated reference for the Mistral (OpenStack Workflow Service)
+  v2 REST API, including every resource, request and response.
 
 For Administrators and Operators
 ================================
