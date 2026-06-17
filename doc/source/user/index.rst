@@ -23,7 +23,6 @@ info on concrete features.
     wf_namespaces
     asynchronous_actions
     wf_lang_v2
-    rest_api_v2
     cli/index
     cli/advanced
     cookbooks/index

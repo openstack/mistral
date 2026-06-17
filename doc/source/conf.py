@@ -32,19 +32,12 @@ sys.path.insert(0, os.path.abspath('../'))
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinxcontrib.pecanwsme.rest',
-    'sphinxcontrib.httpdomain',
-    'wsmeext.sphinxext',
     'openstackdocstheme',
     'oslo_policy.sphinxext',
     'oslo_policy.sphinxpolicygen',
     'oslo_config.sphinxconfiggen',
     'oslo_config.sphinxext',
 ]
-
-wsme_protocols = ['restjson']
-
-suppress_warnings = ['app.add_directive']
 
 # The suffix of source file names.
 source_suffix = '.rst'
@@ -83,6 +76,10 @@ pygments_style = 'native'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # html_static_path = ['_static']
+
+# Extra files (e.g. the .htaccess holding redirects) copied verbatim to the
+# root of the built docs.
+html_extra_path = ['_extra']
 
 html_theme = 'openstackdocs'
 

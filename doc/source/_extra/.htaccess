@@ -1,0 +1,4 @@
+# The standalone REST API V2 page was removed in favour of the curated API
+# reference published at https://docs.openstack.org/api-ref/workflow/.
+# Redirect any old links (across published series) to it.
+redirectmatch 301 ^/mistral/[^/]+/user/rest_api_v2.html$ /api-ref/workflow/
