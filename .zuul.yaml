@@ -53,6 +53,7 @@
     templates:
       - openstack-python3-jobs
       - publish-openstack-docs-pti
+      - api-ref-jobs
       - check-requirements
       - release-notes-jobs-python3
     check:
