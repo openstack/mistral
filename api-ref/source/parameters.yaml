@@ -1,7 +1,21 @@
 # variables in path
+action_execution_id_path:
+  description: |
+    The UUID of the action execution.
+  in: path
+  required: true
+  type: string
+
 action_identifier:
   description: |
     The name or UUID of the action.
+  in: path
+  required: true
+  type: string
+
+code_source_identifier:
+  description: |
+    The name or UUID of the code source.
   in: path
   required: true
   type: string
@@ -13,9 +27,37 @@ cron_trigger_identifier:
   required: true
   type: string
 
+dynamic_action_identifier:
+  description: |
+    The name or UUID of the dynamic action.
+  in: path
+  required: true
+  type: string
+
+environment_name_path:
+  description: |
+    The name of the environment.
+  in: path
+  required: true
+  type: string
+
+event_trigger_id_path:
+  description: |
+    The UUID of the event trigger.
+  in: path
+  required: true
+  type: string
+
 execution_id:
   description: |
     The UUID of the execution.
+  in: path
+  required: true
+  type: string
+
+member_id_path:
+  description: |
+    The project ID of the member.
   in: path
   required: true
   type: string
@@ -42,6 +84,92 @@ workflow_identifier:
   type: string
 
 # variables in query
+action_execution_filter_accepted:
+  description: |
+    Filter by whether the action execution has been accepted.
+  in: query
+  required: false
+  type: boolean
+
+action_execution_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_description:
+  description: |
+    Filter by action execution description.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_name:
+  description: |
+    Filter by action execution name.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_state:
+  description: |
+    Filter by action execution state. Valid values are ``IDLE``,
+    ``RUNNING``, ``SUCCESS``, ``ERROR``, ``PAUSED``, and ``CANCELLED``.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_state_info:
+  description: |
+    Filter by action execution state info.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_tags:
+  description: |
+    Filter by action execution tags.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_task_execution_id:
+  description: |
+    Filter by parent task execution ID.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_task_name:
+  description: |
+    Filter by task name.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+action_execution_filter_workflow_name:
+  description: |
+    Filter by the name of the workflow associated with the action execution.
+  in: query
+  required: false
+  type: string
+
+action_execution_include_output:
+  description: |
+    If set to ``true``, include the output field in the list response.
+    By default, the output field is not included in list results.
+  in: query
+  required: false
+  type: boolean
+
 action_filter_created_at:
   description: |
     Filter by creation date.
@@ -111,6 +239,62 @@ all_projects:
   in: query
   required: false
   type: boolean
+
+code_source_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+code_source_filter_name:
+  description: |
+    Filter by code source name.
+  in: query
+  required: false
+  type: string
+
+code_source_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+code_source_filter_scope:
+  description: |
+    Filter by code source scope.
+  in: query
+  required: false
+  type: string
+
+code_source_filter_tags:
+  description: |
+    Filter by code source tags.
+  in: query
+  required: false
+  type: string
+
+code_source_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+code_source_identifier_query:
+  description: |
+    The name or ID of the code source to update.
+  in: query
+  required: true
+  type: string
+
+code_source_name_create:
+  description: |
+    The name for the new code source (module name).
+  in: query
+  required: true
+  type: string
 
 cron_trigger_filter_created_at:
   description: |
@@ -199,6 +383,146 @@ cron_trigger_filter_workflow_name:
 cron_trigger_filter_workflow_params:
   description: |
     Filter by the workflow parameters.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_name:
+  description: |
+    Filter by dynamic action name.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_scope:
+  description: |
+    Filter by dynamic action scope.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_tags:
+  description: |
+    Filter by dynamic action tags.
+  in: query
+  required: false
+  type: string
+
+dynamic_action_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+environment_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+environment_filter_description:
+  description: |
+    Filter by environment description.
+  in: query
+  required: false
+  type: string
+
+environment_filter_name:
+  description: |
+    Filter by environment name.
+  in: query
+  required: false
+  type: string
+
+environment_filter_scope:
+  description: |
+    Filter by environment scope.
+  in: query
+  required: false
+  type: string
+
+environment_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_created_at:
+  description: |
+    Filter by creation date.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_event:
+  description: |
+    Filter by event type.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_exchange:
+  description: |
+    Filter by message exchange.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_name:
+  description: |
+    Filter by event trigger name.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_project_id:
+  description: |
+    Filter by project ID. Admin only.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_scope:
+  description: |
+    Filter by event trigger scope.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_topic:
+  description: |
+    Filter by message topic.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_updated_at:
+  description: |
+    Filter by last update date.
+  in: query
+  required: false
+  type: string
+
+event_trigger_filter_workflow_id:
+  description: |
+    Filter by the ID of the workflow associated with the trigger.
   in: query
   required: false
   type: string
@@ -324,6 +648,29 @@ execution_force_delete:
   required: false
   type: boolean
 
+execution_report_errors_only:
+  description: |
+    If ``true``, only error paths of the execution tree are included
+    in the report.
+  in: query
+  required: false
+  type: boolean
+
+execution_report_max_depth:
+  description: |
+    Limits the depth of recursion while obtaining the execution tree.
+    A negative number means no limit. Default: -1 (unlimited).
+  in: query
+  required: false
+  type: integer
+
+execution_report_statistics_only:
+  description: |
+    If ``true``, only the statistics are returned without the execution tree.
+  in: query
+  required: false
+  type: boolean
+
 fields:
   description: |
     Comma-separated list of fields to include in the response. If not
@@ -382,6 +729,28 @@ sort_keys:
   in: query
   required: false
   type: string
+
+sub_execution_errors_only:
+  description: |
+    If ``true``, only error paths of the execution tree are returned.
+  in: query
+  required: false
+  type: boolean
+
+sub_execution_include_output:
+  description: |
+    If ``true``, include the output for all executions in the list.
+  in: query
+  required: false
+  type: boolean
+
+sub_execution_max_depth:
+  description: |
+    Limits the depth of recursion while obtaining the execution tree.
+    A negative number means no limit. Default: -1 (unlimited).
+  in: query
+  required: false
+  type: integer
 
 task_filter_created_at:
   description: |
@@ -603,6 +972,171 @@ action_description:
   required: false
   type: string
 
+action_execution_accepted:
+  description: |
+    Whether the action execution has been accepted by an action handler.
+  in: body
+  required: false
+  type: boolean
+
+action_execution_created_at:
+  description: |
+    The date and time when the action execution was created.
+  in: body
+  required: true
+  type: string
+
+action_execution_description:
+  description: |
+    A description of the action execution.
+  in: body
+  required: false
+  type: string
+
+action_execution_description_create:
+  description: |
+    An optional description for the new action execution.
+  in: body
+  required: false
+  type: string
+
+action_execution_id:
+  description: |
+    The UUID of the action execution.
+  in: body
+  required: true
+  type: string
+
+action_execution_input:
+  description: |
+    A JSON object containing the action input values.
+  in: body
+  required: false
+  type: object
+
+action_execution_input_create:
+  description: |
+    A JSON object containing input values for the action.
+  in: body
+  required: false
+  type: object
+
+action_execution_name:
+  description: |
+    The name of the action.
+  in: body
+  required: true
+  type: string
+
+action_execution_name_create:
+  description: |
+    The name of the action to execute.
+  in: body
+  required: true
+  type: string
+
+action_execution_output:
+  description: |
+    A JSON object containing the action output values.
+  in: body
+  required: false
+  type: object
+
+action_execution_output_update:
+  description: |
+    A JSON object containing the action result. Required when setting
+    state to ``SUCCESS`` or ``ERROR``.
+  in: body
+  required: false
+  type: object
+
+action_execution_params_create:
+  description: |
+    A JSON object containing parameters for the action execution.
+  in: body
+  required: false
+  type: object
+
+action_execution_project_id:
+  description: |
+    The UUID of the project that owns the action execution.
+  in: body
+  required: false
+  type: string
+
+action_execution_state:
+  description: |
+    The current state of the action execution. One of ``IDLE``,
+    ``RUNNING``, ``SUCCESS``, ``ERROR``, ``PAUSED``, or ``CANCELLED``.
+  in: body
+  required: true
+  type: string
+
+action_execution_state_info:
+  description: |
+    An optional state information string providing additional details
+    about the current state.
+  in: body
+  required: false
+  type: string
+
+action_execution_state_update:
+  description: |
+    The new state for the action execution. Valid values are ``SUCCESS``,
+    ``ERROR``, ``CANCELLED``, ``PAUSED``, and ``RUNNING``.
+  in: body
+  required: true
+  type: string
+
+action_execution_tags:
+  description: |
+    A list of tags associated with the action execution.
+  in: body
+  required: false
+  type: array
+
+action_execution_task_execution_id:
+  description: |
+    The UUID of the parent task execution.
+  in: body
+  required: false
+  type: string
+
+action_execution_task_name:
+  description: |
+    The name of the parent task.
+  in: body
+  required: false
+  type: string
+
+action_execution_updated_at:
+  description: |
+    The date and time when the action execution was last updated.
+  in: body
+  required: false
+  type: string
+
+action_execution_workflow_name:
+  description: |
+    The name of the workflow associated with the action execution.
+  in: body
+  required: false
+  type: string
+
+action_execution_workflow_namespace:
+  description: |
+    The namespace of the workflow associated with the action execution.
+  in: body
+  required: false
+  type: string
+
+action_executions:
+  description: |
+    A list of action execution objects.
+  in: body
+  required: true
+  type: array
+
 action_id:
   description: |
     The UUID of the action.
@@ -670,6 +1204,83 @@ action_updated_at:
 actions:
   description: |
     A list of action objects.
+  in: body
+  required: true
+  type: array
+
+code_source_actions:
+  description: |
+    A list of action names defined in this code source.
+  in: body
+  required: false
+  type: array
+
+code_source_content:
+  description: |
+    The Python source code content of the code source.
+  in: body
+  required: true
+  type: string
+
+code_source_created_at:
+  description: |
+    The date and time when the code source was created.
+  in: body
+  required: true
+  type: string
+
+code_source_id:
+  description: |
+    The UUID of the code source.
+  in: body
+  required: true
+  type: string
+
+code_source_name:
+  description: |
+    The name of the code source (module name).
+  in: body
+  required: true
+  type: string
+
+code_source_namespace:
+  description: |
+    The namespace of the code source.
+  in: body
+  required: false
+  type: string
+
+code_source_project_id:
+  description: |
+    The UUID of the project that owns the code source.
+  in: body
+  required: false
+  type: string
+
+code_source_scope:
+  description: |
+    The scope of the code source. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+code_source_updated_at:
+  description: |
+    The date and time when the code source was last updated.
+  in: body
+  required: false
+  type: string
+
+code_source_version:
+  description: |
+    The version number of the code source. Incremented on each update.
+  in: body
+  required: true
+  type: integer
+
+code_sources:
+  description: |
+    A list of code source objects.
   in: body
   required: true
   type: array
@@ -807,6 +1418,328 @@ cron_triggers:
   required: true
   type: array
 
+dynamic_action_class_name:
+  description: |
+    The Python class name within the code source that implements the action.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_class_name_create:
+  description: |
+    The Python class name within the code source that implements the action.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_code_source_id:
+  description: |
+    The UUID of the code source containing the action class.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_code_source_id_create:
+  description: |
+    The UUID of the code source. Either ``code_source_id`` or
+    ``code_source_name`` must be provided.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_code_source_name:
+  description: |
+    The name of the code source containing the action class.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_code_source_name_create:
+  description: |
+    The name of the code source. Either ``code_source_id`` or
+    ``code_source_name`` must be provided.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_created_at:
+  description: |
+    The date and time when the dynamic action was created.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_id:
+  description: |
+    The UUID of the dynamic action.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_name:
+  description: |
+    The name of the dynamic action.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_name_create:
+  description: |
+    The name for the new dynamic action.
+  in: body
+  required: true
+  type: string
+
+dynamic_action_namespace:
+  description: |
+    The namespace of the dynamic action.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_project_id:
+  description: |
+    The UUID of the project that owns the dynamic action.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_scope:
+  description: |
+    The scope of the dynamic action. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+dynamic_action_updated_at:
+  description: |
+    The date and time when the dynamic action was last updated.
+  in: body
+  required: false
+  type: string
+
+dynamic_actions:
+  description: |
+    A list of dynamic action objects.
+  in: body
+  required: true
+  type: array
+
+environment_created_at:
+  description: |
+    The date and time when the environment was created.
+  in: body
+  required: true
+  type: string
+
+environment_description:
+  description: |
+    A description of the environment.
+  in: body
+  required: false
+  type: string
+
+environment_description_create:
+  description: |
+    A description for the new environment.
+  in: body
+  required: false
+  type: string
+
+environment_id:
+  description: |
+    The UUID of the environment.
+  in: body
+  required: true
+  type: string
+
+environment_name:
+  description: |
+    The name of the environment.
+  in: body
+  required: true
+  type: string
+
+environment_name_create:
+  description: |
+    The name for the new environment.
+  in: body
+  required: true
+  type: string
+
+environment_project_id:
+  description: |
+    The UUID of the project that owns the environment.
+  in: body
+  required: false
+  type: string
+
+environment_scope:
+  description: |
+    The scope of the environment. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+environment_updated_at:
+  description: |
+    The date and time when the environment was last updated.
+  in: body
+  required: false
+  type: string
+
+environment_variables:
+  description: |
+    A JSON object containing the environment variables. Can include any
+    key-value pairs needed by workflows at runtime.
+  in: body
+  required: true
+  type: object
+
+environment_variables_create:
+  description: |
+    A JSON object containing the environment variables.
+  in: body
+  required: true
+  type: object
+
+environments:
+  description: |
+    A list of environment objects.
+  in: body
+  required: true
+  type: array
+
+event_trigger_created_at:
+  description: |
+    The date and time when the event trigger was created.
+  in: body
+  required: true
+  type: string
+
+event_trigger_event:
+  description: |
+    The event type to listen for (e.g.,
+    ``compute.instance.create.end``).
+  in: body
+  required: true
+  type: string
+
+event_trigger_event_create:
+  description: |
+    The event type to listen for.
+  in: body
+  required: true
+  type: string
+
+event_trigger_exchange:
+  description: |
+    The messaging exchange to listen on (e.g., ``nova``).
+  in: body
+  required: true
+  type: string
+
+event_trigger_exchange_create:
+  description: |
+    The messaging exchange to listen on.
+  in: body
+  required: true
+  type: string
+
+event_trigger_id:
+  description: |
+    The UUID of the event trigger.
+  in: body
+  required: true
+  type: string
+
+event_trigger_name:
+  description: |
+    The name of the event trigger.
+  in: body
+  required: true
+  type: string
+
+event_trigger_name_create:
+  description: |
+    The name for the new event trigger. Optional; defaults to an empty
+    string when omitted.
+  in: body
+  required: false
+  type: string
+
+event_trigger_project_id:
+  description: |
+    The UUID of the project that owns the event trigger.
+  in: body
+  required: false
+  type: string
+
+event_trigger_scope:
+  description: |
+    The scope of the event trigger. ``private`` or ``public``.
+  in: body
+  required: false
+  type: string
+
+event_trigger_topic:
+  description: |
+    The messaging topic to listen on (e.g., ``notifications``).
+  in: body
+  required: true
+  type: string
+
+event_trigger_topic_create:
+  description: |
+    The messaging topic to listen on.
+  in: body
+  required: true
+  type: string
+
+event_trigger_updated_at:
+  description: |
+    The date and time when the event trigger was last updated.
+  in: body
+  required: false
+  type: string
+
+event_trigger_workflow_id:
+  description: |
+    The UUID of the workflow to execute when the event is received.
+  in: body
+  required: true
+  type: string
+
+event_trigger_workflow_id_create:
+  description: |
+    The UUID of the workflow to trigger on event.
+  in: body
+  required: true
+  type: string
+
+event_trigger_workflow_input:
+  description: |
+    A JSON object containing input values for the triggered workflow
+    executions.
+  in: body
+  required: false
+  type: object
+
+event_trigger_workflow_params:
+  description: |
+    A JSON object containing parameters for the triggered workflow
+    executions.
+  in: body
+  required: false
+  type: object
+
+event_triggers:
+  description: |
+    A list of event trigger objects.
+  in: body
+  required: true
+  type: array
+
 execution_created_at:
   description: |
     The date and time when the execution was created.
@@ -883,6 +1816,23 @@ execution_published_global:
     A JSON object containing globally published variables.
   in: body
   required: false
+  type: object
+
+execution_report_root_workflow_execution:
+  description: |
+    The root workflow execution entry containing the full execution tree
+    with nested task and action executions. Not included when
+    ``statistics_only`` is ``true``.
+  in: body
+  required: false
+  type: object
+
+execution_report_statistics:
+  description: |
+    Execution statistics including counts of running, successful, errored,
+    idle, and paused tasks, plus an estimated remaining time in seconds.
+  in: body
+  required: true
   type: object
 
 execution_root_execution_id:
@@ -987,6 +1937,85 @@ execution_workflow_namespace:
 executions:
   description: |
     A list of execution objects.
+  in: body
+  required: true
+  type: array
+
+member_created_at:
+  description: |
+    The date and time when the member was created.
+  in: body
+  required: true
+  type: string
+
+member_id_body:
+  description: |
+    The UUID of the member record.
+  in: body
+  required: true
+  type: string
+
+member_member_id:
+  description: |
+    The project ID of the member (the project the resource is shared with).
+  in: body
+  required: true
+  type: string
+
+member_member_id_create:
+  description: |
+    The project ID to share the resource with.
+  in: body
+  required: true
+  type: string
+
+member_project_id:
+  description: |
+    The project ID of the resource owner.
+  in: body
+  required: true
+  type: string
+
+member_resource_id:
+  description: |
+    The UUID of the shared resource.
+  in: body
+  required: true
+  type: string
+
+member_resource_type:
+  description: |
+    The type of the shared resource (e.g., ``workflow``).
+  in: body
+  required: true
+  type: string
+
+member_status:
+  description: |
+    The status of the member. One of ``pending``, ``accepted``,
+    or ``rejected``.
+  in: body
+  required: true
+  type: string
+
+member_status_update:
+  description: |
+    The new status for the member. One of ``pending``, ``accepted``,
+    or ``rejected``.
+  in: body
+  required: true
+  type: string
+
+member_updated_at:
+  description: |
+    The date and time when the member was last updated.
+  in: body
+  required: false
+  type: string
+
+members:
+  description: |
+    A list of member objects.
   in: body
   required: true
   type: array
@@ -1161,6 +2190,21 @@ tasks:
   in: body
   required: true
   type: array
+
+validation_error:
+  description: |
+    The error message if validation failed. Only present when ``valid``
+    is ``false``.
+  in: body
+  required: false
+  type: string
+
+validation_valid:
+  description: |
+    Whether the definition is valid. ``true`` or ``false``.
+  in: body
+  required: true
+  type: boolean
 
 workbook_created_at:
   description: |

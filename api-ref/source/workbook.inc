@@ -196,3 +196,33 @@ Response
 --------
 
 There is no body content for the response of a successful DELETE action.
+
+Validate Workbook Definition
+============================
+
+.. rest_method:: POST /v2/workbooks/validate
+
+Validates a workbook definition without creating or updating any resources.
+This is useful for checking definitions for syntax errors before deploying
+them.
+
+The request body should contain the workbook definition in Mistral v2 DSL
+format as plain text.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403)
+
+Request
+-------
+
+The request body should be the workbook definition with content type
+``text/plain``.
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - valid: validation_valid
+  - error: validation_error

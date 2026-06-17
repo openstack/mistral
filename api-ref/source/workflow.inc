@@ -217,3 +217,205 @@ Response
 --------
 
 There is no body content for the response of a successful DELETE action.
+
+Validate Workflow Definition
+============================
+
+.. rest_method:: POST /v2/workflows/validate
+
+Validates a workflow definition without creating or updating any resources.
+This is useful for checking definitions for syntax errors before deploying
+them.
+
+The request body should contain the workflow definition in Mistral v2 DSL
+format as plain text.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403)
+
+Request
+-------
+
+The request body should be the workflow definition with content type
+``text/plain``.
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - valid: validation_valid
+  - error: validation_error
+
+List Workflow Members
+=====================
+
+.. rest_method:: GET /v2/workflows/{workflow_identifier}/members
+
+Lists all members with whom the workflow has been shared.
+
+Members represent a sharing relationship between a resource owner and
+another project. Currently, only private workflows can be shared. When a
+resource is shared with a project, the member starts in ``pending`` status
+and must accept the share before gaining access.
+
+This feature requires authentication to be enabled.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - workflow_identifier: workflow_identifier
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - members: members
+  - id: member_id_body
+  - resource_id: member_resource_id
+  - resource_type: member_resource_type
+  - project_id: member_project_id
+  - member_id: member_member_id
+  - status: member_status
+  - created_at: member_created_at
+  - updated_at: member_updated_at
+
+Share Workflow
+==============
+
+.. rest_method:: POST /v2/workflows/{workflow_identifier}/members
+
+Shares a private workflow with another project.
+
+Only private workflows can be shared. The new member starts in ``pending``
+status.
+
+Normal response codes: 201
+
+Error response codes: badRequest(400), unauthorized(401), forbidden(403),
+itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - workflow_identifier: workflow_identifier
+  - member_id: member_member_id_create
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - id: member_id_body
+  - resource_id: member_resource_id
+  - resource_type: member_resource_type
+  - project_id: member_project_id
+  - member_id: member_member_id
+  - status: member_status
+  - created_at: member_created_at
+  - updated_at: member_updated_at
+
+Show Workflow Member
+====================
+
+.. rest_method:: GET /v2/workflows/{workflow_identifier}/members/{member_id}
+
+Shows details for a workflow member.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - workflow_identifier: workflow_identifier
+  - member_id: member_id_path
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - id: member_id_body
+  - resource_id: member_resource_id
+  - resource_type: member_resource_type
+  - project_id: member_project_id
+  - member_id: member_member_id
+  - status: member_status
+  - created_at: member_created_at
+  - updated_at: member_updated_at
+
+Update Workflow Member
+======================
+
+.. rest_method:: PUT /v2/workflows/{workflow_identifier}/members/{member_id}
+
+Updates the status of a workflow member.
+
+Used by the member project to accept or reject the share. The ``status``
+field must be one of ``pending``, ``accepted``, or ``rejected``.
+
+Normal response codes: 200
+
+Error response codes: badRequest(400), unauthorized(401), forbidden(403),
+itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - workflow_identifier: workflow_identifier
+  - member_id: member_id_path
+  - status: member_status_update
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - id: member_id_body
+  - resource_id: member_resource_id
+  - resource_type: member_resource_type
+  - project_id: member_project_id
+  - member_id: member_member_id
+  - status: member_status
+  - created_at: member_created_at
+  - updated_at: member_updated_at
+
+Delete Workflow Member
+======================
+
+.. rest_method:: DELETE /v2/workflows/{workflow_identifier}/members/{member_id}
+
+Removes a member from the workflow's share list.
+
+Normal response codes: 204
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - workflow_identifier: workflow_identifier
+  - member_id: member_id_path
+
+Response
+--------
+
+There is no body content for the response of a successful DELETE action.

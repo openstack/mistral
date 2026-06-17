@@ -236,3 +236,70 @@ Response
 --------
 
 There is no body content for the response of a successful DELETE action.
+
+List Sub-Executions of a Workflow Execution
+===========================================
+
+.. rest_method:: GET /v2/executions/{execution_id}/executions
+
+Lists all sub-executions of a workflow execution.
+
+Sub-executions provide a way to navigate the execution tree of nested
+workflows. This is useful for debugging and monitoring complex workflows
+that invoke sub-workflows.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - execution_id: execution_id
+  - errors_only: sub_execution_errors_only
+  - max_depth: sub_execution_max_depth
+  - include_output: sub_execution_include_output
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - executions: executions
+
+Get Execution Report
+====================
+
+.. rest_method:: GET /v2/executions/{execution_id}/report
+
+Generates a report for a workflow execution.
+
+An execution report provides a detailed tree view of a workflow execution
+including all nested task and action executions, along with statistics
+such as counts of running, successful, errored, idle, and paused tasks.
+The report can optionally include time estimates based on previous
+executions of the same workflow.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - execution_id: execution_id
+  - errors_only: execution_report_errors_only
+  - max_depth: execution_report_max_depth
+  - statistics_only: execution_report_statistics_only
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - statistics: execution_report_statistics
+  - root_workflow_execution: execution_report_root_workflow_execution

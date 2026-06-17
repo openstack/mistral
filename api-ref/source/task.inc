@@ -169,3 +169,34 @@ Response
   - updated_at: task_updated_at
   - started_at: task_started_at
   - finished_at: task_finished_at
+
+List Sub-Executions of a Task Execution
+=======================================
+
+.. rest_method:: GET /v2/tasks/{task_id}/executions
+
+Lists all sub-executions of a task execution.
+
+This returns the workflow executions that were started by a given task,
+which is useful for navigating the execution tree of nested workflows.
+
+Normal response codes: 200
+
+Error response codes: unauthorized(401), forbidden(403), itemNotFound(404)
+
+Request
+-------
+
+.. rest_parameters:: parameters.yaml
+
+  - task_id: task_id
+  - errors_only: sub_execution_errors_only
+  - max_depth: sub_execution_max_depth
+  - include_output: sub_execution_include_output
+
+Response
+--------
+
+.. rest_parameters:: parameters.yaml
+
+  - executions: executions

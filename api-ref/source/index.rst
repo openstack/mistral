@@ -13,4 +13,9 @@ by the Mistral project.
 .. include:: task.inc
 .. include:: execution.inc
 .. include:: action.inc
+.. include:: action-execution.inc
 .. include:: cron-trigger.inc
+.. include:: event-trigger.inc
+.. include:: environment.inc
+.. include:: code-source.inc
+.. include:: dynamic-action.inc

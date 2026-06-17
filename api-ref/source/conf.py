@@ -10,7 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# Compute API Reference documentation build configuration file
+# Mistral API Reference documentation build configuration file
 
 # Refer to the Sphinx documentation for advice on configuring this file:
 #
@@ -62,8 +62,8 @@ html_theme_options = {
 latex_documents = [
     (
         'index',
-        'Nova.tex',
-        'OpenStack Compute API Documentation',
+        'Mistral.tex',
+        'OpenStack Workflow Service API Documentation',
         'OpenStack Foundation',
         'manual',
     ),
