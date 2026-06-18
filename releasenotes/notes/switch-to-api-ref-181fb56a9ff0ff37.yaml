@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    The REST API documentation is now published as a curated OpenStack API
+    reference at https://docs.openstack.org/api-ref/workflow/, built from the
+    ``api-ref/`` source tree and covering every Mistral v2 resource. The
+    previous auto-generated "REST API V2" page in the user documentation has
+    been removed; requests to its old URL are redirected to the new reference.
