@@ -34,4 +34,5 @@ Project Resources
 * Source for the project can be found at:
   https://opendev.org/openstack/mistral
 
-* WSGI app is located in `mistral/api/wsgi.py`
+* WSGI app is located in `mistral/wsgi/__init__.py` and is exposed as
+  ``mistral.wsgi:application``

@@ -152,8 +152,9 @@ api_opts = [
         deprecated_for_removal=True,
         deprecated_reason='This option has become useless and mistral-api'
                           'will start only one worker now. If you want '
-                          'more workers, consider starting mistral-wsgi-api '
-                          'with a wsgi server instead.',
+                          'more workers, consider running the WSGI '
+                          'application (mistral.wsgi:application) with a '
+                          'WSGI server instead.',
         help=_('Number of workers for Mistral API service '
                'default is equal to the number of CPUs available if that can '
                'be determined, else a default worker count of 1 is returned.')

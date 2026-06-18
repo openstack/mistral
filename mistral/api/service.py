@@ -48,8 +48,8 @@ class WSGIService(service.ServiceBase):
         self.app = app.setup_app()
         # NOTE(amorin) since we moved to cheroot, we can't start more than
         # one process.
-        # If you want to use more than one worker, you should start
-        # mistral-wsgi-api instead
+        # If you want to use more than one worker, you should run the WSGI
+        # application (mistral.wsgi:application) with a WSGI server instead
         self.workers = 1
 
         bind_addr = (cfg.CONF.api.host, cfg.CONF.api.port)
@@ -97,8 +97,8 @@ class WSGIService(service.ServiceBase):
         )
         self._thread.start()
         LOG.info('API server started with one process. If you want more '
-                 'workers, consider switching to a wsgi server using '
-                 'mistral-wsgi-api')
+                 'workers, consider running the WSGI application '
+                 '(mistral.wsgi:application) with a WSGI server instead')
 
     def stop(self):
         if self.server:
