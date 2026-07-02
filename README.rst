@@ -24,7 +24,7 @@ Project Resources
 * Project status, bugs, and blueprints are tracked on
   `Launchpad <https://launchpad.net/mistral/>`_
 
-* CloudFlow: visualization tool for workflow executions on https://github.com/arnadmorin/CloudFlow
+* CloudFlow: visualization tool for workflow executions on https://github.com/arnaudmorin/CloudFlow
 
 * Apache License Version 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
