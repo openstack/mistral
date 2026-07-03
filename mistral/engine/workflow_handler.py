@@ -144,7 +144,7 @@ def stop_workflow(wf_ex, state, msg=None, sync=True, force=False):
 
             for sub_wf_ex in sub_wf_exs:
                 if not states.is_completed(sub_wf_ex.state):
-                    stop_workflow(sub_wf_ex, state, msg=msg, sync=sync)
+                    stop_workflow(sub_wf_ex, state, msg=msg, sync=sync, force=force)
 
 
 def force_fail_workflow(wf_ex, msg=None):

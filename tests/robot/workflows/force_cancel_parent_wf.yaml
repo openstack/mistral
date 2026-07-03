@@ -1,0 +1,5 @@
+version: '2.0'
+force_cancel_parent_wf:
+  tasks:
+    invoke_sub:
+      workflow: force_cancel_sub_wf

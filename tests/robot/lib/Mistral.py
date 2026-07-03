@@ -414,8 +414,8 @@ class Mistral(object):
 
         return res.json()['workbooks']
 
-    def get_task(self, task_name):
-        task = [x for x in self._get_tasks() if x['name'] == task_name][0]
+    def get_task(self, task_name, ex_id=None):
+        task = [x for x in self._get_tasks(ex_id) if x['name'] == task_name][0]
 
         task_id = task['id']
 
@@ -718,6 +718,11 @@ class Mistral(object):
     @error_handler
     def cancel_execution(self):
         self._change_execution({'state': 'CANCELLED', 'sync': False})
+
+    @error_handler
+    def force_cancel_execution(self):
+        self._change_execution({'state': 'CANCELLED', 'params': {'force_cancel': True}})
+
 
     @error_handler
     def set_execution_read_only(self):

@@ -1,0 +1,5 @@
+version: '2.0'
+force_cancel_sub_wf:
+  tasks:
+    slow_task:
+      action: std.sleep seconds=300
