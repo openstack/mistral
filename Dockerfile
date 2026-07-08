@@ -1,4 +1,4 @@
-FROM alpine:3.23 AS gitmeta
+FROM alpine:3.24 AS gitmeta
 
 WORKDIR /repo
 
@@ -11,12 +11,12 @@ RUN BRANCH=$(git rev-parse --abbrev-ref HEAD) && \
     COMMIT_DATE=$(date) && \
     echo "{ \"git\": { \"branch\": \"$BRANCH\", \"id\": \"$ID\", \"time\": \"$COMMIT_DATE\" }}" > /repo/version.json
 
-FROM python:3.10.19-alpine3.23 AS wheelhouse
+FROM python:3.10.20-alpine3.24 AS wheelhouse
 
 RUN python --version && pip --version
 
-RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.23/main/' > /etc/apk/repositories && \
-    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.23/community/' >> /etc/apk/repositories
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.24/main/' > /etc/apk/repositories && \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.24/community/' >> /etc/apk/repositories
 
 RUN apk add --no-cache \
     alpine-sdk \
@@ -38,7 +38,7 @@ RUN python --version && pip --version && \
     pip wheel --no-cache-dir -r /tmp/requirements.txt    -w /wheels && \
     pip wheel --no-cache-dir -r /tmp/nc_requirements.txt -w /wheels
 
-FROM python:3.10.19-alpine3.23
+FROM python:3.10.20-alpine3.24
 
 LABEL "maintainer"="Vadim Zelenevskii wortellen@gmail.com"
 
@@ -94,8 +94,8 @@ RUN mkdir -p "${CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}" && \
     mkdir -p "${MOUNT_CONFIGS_HOME}/custom"
 
-RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.23/main/' > /etc/apk/repositories && \
-    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.23/community/' >> /etc/apk/repositories && \
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.24/main/' > /etc/apk/repositories && \
+    echo 'https://dl-cdn.alpinelinux.org/alpine/v3.24/community/' >> /etc/apk/repositories && \
     apk add --no-cache \
     gettext \
     procps \
@@ -104,7 +104,7 @@ RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.23/main/' > /etc/apk/reposito
     libuv \
     librdkafka \
     bash \
-    postgresql-client
+    postgresql18-client
 
 WORKDIR $CONFIGS_HOME
 COPY . $MISTRAL_HOME
