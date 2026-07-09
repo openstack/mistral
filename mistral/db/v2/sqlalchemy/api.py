@@ -1868,6 +1868,10 @@ def create_cron_trigger(values, session=None):
 
 @b.session_aware()
 def update_cron_trigger(identifier, values, session=None, query_filter=None):
+    # NOTE: no cross-project guard here on purpose. This is called by the
+    # periodic scheduler (mistral.services.periodic), which legitimately
+    # updates the next-execution bookkeeping of cron triggers across all
+    # projects. The cron trigger REST API exposes no update operation.
     cron_trigger = get_cron_trigger(identifier)
 
     if query_filter:
@@ -1901,9 +1905,14 @@ def update_cron_trigger(identifier, values, session=None, query_filter=None):
 
 @b.session_aware()
 def create_or_update_cron_trigger(identifier, values, session=None):
-    cron_trigger = _get_db_object_by_name_and_namespace_or_id(
+    # Resolve within the caller's own project so that, when several projects
+    # have a cron trigger with the same name, the caller's own one is updated
+    # rather than another project's. See
+    # create_or_update_workflow_definition().
+    cron_trigger = _get_db_object_by_name_and_project(
         models.CronTrigger,
-        identifier
+        identifier,
+        security.get_project_id()
     )
 
     if not cron_trigger:

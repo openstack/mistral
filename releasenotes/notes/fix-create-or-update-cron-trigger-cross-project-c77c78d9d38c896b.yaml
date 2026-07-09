@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    ``create_or_update_cron_trigger`` now resolves the existing trigger within
+    the caller's own project, so that when several projects have a cron
+    trigger with the same name the caller's own one is updated instead of
+    another project's (possibly public) trigger. The periodic scheduler's
+    ``update_cron_trigger`` bookkeeping is intentionally left unchanged, as it
+    legitimately updates triggers across projects; the cron trigger REST API
+    exposes no update operation.
