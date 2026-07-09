@@ -1,0 +1,18 @@
+---
+security:
+  - |
+    Fixed a cross-project isolation flaw when updating workbooks and
+    environments. A regular (non-admin) project member could modify â€” and
+    unpublish â€” a **public** workbook or environment belonging to another
+    project, because the update looked the object up with a query that
+    includes other projects' public resources and performed no ownership
+    check before writing. Updates now resolve the object within the caller's
+    own project and enforce ``check_db_obj_access()``, consistently with
+    workflow and action definitions.
+fixes:
+  - |
+    ``update_workbook`` now verifies ownership before writing. Previously it
+    was only protected indirectly (a workbook update cascades into the
+    workflow-definition update, which was guarded); making the workflow
+    lookup project-scoped removed that incidental protection, so the guard is
+    now applied to the workbook itself.
