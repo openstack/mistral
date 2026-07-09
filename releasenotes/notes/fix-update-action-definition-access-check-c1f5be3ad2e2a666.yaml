@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Updating an ad-hoc action definition now verifies that the caller is
+    allowed to modify it, consistently with workflow definitions: a non-admin
+    request can no longer modify a public action definition of another
+    project, and system action definitions are protected from modification by
+    non-admin users at the database layer. In addition, when several projects
+    have an action definition with the same name, an update now always
+    targets the definition of the caller's project instead of an arbitrary
+    one.
