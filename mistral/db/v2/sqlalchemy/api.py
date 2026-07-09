@@ -957,7 +957,23 @@ def create_action_definition(values, session=None):
 @b.session_aware()
 def update_action_definition(identifier, values, session=None):
     namespace = values.get('namespace', '')
-    a_def = get_action_definition(identifier, namespace=namespace)
+
+    # If several projects have an action definition with the same name,
+    # update the one of the current project, not an arbitrary one.
+    a_def = _get_db_object_by_name_namespace_and_project(
+        models.ActionDefinition,
+        identifier,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not a_def:
+        a_def = get_action_definition(identifier, namespace=namespace)
+
+    # The check requires an authentication context, which internal
+    # maintenance calls (e.g. 'mistral-db-manage populate') don't have.
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(a_def)
 
     a_def.update(values.copy())
 
