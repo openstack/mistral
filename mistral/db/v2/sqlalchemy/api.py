@@ -391,6 +391,24 @@ def _get_db_object_by_name_and_namespace(model, name,
     return query.first()
 
 
+def _get_db_object_by_name_namespace_and_project(model, name, namespace,
+                                                 project_id, columns=()):
+    query = b.model_query(model, columns=columns)
+
+    if namespace is None:
+        namespace = ''
+
+    query = query.filter(
+        sa.and_(
+            model.name == name,
+            model.namespace == namespace,
+            model.project_id == project_id
+        )
+    )
+
+    return query.first()
+
+
 # Workbook definitions.
 
 @b.session_aware()
@@ -623,12 +641,24 @@ def update_workflow_definition(identifier, values, session=None):
 
 @b.session_aware()
 def create_or_update_workflow_definition(name, values, session=None):
-    namespace = values.get('namespace')
-    if _get_db_object_by_name_and_namespace_or_id(
-            models.WorkflowDefinition,
-            name,
-            namespace=namespace):
-        return update_workflow_definition(name, values)
+    # NOTE(amorin): A written object always ends up in the project of the
+    # current security context (see model_base.register_secure_model_hooks),
+    # so the object to update must be looked up by the same unique key
+    # (name, namespace, project id) the write would produce. A broader
+    # lookup (e.g. across all projects for an admin) may return an object
+    # of another project with the same name; updating it would move it
+    # into the current project and violate the unique constraint if the
+    # current project already has its own object under that name.
+    wf_def = _get_db_object_by_name_namespace_and_project(
+        models.WorkflowDefinition,
+        name,
+        values.get('namespace'),
+        security.get_project_id()
+    )
+
+    if wf_def:
+        return update_workflow_definition(wf_def.id, values)
+
     return create_workflow_definition(values)
 
 
@@ -925,14 +955,20 @@ def update_action_definition(identifier, values, session=None):
 
 @b.session_aware()
 def create_or_update_action_definition(name, values, session=None):
-    namespace = values.get('namespace', '')
-    if not _get_db_object_by_name_and_namespace(
-            models.ActionDefinition,
-            name,
-            namespace=namespace):
-        return create_action_definition(values)
-    else:
-        return update_action_definition(name, values)
+    # NOTE(amorin): The object to update must be looked up by the same
+    # unique key (name, namespace, project id) the write would produce.
+    # See the comment in create_or_update_workflow_definition().
+    a_def = _get_db_object_by_name_namespace_and_project(
+        models.ActionDefinition,
+        name,
+        values.get('namespace', ''),
+        security.get_project_id()
+    )
+
+    if a_def:
+        return update_action_definition(a_def.id, values)
+
+    return create_action_definition(values)
 
 
 @b.session_aware()
