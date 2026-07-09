@@ -162,6 +162,56 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
 
+    def test_update_other_project_workbook(self):
+        # A public workbook owned by another project.
+        auth_context.set_ctx(USER_CTX)
+
+        created = db_api.create_workbook(WORKBOOKS[0])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_workbook,
+            created.name,
+            {'definition': 'my new definition', 'namespace': 'test'}
+        )
+
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_workbook(created.name, namespace='test')
+
+        self.assertEqual('empty', fetched.definition)
+
+    def test_update_workbook_prefers_own_project(self):
+        # Same-named public workbook in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_workbook(WORKBOOKS[0])
+
+        # This project has its own workbook with the same name.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_workbook(WORKBOOKS[0])
+
+        self.assertNotEqual(other.id, mine.id)
+
+        updated = db_api.update_workbook(
+            mine.name,
+            {'definition': 'my new definition', 'namespace': 'test'}
+        )
+
+        self.assertEqual(mine.id, updated.id)
+        self.assertEqual('my new definition', updated.definition)
+
+        # The other project's workbook must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_workbook(other.name, namespace='test')
+
+        self.assertEqual(other.id, fetched.id)
+        self.assertEqual('empty', fetched.definition)
+
     def test_create_or_update_workbook(self):
         name = WORKBOOKS[0]['name']
         namespace = WORKBOOKS[0]['namespace']
@@ -3042,6 +3092,56 @@ class EnvironmentTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_other_project_environment(self):
+        # A public environment owned by another project.
+        auth_context.set_ctx(USER_CTX)
+
+        created = db_api.create_environment(ENVIRONMENTS[1])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_environment,
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual('Test Environment #2', fetched.description)
+
+    def test_update_environment_prefers_own_project(self):
+        # Same-named public environment in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_environment(ENVIRONMENTS[1])
+
+        # This project has its own environment with the same name.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_environment(ENVIRONMENTS[1])
+
+        self.assertNotEqual(other.id, mine.id)
+
+        updated = db_api.update_environment(
+            mine.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual(mine.id, updated.id)
+        self.assertEqual('my new desc', updated.description)
+
+        # The other project's environment must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_environment(other.name)
+
+        self.assertEqual(other.id, fetched.id)
+        self.assertEqual('Test Environment #2', fetched.description)
 
     def test_create_or_update_environment(self):
         name = 'not-existing-id'
