@@ -775,7 +775,20 @@ def load_code_source(identifier, fields=(), session=None, namespace=''):
 
 @b.session_aware()
 def update_code_source(identifier, values, namespace='', session=None):
-    code_src = get_code_source(identifier, namespace=namespace)
+    # If several projects have a code source with the same name, update the
+    # one of the current project. See create_or_update_workflow_definition().
+    code_src = _get_db_object_by_name_namespace_and_project(
+        models.CodeSource,
+        identifier,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not code_src:
+        code_src = get_code_source(identifier, namespace=namespace)
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(code_src)
 
     values['version'] = code_src.version + 1
 
@@ -823,7 +836,24 @@ def create_dynamic_action_definition(values, session=None):
 @b.session_aware()
 def update_dynamic_action_definition(identifier, values, namespace='',
                                      session=None):
-    action_def = get_dynamic_action_definition(identifier, namespace=namespace)
+    # If several projects have a dynamic action with the same name, update
+    # the one of the current project. See
+    # create_or_update_workflow_definition().
+    action_def = _get_db_object_by_name_namespace_and_project(
+        models.DynamicActionDefinition,
+        identifier,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not action_def:
+        action_def = get_dynamic_action_definition(
+            identifier,
+            namespace=namespace
+        )
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(action_def)
 
     action_def.update(values.copy())
 
