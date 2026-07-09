@@ -420,6 +420,19 @@ def _get_db_object_by_name_namespace_and_project(model, name, namespace,
     return query.first()
 
 
+def _get_db_object_by_name_and_project(model, name, project_id, columns=()):
+    query = b.model_query(model, columns=columns)
+
+    query = query.filter(
+        sa.and_(
+            model.name == name,
+            model.project_id == project_id
+        )
+    )
+
+    return query.first()
+
+
 # Workbook definitions.
 
 @b.session_aware()
@@ -475,7 +488,24 @@ def create_workbook(values, session=None):
 @b.session_aware()
 def update_workbook(name, values, session=None):
     namespace = values.get('namespace')
-    wb = get_workbook(name, namespace=namespace)
+
+    # If several projects have a workbook with the same name, update the one
+    # of the current project, not a public one of another project. See the
+    # comment in create_or_update_workflow_definition().
+    wb = _get_db_object_by_name_namespace_and_project(
+        models.Workbook,
+        name,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not wb:
+        wb = get_workbook(name, namespace=namespace)
+
+    # The check requires an authentication context, which internal
+    # maintenance calls don't have.
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(wb)
 
     wb.update(values.copy())
 
@@ -484,7 +514,10 @@ def update_workbook(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_workbook(name, values, session=None):
-    if not _get_db_object_by_name(models.Workbook, name):
+    namespace = values.get('namespace')
+
+    if not _get_db_object_by_name_namespace_and_project(
+            models.Workbook, name, namespace, security.get_project_id()):
         return create_workbook(values)
     else:
         return update_workbook(name, values)
@@ -1912,7 +1945,20 @@ def create_environment(values, session=None):
 
 @b.session_aware()
 def update_environment(name, values, session=None):
-    env = get_environment(name)
+    # If several projects have an environment with the same name, update the
+    # one of the current project, not a public one of another project. See
+    # the comment in create_or_update_workflow_definition().
+    env = _get_db_object_by_name_and_project(
+        models.Environment,
+        name,
+        security.get_project_id()
+    )
+
+    if not env:
+        env = get_environment(name)
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(env)
 
     env.update(values)
 
@@ -1921,7 +1967,8 @@ def update_environment(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_environment(name, values, session=None):
-    env = _get_db_object_by_name(models.Environment, name)
+    env = _get_db_object_by_name_and_project(
+        models.Environment, name, security.get_project_id())
 
     if not env:
         return create_environment(values)
