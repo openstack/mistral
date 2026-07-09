@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Creating or updating a workflow or ad-hoc action definition (including
+    implicitly through a workbook) no longer touches a definition of another
+    project that happens to have the same name. Previously, when several
+    projects had a definition with the same name, an admin request could pick
+    an arbitrary one of them, move it into the admin's project and fail with
+    an unhandled duplicate entry error (HTTP 500). The existing definition to
+    update is now looked up by its full unique key (name, namespace and
+    project id).
