@@ -21,6 +21,7 @@ import datetime
 import time
 
 from oslo_config import cfg
+import testtools
 
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
@@ -1372,7 +1373,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(3, len(fetched))
 
     def test_update_action_definition_with_name(self):
-        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[2])
 
         self.assertIsNone(created.updated_at)
 
@@ -1389,7 +1390,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertIsNotNone(fetched.updated_at)
 
     def test_update_action_definition_with_uuid(self):
-        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[2])
 
         self.assertIsNone(created.updated_at)
 
@@ -1404,6 +1405,82 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
 
+    def test_update_other_project_action_definition(self):
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        created = db_api.create_action_definition(values)
+
+        # Switch to another project.
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_action_definition,
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+    # NOTE(amorin) in this mistral release, we are missing some commits
+    # to let an admin list all action defs, so this test cannot be
+    # executed
+    @testtools.skip('Skip because admin cannot list all action defs.')
+    def test_update_other_project_action_definition_by_admin(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        # Switch to admin in another project.
+        auth_context.set_ctx(ADM_CTX)
+
+        updated = db_api.update_action_definition(
+            created.id,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+
+    def test_update_system_action_definition(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+
+        self.assertRaises(
+            exc.InvalidActionException,
+            db_api.update_action_definition,
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+    def test_update_action_definition_with_same_name_in_other_project(self):
+        # Create a public action definition in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        other = db_api.create_action_definition(values)
+
+        # Create an action definition with the same name in this project.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        created = db_api.create_action_definition(
+            copy.deepcopy(ACTION_DEFINITIONS[2])
+        )
+
+        # The update must touch the action definition of the current
+        # project, not the one of another project with the same name.
+        updated = db_api.update_action_definition(
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual(created.id, updated.id)
+        self.assertEqual('my new desc', updated.description)
+
+        # The action definition of the other project must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_action_definition(other.id)
+
+        self.assertEqual('Action #3', fetched.description)
+
     def test_create_or_update_action_definition(self):
         name = 'not-existing-id'
 
@@ -1411,7 +1488,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         created = db_api.create_or_update_action_definition(
             name,
-            ACTION_DEFINITIONS[0]
+            ACTION_DEFINITIONS[2]
         )
 
         self.assertIsNotNone(created)
