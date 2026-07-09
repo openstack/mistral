@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Updating a code source or a dynamic action definition no longer risks
+    modifying an object of another project that happens to have the same
+    name. The existing object is now resolved within the caller's own project
+    (by name, namespace and project id) before writing, and an ownership
+    check is applied, consistently with the other definition types. These
+    resources are admin-only by default policy, so this is a hardening /
+    data-integrity fix rather than a cross-tenant escalation.

@@ -3019,6 +3019,107 @@ class ScheduledJobTest(SQLAlchemyTest):
         self.assertEqual(0, res)
 
 
+CODE_SOURCES = [
+    {
+        'name': 'cs1',
+        'content': 'def f():\n    return 1\n',
+        'version': 1,
+        'namespace': '',
+        'scope': 'public',
+        'tags': []
+    }
+]
+
+
+class CodeSourceTest(SQLAlchemyTest):
+    def setUp(self):
+        super(CodeSourceTest, self).setUp()
+
+        db_api.delete_code_sources()
+
+    def test_update_code_source_prefers_own_project(self):
+        # Same-named public code source in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        # This project has its own code source with the same name.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        self.assertNotEqual(other.id, mine.id)
+
+        updated = db_api.update_code_source(
+            'cs1',
+            {'content': 'def f():\n    return 2\n'}
+        )
+
+        self.assertEqual(mine.id, updated.id)
+
+        # The other project's code source must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_code_source(other.id)
+
+        self.assertEqual('def f():\n    return 1\n', fetched.content)
+
+
+DYNAMIC_ACTIONS = [
+    {
+        'name': 'dyn1',
+        'class_name': 'MyClass',
+        'namespace': '',
+        'scope': 'public'
+    }
+]
+
+
+class DynamicActionDefinitionTest(SQLAlchemyTest):
+    def setUp(self):
+        super(DynamicActionDefinitionTest, self).setUp()
+
+        db_api.delete_dynamic_action_definitions()
+        db_api.delete_code_sources()
+
+    def _create_dyn_action(self):
+        code_src = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        values = copy.deepcopy(DYNAMIC_ACTIONS[0])
+        values['code_source_id'] = code_src.id
+        values['code_source_name'] = code_src.name
+
+        return db_api.create_dynamic_action_definition(values)
+
+    def test_update_dynamic_action_prefers_own_project(self):
+        # Same-named public dynamic action in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = self._create_dyn_action()
+
+        # This project has its own dynamic action with the same name.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = self._create_dyn_action()
+
+        self.assertNotEqual(other.id, mine.id)
+
+        updated = db_api.update_dynamic_action_definition(
+            'dyn1',
+            {'class_name': 'UpdatedClass'}
+        )
+
+        self.assertEqual(mine.id, updated.id)
+        self.assertEqual('UpdatedClass', updated.class_name)
+
+        # The other project's dynamic action must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_dynamic_action_definition(other.id)
+
+        self.assertEqual('MyClass', fetched.class_name)
+
+
 ENVIRONMENTS = [
     {
         'name': 'env1',
