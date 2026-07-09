@@ -2805,6 +2805,38 @@ class CronTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
 
+    def test_create_or_update_cron_trigger_prefers_own_project(self):
+        # A public cron trigger owned by another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other_vals = copy.deepcopy(CRON_TRIGGERS[0])
+        other_vals['id'] = 'aaaaaaaa-1111-1111-1111-111111111111'
+        other_vals['scope'] = 'public'
+        other_vals['workflow_id'] = self.wf.id
+        other = db_api.create_cron_trigger(other_vals)
+
+        # This project has no cron trigger with that name.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        my_vals = copy.deepcopy(CRON_TRIGGERS[0])
+        my_vals['id'] = 'bbbbbbbb-2222-2222-2222-222222222222'
+        my_vals['workflow_id'] = self.wf.id
+        my_vals['remaining_executions'] = 7
+
+        result = db_api.create_or_update_cron_trigger('trigger1', my_vals)
+
+        # A new trigger must be created in this project, not the other
+        # project's public trigger updated/stolen.
+        self.assertNotEqual(other.id, result.id)
+        self.assertNotEqual(other.project_id, result.project_id)
+
+        # The other project's trigger must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_cron_trigger_by_id(other.id)
+
+        self.assertEqual(42, fetched.remaining_executions)
+
     def test_get_cron_triggers(self):
         created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
         created1 = db_api.create_cron_trigger(CRON_TRIGGERS[1])
