@@ -875,6 +875,47 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
 
+    def test_create_or_update_workflow_definition_in_other_project(self):
+        # Create a workflow definition in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        # Create a workflow definition with the same name in this project.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        created = db_api.create_or_update_workflow_definition(
+            other.name,
+            copy.deepcopy(WF_DEFINITIONS[1])
+        )
+
+        self.assertNotEqual(other.id, created.id)
+        self.assertNotEqual(other.project_id, created.project_id)
+
+        # An admin sees the objects of all projects but a create-or-update
+        # request must only ever touch the object of its own project, not
+        # the one of another project that happens to have the same name.
+        auth_context.set_ctx(test_base.get_context(admin=True))
+
+        values = copy.deepcopy(WF_DEFINITIONS[1])
+        values['definition'] = 'my new definition'
+
+        updated = db_api.create_or_update_workflow_definition(
+            created.name,
+            values
+        )
+
+        self.assertEqual(created.id, updated.id)
+        self.assertEqual('my new definition', updated.definition)
+
+        # The workflow definition of the other project must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_workflow_definition(other.id)
+
+        self.assertEqual(other.project_id, fetched.project_id)
+        self.assertEqual('empty', fetched.definition)
+
     def test_update_wf_scope_cron_trigger_associated_in_diff_tenant(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
@@ -1390,6 +1431,47 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definition(created.name)
 
         self.assertEqual(updated, fetched)
+
+    def test_create_or_update_action_definition_in_other_project(self):
+        # Create an action definition in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        # Create an action definition with the same name in this project.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        created = db_api.create_or_update_action_definition(
+            other.name,
+            copy.deepcopy(ACTION_DEFINITIONS[2])
+        )
+
+        self.assertNotEqual(other.id, created.id)
+        self.assertNotEqual(other.project_id, created.project_id)
+
+        # An admin sees the objects of all projects but a create-or-update
+        # request must only ever touch the object of its own project, not
+        # the one of another project that happens to have the same name.
+        auth_context.set_ctx(test_base.get_context(admin=True))
+
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['description'] = 'my new desc'
+
+        updated = db_api.create_or_update_action_definition(
+            created.name,
+            values
+        )
+
+        self.assertEqual(created.id, updated.id)
+        self.assertEqual('my new desc', updated.description)
+
+        # The action definition of the other project must be intact.
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_action_definition(other.id)
+
+        self.assertEqual(other.project_id, fetched.project_id)
+        self.assertEqual('Action #3', fetched.description)
 
     def test_get_action_definitions(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
