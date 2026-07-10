@@ -158,6 +158,27 @@ class DefaultSchedulerTest(base.DbTestCase):
         # The job wasn't captured, so it stays in the persistent store.
         self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
+    def test_stop_cancels_in_memory_jobs(self):
+        job = scheduler_base.SchedulerJob(
+            run_after=10000,
+            func_name=TARGET_METHOD_PATH
+        )
+
+        self.scheduler.schedule(job)
+
+        timers = list(self.scheduler.in_memory_jobs)
+
+        self.assertEqual(1, len(timers))
+        self.assertTrue(timers[0].daemon)
+
+        self.scheduler.stop()
+
+        self.assertEqual(0, len(self.scheduler.in_memory_jobs))
+
+        timers[0].join(5)
+
+        self.assertFalse(timers[0].is_alive())
+
     @mock.patch(TARGET_METHOD_PATH)
     def test_pickup_from_job_store(self, method):
         # Delegate from the module function to the method of the test class.

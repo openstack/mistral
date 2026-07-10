@@ -76,6 +76,16 @@ class DefaultScheduler(base.Scheduler):
     def stop(self, graceful=False):
         self._stopped = True
 
+        # Cancel pending in-memory timers. The jobs stay in the persistent
+        # store and are picked up again by the job store checker after a
+        # restart, so nothing is lost.
+        with self._jobs_lock:
+            timers = list(self.in_memory_jobs)
+            self.in_memory_jobs.clear()
+
+        for timer in timers:
+            timer.cancel()
+
         if graceful:
             self._job_store_checker_thread.join()
 
@@ -195,6 +205,10 @@ class DefaultScheduler(base.Scheduler):
     def _schedule_in_memory(self, run_after, scheduled_job):
         timer = threading.Timer(run_after, self._process_memory_job,
                                 args=(scheduled_job,))
+
+        # A pending timer must not keep the process alive on shutdown; the job
+        # is persisted and gets picked up from the job store after a restart.
+        timer.daemon = True
 
         # Register the job before starting the timer so that a timer with a
         # near-zero delay can't fire and try to clean up before it's tracked.
