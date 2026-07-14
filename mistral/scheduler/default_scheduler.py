@@ -42,15 +42,10 @@ class DefaultScheduler(base.Scheduler):
     def __init__(self, conf):
         """Initializes a scheduler instance.
 
-        # TODO(rakhmerov): Fix docstring
-        :param fixed_delay: A fixed part of the delay (in seconds) that
-            defines how often this scheduler checks the persistent job
-            store for the new jobs to run.
-        :param random_delay: A random part of the delay (in seconds) that
-            defines how often this scheduler checks the persistent job
-            store for the new jobs to run.
-        :param batch_size: Defines how many jobs this scheduler can pick
-            up from the job store at once.
+        :param conf: The "scheduler" configuration group. It provides
+            fixed_delay/random_delay (how often the job store is polled),
+            batch_size (how many jobs are picked up per poll) and
+            in_memory_workers (the size of the local execution thread pool).
         """
 
         self._fixed_delay = conf.fixed_delay
@@ -173,7 +168,7 @@ class DefaultScheduler(base.Scheduler):
 
             self._delete_scheduled_job(job)
 
-    def schedule(self, job, allow_redistribute=False):
+    def schedule(self, job):
         scheduled_job = self._persist_job(job)
 
         self._schedule_in_memory(scheduled_job)

@@ -107,7 +107,7 @@ class LegacyScheduler(sched_base.Scheduler):
         self._random_delay = conf.random_delay
         self._batch_size = conf.batch_size
 
-    def schedule(self, job, allow_redistribute=False):
+    def schedule(self, job):
         _schedule_call(
             job.target_factory_func_name,
             job.func_name,
