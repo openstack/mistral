@@ -363,6 +363,17 @@ scheduler_opts = [
             'restriction on selection.'
         )
     ),
+    cfg.IntOpt(
+        'in_memory_workers',
+        default=10,
+        min=1,
+        help=(
+            'The size of the thread pool the default scheduler uses to run '
+            'jobs whose execution time has come. Pending jobs are kept in a '
+            'single in-memory queue, so this only bounds the number of jobs '
+            'running concurrently, not the number of scheduled jobs.'
+        )
+    ),
     cfg.FloatOpt(
         'captured_job_timeout',
         default=30,

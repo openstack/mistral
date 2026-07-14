@@ -158,7 +158,7 @@ class DefaultSchedulerTest(base.DbTestCase):
         # The job wasn't captured, so it stays in the persistent store.
         self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
-    def test_stop_cancels_in_memory_jobs(self):
+    def test_stop_drops_pending_jobs(self):
         job = scheduler_base.SchedulerJob(
             run_after=10000,
             func_name=TARGET_METHOD_PATH
@@ -166,18 +166,32 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         self.scheduler.schedule(job)
 
-        timers = list(self.scheduler.in_memory_jobs)
-
-        self.assertEqual(1, len(timers))
-        self.assertTrue(timers[0].daemon)
+        self.assertEqual(1, len(self.scheduler.in_memory_jobs))
 
         self.scheduler.stop()
 
         self.assertEqual(0, len(self.scheduler.in_memory_jobs))
 
-        timers[0].join(5)
+    @mock.patch(TARGET_METHOD_PATH)
+    def test_jobs_run_in_execution_time_order(self, method):
+        # A job scheduled second but due sooner must still run first: the
+        # dispatcher has to wake up early when a nearer job is added.
+        calls = []
 
-        self.assertFalse(timers[0].is_alive())
+        method.side_effect = lambda **kwargs: calls.append(kwargs['id'])
+
+        self.scheduler.schedule(scheduler_base.SchedulerJob(
+            run_after=4,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'id': 'late'}
+        ))
+        self.scheduler.schedule(scheduler_base.SchedulerJob(
+            run_after=1,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'id': 'soon'}
+        ))
+
+        self._await(lambda: calls == ['soon', 'late'])
 
     @mock.patch(TARGET_METHOD_PATH)
     def test_pickup_from_job_store(self, method):
