@@ -589,23 +589,54 @@ class Mistral(object):
             logger.error(f'These executions must be success or paused: {error_ex}')
 
     @error_handler
-    def delete_execution(self):
+    def delete_execution(self, id=None):
+        if not id:
+            id = self._ex_id
+
         res = self._security_request(
             'GET',
-            self._mistral_url + "/executions/" + self._ex_id
+            self._mistral_url + "/executions/" + id
         ).json()
 
         if res["state"] not in ["SUCCESS", "ERROR", "CANCELLED"]:
             self._security_request(
                 'PUT',
-                self._mistral_url + "/executions/" + self._ex_id,
+                self._mistral_url + "/executions/" + id,
                 json={'state': "CANCELLED"}
             )
 
         res = self._security_request('DELETE',
                                      self._mistral_url + "/executions/" +
-                                     self._ex_id)
+                                     id)
         assert_response(res, [404, 204])
+
+    def _get_executions(self, **filters):
+        query = '&'.join(f'{key}={value}' for key, value in filters.items())
+
+        res = self._security_request(
+            'GET',
+            self._mistral_url + '/executions?' + query
+        ).json()
+
+        return res['executions']
+
+    @error_handler
+    def delete_stuck_executions(self):
+        executions = self._get_executions(state='RUNNING')
+
+        for execution in executions:
+            if execution["workflow_namespace"] != self._workflow_namespace:
+                continue
+
+            logger.warn(f'Cleaning up stuck execution [id={execution["id"]}, '
+                       f'workflow_name={execution["workflow_name"]}]')
+
+            try:
+                self.delete_execution(id=execution["id"])
+            except BaseException as e:
+                logger.error(
+                    f'Failed to clean up execution {execution["id"]}: {e}'
+                )
 
     @error_handler
     def delete_existing_executions_by_name(self, name):

@@ -28,6 +28,7 @@ Library  ../lib/UtilsLibrary.py
 Library  PlatformLibrary  managed_by_operator=true
 Library  String
 
+Suite Setup      Wait Until Keyword Succeeds  3 min  5 sec  Delete stuck executions
 Test Setup       Wait Until Keyword Succeeds  3 min  5 sec  Set maintenance mode  RUNNING
 Test Teardown    Wait Until Keyword Succeeds  3 min  5 sec  Run Keywords
 ...                 Clear events
