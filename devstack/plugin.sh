@@ -135,15 +135,15 @@ function install_mistral_pythonclient {
 
 function install_mistral_lib {
     if use_library_from_git "mistral-lib"; then
-        git_clone $MISTRAL_LIB_REPO $MISTRAL_LIB_DIR $MISTRAL_LIB_BRANCH
-        setup_develop $MISTRAL_LIB_DIR
+        git_clone_by_name "mistral-lib"
+        setup_dev_lib "mistral-lib"
     fi
 }
 
 function install_mistral_extra {
     if use_library_from_git "mistral-extra"; then
-        git_clone $MISTRAL_EXTRA_REPO $MISTRAL_EXTRA_DIR $MISTRAL_EXTRA_BRANCH
-        setup_develop $MISTRAL_EXTRA_DIR
+        git_clone_by_name "mistral-extra"
+        setup_dev_lib "mistral-extra"
     fi
 }
 
