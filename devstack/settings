@@ -19,13 +19,13 @@ MISTRAL_BRANCH=${MISTRAL_BRANCH:-master}
 MISTRAL_DASHBOARD_REPO=${MISTRAL_DASHBOARD_REPO:-${GIT_BASE}/openstack/mistral-dashboard.git}
 MISTRAL_DASHBOARD_BRANCH=${MISTRAL_DASHBOARD_BRANCH:-master}
 
-MISTRAL_LIB_REPO=${MISTRAL_LIB_REPO:-${GIT_BASE}/openstack/mistral-lib.git}
-MISTRAL_LIB_BRANCH=${MISTRAL_LIB_BRANCH:-master}
-MISTRAL_LIB_DIR=${DEST}/mistral-lib
+GITDIR["mistral-lib"]=${DEST}/mistral-lib
+GITREPO["mistral-lib"]=${MISTRAL_LIB_REPO:-${GIT_BASE}/openstack/mistral-lib.git}
+GITBRANCH["mistral-lib"]=${MISTRAL_LIB_BRANCH:-master}
 
-MISTRAL_EXTRA_REPO=${MISTRAL_EXTRA_REPO:-${GIT_BASE}/openstack/mistral-extra.git}
-MISTRAL_EXTRA_BRANCH=${MISTRAL_EXTRA_BRANCH:-master}
-MISTRAL_EXTRA_DIR=${DEST}/mistral-extra
+GITDIR["mistral-extra"]=${DEST}/mistral-extra
+GITREPO["mistral-extra"]=${MISTRAL_EXTRA_REPO:-${GIT_BASE}/openstack/mistral-extra.git}
+GITBRANCH["mistral-extra"]=${MISTRAL_EXTRA_BRANCH:-master}
 
 GITDIR["python-mistralclient"]=${DEST}/python-mistralclient
 GITREPO["python-mistralclient"]=${MISTRALCLIENT_REPO:-${GIT_BASE}/openstack/python-mistralclient.git}
