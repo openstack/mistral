@@ -12,6 +12,7 @@ import random
 import re
 import requests
 from threading import Thread
+from pg_connection import PgConnectionInfo
 
 from kubernetes import client
 from kubernetes.client import V1ObjectMeta, V1EnvVar, V1Container, V1PodSpec, \
@@ -26,6 +27,7 @@ from kubernetes.client import V1ObjectMeta, V1EnvVar, V1Container, V1PodSpec, \
 
 import mistral_constants as MC
 from rabbitmq_helper import RabbitMQHelper
+from dbaas_helper import DBaaSHelper
 
 logging.basicConfig(
     filename='/proc/1/fd/1',
@@ -356,6 +358,9 @@ class KubernetesHelper:
 
         if self.tls_enabled():
             envs.extend(self.get_tls_envs())
+
+        if self.is_dbaas_integration_enabled():
+            envs.append(V1EnvVar(name='DBAAS_MODE', value='True'))
 
         volumes.append(self._get_mistralsecret_volume())
         volume_mounts.append(self._get_mistralsecret_volume_mount())
@@ -1740,6 +1745,17 @@ class KubernetesHelper:
         logger.info("Robot Tests result Summary: %s", test_status_summary)
         return result
 
+    def _get_configmap_data(self):
+        try:
+            cm = self._v1_apps_api.read_namespaced_config_map(
+                MC.COMMON_CONFIGMAP, self._workspace
+            )
+            return cm.data or {}
+        except client.rest.ApiException as exc:
+            if exc.status == 404:
+                return {}
+            raise
+
     def generate_mistral_common_configmap_body(self):
         metadata = client.V1ObjectMeta(
             name=MC.COMMON_CONFIGMAP,
@@ -1753,6 +1769,7 @@ class KubernetesHelper:
             'default-project-id': str(configmap.get('defaultProjectId', '')),
             'dbaas-agent-url': str(configmap['dbaas']['agentUrl']),
             'dbaas-aggregator-url': str(configmap['dbaas'].get('aggregatorUrl')),
+            'dbaas-integration-enabled': str(configmap['dbaas'].get('integrationEnabled', 'False')),
             'debug-log': str(configmap['debugLog']),
             'external-mistral-url': str(configmap.get('externalMistralUrl')),
             'guaranteed-notifier-enabled':
@@ -2074,6 +2091,12 @@ class KubernetesHelper:
                     config_map_key_ref=V1ConfigMapKeySelector(
                         key='queue-name-prefix',
                         name=MC.COMMON_CONFIGMAP))),
+            V1EnvVar(
+                name='DBAAS_INTEGRATION_ENABLED',
+                value_from=V1EnvVarSource(
+                    config_map_key_ref=V1ConfigMapKeySelector(
+                        key='dbaas-integration-enabled',
+                        name=MC.COMMON_CONFIGMAP))),
              self._get_pythondontwritebytecode_env(),
              self._get_config_redirect_env(),
         ]
@@ -2159,6 +2182,142 @@ class KubernetesHelper:
         dr_mode = str(((spec.get('disasterRecovery') or {})
                        .get('mode') or '')).strip().lower()
         return dr_mode != 'standby'
+
+    def is_dbaas_integration_enabled(self):
+        spec = self._spec or {}
+        return bool(((spec.get('mistralCommonParams') or {})
+                    .get('dbaas') or {})
+                    .get('integrationEnabled', False))
+
+    def get_dbaas_helper(self):
+        dbaas_params = self._spec['mistralCommonParams']['dbaas']
+        aggregator_url = dbaas_params['aggregatorUrl']
+        mistral_secret = self._v1_apps_api.read_namespaced_secret(
+            MC.MISTRAL_SECRET, self._workspace
+        )
+        secret_data = mistral_secret.data
+        dbaas_user = self.decode_secret(secret_data['dbaas-user'])
+        dbaas_password = self.decode_secret(secret_data['dbaas-password'])
+        return DBaaSHelper(
+            aggregator_url=aggregator_url,
+            dbaas_user=dbaas_user,
+            dbaas_password=dbaas_password,
+            namespace=self._workspace,
+        )
+
+
+    def _read_pg_props(self):
+        mistral_secret = self._v1_apps_api.read_namespaced_secret(
+            MC.MISTRAL_SECRET, self._workspace
+        )
+        secret_data = mistral_secret.data
+        pg_user = self.decode_secret(secret_data['pg-user'])
+        pg_password = self.decode_secret(secret_data['pg-password'])
+        cm_data = self._get_configmap_data()
+        pg_host = cm_data['pg-host'].removesuffix(".svc")
+        pg_port = str(cm_data['pg-port'])
+        pg_db_name = cm_data['pg-db-name']
+        return PgConnectionInfo(
+            host=pg_host,
+            port=pg_port,
+            db_name=pg_db_name,
+            user=pg_user,
+            password=pg_password,
+        )
+
+
+    def _mistral_db_has_data(self, pg:PgConnectionInfo) -> bool:
+        import psycopg2
+        try:
+            conn = psycopg2.connect(
+                host=pg.host, port=pg.port, dbname=pg.db_name,
+                user=pg.user, password=pg.password, connect_timeout=5
+            )
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT COUNT(*) FROM information_schema.tables "
+                "WHERE table_schema = 'public'"
+            )
+            count = cur.fetchone()[0]
+            conn.close()
+            return count > 0
+        except Exception as e:
+            logger.warning(
+            "DBaaS: Error connecting to Mistral db (host=%s, port=%s, dbname=%s): %s",
+            pg.host, pg.port, pg.db_name, e
+            )
+            return False
+
+    def _detect_drift(self, dbaas_pg: PgConnectionInfo) -> bool:
+        try:
+            pg = self._read_pg_props()
+        except Exception as e:
+            logger.warning("DBaaS: drift check could not read current creds: %s", e)
+            return True
+        return dbaas_pg != pg
+
+    def _patch_pg_properties(self, pg: PgConnectionInfo):
+        logger.info("DBaaS: patching pg credentials in Secret and ConfigMap")
+        self._v1_apps_api.patch_namespaced_secret(
+            name=MC.MISTRAL_SECRET,
+            namespace=self._workspace,
+            body={'data': {
+                'pg-user': base64.b64encode(
+                    pg.user.encode('utf-8')
+                ).decode('utf-8'),
+                'pg-password': base64.b64encode(
+                    pg.password.encode('utf-8')
+                ).decode('utf-8'),
+            }}
+        )
+        self._v1_apps_api.patch_namespaced_config_map(
+            name=MC.COMMON_CONFIGMAP,
+            namespace=self._workspace,
+            body={'data': {
+                'pg-host': pg.host,
+                'pg-port': pg.port,
+                'pg-db-name': pg.db_name,
+            }}
+        )
+
+    def resolve_db_connection_from_dbaas(self, is_create_event=False):
+        dbaas_pg = self.ensure_dbaas_managed_connection(is_create_event)
+        should_be_patched = is_create_event or self._detect_drift(dbaas_pg)
+        if should_be_patched:
+            self._patch_pg_properties(dbaas_pg)
+
+    def ensure_dbaas_managed_connection(self, is_create_event=False) -> PgConnectionInfo:
+        helper = self.get_dbaas_helper()
+        pg = self._read_pg_props()
+
+        result = helper.get_by_classifier()
+
+        if result is not None:
+            if not result.get('externallyManageable', True):
+                # Branch A: already internal/managed by DBaaS
+                logger.info("DBaaS: database is internally managed, using returned connection")
+                return PgConnectionInfo.from_dbaas_dict(result['connectionProperties'])
+            else:
+                # Branch B: found in DBaaS but still external — migrate
+                logger.info("DBaaS: database is external, migrating to internal")
+                helper.migrate_external_to_internal(pg)
+                result2 = helper.get_by_classifier()
+                return PgConnectionInfo.from_dbaas_dict(result2['connectionProperties'])
+        else:
+            # Branch C: not in DBaaS at all — probe physical DB
+            register_and_migrate  = not(is_create_event) and self._mistral_db_has_data(pg)
+            if register_and_migrate:
+                # C1: legacy manual DB exists — adopt, do NOT create
+                logger.info("DBaaS: legacy DB detected, registering and migrating")
+                helper.register_external_db(pg)
+                helper.migrate_external_to_internal(pg)
+                result3 = helper.get_by_classifier()
+                return PgConnectionInfo.from_dbaas_dict(result3['connectionProperties'])
+            else:
+                # C2: true greenfield — let DBaaS create DB + user
+                logger.info("DBaaS: no DB found, creating new database via DBaaS")
+                result4 = helper.create_db()
+                return PgConnectionInfo.from_dbaas_dict(result4['connectionProperties'])
 
     def integration_tests_enabled(self):
         enabled = self._spec['integrationTests']['enabled']
@@ -2587,6 +2746,28 @@ class KubernetesHelper:
             self._apps_api.create_namespaced_deployment(
                 namespace=self._workspace,
                 body=deployment_body)
+
+    def reconcile_deployments(self, is_create_event=False):
+        if self.is_dbaas_integration_enabled():
+            self.resolve_db_connection_from_dbaas(is_create_event)
+        self.update_db_job()
+        for service in MC.MISTRAL_SERVICES:
+            if self.is_deployment_present(service):
+                self.update_deployment(
+                    service,
+                    MC.SERVICES_NAME_TO_SERVER[service]
+                )
+            else:
+                self.apply_deployment_config(
+                    service,
+                    MC.SERVICES_NAME_TO_SERVER[service]
+                )
+
+    def create_services(self):
+        if not self.is_service_present(MC.MONITORING_SERVICE):
+            self.create_mistral_monitoring_service()
+        if not self.is_service_present(MC.MISTRAL_SERVICE):
+            self.create_mistral_service()
 
     def is_service_present(self, name):
         services = self._v1_apps_api.list_namespaced_service(

@@ -200,7 +200,8 @@ mistralCommonParams:
         pattern: "*/realms/{value}"
   dbaas:
     agentUrl: "http://dbaas-agent:8080"
-    aggregatorUrl: ""
+    aggregatorUrl: "http://dbaas-aggregator.dbaas:8080"
+    integrationEnabled: "False"
   debugLog: "False"
   externalMistralUrl: ""
   guaranteedNotifierEnabled: "False"
@@ -491,6 +492,8 @@ secrets:
   rabbitUser: "mistral_user"
   kafkaSaslPlainUsername: "null"
   kafkaSaslPlainPassword: "null"
+  dbaasUser: "cluster-dba"
+  dbaasPassword: ""
 
 ## Configure Gateway API resources based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/gateway/
 GatewayAPI:

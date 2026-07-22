@@ -7,6 +7,10 @@ ${TENANT}                  system
 ${WORKFLOW_NAMESPACE}      tests
 ${KUBERNETES_NAMESPACE}    %{KUBERNETES_NAMESPACE}
 ${MISTRAL_SERVICE_NAME}    %{MISTRAL_HOST}
+${MISTRAL_CR_NAME}         mistral-service
+${MISTRAL_SECRET_NAME}     mistral-secret
+${DBAAS_USER}              %{DBAAS_USER=}
+${DBAAS_PASSWORD}          %{DBAAS_PASSWORD=}
 
 
 *** Settings ***
@@ -26,6 +30,7 @@ Library  ../lib/Mistral.py  mistral_url=%{MISTRAL_URL}
 Library  ../lib/HttpServerLibrary.py  mistral_url=%{MISTRAL_URL}
 Library  ../lib/UtilsLibrary.py
 Library  PlatformLibrary  managed_by_operator=true
+Library  RequestsLibrary
 Library  String
 
 Suite Setup      Wait Until Keyword Succeeds  3 min  5 sec  Delete stuck executions
@@ -38,6 +43,29 @@ Suite Teardown   Wait Until Keyword Succeeds  3 min  5 sec  Set maintenance mode
 
 
 *** Keywords ***
+DBaaS Integration Is Enabled
+    ${cr}=    Get Custom Resource    netcracker.com/v2    mistralservice
+    ...    ${KUBERNETES_NAMESPACE}    ${MISTRAL_CR_NAME}
+    ${enabled}=    Set Variable    ${cr['spec']['mistralCommonParams']['dbaas']['integrationEnabled']}
+    [Return]    ${enabled}
+
+Get DBaaS Connection Properties
+    ${cr}=    Get Custom Resource    netcracker.com/v2    mistralservice
+    ...    ${KUBERNETES_NAMESPACE}    ${MISTRAL_CR_NAME}
+    ${aggregator_url}=    Set Variable    ${cr['spec']['mistralCommonParams']['dbaas']['aggregatorUrl']}
+    ${auth}=    Create List    ${DBAAS_USER}    ${DBAAS_PASSWORD}
+    ${session}=    Create Session    dbaas    ${aggregator_url}
+    ...    auth=${auth}
+    ${classifier}=    Create Dictionary
+    ...    microserviceName=mistral-operator    scope=service    namespace=${KUBERNETES_NAMESPACE}
+    ${body}=    Create Dictionary    classifier=${classifier}    originService=mistral-operator
+    ${resp}=    POST On Session    dbaas
+    ...    /api/v3/dbaas/${KUBERNETES_NAMESPACE}/databases/get-by-classifier/postgresql
+    ...    json=${body}
+    Should Be Equal As Integers    ${resp.status_code}    200
+    ...    msg=DBaaS get-by-classifier failed: ${resp.text}
+    [Return]    ${resp.json()['connectionProperties']}
+
 Recreate the ${name} workflow
     delete workflow     ${name}
     create workflow     ${name}
@@ -775,3 +803,30 @@ Force cancel propagates to sub-workflow tasks
 
     ${SLOW_TASK}=  Get task  slow_task  ${SUB_EX.id}
     Should be equal  ERROR  ${SLOW_TASK.state}
+
+DBaaS PG Credentials And Properties Are In Sync
+    [Tags]    dbaas    mistral
+    ${dbaas_enabled}=    DBaaS Integration Is Enabled
+    Skip If    str('${dbaas_enabled}').lower() != 'true'    DBaaS integration is disabled
+
+    ${conn}=    Get DBaaS Connection Properties
+
+    ${secret}=    Get Secret    ${MISTRAL_SECRET_NAME}    ${KUBERNETES_NAMESPACE}
+    ${pg_user_b64}=      Set Variable    ${secret.data}[pg-user]
+    ${pg_user}=          Evaluate    __import__('base64').b64decode('${pg_user_b64}').decode()
+    ${pg_password_b64}=  Set Variable    ${secret.data}[pg-password]
+    ${pg_password}=      Evaluate    __import__('base64').b64decode('${pg_password_b64}').decode()
+
+    ${cm}=    Get Config Map    mistral-common-params    ${KUBERNETES_NAMESPACE}
+
+    Should Be Equal    ${pg_user}        ${conn['username']}
+    ...    msg=pg-user in Secret does not match DBaaS username
+    Should Be Equal    ${pg_password}    ${conn['password']}
+    ...    msg=pg-password in Secret does not match DBaaS password
+    Should Be Equal    ${cm.data['pg-host'].removesuffix('.svc')}     ${conn['host']}
+    ...    msg=pg-host in ConfigMap does not match DBaaS host
+    Should Be Equal As Integers    ${cm.data['pg-port']}     ${conn['port']}
+    ...    msg=pg-port in ConfigMap does not match DBaaS port
+    Should Be Equal    ${cm.data['pg-db-name']}  ${conn['name']}
+    ...    msg=pg-db-name in ConfigMap does not match DBaaS name
+

@@ -1,0 +1,83 @@
+@startuml Mistral + DBaaS: provisioning, restore, credential ownership
+
+actor "User" as user
+participant "Cloud Backuper" as CB
+participant "Mistral Operator" as MO
+participant "Update DB Job" as MUJ
+participant "DBaaS Aggregator" as DBaaS
+database "Postgres" as P
+
+entity "Mistral CM" as MCM
+entity "Mistral Secret" as MS
+collections "Mistral Services" as MSVC
+
+note across
+  Mistral integrated with DBaaS (mistralCommonParams.dbaas.integrationEnabled=true):
+  - DBaaS is the SOURCE OF TRUTH for DB connection + credentials.
+  - Secret + CM are a read cache. Operator is PULL-ONLY
+  - Credentials are NEVER changed by editing the Secret; they change in DBaaS
+    (restore / rotate-password) and the operator propagates them.
+  - DB creation strategy is auto-routed by get-by-classifier so that
+    greenfield, legacy-manual (brownfield) and restore all share one code path.
+  - GUARDRAIL: never native-create a DB on top of an existing physical DB with data.
+end note
+
+== Deploy / Reconcile (on.create, on.update) ==
+
+group sync_db_connection_from_dbaas()
+
+    MO -> DBaaS: POST get-by-classifier/postgresql\n{ classifier, userRole }
+
+    alt DB found, internal (DBaaS-managed)
+        DBaaS --> MO: connectionProperties\n(host, port, authDbName, username, password)
+        note right of MO
+          Covers greenfield-after-create
+          AND brownfield-after-migrate.
+        end note
+
+    else DB found, external / not migrated (brownfield in transition)
+        DBaaS --> MO: connection (external)
+        MO -> DBaaS: Migrate external -> internal\n(keep credentials)
+        MO -> DBaaS: get-by-classifier
+        DBaaS --> MO: connectionProperties
+
+    else DB not found in DBaaS
+        MO -> P: Probe: does physical DB exist with data?\n(using current Secret creds)
+        alt Legacy manual DB exists with data
+            note right of MO: GUARDRAIL -> adopt, do NOT create
+            MO -> DBaaS: Register External DB\n(registration/externally_manageable)
+            MO -> DBaaS: Migrate external -> internal\n(keep credentials)
+            MO -> DBaaS: get-by-classifier
+            DBaaS --> MO: connectionProperties
+        else True greenfield (no DB anywhere)
+            MO -> DBaaS: PUT databases (get-or-create,\ndbOwner=mistral)
+            DBaaS -> P: Create DB + user
+            DBaaS --> MO: connectionProperties
+        end
+    end
+
+    MO -> MS: Read current pg-user / pg-password
+    MO -> MCM: Read current pg-host / pg-port / pg-db-name
+    MO -> MO: compare DBaaS connection with CM + Secret
+
+    alt Drift (restore / rotation / first sync)
+        MO -> MSVC: Scale down services
+        MO -> MCM: Patch pg-host / pg-port / pg-db-name
+        MO -> MS: Patch pg-user / pg-password
+        MO -> MUJ: Run Update DB Job (dbaas mode)
+        MUJ -> P: upgrade head + populate\n(no create_db / create_user)
+        MO -> MSVC: Scale up services
+    else No drift
+        MO -> MUJ: Run Update DB Job (dbaas mode)
+        MUJ -> P: upgrade head + populate
+        MO -> MSVC: Deploy / ensure services
+    end
+end
+
+MSVC -> MS: Read pg-user / pg-password (envs.sh)
+MSVC -> MCM: Read pg-host / pg-port / pg-db-name
+MSVC -> P: Connect
+
+
+
+@enduml

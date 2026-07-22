@@ -386,11 +386,17 @@
                             "items": {
                                 "type": "object",
                                 "additionalProperties": false,
-                                "required": ["type", "field"],
+                                "required": [
+                                    "type",
+                                    "field"
+                                ],
                                 "properties": {
                                     "type": {
                                         "type": "string",
-                                        "enum": ["extract", "map"]
+                                        "enum": [
+                                            "extract",
+                                            "map"
+                                        ]
                                     },
                                     "field": {
                                         "type": "string"
@@ -418,6 +424,9 @@
                         },
                         "aggregatorUrl": {
                             "type": "string"
+                        },
+                        "integrationEnabled": {
+                            "$ref": "#/definitions/booleanOrString"
                         }
                     }
                 },
@@ -842,6 +851,12 @@
                     "type": "string"
                 },
                 "kafkaSaslPlainPassword": {
+                    "type": "string"
+                },
+                "dbaasUser": {
+                    "type": "string"
+                },
+                "dbaasPassword": {
                     "type": "string"
                 }
             }

@@ -94,22 +94,8 @@ def on_create(body, meta, spec, status, **kwargs):
         if not kub_helper.check_if_rmq_exchange_durable():
             kub_helper.scale_down_mistral_deployments()
             kub_helper.delete_existing_queues()
-        kub_helper.update_db_job()
-        for service in MC.MISTRAL_SERVICES:
-            if kub_helper.is_deployment_present(service):
-                kub_helper.update_deployment(
-                    service,
-                    MC.SERVICES_NAME_TO_SERVER[service]
-                )
-            else:
-                kub_helper.apply_deployment_config(
-                    service,
-                    MC.SERVICES_NAME_TO_SERVER[service]
-                )
-    if not kub_helper.is_service_present(MC.MONITORING_SERVICE):
-        kub_helper.create_mistral_monitoring_service()
-    if not kub_helper.is_service_present(MC.MISTRAL_SERVICE):
-        kub_helper.create_mistral_service()
+        kub_helper.reconcile_deployments(True)
+    kub_helper.create_services()
     kub_helper.set_deploy_status_and_run_tests()
 
 
@@ -196,27 +182,11 @@ def on_update(body, meta, spec, status, old, new, diff, **kwargs):
             check_if_mistral_scale_down_needed(kub_helper, diff):
             kub_helper.scale_down_mistral_deployments()
             kub_helper.delete_existing_queues()
-        kub_helper.update_db_job()
-        for service in MC.MISTRAL_SERVICES:
-            if kub_helper.is_deployment_present(service):
-                kub_helper.update_deployment(
-                    service,
-                    MC.SERVICES_NAME_TO_SERVER[service]
-                )
-            else:
-                kub_helper.apply_deployment_config(
-                    service,
-                    MC.SERVICES_NAME_TO_SERVER[service]
-                )
-
-    if not kub_helper.is_service_present(MC.MONITORING_SERVICE):
-        kub_helper.create_mistral_monitoring_service()
-    if not kub_helper.is_service_present(MC.MISTRAL_SERVICE):
-        kub_helper.create_mistral_service()
+        kub_helper.reconcile_deployments(False)
+    kub_helper.create_services()
     kub_helper.set_deploy_status_and_run_tests()
 
 
-@kopf.on.delete(MC.CR_GROUP, MC.CR_VERSION, MC.CR_PLURAL, optional=OPTIONAL_DELETE)
 @kopf.on.delete(MC.CR_GROUP, MC.CR_VERSION, MC.CR_PLURAL, optional=OPTIONAL_DELETE)
 def on_delete(spec, **kwargs):
     logger.info('Deleting Mistral')
@@ -278,3 +248,4 @@ def set_disaster_recovery_state(spec, status, namespace, diff, **kwargs):
     kub_helper.update_disaster_recovery_status(mode=mode, status=status,
                                                message=message)
     logger.info("Switchover finished successfully")
+

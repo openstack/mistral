@@ -23,5 +23,7 @@ export IDP_JWK_MOD=$(_read_secret idp-jwk-mod)
 export IDP_USER=$(_read_secret idp-user-robot)
 export IDP_PASSWORD=$(_read_secret idp-password-robot)
 export CLIENT_REGISTRATION_TOKEN=$(_read_secret idp-registration-token)
+export DBAAS_USER=$(_read_secret dbaas-user)
+export DBAAS_PASSWORD=$(_read_secret dbaas-password)
 
 exec /docker-entrypoint.sh "$@"

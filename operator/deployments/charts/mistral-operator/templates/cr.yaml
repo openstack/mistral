@@ -212,6 +212,7 @@ spec:
       {{- if .Values.mistralCommonParams.dbaas.aggregatorUrl }}
       aggregatorUrl: {{ .Values.mistralCommonParams.dbaas.aggregatorUrl }}
       {{- end}}
+      integrationEnabled: {{ .Values.mistralCommonParams.dbaas.integrationEnabled }}
     debugLog: {{ .Values.mistralCommonParams.debugLog }}
     {{- if .Values.mistralCommonParams.externalMistralUrl }}
     externalMistralUrl: {{ .Values.mistralCommonParams.externalMistralUrl }}

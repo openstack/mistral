@@ -449,6 +449,85 @@ The Kafka Notification parameters used for the configurations are specified in t
 |secrets.kafkaSaslPlainUsername|string|no|'username'|This parameter specifies the Kafka username.|
 |secrets.kafkaSaslPlainPassword|string|no|'password'|This parameter specifies the Kafka password.|
 
+## DBaaS Integration Parameters
+
+Mistral Operator supports the **Database-as-a-Service (DBaaS)** platform as the source of truth for PostgreSQL connection details and credentials. When enabled, the operator synchronizes db connection properties from DBaaS on every reconcile.
+
+The DBaaS integration parameters used for the configurations are specified in the following table.
+
+|Parameter|Type|Mandatory|Default value|Description|
+|---|---|---|---|---|
+|mistralCommonParams.dbaas.integrationEnabled|bool|no|`False`|Enables DBaaS integration. When `True`, the operator synchronizes PostgreSQL connection properties from the DBaaS.|
+|mistralCommonParams.dbaas.aggregatorUrl|string|no|`http://dbaas-aggregator.dbaas:8080`|URL of the DBaaS aggregator service.|
+|secrets.dbaasUser|string|no|`cluster-dba`|Username used by the operator to authenticate against the DBaaS API.|
+|secrets.dbaasPassword|string|no|`''`|Password for `dbaasUser`.|
+
+**Without dbaas to with dbaas-Clean Install:** With dbaas integration enabled in clean install mode, dbaas will create fresh db. Cleanup of existing db would be skipped in this case and can be manually done using ```DROP DATABASE IF EXISTS <db_name>```. However, configuring postgres admin credentials are necessary for performing privileged operations on db.
+
+#### Example configuration
+
+```yaml
+mistralCommonParams:
+  dbaas:
+    aggregatorUrl: "http://dbaas-aggregator.dbaas:8080"
+    integrationEnabled: "True"
+
+secrets:
+  pgAdminPassword: "<password>"
+  pgAdminUser: "<pg_admin_user>"
+  dbaasPassword: "<password>"
+  dbaasUser: "<dbaas_user>"
+```
+
+**Without dbaas to with dbaas-Rolling Update:** With dbaas integration enabled, dbaas will register and migrate the configured db to dbaas internal db if it already exists. Hence, configuring existing pg connection properties is necessary.
+
+#### Example configuration
+
+```yaml
+mistralCommonParams:
+  dbaas:
+    aggregatorUrl: "http://dbaas-aggregator.dbaas:8080"
+    integrationEnabled: "True"
+  postgres:
+    dbName: "<previous_db>"
+    host: "<previous_host>"
+    port: "<previous_port>"
+
+secrets:
+  pgAdminPassword: "<password>"
+  pgAdminUser: "<pg_admin_user>"
+  pgPassword: "<previous_pg_password>"
+  pgUser: "<previous_pg_user>"
+  dbaasPassword: "<password>"
+  dbaasUser: "<dbaas_user>"
+```
+
+**Note:** When `integrationEnabled=True` the operator automatically patches `mistral-secret` (`pg-user`, `pg-password`) and `mistral-common-params` (`pg-host`, `pg-port`, `pg-db-name`) with the values returned by DBaaS whenever it detects a drift.
+
+
+
+### Credential sync behaviour
+
+| Scenario | DBaaS state | Physical DB | What the operator does |
+|---|---|---|---|
+| A | Registered, DBaaS-managed | — | Uses the returned `connectionProperties` directly |
+| B | Registered, still external | — | Migrates to internally-managed, re-queries |
+| C1 | Not registered | exists (legacy install) | Registers external DB, migrates to internal |
+| C2 | Not registered | Empty  | Creates a new managed DB via DBaaS |
+
+### Example configuration
+
+```yaml
+mistralCommonParams:
+  dbaas:
+    aggregatorUrl: "http://dbaas-aggregator.dbaas:8080"
+    integrationEnabled: "True"
+
+secrets:
+  dbaasPassword: "<password>"
+  dbaasUser: "cluster-dba"
+```
+
 ## Horizontal Pod Autoscalers Parameters
 
 The Horizontal Pod Autoscalers parameters are as follows:

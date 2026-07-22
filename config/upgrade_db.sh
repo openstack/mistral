@@ -16,8 +16,10 @@ else
         mistral-db-nc-manage --config-file "$CONFIG" delete_existing_queues
     fi
 
-    mistral-db-nc-manage --config-file "$CONFIG" create_db || true
-    mistral-db-nc-manage --config-file "$CONFIG" create_user || true
+    if [ "${DBAAS_MODE}" != "True" ]; then
+        mistral-db-nc-manage --config-file "$CONFIG" create_db || true
+        mistral-db-nc-manage --config-file "$CONFIG" create_user || true
+    fi
 
     CURRENT_VER=$(mistral-db-manage --config-file "$CONFIG" current) || true
 

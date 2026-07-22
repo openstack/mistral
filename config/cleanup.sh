@@ -3,41 +3,48 @@
 ### Script for cleaning up database, rabbit and kafka
 set -e
 
-echo "Start deleting database"
+DBAAS_INTEGRATION_ENABLED=$(echo "${DBAAS_INTEGRATION_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')
 
-DB_NAME=${PG_DB_NAME}
-DB_USER=${PG_ADMIN_USER}
-# shellcheck disable=SC2153
-DB_PASSWORD=${PG_ADMIN_PASSWORD}
-DB_HOST=${PG_HOST}
-DB_PORT=${PG_PORT:-5432}
+if [ "$DBAAS_INTEGRATION_ENABLED" = "true" ]; then
+  echo "DBaaS integration is enabled, skipping database cleanup step."
+else
+  echo "Start deleting database"
 
-export PGPASSWORD="${DB_PASSWORD}"
+  DB_NAME=${PG_DB_NAME}
+  DB_USER=${PG_ADMIN_USER}
+  # shellcheck disable=SC2153
+  DB_PASSWORD=${PG_ADMIN_PASSWORD}
+  DB_HOST=${PG_HOST}
+  DB_PORT=${PG_PORT:-5432}
 
-if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -d postgres <<EOF
-ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = false;
+  export PGPASSWORD="${DB_PASSWORD}"
 
-SELECT pg_terminate_backend(pid)
-FROM pg_stat_activity
-WHERE datname = '$DB_NAME'
-  AND pid <> pg_backend_pid();
+  if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -d postgres <<EOF
+  ALTER DATABASE "$DB_NAME" WITH ALLOW_CONNECTIONS = false;
+
+  SELECT pg_terminate_backend(pid)
+  FROM pg_stat_activity
+  WHERE datname = '$DB_NAME'
+    AND pid <> pg_backend_pid();
 
 EOF
-then
-  echo "Closed existing connections to $DB_NAME."
-else
-  echo "Error closing existing connections to $DB_NAME."
-  exit 1
+  then
+    echo "Closed existing connections to $DB_NAME."
+  else
+    echo "Error closing existing connections to $DB_NAME."
+    exit 1
+  fi
+
+
+  if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"; then
+    echo "Database $DB_NAME successfully deleted."
+  else
+    echo "Error during deleting database $DB_NAME."
+    exit 1
+  fi
 fi
 
 
-
-if psql -h "$DB_HOST" -U "$DB_USER" -p "$DB_PORT" -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"; then
-  echo "Database $DB_NAME successfully deleted."
-else
-  echo "Error during deleting database $DB_NAME."
-  exit 1
-fi
 
 echo "Start deleting RabbitMQ vhost"
 MISTRAL_TLS_ENABLED="${MISTRAL_TLS_ENABLED:-false}"
