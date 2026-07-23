@@ -1,8 +1,11 @@
 name: Branch Deleted
-on: delete
+on:
+  delete:
+  pull_request:
+    types: [closed]
 
 env:
-  TAG_NAME: ${{ github.event.ref }}
+  TAG_NAME: ${{ github.event.ref || github.ref }}
 
 jobs:
   delete:
@@ -25,7 +28,7 @@ jobs:
           - name: qubership-mistral-tests
             file: tests/robot/Dockerfile
             context: tests/robot
-    if: github.event.ref_type == 'branch'
+    if: (github.event_name == 'delete' && github.event.ref_type == 'branch') || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Login to Docker Hub
