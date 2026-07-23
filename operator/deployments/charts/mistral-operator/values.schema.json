@@ -607,6 +607,9 @@
                 "affinity": {
                     "type": "object"
                 },
+                "topologySpreadConstraints": {
+                    "type": "array"
+                },
                 "securityContext": {
                     "type": "object"
                 },
@@ -646,6 +649,9 @@
                 "prometheusEnabled": {
                     "$ref": "#/definitions/booleanOrString"
                 },
+                "topologySpreadConstraints": {
+                    "type": "array"
+                },
                 "securityContext": {
                     "type": "object"
                 },
@@ -682,6 +688,9 @@
                 "noProxy": {
                     "type": "string"
                 },
+                "topologySpreadConstraints": {
+                    "type": "array"
+                },
                 "securityContext": {
                     "type": "object"
                 },
@@ -700,6 +709,9 @@
                 "resources": {
                     "$ref": "#/definitions/resources"
                 },
+                "topologySpreadConstraints": {
+                    "type": "array"
+                },
                 "securityContext": {
                     "type": "object"
                 },
@@ -717,6 +729,9 @@
                 },
                 "resources": {
                     "$ref": "#/definitions/resources"
+                },
+                "topologySpreadConstraints": {
+                    "type": "array"
                 },
                 "securityContext": {
                     "type": "object"

@@ -800,6 +800,14 @@ class KubernetesHelper:
                 'V1Affinity'
             )
 
+        topology_spread_constraints = None
+
+        if 'topologySpreadConstraints' in self._spec[server]:
+            topology_spread_constraints = self._api_client.deserialize(
+                FakeKubeResponse(self._spec[server]['topologySpreadConstraints']),
+                'list[V1TopologySpreadConstraint]'
+            )
+
         mounts = [
             V1VolumeMount(
                 mount_path='/opt/mistral/mount_configs/custom',
@@ -848,6 +856,7 @@ class KubernetesHelper:
             )],
                 volumes=None,
                 affinity=affinity,
+                topology_spread_constraints=topology_spread_constraints,
                 security_context=self.get_security_context(server),
                 priority_class_name = None
             )

@@ -256,6 +256,9 @@ spec:
     {{ if .Values.mistralApi.affinity }}
     affinity: {{ .Values.mistralApi.affinity | toJson }}
     {{ end }}
+    {{ if .Values.mistralApi.topologySpreadConstraints }}
+    topologySpreadConstraints: {{ .Values.mistralApi.topologySpreadConstraints | toJson }}
+    {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
       {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralApi.securityContext) | nindent 6 }}
@@ -273,6 +276,9 @@ spec:
         memory: {{ default "300Mi" .Values.mistralMonitoring.resources.limits.memory }}
     {{ if .Values.mistralMonitoring.affinity }}
     affinity: {{ .Values.mistralMonitoring.affinity | toJson }}
+    {{ end }}
+    {{ if .Values.mistralMonitoring.topologySpreadConstraints }}
+    topologySpreadConstraints: {{ .Values.mistralMonitoring.topologySpreadConstraints | toJson }}
     {{ end }}
     recoveryInterval: {{ .Values.mistralMonitoring.recoveryInterval }}
     hangInterval: {{ .Values.mistralMonitoring.hangInterval }}
@@ -298,6 +304,9 @@ spec:
         memory: {{ default "300Mi" .Values.mistralExecutor.resources.limits.memory }}
     {{ if .Values.mistralExecutor.affinity }}
     affinity: {{ .Values.mistralExecutor.affinity | toJson }}
+    {{ end }}
+    {{ if .Values.mistralExecutor.topologySpreadConstraints }}
+    topologySpreadConstraints: {{ .Values.mistralExecutor.topologySpreadConstraints | toJson }}
     {{ end }}
     {{- if .Values.mistralExecutor.loggingProxyAdminUrl}}
     loggingProxyAdminUrl: {{ .Values.mistralExecutor.loggingProxyAdminUrl }}
@@ -331,6 +340,9 @@ spec:
     {{ if .Values.mistralEngine.affinity }}
     affinity: {{ .Values.mistralEngine.affinity | toJson }}
     {{ end }}
+    {{ if .Values.mistralEngine.topologySpreadConstraints }}
+    topologySpreadConstraints: {{ .Values.mistralEngine.topologySpreadConstraints | toJson }}
+    {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}
       {{- include "restricted.platformPodSecurityContext" (dict "platform" $platform "securityContext" .Values.mistralEngine.securityContext) | nindent 6 }}
@@ -348,6 +360,9 @@ spec:
         memory: {{ default "300Mi" .Values.mistralNotifier.resources.limits.memory }}
     {{ if .Values.mistralNotifier.affinity }}
     affinity: {{ .Values.mistralNotifier.affinity | toJson }}
+    {{ end }}
+    {{ if .Values.mistralNotifier.topologySpreadConstraints }}
+    topologySpreadConstraints: {{ .Values.mistralNotifier.topologySpreadConstraints | toJson }}
     {{ end }}
     securityContext:
       {{- include "restricted.globalPodSecurityContext" . | nindent 6 }}

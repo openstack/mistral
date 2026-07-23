@@ -299,6 +299,16 @@ mistralApi:
                     - mistral-api
             topologyKey: kubernetes.io/hostname
           weight: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-api
   securityContext: {}
   priorityClassName: ""
 
@@ -331,6 +341,16 @@ mistralMonitoring:
                     - mistral-monitoring
             topologyKey: kubernetes.io/hostname
           weight: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-monitoring
   recoveryInterval: "30"
   hangInterval: "300"
   recoveryEnabled: "True"
@@ -370,6 +390,16 @@ mistralExecutor:
                     - mistral-executor
             topologyKey: kubernetes.io/hostname
           weight: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-executor
   loggingProxyAdminUrl: ""
   certificateStore: "http://certificate-store:8080"
   retrieverPort: "8777"
@@ -408,6 +438,16 @@ mistralEngine:
                     - mistral-engine
             topologyKey: kubernetes.io/hostname
           weight: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-engine
   securityContext: {}
   priorityClassName: ""
 
@@ -440,6 +480,16 @@ mistralNotifier:
                     - mistral-notifier
             topologyKey: kubernetes.io/hostname
           weight: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-notifier
   securityContext: {}
   priorityClassName: ""
 

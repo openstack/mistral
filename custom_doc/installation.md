@@ -8,10 +8,10 @@ It covers the following:
     * [Installation Process](#installation-process)
     * [Upgrade Mistral Database](#upgrade-mistral-database)
 
-    <!-- #GFCFilterMarkerStart# -->    
+    <!-- #GFCFilterMarkerStart# -->
 
     * [Manual Installation](#manual-installation)
-    
+
     <!-- #GFCFilterMarkerEnd# -->
 
     * [DP Jobs](#dp-jobs)
@@ -26,7 +26,7 @@ It covers the following:
 
 # OpenShift Installation
 
-The following sections provide OpenShift installation information. 
+The following sections provide OpenShift installation information.
 
 For more information about upgrade or install newer version instead of the older one, refer to [Mistral Service Upgrade](service_upgrade_guide.md).
 
@@ -70,7 +70,7 @@ Mistral runs best with 1900 MiB of main memory and 2500 millicores of CPU.
 Because of the Global Interpreter Lock mechanism used in Python, it is unnecessary to specify more than 1 CPU core per Mistral pod. It looks like workflows are still processed in one thread.
 
 ## Installation Process
-    
+
 This section describes the Mistral deployment process.
 
 ![Mistral Deploy Process](/custom_doc/img/mistral-deploy-process.png)
@@ -84,8 +84,8 @@ Create-Update PG and RabbitMQ secret - Remove the existing PostgreSQL and Rabbit
 <!-- #GFCFilterMarkerStart# -->
 [Script](openshift/scripts/create_mistral_secrets.sh)
 <!-- #GFCFilterMarkerEnd# -->
-    
-Update the Mistral Database - An OpenShift job for updating Mistral is deployed. 
+
+Update the Mistral Database - An OpenShift job for updating Mistral is deployed.
 Enter the PostgreSQL user and password. The database then tries to update schemas and tables.
 
 <!-- #GFCFilterMarkerStart# -->
@@ -126,7 +126,7 @@ The first step in deploying Mistral to OpenShift is to upgrade or create the dat
 * Set the database owner to the user.
 * Upgrade the database to the latest version. For more information, refer to the _Official Mistral Documentation_ at [https://github.com/openstack/mistral/tree/master/mistral/db/sqlalchemy/migration/alembic_migrations](https://github.com/openstack/mistral/tree/master/mistral/db/sqlalchemy/migration/alembic_migrations).
 
-<!-- #GFCFilterMarkerStart# -->  
+<!-- #GFCFilterMarkerStart# -->
 
 ## Manual Installation
 
@@ -200,7 +200,7 @@ The Mistral URLs are as follows:
 
 #### Authentication
 
-Authentication details are as follows: 
+Authentication details are as follows:
 
 |Name|Default|Description|
 |---|---|---|
@@ -221,7 +221,7 @@ The OpenShift details are all optional.
 |OPENSHIFT_WORKSPACE|mistral|The OpenShift Project.|
 |OPENSHIFT_LOGIN|admin|The OpenShift user.|
 |OPENSHIFT_PASSWORD| |The OpenShift password.|
-|OPENSHIFT_ACCOUNTSERVICE_TOKEN| |The service account token. If it is present, then the token is used instead of the login/password.|  
+|OPENSHIFT_ACCOUNTSERVICE_TOKEN| |The service account token. If it is present, then the token is used instead of the login/password.|
 
 #### RabbitMQ
 
@@ -231,7 +231,7 @@ The RabbitMQ details are as follows:
 |---|---|---|---|
 |RABBIT_ADMIN_PASSWORD|Yes| |RabbitMQ admin password|
 |RABBIT_ADMIN_USER|No|`guest`|RabbitMQ admin user|
-|RABBIT_HOST|No|`rabbitmq.rabbitmq`|The RabbitMQ URL. Default value may be used if Mistral and RabbitMQ are deployed into one project 
+|RABBIT_HOST|No|`rabbitmq.rabbitmq`|The RabbitMQ URL. Default value may be used if Mistral and RabbitMQ are deployed into one project
 |RABBIT_PORT|No|5672|The RabbitMQ port.|
 |RABBIT_VHOST|No|`mistral_$(OPENSHIFT_WORKSPACE)`|The RabbitMQ vhost. **Important** With multiple Mistral installation on one RabbitMQ all Mistrals must be deployed to different vhosts|
 |RABBIT_USER|No|`mistral_$(OPENSHIFT_WORKSPACE)_rabbit_user`|The RabbitMQ user is be generated if omitted.|
@@ -297,7 +297,7 @@ The Recovery details are as follows:
 |Name|Default|Description|
 |---|---|---|
 |RECOVERY_INTERVAL|30|The recovery job is triggered with this interval.|
-|HANG_INTERVAL|300|Delayed calls are triggered updated with this interval.| 
+|HANG_INTERVAL|300|Delayed calls are triggered updated with this interval.|
 |RECOVERY_ENABLED|True|If set to `True`, then recovery job is enabled.|
 |RPC_IMPLEMENTATION|oslo|
 
@@ -308,7 +308,7 @@ The Requests Python library proxy parameters could be configured as follows:
 |Name|Default|Description|
 |---|---|---|
 |MISTRAL_HTTP_PROXY| |URL of HTTP proxy.|
-|MISTRAL_HTTPS_PROXY| |URL of HTTPS proxy.| 
+|MISTRAL_HTTPS_PROXY| |URL of HTTPS proxy.|
 |MISTRAL_NO_PROXY| |List of URLs with which Requests library does not use proxy at all.|
 
 For more information, refer to the Requests library docs.
@@ -329,6 +329,33 @@ The Pod Affinity details are as follows:
 |---|---|---|
 |TOPOLOGY_KEY|kubernetes.io/hostname|The key for the node label that the system uses to denote a topology domain.|
 |POD_AFFINITY_TERM|preferred|Severity of the anti-affinity. The `required` value allows only one pod to be scheduled in one topology domain. The `preferred` value allows several pods to be scheduled in one topology domain.|
+
+#### Topology Spread Constraints
+
+In addition to pod anti-affinity, each Mistral service (`mistralApi`, `mistralEngine`, `mistralExecutor`, `mistralNotifier`, `mistralMonitoring`) supports `topologySpreadConstraints` for finer-grained, even distribution of replicas across nodes or zones. Unlike anti-affinity, spread constraints actively balance pod counts across a topology domain.
+
+#### Default Configuration Example:
+
+```yaml
+mistralApi:
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchExpressions:
+          - key: name
+            operator: In
+            values:
+              - mistral-api
+```
+
+|Name|Default|Description|
+|---|---|---|
+|maxSkew|1|The maximum allowed difference in the number of matching pods between any two topology domains (e.g. nodes or zones).|
+|topologyKey|kubernetes.io/hostname|The node label key that defines a topology domain. Use `kubernetes.io/hostname` to spread across nodes, or `topology.kubernetes.io/zone` to spread across availability zones.|
+|whenUnsatisfiable|ScheduleAnyway|How to handle a pod that cannot satisfy the constraint. `ScheduleAnyway` treats it as a soft preference; `DoNotSchedule` treats it as a hard requirement and leaves the pod `Pending` if it cannot be satisfied.|
+|labelSelector|—|Identifies which pods are counted toward the spread calculation, typically matching the service's own pod label (e.g. `name: mistral-api`).|
 
 #### Kafka Notifications
 
