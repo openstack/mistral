@@ -1,0 +1,101 @@
+lockfile_version: '1'
+generated_at: '2026-07-27T13:34:06.352920+00:00'
+apm_version: 0.26.0
+dependencies:
+- repo_url: _local/troubleshoot-qubership-mistral
+  name: troubleshoot-qubership-mistral
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/troubleshoot-qubership-mistral.md
+  - .claude/skills/troubleshoot-qubership-mistral
+  - .claude/skills/troubleshoot-qubership-mistral/SKILL.md
+  - .claude/skills/troubleshoot-qubership-mistral/references/troubleshooting.md
+  deployed_file_hashes:
+    .claude/rules/troubleshoot-qubership-mistral.md: sha256:396fea77ed808668f1229589401e679138e94e0b921d89dabfdba8d7c0ecca3d
+    .claude/skills/troubleshoot-qubership-mistral/SKILL.md: sha256:f39408a8f453c73ef8093236832af7be0e56f83aa5b44956dd7bcb85b5233df1
+    .claude/skills/troubleshoot-qubership-mistral/references/troubleshooting.md: sha256:33be64e40a35071c472bf655c6d5733e10db98d428ea8ccaea0f47e66f1f72b0
+  source: local
+  local_path: ./agent-packages/troubleshoot-qubership-mistral/
+  is_dev: true
+- repo_url: netcracker/qubership-ai-packages
+  name: apm-authoring
+  host: github.com
+  resolved_commit: b5c51a1eaa16ac523d94008db6dd5ed5d946ea08
+  version: 1.0.0
+  virtual_path: agent-packages/apm-authoring
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apm-authoring.md
+  - .claude/skills/apm-authoring
+  - .claude/skills/apm-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apm-authoring.md: sha256:5c4185d3d69333a810c01f5e26a8ea46b033e7082a21f1551433d6c97d8a24a2
+    .claude/skills/apm-authoring/SKILL.md: sha256:1832abc93a14884504dc87d97cc0c2825c7e7b4a6786f2daccf1d6ef172bc907
+  content_hash: sha256:1d731d0a26376eda0b82629e6e1cff1b41dfeae13fe8d7e5debb24a1699ea4a8
+  is_dev: true
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apm-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  active_owner: netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  content_hash: sha256:5c4185d3d69333a810c01f5e26a8ea46b033e7082a21f1551433d6c97d8a24a2
+- kind: project-relative
+  target: claude
+  value: .claude/rules/troubleshoot-qubership-mistral.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/troubleshoot-qubership-mistral/
+  active_owner: ./agent-packages/troubleshoot-qubership-mistral/
+  content_hash: sha256:396fea77ed808668f1229589401e679138e94e0b921d89dabfdba8d7c0ecca3d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apm-authoring
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  active_owner: netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apm-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  active_owner: netcracker/qubership-ai-packages/agent-packages/apm-authoring
+  content_hash: sha256:1832abc93a14884504dc87d97cc0c2825c7e7b4a6786f2daccf1d6ef172bc907
+- kind: project-relative
+  target: claude
+  value: .claude/skills/troubleshoot-qubership-mistral
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/troubleshoot-qubership-mistral/
+  active_owner: ./agent-packages/troubleshoot-qubership-mistral/
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/troubleshoot-qubership-mistral/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/troubleshoot-qubership-mistral/
+  active_owner: ./agent-packages/troubleshoot-qubership-mistral/
+  content_hash: sha256:f39408a8f453c73ef8093236832af7be0e56f83aa5b44956dd7bcb85b5233df1
+- kind: project-relative
+  target: claude
+  value: .claude/skills/troubleshoot-qubership-mistral/references/troubleshooting.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/troubleshoot-qubership-mistral/
+  active_owner: ./agent-packages/troubleshoot-qubership-mistral/
+  content_hash: sha256:33be64e40a35071c472bf655c6d5733e10db98d428ea8ccaea0f47e66f1f72b0

@@ -63,3 +63,7 @@ doc/source/_static/
 
 # Files created by API build
 api-ref/build/
+
+
+# APM dependencies
+apm_modules/
