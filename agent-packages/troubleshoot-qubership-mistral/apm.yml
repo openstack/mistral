@@ -1,0 +1,4 @@
+name: troubleshoot-qubership-mistral
+version: 1.0.0
+description: Failure-mode catalogue and diagnostic steps for troubleshooting Qubership Mistral deployments.
+author: Netcracker
