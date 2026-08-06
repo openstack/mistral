@@ -592,3 +592,15 @@ Helm version for helm chart
     {{- .Values.GatewayAPI.gatewayNamespace -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Gateway system type: comma-separated list of "legacy-ingress" and/or "gateway-api-default".
+Check if a mode is enabled with e.g. `contains "gateway-api-default" (include "mistral.gatewaySystemType" .)`.
+*/}}
+{{- define "mistral.gatewaySystemType" -}}
+  {{- if and (ne (.Values.GATEWAY_SYSTEM_TYPE | toString) "<nil>") .Values.mistral.cloudIntegrationEnabled -}}
+    {{- .Values.GATEWAY_SYSTEM_TYPE -}}
+  {{- else -}}
+    {{- .Values.GatewayAPI.type | toString -}}
+  {{- end -}}
+{{- end -}}
