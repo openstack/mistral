@@ -4505,6 +4505,21 @@
                 "value": 10
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ef843c"
+                }
+              }
+            ]
           }
         ]
       },
@@ -4617,6 +4632,19 @@
           "legendFormat": "limit: {{pod}}",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (pod) (\n  kube_pod_container_resource_requests_cpu_cores{\n    namespace=\"$mistral_namespace\",\n    container=\"mistral-engine\"\n  }\n)\n",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "request: {{pod}}",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Mistral Engine CPU Usage",
@@ -4709,6 +4737,21 @@
                 "value": 10
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ef843c"
+                }
+              }
+            ]
           }
         ]
       },
@@ -4766,7 +4809,7 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{pod}}",
+          "legendFormat": "usage: {{pod}}",
           "measurement": "cpu/usage_rate",
           "orderByTime": "ASC",
           "policy": "default",
@@ -4887,7 +4930,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "",
+          "expr": "sum by (pod) (\n  kube_pod_container_resource_requests_cpu_cores{\n    namespace=\"$mistral_namespace\",\n    container=\"mistral-api\"\n  }\n)\n",
           "format": "time_series",
           "groupBy": [
             {
@@ -4950,7 +4993,10 @@
               "operator": "=~",
               "value": "/^mistral-api/"
             }
-          ]
+          ],
+          "legendFormat": "request: {{pod}}",
+          "editorMode": "code",
+          "range": true
         }
       ],
       "title": "Mistral API CPU Usage",
@@ -5043,6 +5089,21 @@
                 "value": 10
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ef843c"
+                }
+              }
+            ]
           }
         ]
       },
@@ -5100,7 +5161,7 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{pod}}",
+          "legendFormat": "usage: {{pod}}",
           "measurement": "cpu/usage_rate",
           "orderByTime": "ASC",
           "policy": "default",
@@ -5221,7 +5282,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "",
+          "expr": "sum by (pod) (\n  kube_pod_container_resource_requests_cpu_cores{\n    namespace=\"$mistral_namespace\",\n    container=\"mistral-executor\"\n  }\n)\n",
           "format": "time_series",
           "groupBy": [
             {
@@ -5284,7 +5345,10 @@
               "operator": "=~",
               "value": "/^mistral-executor/"
             }
-          ]
+          ],
+          "legendFormat": "request: {{pod}}",
+          "editorMode": "code",
+          "range": true
         }
       ],
       "title": "Mistral Executor CPU Usage",
@@ -5375,6 +5439,21 @@
                 "value": 10
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ef843c"
+                }
+              }
+            ]
           }
         ]
       },
@@ -5432,7 +5511,7 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{pod}}",
+          "legendFormat": "usage: {{pod}}",
           "measurement": "cpu/usage_rate",
           "orderByTime": "ASC",
           "policy": "default",
@@ -5553,7 +5632,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "",
+          "expr": "sum by (pod) (\n  kube_pod_container_resource_requests_cpu_cores{\n    namespace=\"$mistral_namespace\",\n    container=\"mistral-notifier\"\n  }\n)\n",
           "format": "time_series",
           "groupBy": [
             {
@@ -5616,7 +5695,10 @@
               "operator": "=~",
               "value": "/^mistral-notifier/"
             }
-          ]
+          ],
+          "legendFormat": "request: {{pod}}",
+          "editorMode": "code",
+          "range": true
         }
       ],
       "title": "Mistral Notifier CPU Usage",
@@ -5707,6 +5789,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#ef843c"
+                }
+              }
+            ]
           }
         ]
       },
@@ -5763,7 +5860,7 @@
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{pod}}",
+          "legendFormat": "usage: {{pod}}",
           "measurement": "cpu/usage_rate",
           "orderByTime": "ASC",
           "policy": "default",
@@ -5883,7 +5980,7 @@
           "datasource": {
             "uid": "$datasource"
           },
-          "expr": "",
+          "expr": "sum by (pod) (\n  kube_pod_container_resource_requests_cpu_cores{\n    namespace=\"$mistral_namespace\",\n    container=\"mistral-monitoring\"\n  }\n)\n",
           "format": "time_series",
           "groupBy": [
             {
@@ -5946,7 +6043,10 @@
               "operator": "=~",
               "value": "/^mistral-monitoring/"
             }
-          ]
+          ],
+          "legendFormat": "request: {{pod}}",
+          "editorMode": "code",
+          "range": true
         }
       ],
       "title": "Mistral Monitoring CPU Usage",
