@@ -890,6 +890,11 @@
                 "type": "string",
                 "description": "Optional manual Gateway namespace override.",
                 "default": "gateway-system"
+            },
+            "type": {
+                "type": "string",
+                "default": "legacy-ingress",
+                "description": "Select network mode: legacy-ingress, gateway-api-default, or both (comma-separated). Overridden by cloud passport parameter GATEWAY_SYSTEM_TYPE when mistral.cloudIntegrationEnabled is true."
             }
         }
     },

@@ -717,6 +717,7 @@ The Integration Tests parameters are as follows:
 ## Gateway API Parameters
 | GatewayAPI.gatewayName | Name of the Gateway | default-external-gateway |
 | GatewayAPI.gatewayNamespace | Namespace of the Gateway | gateway-system |
+| GatewayAPI.type | Network mode(s) to deploy: legacy-ingress, gateway-api-default, or both (comma-separated). Overridable via GATEWAY_SYSTEM_TYPE. | legacy-ingress |
 
 # Installation
 

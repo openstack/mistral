@@ -549,3 +549,6 @@ secrets:
 GatewayAPI:
   gatewayName: "default-external-gateway"
   gatewayNamespace: "gateway-system"
+  # Select network mode: legacy-ingress, gateway-api-default, or both (comma-separated).
+  # Overridden by cloud passport parameter GATEWAY_SYSTEM_TYPE when mistral.cloudIntegrationEnabled is true.
+  type: "legacy-ingress"

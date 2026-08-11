@@ -1,7 +1,7 @@
 {{- $mistralEnabled := .Values.mistral.ingress.enabled -}}
 {{- $isK8s := eq (.Values.PAAS_PLATFORM | default "KUBERNETES") "KUBERNETES" -}}
 {{- $tlsRequired :=  .Values.mistral.tls.enabled -}}
-{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" ) (not $tlsRequired) -}}
+{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" ) (not $tlsRequired) (contains "gateway-api-default" (include "mistral.gatewaySystemType" .)) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -32,7 +32,7 @@ spec:
           weight: 1
 {{- end }}
 ---
-{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") ($tlsRequired) -}}
+{{- if and $mistralEnabled ($isK8s) (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") ($tlsRequired) (contains "gateway-api-default" (include "mistral.gatewaySystemType" .)) -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

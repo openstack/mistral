@@ -1,4 +1,4 @@
-{{- if .Values.mistral.ingress.enabled }}
+{{- if and .Values.mistral.ingress.enabled (contains "legacy-ingress" (include "mistral.gatewaySystemType" .)) }}
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
@@ -7,7 +7,9 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: HTTPS
     nginx.ingress.kubernetes.io/ssl-passthrough: 'true'
     {{- end }}
+    {{- if contains "gateway-api-default" (include "mistral.gatewaySystemType" .) }}
     gateway-api-converter.netcracker.com/ignore: "true"
+    {{- end }}
   name: mistral
   labels:
     app: mistral
