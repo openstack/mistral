@@ -603,6 +603,9 @@ Check if a mode is enabled with e.g. `contains "gateway-api-default" (include "m
   {{- else -}}
     {{- .Values.GatewayAPI.type | toString -}}
   {{- end -}}
+{{- end -}}
+
+{{/*
 Ingress classification labels, expected on both Ingress and HTTPRoute resources for this endpoint.
 */}}
 {{- define "mistral.ingressLabels" -}}
