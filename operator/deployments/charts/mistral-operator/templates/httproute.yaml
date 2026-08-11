@@ -8,6 +8,7 @@ metadata:
   name: mistral
   labels:
     app: mistral
+    {{- include "mistral.ingressLabels" . | nindent 4 }}
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -38,6 +39,7 @@ metadata:
   name: mistral-redirect
   labels:
     app: mistral
+    {{- include "mistral.ingressLabels" . | nindent 4 }}
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

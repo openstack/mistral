@@ -592,3 +592,11 @@ Helm version for helm chart
     {{- .Values.GatewayAPI.gatewayNamespace -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Ingress classification labels, expected on both Ingress and HTTPRoute resources for this endpoint.
+*/}}
+{{- define "mistral.ingressLabels" -}}
+deployment.netcracker.com/ingress-type: 'private-network'
+deployment.netcracker.com/ingress-audience-type: 'ops-user'
+{{- end -}}
