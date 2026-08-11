@@ -13,6 +13,7 @@ metadata:
   name: mistral
   labels:
     app: mistral
+    {{- include "mistral.ingressLabels" . | nindent 4 }}
 spec:
   {{- if (eq (include "mistral.enableTls" .) "true") }}
   tls:
