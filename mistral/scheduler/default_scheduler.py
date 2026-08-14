@@ -55,9 +55,11 @@ class DefaultScheduler(base.Scheduler):
         self._random_delay = conf.random_delay
         self._batch_size = conf.batch_size
 
-        # Dictionary containing {GreenThread: ScheduledJob} pairs that
-        # represent in-memory jobs.
+        # Dictionary containing {Timer: ScheduledJob} pairs that represent
+        # in-memory jobs. It is accessed both from the scheduling thread and
+        # from the timer threads, so it must be guarded by a lock.
         self.in_memory_jobs = {}
+        self._jobs_lock = threading.Lock()
 
         self._job_store_checker_thread = threading.Thread(
             target=self._job_store_checker
@@ -125,7 +127,10 @@ class DefaultScheduler(base.Scheduler):
 
     def has_scheduled_jobs(self, **filters):
         # Checking in-memory jobs first.
-        for j in self.in_memory_jobs.values():
+        with self._jobs_lock:
+            in_memory_jobs = list(self.in_memory_jobs.values())
+
+        for j in in_memory_jobs:
             if filters and 'key' in filters and filters['key'] != j.key:
                 continue
 
@@ -190,32 +195,36 @@ class DefaultScheduler(base.Scheduler):
     def _schedule_in_memory(self, run_after, scheduled_job):
         timer = threading.Timer(run_after, self._process_memory_job,
                                 args=(scheduled_job,))
+
+        # Register the job before starting the timer so that a timer with a
+        # near-zero delay can't fire and try to clean up before it's tracked.
+        with self._jobs_lock:
+            self.in_memory_jobs[timer] = scheduled_job
+
         timer.start()
-        self.in_memory_jobs[timer] = scheduled_job
 
     def _process_memory_job(self, scheduled_job):
-        # 1. Capture the job in Job Store.
-        if not self._capture_scheduled_job(scheduled_job):
-            LOG.warning(
-                "Unable to capture a scheduled job [scheduled_job=%s]",
-                scheduled_job
-            )
+        try:
+            # Capture the job in the Job Store.
+            if not self._capture_scheduled_job(scheduled_job):
+                LOG.warning(
+                    "Unable to capture a scheduled job [scheduled_job=%s]",
+                    scheduled_job
+                )
 
-            return
+                return
 
-        # 2. Invoke the target function.
-        auth_ctx, func, func_args = self._prepare_job(scheduled_job)
+            # Invoke the target function.
+            auth_ctx, func, func_args = self._prepare_job(scheduled_job)
 
-        self._invoke_job(auth_ctx, func, func_args)
+            self._invoke_job(auth_ctx, func, func_args)
 
-        self._delete_scheduled_job(scheduled_job)
-
-        # 3. Delete the job from Job Store, if success.
-        # TODO(rakhmerov):
-        # 3.1 What do we do if invocation wasn't successful?
-
-        # Delete from a local collection of in-memory jobs.
-        del self.in_memory_jobs[threading.current_thread()]
+            self._delete_scheduled_job(scheduled_job)
+        finally:
+            # Always forget the in-memory job, even if it couldn't be
+            # captured, so that the collection doesn't grow indefinitely.
+            with self._jobs_lock:
+                self.in_memory_jobs.pop(threading.current_thread(), None)
 
     @staticmethod
     def _capture_scheduled_job(scheduled_job):

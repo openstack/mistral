@@ -140,6 +140,24 @@ class DefaultSchedulerTest(base.DbTestCase):
         # After the job is processed the persistent object must be deleted.
         self._await(lambda: not db_api.get_scheduled_jobs())
 
+    def test_in_memory_job_removed_when_capture_fails(self):
+        # If a job can't be captured (e.g. another scheduler grabbed it first)
+        # the in-memory collection must still be cleaned up.
+        with mock.patch.object(self.scheduler, '_capture_scheduled_job',
+                               return_value=False):
+            job = scheduler_base.SchedulerJob(
+                run_after=0,
+                func_name=TARGET_METHOD_PATH,
+                func_args={'name': 'task', 'id': '321'}
+            )
+
+            self.scheduler.schedule(job)
+
+            self._await(lambda: not self.scheduler.in_memory_jobs)
+
+        # The job wasn't captured, so it stays in the persistent store.
+        self.assertEqual(1, len(db_api.get_scheduled_jobs()))
+
     @mock.patch(TARGET_METHOD_PATH)
     def test_pickup_from_job_store(self, method):
         # Delegate from the module function to the method of the test class.
