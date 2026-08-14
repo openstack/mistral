@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from concurrent import futures
 import copy
 import datetime
+import heapq
 import random
 import threading
 import time
@@ -55,11 +57,25 @@ class DefaultScheduler(base.Scheduler):
         self._random_delay = conf.random_delay
         self._batch_size = conf.batch_size
 
-        # Dictionary containing {Timer: ScheduledJob} pairs that represent
-        # in-memory jobs. It is accessed both from the scheduling thread and
-        # from the timer threads, so it must be guarded by a lock.
+        # In-memory jobs waiting for local execution. "_heap" orders them by
+        # execution time for the dispatcher; "in_memory_jobs" maps a job id to
+        # the job so that has_scheduled_jobs() can answer without hitting the
+        # DB. Both are guarded by "_cond", which the dispatcher also waits on
+        # so that it wakes up when a job is added or the scheduler is stopped.
+        self._cond = threading.Condition()
+        self._heap = []
         self.in_memory_jobs = {}
-        self._jobs_lock = threading.Lock()
+        self._seq = 0
+
+        # A single pool runs the jobs whose execution time has come. Pending
+        # jobs only live in the heap, so the number of threads no longer grows
+        # with the number of scheduled jobs.
+        self._executor = futures.ThreadPoolExecutor(
+            max_workers=conf.in_memory_workers
+        )
+
+        self._dispatcher_thread = threading.Thread(target=self._dispatcher)
+        self._dispatcher_thread.daemon = True
 
         self._job_store_checker_thread = threading.Thread(
             target=self._job_store_checker
@@ -71,23 +87,50 @@ class DefaultScheduler(base.Scheduler):
     def start(self):
         self._stopped = False
 
+        self._dispatcher_thread.start()
         self._job_store_checker_thread.start()
 
     def stop(self, graceful=False):
-        self._stopped = True
+        # Drop pending jobs and wake the dispatcher. The jobs stay in the
+        # persistent store and are picked up again by the job store checker
+        # after a restart, so nothing is lost.
+        with self._cond:
+            self._stopped = True
+            self._heap = []
+            self.in_memory_jobs = {}
+            self._cond.notify_all()
 
-        # Cancel pending in-memory timers. The jobs stay in the persistent
-        # store and are picked up again by the job store checker after a
-        # restart, so nothing is lost.
-        with self._jobs_lock:
-            timers = list(self.in_memory_jobs)
-            self.in_memory_jobs.clear()
-
-        for timer in timers:
-            timer.cancel()
+        self._executor.shutdown(wait=graceful)
 
         if graceful:
+            self._dispatcher_thread.join()
             self._job_store_checker_thread.join()
+
+    def _dispatcher(self):
+        while not self._stopped:
+            with self._cond:
+                if self._stopped:
+                    return
+
+                if not self._heap:
+                    self._cond.wait()
+
+                    continue
+
+                execute_at = self._heap[0][0]
+
+                delay = (execute_at - utils.utc_now_sec()).total_seconds()
+
+                if delay > 0:
+                    self._cond.wait(timeout=delay)
+
+                    continue
+
+                _, _, scheduled_job = heapq.heappop(self._heap)
+
+                # Submitting under the lock guarantees we never submit after
+                # stop() has shut the executor down.
+                self._executor.submit(self._process_memory_job, scheduled_job)
 
     def _job_store_checker(self):
         while not self._stopped:
@@ -133,11 +176,11 @@ class DefaultScheduler(base.Scheduler):
     def schedule(self, job, allow_redistribute=False):
         scheduled_job = self._persist_job(job)
 
-        self._schedule_in_memory(job.run_after, scheduled_job)
+        self._schedule_in_memory(scheduled_job)
 
     def has_scheduled_jobs(self, **filters):
         # Checking in-memory jobs first.
-        with self._jobs_lock:
+        with self._cond:
             in_memory_jobs = list(self.in_memory_jobs.values())
 
         for j in in_memory_jobs:
@@ -202,20 +245,21 @@ class DefaultScheduler(base.Scheduler):
 
         return db_api.create_scheduled_job(values)
 
-    def _schedule_in_memory(self, run_after, scheduled_job):
-        timer = threading.Timer(run_after, self._process_memory_job,
-                                args=(scheduled_job,))
+    def _schedule_in_memory(self, scheduled_job):
+        with self._cond:
+            # The sequence number keeps the heap entries orderable when two
+            # jobs share the same execution time (it also avoids comparing the
+            # job objects themselves).
+            self._seq += 1
 
-        # A pending timer must not keep the process alive on shutdown; the job
-        # is persisted and gets picked up from the job store after a restart.
-        timer.daemon = True
+            heapq.heappush(
+                self._heap,
+                (scheduled_job.execute_at, self._seq, scheduled_job)
+            )
 
-        # Register the job before starting the timer so that a timer with a
-        # near-zero delay can't fire and try to clean up before it's tracked.
-        with self._jobs_lock:
-            self.in_memory_jobs[timer] = scheduled_job
+            self.in_memory_jobs[scheduled_job.id] = scheduled_job
 
-        timer.start()
+            self._cond.notify()
 
     def _process_memory_job(self, scheduled_job):
         try:
@@ -237,8 +281,8 @@ class DefaultScheduler(base.Scheduler):
         finally:
             # Always forget the in-memory job, even if it couldn't be
             # captured, so that the collection doesn't grow indefinitely.
-            with self._jobs_lock:
-                self.in_memory_jobs.pop(threading.current_thread(), None)
+            with self._cond:
+                self.in_memory_jobs.pop(scheduled_job.id, None)
 
     @staticmethod
     def _capture_scheduled_job(scheduled_job):
