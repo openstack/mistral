@@ -277,6 +277,10 @@ class DefaultScheduler(base.Scheduler):
 
             self._invoke_job(auth_ctx, func, func_args)
 
+            # A failed invocation is logged inside _invoke_job but not
+            # re-raised: the scheduler runs a job once and does not retry it.
+            # Re-execution, when needed, is driven by higher-level policies
+            # (e.g. retry), so the job is removed from the store either way.
             self._delete_scheduled_job(scheduled_job)
         finally:
             # Always forget the in-memory job, even if it couldn't be
