@@ -32,13 +32,10 @@ class Scheduler(object, metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def schedule(self, job, allow_redistribute=False):
+    def schedule(self, job):
         """Schedules a delayed call to be invoked at some point in future.
 
         :param job: Scheduler Job. An instance of :class:`SchedulerJob`.
-        :param allow_redistribute: If True then the method is allowed to
-            reroute the call to other Scheduler instances available in the
-            cluster.
         """
         raise NotImplementedError
 

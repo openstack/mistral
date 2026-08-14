@@ -1,0 +1,27 @@
+---
+upgrade:
+  - |
+    A migration adds indexes to the ``scheduled_jobs_v2`` table, used by the
+    ``default`` scheduler, on ``(execute_at, captured_at)`` and on ``key``.
+    Run ``mistral-db-manage upgrade head`` when upgrading.
+  - |
+    A new ``[scheduler] in_memory_workers`` option (default ``10``) sets the
+    size of the thread pool the ``default`` scheduler uses to run jobs whose
+    execution time has come.
+fixes:
+  - |
+    The ``default`` scheduler no longer keeps one thread per pending job.
+    Pending jobs are held in a single in-memory queue and run by a bounded
+    thread pool, so a large number of scheduled jobs (for instance long
+    ``wait-before`` delays) no longer results in a matching number of
+    threads.
+  - |
+    The ``default`` scheduler's in-memory job collection is now guarded by a
+    lock and always cleaned up, and pending jobs are cancelled on shutdown so
+    they can no longer keep the engine process alive.
+other:
+  - |
+    A scheduled job is run once by the ``default`` scheduler; a failure is
+    logged but not retried by the scheduler itself. If the owning engine
+    crashes, another engine re-runs the job from the job store after
+    ``[scheduler] pickup_job_after`` seconds.
