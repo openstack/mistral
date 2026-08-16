@@ -1,0 +1,37 @@
+name: Sync Troubleshooting Skill
+run-name: "Sync troubleshooting skill #${{ github.run_number }} — triggered by ${{ github.actor }} (${{ github.event_name }})"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      auto-merge:
+        description: "Automatically enable auto-merge for the created pull request"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Sync troubleshooting doc into skill
+        uses: netcracker/qubership-workflow-hub/actions/sync-files-action@27fd7674286e5f561a6fd8277f2f389ff96ddb9e  # v2.6.0
+        with:
+          files: |
+            [
+              { "from": "custom_doc/troubleshooting.md", "to": "agent-packages/troubleshoot-qubership-mistral/.apm/skills/troubleshoot-qubership-mistral/references/troubleshooting.md" }
+            ]
+          title: "chore: sync troubleshooting skill reference"
+          commit-message: "chore: sync troubleshooting skill reference"
+          auto-merge: ${{ inputs.auto-merge || 'true' }}
+          token: ${{ secrets.GITHUB_TOKEN }}
