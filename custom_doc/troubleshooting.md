@@ -1,5 +1,12 @@
-Topics covered in this section are as follows:
+# Troubleshooting guide
 
+## Table of Contents
+
+* [Mistral tasks stuck in processing](#mistral-tasks-stuck-in-processing)
+* [Deployment of Mistral is Failing (`mistral-update-db` Job Failure)](#deployment-of-mistral-is-failing-mistral-update-db-job-failure)
+* [Tasks Failing with Heartbeat error](#tasks-failing-with-heartbeat-error)
+* [DNS Resolution Failures in Composite-Namespace Deployments](#dns-resolution-failures-in-composite-namespace-deployments)
+* [Executions Fail with "Failed to find workflow" Error](#executions-fail-with-failed-to-find-workflow-error)
 * [Mistral Workflow has Error Status](#mistral-workflow-has-error-status)
 * [Mistral API is Not Responding](#mistral-api-is-not-responding)
 * [Execution of Workflow is Stuck](#execution-of-workflow-is-stuck)
@@ -9,8 +16,44 @@ Topics covered in this section are as follows:
 * [RabbitMQ Collects a Lot of Messages](#rabbitmq-collects-a-lot-of-messages)
 * [Mistral Cannot Deploy Because of Active Connections to DB](#mistral-cannot-deploy-because-of-active-connections-to-db)
 * [How to Clean Mistral Database](#how-to-clean-mistral-database)
+* [Monitoring Alarms Description](#monitoring-alarms-description)
 
-# Mistral Workflow has Error Status
+
+## Mistral tasks stuck in processing
+
+1. Navigate through the Mistral Engine and Executor deployment config to the **Logs** tab or Graylog.
+2. If the **Engine** is successfully dispatching new actions, but the **Executor** repeatedly reports the same set of previous running actions and fails to pick up new ones, the mistral-executor has likely reached its capacity limit (often occurring when running on a single replica).
+3. To solve this problem, restart the `mistral-executor` pod/service to clear the wedge and allow it to accept new actions. Manually move the leftover stuck executions to a terminal state. Consider, scaling up the mistral-executor replicas to handle higher workloads and prevent capacity overload in the future.
+
+## Deployment of Mistral is Failing (`mistral-update-db` Job Failure)
+
+1. If the `mistral-update-db` job fails with `psycopg2.errors.DuplicateTable` (e.g., `relation "workbooks_v2" already exists`), the `alembic_version` table/pointer in PostgreSQL is missing or empty. Because Alembic lacks a version tracking record, it attempts to run migrations from scratch (`001`), failing because tables already exist.
+2. To solve this problem, stamp the Alembic database revision to **044** by running `mistral-db-manage --config-file <path-to-mistral.conf> stamp 044` inside a running `mistral-api` pod and redeploy. Alternatively, if preserving data is not required, drop the corrupted Mistral database (`DROP DATABASE <mistral_db_name>;`) on the PostgreSQL node and perform a rolling redeployment to re-initialize it cleanly.
+
+> **Note:** Stamping or re-initializing the database addresses the migration failure, but not the underlying cause. Review PostgreSQL server logs and previous deployment jobs to determine why the `alembic_version` was corrupted.
+
+## Tasks Failing with Heartbeat error
+
+1. If the **Mistral logs** and **PostgreSQL logs** reflect errors like `FATAL: terminating connection due to idle-in-transaction timeout`(PG logs) followed by `Heartbeat wasn't received.`(Mistral logs) it could be due to workflow task concatenating or appending large object payloads into workflow variables across iterations (e.g., `<% $.collection + task()['result']['content'] %>`), the serialized state payload becomes massive. Writing too many characters to the DB causes the transaction to exceed PostgreSQL's `idle_in_transaction_session_timeout` (~30-40s), triggering transaction rollbacks and missing heartbeats.
+3. To solve this problem, optimize the workflow task definition:
+   * **Remove Unused Variables:** Remove unnecessary published payload collections from the `publish` block if they are not referenced downstream.
+   * **Trim Payload Attributes:** Filter and publish only essential keys instead of full nested JSON objects.
+   * **Reduce Batch Sizes:** Decrease iteration page/batch limits (e.g., `limit = 600`) to reduce payload overhead per transaction.
+
+## DNS Resolution Failures in Composite-Namespace Deployments
+
+1. If the **Mistral logs** show connection errors such as `Failed to resolve '<service-name>' ([Errno -2] Name or service not known)` and if Mistral is deployed in a composite/split-namespace mode (e.g., `<env>-mistral`) separate from target OSS services (e.g., `<env>-oss`), bare hostnames (such as `mediator-coordinator` or `certificate-store`) cannot be resolved across namespace boundaries by Kubernetes DNS.
+3. To solve this problem, ensure that target service configurations (in CMDB)  use Fully Qualified Domain Names (FQDN) in the format `<service-name>.<oss-namespace>.svc.cluster.local` to allow cross-namespace communication.
+
+> **Note:** As a permanent solution for cross-namespace service communication, configuring Gateway and Mesh Custom Resources (CRs) on the `custom-mistral-actions` side is recommended, as it manages and wraps the required OSS actions.
+
+## Executions Fail with "Failed to find workflow" Error
+
+1. If the **Mistral logs** or executions outputs show errors such as `Failed to find workflow [name=<sub_workflow_name>] [namespace=<namespace_name>]`,
+the error could be due to a **Realm / Tenant mismatch**. By default Mistral assigns the `project_id` based on the Keycloak realm name in the bearer token (Unless project rules are overridden). If the parent workflow was uploaded using a token from one realm but triggered or evaluated using a token from a different realm, Mistral isolates the workflow definitions and cannot locate the workflow under the current token context.
+3. To solve this problem, ensure that the token being used to trigger executions resolves to the same `project_id` as the `project_id` workflows were created with.
+
+## Mistral Workflow has Error Status
 
 If the Mistral workflow has the "error" status, you can find the _output_ or _state_info_ in a Mistral entity as follows:
 
@@ -18,7 +61,7 @@ If the Mistral workflow has the "error" status, you can find the _output_ or _st
 * Task: ```http://_mistral_url_/v2/executions/_execution_id_/tasks```
 * Action: ```http://_mistral_url_/v2/action_executions/_action_id_```
 
-# Mistral API is Not Responding
+## Mistral API is Not Responding
 
 If the Mistral API service is not responding, or the response takes a long time, it is due to a lack of resources.
 
@@ -37,7 +80,7 @@ The following table shows the approximate memory overhead numbers for **/v2/work
 |7000|70|
 |10000|100|
 
-# Execution of Workflow is Stuck
+## Execution of Workflow is Stuck
 
 To address this problem, perform the following steps:
 
@@ -45,20 +88,20 @@ To address this problem, perform the following steps:
 1. If there is a line "Killed by" in logs, you need to increase the main memory.
 1. If any Mistral pod was recently redeployed, it could be the cause.
 
-# Mistral Service was not Deployed
+## Mistral Service was not Deployed
 
 To address this problem, perform the following steps:
 
 1. Navigate through the Mistral service deployment config to the **Logs** tab or Graylog.
 1. If there is a problem with the PostgreSQL and RabbitMQ connection, check these services.
 
-# Request on Execution Creation is Stuck
+## Request on Execution Creation is Stuck
 
-## Problem
+### Problem
 
 The HTTP request when creating an execution or action is stuck or failed by timeout.
 
-## Solution
+### Solution
 
 Check a Mistral RabbitMQ host.
 
@@ -88,9 +131,9 @@ $ mistral run-action std.noop
 {"result": null}
 ```
 
-# Different IDP Tenants
+## Different IDP Tenants
 
-## Problem
+### Problem
 
 You can observe the following problems:
 
@@ -98,7 +141,7 @@ You can observe the following problems:
 * The message `ERROR oslo_messaging.rpc.server DBEntityNotFoundError: Workflow not found [workflow_identifier=
 some_workflow, namespace=]` appears in the logs during an execution creation.
 
-## Solution
+### Solution
 
 First of all, you must make sure that the problematic entities are actually present in the databases table.
 
@@ -137,21 +180,21 @@ If `project_id` differs from `tenant-id`, then there are two possible situations
 * The Mistral entity was created using one `tenant-id`, but you get the entity using another `tenant-id`.
 * The Mistral entity was created when Mistral security turned off, and you try to get the entity after security is turned on.
 
-When Mistral security is switched on using the `AUTH_ENABLE=True` parameter, Mistral enables multitenancy. It is the reason 
+When Mistral security is switched on using the `AUTH_ENABLE=True` parameter, Mistral enables multitenancy. It is the reason
 why you cannot access the specific Mistral entities using the different tenants.
 
-# RabbitMQ Collects a Lot of Messages
+## RabbitMQ Collects a Lot of Messages
 
-## Problem
+### Problem
 
 If some Mistral service is down, RabbitMQ collects messages for this service until it is up again.
 This huge message flow could kill the Mistral service because of resources limits.
 
-## Solution
+### Solution
 
 To solve this problem, you can either clear this message queue, or limit the message count that the Mistral service can handle at one time.
 
-### Clearing RabbitMQ Queue
+#### Clearing RabbitMQ Queue
 
 The following steps should be done in the RabbitMQ pod:
 
@@ -162,7 +205,7 @@ You can check this on the RabbitMQ's user interface in the **Channels** tab:
 ![Channels List](/custom_doc/img/rabbitmq_channels.png)
 
 * If you have some, you need to close the connection associated with this channel, so all unacked messages will be returned to the queue.
-* Check the name of the channel with these unacked messages through RabbitMQ's user interface:  
+* Check the name of the channel with these unacked messages through RabbitMQ's user interface:
 
 ![Channel](/custom_doc/img/rabbitmq_channel.png)
 
@@ -176,7 +219,7 @@ You can check this on the RabbitMQ's user interface in the **Channels** tab:
 
 Second, remove all the messages from your queues with lots of messages:
 
-* Check the name of the queue that collects a lot of messages in RabbitMQ's UI in the **Queues** tab:  
+* Check the name of the queue that collects a lot of messages in RabbitMQ's UI in the **Queues** tab:
 
 ![Queues List](/custom_doc/img/rabbitmq_queues.png)
 
@@ -188,25 +231,25 @@ Second, remove all the messages from your queues with lots of messages:
 
 ![After Purge](/custom_doc/img/rabbitmq_after_purge.png)
 
-### Limit Message Count
+#### Limit Message Count
 
-To limit the message count Mistral can handle at one time, you need to deploy the Mistral service with this custom-config:  
+To limit the message count Mistral can handle at one time, you need to deploy the Mistral service with this custom-config:
 
 ```
 [oslo_messaging_rabbit]
 rabbit_qos_prefetch_count = 20
 ```
 
-There is no common way to choose the correct value of this parameter, but you should keep in mind your resource limitations, 
+There is no common way to choose the correct value of this parameter, but you should keep in mind your resource limitations,
 message size, message count, and current load to your service.
 
-# Mistral Cannot Deploy Because of Active Connections to DB
+## Mistral Cannot Deploy Because of Active Connections to DB
 
-## Problem
+### Problem
 
 If someone else is using Mistral's database while you are deploying it with the `clean` flag, this deploy will fail.
 
-## Solution
+### Solution
 
 In this case, you can view the active connections in the deploy logs.
 
@@ -223,18 +266,18 @@ In this case, you can view the active connections in the deploy logs.
 
 To resolve the problem, perfrom the following steps:
 
-1. Check who is connected to the database right now. 
+1. Check who is connected to the database right now.
 2. Make sure that you still want to clean this database.
-3. To prevent the reconnects after dropping them down, use:   
+3. To prevent the reconnects after dropping them down, use:
 `UPDATE pg_database SET datallowconn = false WHERE datname = 'DB_NAME';`
-4. To drop these connections, use:   
+4. To drop these connections, use:
 `SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'DB_NAME' AND pid <> pg_backend_pid();`
 
-# How to Clean Mistral Database
+## How to Clean Mistral Database
 
 The below seb-sections provide infromation on how you can clean the mistral database.
 
-## Full Cleanup
+### Full Cleanup
 
 To perform the full cleanup, use the following SQL commands:
 ```
@@ -245,7 +288,7 @@ DELETE FROM action_executions_v2;
 DELETE FROM delayed_calls_v2;
 ```
 
-## Partial Cleanup
+### Partial Cleanup
 
 Sometimes, it is required to delete only old entities. To perform it, use the following command:
 
@@ -253,7 +296,7 @@ Sometimes, it is required to delete only old entities. To perform it, use the fo
 DELETE FROM workflow_executions_v2 WHERE updated_at<'2022-05-31 11:19:25';
 ```
 
-## Trigger Postgres To Clean Disk Space
+### Trigger Postgres To Clean Disk Space
 
 To ensure that the disc space was cleaned immidiately, you can trigger VACUUM command:
 
@@ -263,7 +306,7 @@ VACUUM FULL task_executions_v2;
 VACUUM FULL workflow_executions_v2;
 ```
 
-# Monitoring Alarms Description
+## Monitoring Alarms Description
 
 This section describes the different monitoring alarms in detail.
 
