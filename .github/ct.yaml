@@ -1,0 +1,4 @@
+chart-dirs:
+  - operator/deployments/charts
+validate-maintainers: false
+check-version-increment: false
