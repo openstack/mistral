@@ -1,6 +1,6 @@
 ---
-paths:
-  - "**/{apm.yml,SKILL.md,*.instructions.md,*.prompt.md,*.agent.md,CLAUDE.md,AGENTS.md}"
+description: Conventions for authoring APM packages — instructions, skills, prompts, agents, hooks, and `apm.yml`.
+applyTo: "**/{apm.yml,SKILL.md,*.instructions.md,*.prompt.md,*.agent.md,CLAUDE.md,AGENTS.md}"
 ---
 
 When editing any APM primitive (`apm.yml`, `*.instructions.md`, `SKILL.md`,
