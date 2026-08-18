@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-08-17T06:17:21.867737+00:00'
+generated_at: '2026-08-18T07:52:06.981607+00:00'
 apm_version: 0.15.0
 dependencies:
 - repo_url: Netcracker/qubership-ai-packages
@@ -15,6 +15,7 @@ dependencies:
   - .cursor/rules/apm-authoring.mdc
   - .github/instructions/apm-authoring.instructions.md
   deployed_file_hashes:
+    .claude/rules/apm-authoring.md: sha256:5c4185d3d69333a810c01f5e26a8ea46b033e7082a21f1551433d6c97d8a24a2
     .cursor/rules/apm-authoring.mdc: sha256:fbc8f94d4f0b94c04a0ed042ee06f1f48244fdac316f0ce15e2d38b0affbb9aa
     .github/instructions/apm-authoring.instructions.md: sha256:9ae7ddb9835b7074edd9d3e7f6df95426941ce6024b35b0d17aeb5d77322a4ce
   content_hash: sha256:1d731d0a26376eda0b82629e6e1cff1b41dfeae13fe8d7e5debb24a1699ea4a8
