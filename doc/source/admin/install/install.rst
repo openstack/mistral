@@ -122,7 +122,7 @@ Update the database to the latest revision:
 
 .. code-block:: console
 
-    # For MySQL / MariaDB / PostgreSQL
+    # For MySQL / MariaDB
     $ mistral-db-manage upgrade head
 
     # For SQLite - do not use sqlite in production!
