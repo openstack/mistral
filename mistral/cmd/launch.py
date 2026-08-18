@@ -27,6 +27,7 @@ from mistral.event_engine import event_engine_server
 from mistral.executors import executor_server
 from mistral.notifiers import notification_server
 from mistral.rpc import base as rpc
+from mistral.services import periodic_server
 from mistral import version
 
 
@@ -69,6 +70,10 @@ def launch_notifier():
     launch_process(notification_server.get_oslo_service())
 
 
+def launch_periodic():
+    launch_process(periodic_server.get_oslo_service())
+
+
 def launch_api():
     server = api_service.WSGIService('mistral_api')
     launch_process(server, workers=server.workers)
@@ -92,7 +97,8 @@ LAUNCH_OPTIONS = {
     'engine': launch_engine,
     'executor': launch_executor,
     'event-engine': launch_event_engine,
-    'notifier': launch_notifier
+    'notifier': launch_notifier,
+    'periodic': launch_periodic
 }
 
 

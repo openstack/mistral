@@ -296,6 +296,22 @@ directory.
      enable_info_endpoint = False
      info_json_file_path = info.json
 
+#. Configure cron trigger processing if needed. By default, cron triggers
+   are processed by the API service, every API worker running its own
+   processing loop. **This behavior is deprecated and will be removed in
+   the next cycle**: if you use cron triggers, migrate to the dedicated
+   periodic server. Disable the processing in the API configuration::
+
+     [cron_trigger]
+     run_in_api = False
+
+   and run the periodic server::
+
+     $ mistral-server --config-file <path-to-config> --server periodic
+
+   **NOTE**: If ``run_in_api`` is set to ``False`` and no periodic server
+   is running, cron triggers will not fire at all.
+
 #. Finally, try to run mistral engine and verify that it is running without
    any error::
 

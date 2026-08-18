@@ -1,0 +1,24 @@
+---
+features:
+  - |
+    Cron trigger processing can now run as a dedicated Mistral component:
+    ``mistral-server --server periodic``. This avoids running one processing
+    loop per API worker. When deploying the dedicated periodic server, set
+    ``[cron_trigger] run_in_api = False`` on the API nodes so they stop
+    processing cron triggers themselves.
+upgrade:
+  - |
+    A new option ``[cron_trigger] run_in_api`` (default ``True``) controls
+    whether the API service processes cron triggers. The default preserves
+    the previous behavior; nothing changes unless you deploy the new
+    dedicated periodic server and disable the processing in the API. Note
+    that if you disable ``run_in_api`` without running a periodic server,
+    cron triggers will stop firing.
+deprecations:
+  - |
+    Processing cron triggers in the API service is deprecated and will be
+    removed in the next cycle, along with the ``[cron_trigger] run_in_api``
+    option. At that point, deployments using cron triggers will need to run
+    the dedicated periodic server (``mistral-server --server periodic``).
+    The API service logs a deprecation warning at startup while it still
+    processes cron triggers.

@@ -59,3 +59,16 @@ class ServiceLauncherTest(base.DbTestCase):
         mock_launch_service.call_count = 2
         mock_wait.call_count = 2
         mock_exit.assert_called_once()
+
+    @mock.patch.object(service.ProcessLauncher, 'launch_service')
+    @mock.patch.object(service.ProcessLauncher, 'wait')
+    @mock.patch('sys.exit')
+    def test_launch_periodic(self, mock_exit, mock_wait,
+                             mock_launch_service):
+        # Launch the periodic server
+        launch.launch_any(['periodic'])
+
+        # Make sure we tried to start a service
+        mock_launch_service.assert_called_once_with(mock.ANY, workers=1)
+        mock_wait.assert_called_once_with()
+        mock_exit.assert_called_once()

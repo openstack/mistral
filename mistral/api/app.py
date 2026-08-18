@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_middleware.cors as cors_middleware
 from oslo_middleware import healthcheck
 from oslo_middleware import http_proxy_to_wsgi
@@ -26,6 +27,8 @@ from mistral import config as m_config
 from mistral import context as ctx
 from mistral.rpc import base as rpc
 from mistral.services import periodic
+
+LOG = logging.getLogger(__name__)
 
 
 def get_pecan_config():
@@ -53,9 +56,16 @@ def setup_app(config=None):
 
     app_conf = dict(config.app)
 
-    # TODO(rakhmerov): Why do we run cron triggers in the API layer?
-    # Should we move it to engine?s
-    if cfg.CONF.cron_trigger.enabled:
+    # Cron triggers can alternatively be processed by a dedicated
+    # periodic server (mistral-server --server periodic), in which
+    # case [cron_trigger] run_in_api should be set to False here.
+    if cfg.CONF.cron_trigger.enabled and cfg.CONF.cron_trigger.run_in_api:
+        LOG.warning(
+            "Processing cron triggers in the API service is deprecated "
+            "and will be removed in the next cycle. Deploy a dedicated "
+            "periodic server (mistral-server --server periodic) and set "
+            "[cron_trigger] run_in_api = False instead."
+        )
         periodic.setup()
 
     app = pecan.make_app(

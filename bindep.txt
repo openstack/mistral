@@ -9,3 +9,7 @@ mysql-server [platform:dpkg !platform:debian test]
 postgresql
 postgresql-client [platform:dpkg]
 postgresql-server [platform:rpm]
+
+# PDF documentation build (SVG -> PDF conversion)
+librsvg2-tools [doc platform:rpm]
+librsvg2-bin [doc platform:dpkg]

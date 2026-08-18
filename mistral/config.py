@@ -41,7 +41,7 @@ launch_opt = cfg.ListOpt(
     default=['all'],
     item_type=types.String(
         choices=('all', 'api', 'engine', 'executor', 'event-engine',
-                 'notifier')),
+                 'notifier', 'periodic')),
     help=_('Specifies which mistral server to start by the launch script.')
 )
 
@@ -426,6 +426,23 @@ cron_trigger_opts = [
             'example, a cron trigger can be configured to run every second '
             'but if the execution_interval is set to 60, it will only run '
             'once per minute.'
+        )
+    ),
+    cfg.BoolOpt(
+        'run_in_api',
+        default=True,
+        deprecated_for_removal=True,
+        deprecated_reason='Processing cron triggers in the API service is '
+                          'deprecated and will be removed in the next '
+                          'cycle, along with this option. Deploy a '
+                          'dedicated periodic server '
+                          '(mistral-server --server periodic) instead.',
+        help=(
+            'If set to True (the default), the API server processes cron '
+            'triggers, each API worker running its own processing loop. '
+            'Set this to False on API nodes when cron triggers are '
+            'processed by a dedicated periodic server '
+            '(mistral-server --server periodic) instead.'
         )
     )
 ]
