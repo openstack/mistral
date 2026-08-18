@@ -460,6 +460,11 @@ Whether integrationTests is enabled
 {{/*
 Find mistral operator image in open source values.
 */}}
+{{- define "mistral.operatorImage" -}}
+  {{- printf "%s" .Values.operatorImage -}}
+{{- end -}}
+
+
 {{- define "mistral.operatorId" -}}
   {{- .Values.operatorImage | sha1sum -}}
 {{- end -}}

@@ -1,8 +1,9 @@
 name: Helm Lint
+
 on:
   push:
     branches:
-      - '**'
+      - main
     paths:
       - 'operator/deployments/charts/**'
   pull_request:
@@ -12,25 +13,32 @@ on:
       - 'operator/deployments/charts/**'
   workflow_dispatch:
 
+concurrency:
+  group: helm-lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   helm-lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Helm
-        uses: azure/setup-helm@v5
+        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
         with:
           version: v3.21.4
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2
+        uses: helm/chart-testing-action@6ec842c01de15ebb84c8627d2744a0c2f2755c9f # v2.8.0
 
       - name: Run chart-testing (list-changed)
         id: list-changed
@@ -43,3 +51,19 @@ jobs:
       - name: Run chart-testing (lint)
         if: steps.list-changed.outputs.changed == 'true'
         run: ct lint --config .github/ct.yaml --target-branch main
+
+      - name: Render chart and validate manifests with kubeconform
+        if: steps.list-changed.outputs.changed == 'true'
+        run: |
+          rm -rf .helm-render
+          helm template mistral-operator operator/deployments/charts/mistral-operator \
+            --output-dir .helm-render
+
+          docker run --rm -v "$PWD/.helm-render:/manifests:ro" ghcr.io/yannh/kubeconform:v0.8.0 \
+            -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            -ignore-missing-schemas \
+            /manifests
+
+          rm -rf .helm-render
