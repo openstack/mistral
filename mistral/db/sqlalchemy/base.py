@@ -18,6 +18,7 @@ import cachetools
 from oslo_config import cfg
 from oslo_db import options
 from oslo_db.sqlalchemy import enginefacade
+from oslo_log import log as logging
 import osprofiler.sqlalchemy
 import sqlalchemy as sa
 from sqlalchemy.sql import column
@@ -27,6 +28,8 @@ from mistral import exceptions as exc
 from mistral_lib import utils
 
 
+LOG = logging.getLogger(__name__)
+
 # Note(dzimine): sqlite only works for basic testing.
 options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")
 
@@ -34,7 +37,6 @@ _DB_SESSION_THREAD_LOCAL_NAME = "__db_sql_alchemy_session__"
 _TX_SCOPED_CACHE_THREAD_LOCAL_NAME = "__tx_scoped_cache__"
 
 _facade = None
-_sqlalchemy_create_engine_orig = sa.create_engine
 
 
 def _get_facade():
@@ -45,36 +47,45 @@ def _get_facade():
         ctx.configure(sqlite_fk=True)
         _facade = ctx.writer
 
+        # NOTE(amorin): Mistral requires the READ COMMITTED transaction
+        # isolation level: the named lock synchronization pattern (see
+        # named_lock() in db/v2/sqlalchemy/api.py, used e.g. to create
+        # "join" tasks) relies on re-reading data committed by another
+        # process right after acquiring the lock, which REPEATABLE READ
+        # (the MySQL/MariaDB default) does not allow within an already
+        # started transaction. The isolation level is set here, right
+        # after the engine facade created the engine, so it applies
+        # whatever code path triggers the creation. It used to be done
+        # by monkey-patching sqlalchemy.create_engine() from
+        # get_engine(), but nothing guaranteed that get_engine() was
+        # called before the engine facade created the engine.
+        # sqlite does not support READ COMMITTED (it is only used for
+        # unit tests, which rely on a dedicated locking mechanism, and
+        # not allowed for production).
+        engine = _facade.get_engine()
+
+        if engine.url.get_backend_name() != 'sqlite':
+            engine.update_execution_options(
+                isolation_level='READ COMMITTED'
+            )
+
+            LOG.info(
+                "Set the database transaction isolation level to "
+                "READ COMMITTED"
+            )
+
         if cfg.CONF.profiler.enabled:
             if cfg.CONF.profiler.trace_sqlalchemy:
                 osprofiler.sqlalchemy.add_tracing(
                     sa,
-                    _facade.get_engine(),
+                    engine,
                     'db'
                 )
 
     return _facade
 
 
-# Monkey-patching sqlalchemy to set the isolation_level
-# as this configuration is not exposed by oslo_db.
-def _sqlalchemy_create_engine_wrapper(*args, **kwargs):
-    # sqlite (used for unit testing and not allowed for production)
-    # does not support READ_COMMITTED.
-    # Checking the drivername using the args and not the get_driver_name()
-    # method because that method requires a session.
-    if args[0].drivername != 'sqlite':
-        kwargs["isolation_level"] = "READ_COMMITTED"
-
-    return _sqlalchemy_create_engine_orig(*args, **kwargs)
-
-
 def get_engine():
-    # If the patch was not applied yet.
-    if sa.create_engine != _sqlalchemy_create_engine_wrapper:
-        # Replace the original create_engine with our wrapper.
-        sa.create_engine = _sqlalchemy_create_engine_wrapper
-
     return _get_facade().get_engine()
 
 

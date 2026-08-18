@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Fixed a regression that caused the READ COMMITTED transaction isolation
+    level to no longer be applied to database connections. The isolation
+    level was set as a side effect of ``setup_db()``, whose startup calls
+    were removed. On MySQL/MariaDB servers using the default REPEATABLE READ
+    isolation level, this broke the named lock synchronization between
+    engines: with several engines running, concurrent completion of parallel
+    branches could raise ``DBDuplicateEntry`` errors when creating a "join"
+    task, leaving the workflow execution stuck in the RUNNING state. The
+    isolation level is now set on the engine as soon as it is created,
+    regardless of the code path that triggers the creation.
