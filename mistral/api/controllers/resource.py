@@ -24,6 +24,23 @@ class Resource(wtypes.Base):
 
     _wsme_attributes = []
 
+    # Attributes that can carry user-supplied secrets (tokens, passwords,
+    # credentials in workflow inputs/outputs, environment variables, task
+    # results, published values, ...). They are masked by __str__ so that
+    # logging a resource - a very common pattern in the controllers - can
+    # never leak them.
+    _sensitive_attributes = frozenset([
+        'input',
+        'output',
+        'params',
+        'result',
+        'published',
+        'published_global',
+        'runtime_context',
+        'env',
+        'variables',
+    ])
+
     def to_dict(self):
         d = {}
 
@@ -72,7 +89,15 @@ class Resource(wtypes.Base):
             else:
                 first = False
 
-            res += "%s='%s'" % (attr.name, getattr(self, attr.name))
+            value = getattr(self, attr.name)
+
+            # Mask attributes that may carry secrets, but keep unset ones
+            # readable so the output still shows which fields are present.
+            if (attr.name in self._sensitive_attributes and
+                    not isinstance(value, wtypes.UnsetType)):
+                value = '***'
+
+            res += "%s='%s'" % (attr.name, value)
 
         return res + "]"
 
