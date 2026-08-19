@@ -17,8 +17,10 @@ from oslo_log import log as logging
 from pecan import rest
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.utils import rest_utils
@@ -244,6 +246,7 @@ class ExecutionReportController(rest.RestController):
         :param statistics_only: Optional. If True, only the statistics will be
             returned.
         """
+        acl.enforce('executions:get', context.ctx())
 
         LOG.info(
             "Fetch execution report [workflow_execution_id=%s]",

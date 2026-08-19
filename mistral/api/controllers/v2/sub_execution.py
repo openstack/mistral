@@ -17,8 +17,10 @@ from pecan import request
 from pecan import rest
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.utils import rest_utils
 from mistral.workflow import states
@@ -111,6 +113,8 @@ class SubExecutionsController(rest.RestController):
         :param include_output: Optional. Include the output for all executions
             in the list.
         """
+        acl.enforce('executions:get', context.ctx())
+
         origin = 'execution' if request.path.startswith('/v2/executions') \
             else 'task'
 
