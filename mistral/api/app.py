@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 import oslo_middleware.cors as cors_middleware
 from oslo_middleware import healthcheck
 from oslo_middleware import http_proxy_to_wsgi
@@ -100,5 +101,12 @@ def init_wsgi():
     # As a result, invoking this wsgi script from gunicorn leads to the error
     # with argparse complaining that the CLI options have already been parsed.
     m_config.parse_args(args=[])
+
+    # Configure logging: unlike the mistral-server launcher, the WSGI entry
+    # point (mistral.wsgi:application, run under uWSGI/gunicorn) has to set
+    # up oslo.log itself. Without this the application logs fall back to
+    # Python's default handler, which drops everything below WARNING - so
+    # the INFO-level API logs never show up.
+    logging.setup(cfg.CONF, 'Mistral')
 
     return setup_app()

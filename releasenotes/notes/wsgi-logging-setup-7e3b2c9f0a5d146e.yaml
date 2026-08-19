@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    The API now configures logging when run as a WSGI application
+    (``mistral.wsgi:application`` under uWSGI/gunicorn). Previously only the
+    ``mistral-server`` launcher called ``oslo.log`` setup, so a WSGI-hosted
+    API fell back to Python's default logging, which drops everything below
+    WARNING - the INFO-level API logs never appeared. ``init_wsgi()`` now
+    sets up ``oslo.log`` right after parsing the configuration, so the log
+    level and formatting from ``mistral.conf`` are honored.
