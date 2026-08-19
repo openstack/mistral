@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    List endpoints now cap the number of returned resources at the new
+    ``[api] max_limit`` option (default 1000). Previously a list request
+    with no ``limit`` (or a very large one) loaded the entire table into
+    memory and serialized it in a single response, which a caller could use
+    to exhaust the API and database memory (amplified by
+    ``all_projects=true`` for admins). Requests are now clamped to
+    ``max_limit`` and callers page further using the returned ``next``
+    marker.

@@ -135,6 +135,16 @@ api_opts = [
         help='Mistral API server host'
     ),
     cfg.PortOpt('port', default=8989, help='Mistral API server port'),
+    cfg.IntOpt(
+        'max_limit',
+        default=1000,
+        min=1,
+        help=_('Maximum number of resources a single list request may '
+               'return. A request without a limit, or with a larger limit, '
+               'is clamped to this value; use the returned pagination '
+               'marker to fetch further pages. Prevents unbounded result '
+               'sets from exhausting the API/DB memory.')
+    ),
     cfg.BoolOpt(
         'allow_action_execution_deletion',
         default=False,
