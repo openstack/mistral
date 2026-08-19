@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    The serialized security context is no longer leaked when scheduler
+    objects are logged. ``ScheduledJob.auth_ctx`` and
+    ``DelayedCall.auth_context`` store a serialized ``MistralContext`` that
+    includes the Keystone auth token and service catalog. The ORM
+    ``__repr__`` used to dump every column, so a warning such as "Unable to
+    capture a scheduled job" (logged on the routine multi-node capture
+    race) leaked the token. These columns are now masked in ``__repr__``,
+    and the scheduler warning logs only the job id.

@@ -261,8 +261,8 @@ class DefaultScheduler(base.Scheduler):
             # Capture the job in the Job Store.
             if not self._capture_scheduled_job(scheduled_job):
                 LOG.warning(
-                    "Unable to capture a scheduled job [scheduled_job=%s]",
-                    scheduled_job
+                    "Unable to capture a scheduled job [id=%s]",
+                    scheduled_job.id
                 )
 
                 return

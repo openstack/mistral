@@ -123,8 +123,19 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
         return m
 
+    # Columns whose value must be masked in __repr__ because they may
+    # contain secrets (e.g. a serialized security context holding the
+    # Keystone auth token and service catalog). Subclasses override this.
+    _sensitive_repr_columns = ()
+
     def __repr__(self):
-        return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
+        d = self.to_dict()
+
+        for col in self._sensitive_repr_columns:
+            if col in d:
+                d[col] = '***'
+
+        return '%s %s' % (type(self).__name__, d.__repr__())
 
     @classmethod
     def _get_nullable_column_names(cls):

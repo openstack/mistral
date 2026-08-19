@@ -514,6 +514,10 @@ class DelayedCall(mb.MistralModelBase):
 
     __tablename__ = 'delayed_calls_v2'
 
+    # 'auth_context' holds a serialized security context (auth token,
+    # service catalog); mask it when the object is logged/repr'd.
+    _sensitive_repr_columns = ('auth_context',)
+
     id = mb.id_column()
     factory_method_path = sa.Column(sa.String(200), nullable=True)
     target_method_name = sa.Column(sa.String(80), nullable=False)
@@ -535,6 +539,10 @@ class ScheduledJob(mb.MistralModelBase):
     """Contains info about scheduled jobs."""
 
     __tablename__ = 'scheduled_jobs_v2'
+
+    # 'auth_ctx' holds a serialized security context (auth token, service
+    # catalog); mask it when the object is logged/repr'd.
+    _sensitive_repr_columns = ('auth_ctx',)
 
     id = mb.id_column()
 
