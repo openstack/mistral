@@ -141,11 +141,11 @@ class InlineJinjaEvaluator(base.Evaluator):
 
     @classmethod
     def evaluate(cls, expression, data_context):
+        # NOTE: never log data_context, it may contain sensitive data
+        # such as the auth token.
         LOG.debug(
-            "Start to evaluate Jinja expression. "
-            "[expression='%s', context=%s]",
-            expression,
-            data_context
+            "Start to evaluate Jinja expression. [expression='%s']",
+            expression
         )
 
         patterns = cls.find_expression_pattern.findall(expression)
@@ -168,17 +168,23 @@ class InlineJinjaEvaluator(base.Evaluator):
                 LOG.error(
                     "Failed to evaluate Jinja expression due to a database"
                     " error, re-raising initial exception [expression=%s,"
-                    " error=%s, data=%s]",
+                    " error=%s]",
                     expression,
-                    str(e),
-                    data_context
+                    str(e)
                 )
 
                 raise e
 
+            # Re-raise an already typed evaluation error as-is so its
+            # (safe) message is kept instead of being wrapped again.
+            if isinstance(e, exc.JinjaEvaluationException):
+                raise
+
+            # NOTE: never include data_context here, it may contain
+            # sensitive data such as the auth token.
             raise exc.JinjaEvaluationException(
-                "Can not evaluate Jinja expression [expression=%s, error=%s"
-                ", data=%s]" % (expression, str(e), data_context)
+                "Can not evaluate Jinja expression [expression=%s, error=%s]"
+                % (expression, str(e))
             )
 
         # NOTE: do not log the result, it may contain sensitive data

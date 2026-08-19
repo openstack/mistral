@@ -169,17 +169,23 @@ class YAQLEvaluator(base.Evaluator):
                 LOG.error(
                     "Failed to evaluate YAQL expression due to a database"
                     " error, re-raising initial exception [expression=%s,"
-                    " error=%s, data=%s]",
+                    " error=%s]",
                     expression,
-                    str(e),
-                    data_context
+                    str(e)
                 )
 
                 raise e
 
+            # Re-raise an already typed evaluation error as-is so its
+            # (safe) message is kept instead of being wrapped again.
+            if isinstance(e, exc.YaqlEvaluationException):
+                raise
+
+            # NOTE: never include data_context here, it may contain
+            # sensitive data such as the auth token.
             raise exc.YaqlEvaluationException(
-                "Can not evaluate YAQL expression [expression=%s, error=%s"
-                ", data=%s]" % (expression, str(e), data_context)
+                "Can not evaluate YAQL expression [expression=%s, error=%s]"
+                % (expression, str(e))
             )
 
         return _sanitize_yaql_result(result)

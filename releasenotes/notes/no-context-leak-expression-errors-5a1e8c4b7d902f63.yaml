@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    The evaluation context is no longer included in expression evaluation
+    errors. When a YAQL or Jinja expression failed to evaluate, the raised
+    error (and the related log messages) embedded the whole evaluation
+    context, which can contain sensitive data such as the Keystone auth
+    token and the service catalog. That error is persisted in the task
+    ``state_info`` and written to the logs, leaking the token. Evaluation
+    errors now report only the expression and the underlying error, never
+    the context.

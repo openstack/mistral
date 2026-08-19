@@ -413,7 +413,11 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertLess(state_info.find('error'), state_info.find('data'))
+        self.assertGreater(state_info.find('error='), 0)
+        # The evaluation context must not leak into the error: it can hold
+        # sensitive data such as the auth token. Only the expression and
+        # the underlying error are reported, no 'data=<context>' segment.
+        self.assertNotIn('data=', state_info)
 
     def test_error_message_format_unknown_function(self):
         wf_text = """
@@ -442,7 +446,10 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.assertIsNotNone(state_info)
         self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('data='))
+        # The evaluation context must not leak into the error: it can hold
+        # sensitive data such as the auth token. Only the expression and
+        # the underlying error are reported, no 'data=<context>' segment.
+        self.assertNotIn('data=', state_info)
 
     def test_error_message_format_invalid_on_task_run(self):
         wf_text = """

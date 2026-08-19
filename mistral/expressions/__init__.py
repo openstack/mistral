@@ -96,10 +96,11 @@ def _evaluate_item(item, context):
         try:
             return evaluate(item, context)
         except AttributeError as e:
+            # NOTE: never log the context, it may contain sensitive data
+            # such as the auth token.
             LOG.debug(
-                "Expression %s is not evaluated, [context=%s]: %s",
+                "Expression %s is not evaluated: %s",
                 item,
-                context,
                 e
             )
             return item
