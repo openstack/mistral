@@ -126,9 +126,24 @@ def validate_fields(fields, object_fields):
 def fields_list_to_cls_fields_tuple(model, f):
     if not f:
         return ()
-    return tuple(
-        [getattr(model, str(field)) for field in f]
-    )
+
+    cls_fields = []
+
+    for field in f:
+        field = str(field)
+
+        # Guard the getattr: an unknown user-supplied field would
+        # otherwise raise AttributeError (not a MistralException) and
+        # surface as an unhandled HTTP 500 with a traceback.
+        if not hasattr(model, field):
+            raise wsme_exc.ClientSideError(
+                "Field '%s' does not exist." % field,
+                status_code=400
+            )
+
+        cls_fields.append(getattr(model, field))
+
+    return tuple(cls_fields)
 
 
 def filters_to_dict(**kwargs):

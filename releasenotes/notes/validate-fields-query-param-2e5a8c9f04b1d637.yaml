@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    A ``fields`` query parameter that names a non-existent field on a
+    single-resource GET (e.g. ``GET /v2/executions/<id>?fields=bogus``) now
+    returns a ``400 Bad Request`` instead of an unhandled ``500`` with a
+    traceback. The value is validated centrally in
+    ``fields_list_to_cls_fields_tuple``.
