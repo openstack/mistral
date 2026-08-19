@@ -87,12 +87,26 @@ class JinjaEvaluator(base.Evaluator):
     def evaluate(cls, expression, data_context):
         ctx = get_jinja_context(data_context)
 
-        result = cls._env.compile_expression(expression, **JINJA_OPTS)(**ctx)
+        try:
+            result = cls._env.compile_expression(
+                expression, **JINJA_OPTS
+            )(**ctx)
 
-        # For StrictUndefined values, UndefinedError only gets raised when
-        # the value is accessed, not when it gets created. The simplest way
-        # to access it is to try and cast it to string.
-        str(result)
+            # For StrictUndefined values, UndefinedError only gets raised
+            # when the value is accessed, not when it gets created. The
+            # simplest way to access it is to try and cast it to string.
+            str(result)
+        except MemoryError:
+            # A Jinja expression can build an arbitrarily large object
+            # (e.g. "{{ [0] * 2000000000 }}"). When the engine runs with
+            # a memory limit (see [engine] memory_limit_mb), such an
+            # allocation raises MemoryError; turn it into a regular
+            # evaluation error so it only fails this expression instead
+            # of propagating as an unexpected error.
+            raise exc.JinjaEvaluationException(
+                "Expression evaluation exceeded the available memory "
+                "[expression=%s]" % expression
+            )
 
         return result
 

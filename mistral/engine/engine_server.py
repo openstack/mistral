@@ -24,6 +24,7 @@ from mistral.services import action_heartbeat_checker
 from mistral.services import action_heartbeat_sender
 from mistral.services import expiration_policy
 from mistral.utils import profiler as profiler_utils
+from mistral.utils import resource_limits
 from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ class EngineServer(service_base.MistralService):
         super(EngineServer, self).start()
 
         _validate_config()
+
+        resource_limits.apply_memory_limit(CONF.engine.memory_limit_mb)
 
         self._scheduler = sched_base.get_system_scheduler()
         self._scheduler.start()
