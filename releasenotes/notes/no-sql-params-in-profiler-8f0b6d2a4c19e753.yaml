@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    The osprofiler DB trace no longer logs the SQL bind parameters. Mistral
+    binds persisted context rows (e.g. ``scheduled_jobs_v2.auth_ctx``,
+    ``delayed_calls_v2.auth_context``) and workflow inputs into those
+    parameters, so they could contain the serialized security context
+    (Keystone auth token, service catalog) and other secrets. Only the SQL
+    statement and timing are logged now. This only affected deployments
+    running with ``[profiler] enabled = True`` and ``trace_sqlalchemy =
+    True``.

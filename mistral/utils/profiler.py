@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import copy
-import datetime
 import json
 
 from oslo_config import cfg
@@ -61,10 +60,10 @@ def log_to_file(info, context=None):
     if 'info' in info and 'db' in info['info']:
         db_info = copy.deepcopy(info['info']['db'])
 
-        db_info['params'] = {
-            k: str(v) if isinstance(v, datetime.datetime) else v
-            for k, v in db_info.get('params', {}).items()
-        }
+        # Do not log the bound SQL parameters: they can contain the
+        # serialized security context (auth token, service catalog) and
+        # workflow inputs. The statement and timing are enough to profile.
+        db_info.pop('params', None)
 
         attrs.append(json.dumps(db_info))
 
