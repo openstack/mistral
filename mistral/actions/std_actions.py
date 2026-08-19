@@ -29,6 +29,7 @@ from mistral import exceptions as exc
 from mistral import utils
 from mistral.utils import egress
 from mistral.utils import javascript
+from mistral.utils import redact
 from mistral.utils import rest_utils
 from mistral.utils import ssh_utils
 from mistral_lib import actions
@@ -217,6 +218,18 @@ class HTTPAction(actions.Action):
         # issuing the request.
         egress.validate_url(self.url)
 
+        # Redact credentials so they never reach the logs: 'auth' holds an
+        # HTTP Basic/Digest password or a bearer token, 'cookies' hold
+        # session secrets, and 'params' may carry tokens/API keys.
+        if isinstance(self.auth, tuple):
+            safe_auth = (self.auth[0], '***') if len(self.auth) > 1 else '***'
+        elif self.auth:
+            safe_auth = '***'
+        else:
+            safe_auth = self.auth
+
+        safe_cookies = '***' if self.cookies else self.cookies
+
         LOG.info(
             "Running HTTP action "
             "[url=%s, method=%s, params=%s, body=%s, json=%s,"
@@ -224,12 +237,12 @@ class HTTPAction(actions.Action):
             " allow_redirects=%s, proxies=%s, verify=%s]",
             self.url,
             self.method,
-            self.params,
+            redact.redact_sensitive(self.params),
             rest_utils.prepare_request_body_log(self.body),
             self.json,
             rest_utils.clear_sensitive_headers(self.headers),
-            self.cookies,
-            self.auth,
+            safe_cookies,
+            safe_auth,
             self.timeout,
             self.allow_redirects,
             self.proxies,

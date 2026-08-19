@@ -138,13 +138,13 @@ class EngineClient(eng.Engine):
 
         call = self._client.async_call if async_ else self._client.sync_call
 
+        # NOTE: do not log workflow_input or params, they carry
+        # user-supplied secrets (env values, action credentials).
         LOG.info(
             "Send RPC request 'start_workflow'[workflow_identifier=%s, "
-            "workflow_input=%s, description=%s, params=%s]",
+            "description=%s]",
             wf_identifier,
-            wf_input,
-            description,
-            params
+            description
         )
 
         return call(

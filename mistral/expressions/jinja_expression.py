@@ -181,10 +181,11 @@ class InlineJinjaEvaluator(base.Evaluator):
                 ", data=%s]" % (expression, str(e), data_context)
             )
 
+        # NOTE: do not log the result, it may contain sensitive data
+        # rendered from the workflow context (secrets, credentials).
         LOG.debug(
-            "Finished evaluation. [expression='%s', result: %s]",
-            expression,
-            result
+            "Finished evaluation. [expression='%s']",
+            expression
         )
 
         return result

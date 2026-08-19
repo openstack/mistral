@@ -259,12 +259,15 @@ class RegularAction(Action):
 
         try:
             action = self.action_desc.instantiate(input_dict, wf_ctx)
-        except Exception:
+        except Exception as e:
+            # NOTE: never include input_dict here, it may contain secrets
+            # (ssh password/private_key, http Authorization headers, smtp
+            # password, ...). This message also ends up in the persisted,
+            # API-visible task state_info.
             raise exc.InvalidActionException(
-                'Failed to instantiate an action'
-                ' [action_desc=%s, input_dict=%s]'
-                % (self.action_desc, input_dict)
-            )
+                'Failed to instantiate an action [action_desc=%s]'
+                % self.action_desc
+            ) from e
 
         # Assign the action execution ID here to minimize database calls.
         # Otherwise, the input property of the action execution DB object needs
@@ -305,12 +308,15 @@ class RegularAction(Action):
 
         try:
             action = self.action_desc.instantiate(input_dict, {})
-        except Exception:
+        except Exception as e:
+            # NOTE: never include input_dict here, it may contain secrets
+            # (ssh password/private_key, http Authorization headers, smtp
+            # password, ...). This message also ends up in the persisted,
+            # API-visible task state_info.
             raise exc.InvalidActionException(
-                'Failed to instantiate an action'
-                ' [action_desc=%s, input_dict=%s]'
-                % (self.action_desc, input_dict)
-            )
+                'Failed to instantiate an action [action_desc=%s]'
+                % self.action_desc
+            ) from e
 
         # Assign the action execution ID here to minimize database calls.
         # Otherwise, the input property of the action execution DB object needs
