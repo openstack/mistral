@@ -1,0 +1,12 @@
+---
+security:
+  - |
+    The API now rejects request bodies sent with an XML content type
+    (``text/xml``, ``application/xml`` or any ``+xml`` media type) with a
+    ``415 Unsupported Media Type`` response. Mistral does not support XML,
+    but wsme used to deserialize XML bodies with an unhardened
+    ``xml.etree.ElementTree`` parser, before any authorization or schema
+    validation. On deployments running an old ``libexpat`` (< 2.6.0, which
+    predates the built-in entity-expansion protection), this exposed the
+    API to XML entity-expansion ("billion laughs") denial-of-service
+    attacks. XML bodies are now refused up front, on every endpoint.

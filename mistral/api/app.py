@@ -22,6 +22,7 @@ import pecan
 
 from mistral.api import access_control
 from mistral.api.hooks import maintenance
+from mistral.api.hooks import request_body
 from mistral import config as m_config
 from mistral import context as ctx
 from mistral.rpc import base as rpc
@@ -60,7 +61,8 @@ def setup_app(config=None):
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [ctx.AuthHook(), maintenance.MaintenanceHook(),
+        hooks=lambda: [request_body.RejectXMLHook(),
+                       ctx.AuthHook(), maintenance.MaintenanceHook(),
                        ctx.ContextHook()],
         logging=getattr(config, 'logging', {}),
         **app_conf
