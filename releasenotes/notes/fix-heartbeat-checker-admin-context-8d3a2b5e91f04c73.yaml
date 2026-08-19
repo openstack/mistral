@@ -1,0 +1,15 @@
+---
+fixes:
+  - |
+    Fixed the action execution heartbeat checker losing its administrative
+    security context: after processing the first expired action of a batch,
+    the context was replaced by a non-admin project-less context (a
+    regression of the root_execution_id logging feature). Subsequent
+    project-scoped lookups then failed with ``DBEntityNotFoundError``,
+    rolling back the whole batch, and the checker retried the same batch
+    forever, leaving expired actions (e.g. of cancelled workflow executions)
+    in the RUNNING state indefinitely. The checker now keeps its
+    administrative context and only enriches it with the root execution id
+    used for logging. Additionally, an action execution whose task or
+    workflow execution no longer exists is now skipped with a warning
+    instead of aborting the whole heartbeat checker iteration.

@@ -22,6 +22,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import post_tx_queue
+from mistral import exceptions as exc
 from mistral_lib import actions as mistral_lib
 from mistral_lib import utils
 from oslo_config import cfg
@@ -61,14 +62,27 @@ def handle_expired_actions():
                     "heartbeat wasn't received: %s", action_ex.id
                 )
 
-                task_ex = db_api.get_task_execution(
-                    action_ex.task_execution_id
-                )
-                wf_ex = db_api.get_workflow_execution(
-                    task_ex.workflow_execution_id,
-                    fields=(db_models.WorkflowExecution.id,
-                            db_models.WorkflowExecution.root_execution_id)
-                )
+                try:
+                    task_ex = db_api.get_task_execution(
+                        action_ex.task_execution_id
+                    )
+                    wf_ex = db_api.get_workflow_execution(
+                        task_ex.workflow_execution_id,
+                        fields=(db_models.WorkflowExecution.id,
+                                db_models.WorkflowExecution.root_execution_id)
+                    )
+                except exc.DBEntityNotFoundError as e:
+                    # Don't let one broken action execution poison the
+                    # whole batch: an exception would roll back the
+                    # transitions of the previously processed actions and
+                    # the checker would retry the same batch forever.
+                    LOG.warning(
+                        "Skipping action execution %s: its task or "
+                        "workflow execution doesn't exist anymore: %s",
+                        action_ex.id, e
+                    )
+
+                    continue
 
                 if wf_ex.root_execution_id:
                     root_execution_id = wf_ex.root_execution_id
@@ -79,8 +93,19 @@ def handle_expired_actions():
                     error="Heartbeat wasn't received."
                 )
 
+                # NOTE(amorin): keep the administrative context of the
+                # checker thread and only enrich it with the root
+                # execution id (used by the loggers). Replacing it with a
+                # non-admin project-less context would make the DB lookups
+                # of the next loop iterations project-scoped, failing with
+                # DBEntityNotFoundError on entities the administrative
+                # context can see.
                 auth_ctx.set_ctx(
                     auth_ctx.MistralContext(
+                        user_id=None,
+                        project_id=None,
+                        auth_token=None,
+                        is_admin=True,
                         root_execution_id=root_execution_id
                     )
                 )
