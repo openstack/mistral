@@ -72,8 +72,8 @@ directory.
     [DEFAULT]
     transport_url = rabbit://<user_id>:<password>@<host>:5672/
 
-#. Configure database. **SQLite can't be used in production; use MySQL or
-   PostgreSQL instead.** Here are the steps how to connect *MySQL* DB to
+#. Configure database. **SQLite can't be used in production; use MySQL
+   instead.** Here are the steps how to connect *MySQL* DB to
    Mistral:
 
    Make sure you have installed ``mysql-server`` package on your database
@@ -95,10 +95,6 @@ directory.
 
     [database]
     connection = mysql+pymysql://<user>:<password>@<database-host>:3306/mistral
-
-   **NOTE**: If PostgreSQL is used, configure connection item as below::
-
-    connection = postgresql://<user>:<password>@<database-host>:5432/mistral
 
 #. **If you are not using OpenStack, skip this item.**
    Update ``mistral/actions/openstack/mapping.json`` file which contains all

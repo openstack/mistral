@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    PostgreSQL support is deprecated and not usable anymore. MySQL /
+    MariaDB are the supported production databases. The PostgreSQL
+    references have been removed from the documentation.
