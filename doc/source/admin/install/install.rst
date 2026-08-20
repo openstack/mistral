@@ -16,48 +16,6 @@ environment with at least the following components installed:
 
 Note that installation and configuration may vary by distribution.
 
-Overview
---------
-
-The Workflow service consists of the following components:
-
-``Mistral API`` service
-  Provides a REST API for operating and monitoring workflow executions.
-
-``Mistral Engine`` service
-  Controls workflow executions and handles their data flow, places finished
-  tasks in a queue, transfers data from task to task, and deals with condition
-  transitions, and so on.
-
-``Mistral Executor`` service
-  Executes task actions, picks up the tasks from the queue, runs actions, and
-  sends results back to the engine.
-
-``Mistral Notifier`` service
-  Send notifications based on state of workflow and task executions.
-  `This service is optional`.
-
-``Mistral Event Engine`` service
-  Create workflow executions based on external events (like RabbitMQ, HTTP,
-  kafka, etc.).
-  `This service is optional`.
-
-The mistral project is also providing the following python libraries:
-
-``mistral-dashboard``
-  Mistral Dashboard is a Horizon (OpenSack dashboard) plugin.
-
-``python-mistralclient``
-  Python client API and Command Line Interface.
-
-``mistral-lib``
-  A library used by mistral internals.
-
-``mistral-extra``
-  A collection of extra actions that could be installed to extend mistral
-  standard actions with openstack ones (by default mistral is not having any
-  OpenStack related action).
-
 Prerequisites
 -------------
 
@@ -137,8 +95,8 @@ Edit the configuration file:
 
     $ vi /etc/mistral/mistral.conf
 
-You may also want to install the `mistral-extra` package to have the
-opentack actions available (but this is not mandatory):
+You may also want to install the ``mistral-extra`` package to have the
+openstack actions available (but this is not mandatory):
 
 .. code-block:: console
 
@@ -222,6 +180,49 @@ The valid options are:
 * executor
 * event-engine
 * notifier
+* periodic
+
+.. _running-cron-trigger-processing-separately:
+
+Running cron trigger processing separately
+------------------------------------------
+
+By default, cron triggers are processed by the API service and every API
+worker runs its own processing loop. The processing is safe with multiple
+concurrent workers (a database compare-and-swap guarantees each cron trigger
+occurrence starts only one workflow execution), but with many API workers
+or several API nodes most of the loops do redundant work. This is especially
+relevant when the API runs under uWSGI with multiple workers (see below).
+
+.. warning::
+
+    Processing cron triggers in the API service is deprecated and will be
+    removed in the next cycle. Deployments using cron triggers should
+    migrate to the dedicated periodic server described below.
+
+To avoid this, cron trigger processing can run as a dedicated component
+instead:
+
+.. code-block:: console
+
+    $ mistral-server --server periodic
+
+Then disable the processing inside the API by setting the following in the
+configuration of the API nodes:
+
+.. code-block:: ini
+
+    [cron_trigger]
+    run_in_api = False
+
+Running more than one periodic server is supported (e.g. for high
+availability).
+
+.. note::
+
+    Start the periodic server before setting ``run_in_api = False`` on the
+    API nodes. If cron trigger processing is disabled in the API and no
+    periodic server is running, cron triggers will not fire at all.
 
 Running Mistral API with uWSGI
 ------------------------------

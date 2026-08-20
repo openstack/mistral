@@ -51,6 +51,8 @@ etc/mistral.conf.sample
 
 #Linux swap files range from .saa to .swp
 *.s[a-w][a-p]
+# ...but that range also matches real file extensions
+!*.svg
 
 # Files created by releasenotes build
 releasenotes/build
