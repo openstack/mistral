@@ -1,0 +1,21 @@
+---
+security:
+  - |
+    Added a soft address-space (memory) limit that can be applied to the
+    engine process, configured with the new ``[engine] memory_limit_mb``
+    option (in MiB, ``0`` disables it, which is the default). When set, a
+    runaway allocation - for instance a workflow expression building a huge
+    data structure such as ``{{ [0] * 2000000000 }}`` - raises a
+    ``MemoryError`` that is turned into a regular expression evaluation
+    error, instead of exhausting the host memory and taking the engine
+    down. Operators running untrusted workflows are encouraged to set it to
+    the memory budget of the engine process. Note that the limit applies to
+    the whole engine process, not only to expression evaluation.
+
+    This bounds *memory*, not CPU time. It does not protect against
+    expressions that exhaust CPU without allocating much memory, such as a
+    Jinja template with nested loops (for example
+    ``{% for i in range(100000) %}{% for j in range(100000) %}...``).
+    Operators exposing the engine to untrusted workflows should also
+    consider disabling the Jinja expression language entirely (see the
+    ``[expressions] allowed_languages`` option).

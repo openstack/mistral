@@ -245,6 +245,20 @@ engine_opts = [
                'of runtime execution objects. Use -1 for no limit.')
     ),
     cfg.IntOpt(
+        'memory_limit_mb',
+        default=0,
+        help=_('Soft address-space (memory) limit in MiB applied to the '
+               'engine process at startup (RLIMIT_AS). When the process '
+               'tries to allocate more than this, the allocation raises '
+               'MemoryError instead of exhausting the host memory. This '
+               'protects the engine against runaway allocations such as a '
+               'workflow expression building a huge data structure (e.g. '
+               '"{{ [0] * 2000000000 }}"). 0 (the default) disables the '
+               'limit. Tune it to the memory budget of the engine process; '
+               'note that it caps the whole process, not only expression '
+               'evaluation.')
+    ),
+    cfg.IntOpt(
         'execution_integrity_check_delay',
         default=20,
         help=_('A number of seconds since the last update of a task'
