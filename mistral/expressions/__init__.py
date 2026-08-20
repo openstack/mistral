@@ -16,12 +16,15 @@
 
 import copy
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from stevedore import extension
 
 from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 _mgr = extension.ExtensionManager(
     namespace='mistral.expression.evaluators',
@@ -37,6 +40,12 @@ for name in sorted(_mgr.names()):
     patterns[name] = evaluator.find_expression_pattern.pattern
 
 
+def _is_language_allowed(name):
+    # Read the configuration lazily: the option may not be registered or
+    # parsed yet when this module is imported.
+    return name in CONF.expressions.allowed_languages
+
+
 def validate(expression):
     LOG.debug("Validating expression [expression='%s']", expression)
 
@@ -47,6 +56,11 @@ def validate(expression):
 
     for name, evaluator in _evaluators:
         if evaluator.is_expression(expression):
+            if not _is_language_allowed(name):
+                raise exc.ExpressionGrammarException(
+                    "The '%s' expression language is disabled by the "
+                    "operator." % name)
+
             if expression_found:
                 raise exc.ExpressionGrammarException(
                     "The line already contains an expression of type '%s'. "
@@ -67,6 +81,11 @@ def evaluate(expression, context):
         # every time on a caller side.
         if (isinstance(expression, str) and
                 evaluator.is_expression(expression)):
+            if not _is_language_allowed(name):
+                raise exc.EvaluationException(
+                    "The '%s' expression language is disabled by the "
+                    "operator." % name)
+
             return evaluator.evaluate(expression, context)
 
     return expression

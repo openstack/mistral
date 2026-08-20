@@ -685,6 +685,25 @@ keycloak_oidc_opts = [
 ]
 
 
+expression_opts = [
+    cfg.ListOpt(
+        'allowed_languages',
+        item_type=types.String(choices=('yaql', 'jinja')),
+        default=['yaql', 'jinja'],
+        sample_default='yaql,jinja',
+        help=_('The expression languages that workflows are allowed to '
+               'use. Valid values are "yaql" and "jinja"; by default both '
+               'are enabled. An operator can restrict the list (e.g. to '
+               '"yaql" only) to disable a language: a workflow that uses a '
+               'disabled language is then rejected at creation and its '
+               'expressions are refused at evaluation time. Disabling a '
+               'language reduces the attack surface of untrusted workflows. '
+               'This is a comma-separated list (e.g. '
+               '"allowed_languages = yaql"), not a Python list literal; an '
+               'unknown value is rejected at startup.')
+    ),
+]
+
 yaql_opts = [
     cfg.IntOpt(
         'limit_iterators',
@@ -800,6 +819,7 @@ CONTEXT_VERSIONING_GROUP = 'context_versioning'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
+EXPRESSIONS_GROUP = "expressions"
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -836,6 +856,7 @@ CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
+CONF.register_opts(expression_opts, group=EXPRESSIONS_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -878,6 +899,7 @@ def list_opts():
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
+        (EXPRESSIONS_GROUP, expression_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),
