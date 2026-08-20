@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    Added the ``[expressions] allowed_languages`` option, which lists the
+    expression languages workflows may use (``yaql`` and ``jinja`` by
+    default). An operator can restrict it - for example to ``yaql`` only -
+    to disable a language entirely: a workflow that uses a disabled
+    language is rejected when it is created and its expressions are refused
+    at evaluation time.
+security:
+  - |
+    Operators can now disable the Jinja expression language by removing it
+    from ``[expressions] allowed_languages``. This reduces the attack
+    surface exposed to untrusted workflows (expression evaluation runs in
+    the engine and can, for instance, be abused to build very large objects
+    and exhaust resources). The default keeps both YAQL and Jinja enabled so
+    that existing workflows are unaffected on upgrade.
