@@ -84,6 +84,21 @@ def wrap_pecan_controller_exception(func):
     return wrapped
 
 
+def clamp_limit(limit):
+    """Cap a requested page size at [api] max_limit.
+
+    A request without a limit (None) or with a larger one is clamped to
+    the configured maximum, so a single list request cannot pull an
+    unbounded result set into memory.
+    """
+    max_limit = cfg.CONF.api.max_limit
+
+    if limit is None or limit > max_limit:
+        return max_limit
+
+    return limit
+
+
 def validate_query_params(limit, sort_keys, sort_dirs):
     if limit is not None and limit <= 0:
         raise wsme_exc.ClientSideError("Limit must be positive.")
@@ -178,6 +193,11 @@ def get_all(list_cls, cls, get_all_function, get_function,
 
     if fields and 'id' not in fields:
         fields.insert(0, 'id')
+
+    # Cap the page size to avoid unbounded result sets exhausting memory.
+    # A request without a limit (or with a larger one) is clamped to the
+    # configured maximum; the 'next' marker lets callers page further.
+    limit = clamp_limit(limit)
 
     validate_query_params(limit, sort_keys, sort_dirs)
     validate_fields(fields, cls.get_fields())
