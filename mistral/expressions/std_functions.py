@@ -16,7 +16,8 @@
 
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-import yaml
+
+from mistral.utils import safe_yaml
 
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
@@ -98,7 +99,7 @@ def json_dump_(context, data):
 
 
 def yaml_dump_(context, data):
-    return yaml.safe_dump(data, default_flow_style=False)
+    return safe_yaml.safe_dump(data, default_flow_style=False)
 
 
 @db_utils.tx_cached(ignore_args='context')
@@ -270,4 +271,9 @@ def json_parse_(context, data):
 
 
 def yaml_parse_(context, data):
-    return yaml.safe_load(data)
+    # Use the hardened loader (mistral.utils.safe_yaml) that neutralizes
+    # YAML anchors/aliases: the plain yaml.safe_load supports them and is
+    # vulnerable to entity-expansion ("billion laughs") DoS, and this
+    # function is reachable from any workflow expression with
+    # attacker-controlled input.
+    return safe_yaml.load(data)

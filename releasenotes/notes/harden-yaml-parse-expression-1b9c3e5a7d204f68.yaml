@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    The ``yaml_parse`` workflow expression function now uses Mistral's
+    hardened YAML loader (``mistral.utils.safe_yaml``) instead of the plain
+    ``yaml.safe_load``. The plain loader resolves YAML anchors/aliases and
+    is vulnerable to the "billion laughs" entity-expansion denial of
+    service; ``yaml_parse`` is callable from any workflow expression with
+    attacker-controlled input, so a workflow author could exhaust the
+    engine memory. Anchors/aliases are now treated as plain text and are
+    not expanded. ``yaml_dump`` likewise no longer emits aliases.
