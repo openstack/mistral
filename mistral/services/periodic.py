@@ -42,15 +42,16 @@ def process_cron_triggers_v2(self, ctx):
         LOG.debug("Processing cron trigger: %s", trigger)
 
         try:
-            # Setup admin context before schedule triggers.
-            ctx = security.create_context(
-                trigger.trust_id,
-                trigger.project_id
-            )
-
-            auth_ctx.set_ctx(ctx)
-
-            LOG.debug("Cron trigger security context: %s", ctx)
+            # Set a cheap locally-built context so the project-scoped DB
+            # queries in advance_cron_trigger() work. The expensive
+            # trust-scoped context (Keystone round-trip) is only created
+            # if this engine wins the race below.
+            auth_ctx.set_ctx(auth_ctx.MistralContext(
+                user_id=None,
+                project_id=trigger.project_id,
+                auth_token=None,
+                is_admin=False
+            ))
 
             # Try to advance the cron trigger next_execution_time and
             # remaining_executions if relevant.
@@ -58,6 +59,16 @@ def process_cron_triggers_v2(self, ctx):
 
             # If cron trigger was not already modified by another engine.
             if modified:
+                # Setup admin context before scheduling the workflow.
+                trust_ctx = security.create_context(
+                    trigger.trust_id,
+                    trigger.project_id
+                )
+
+                auth_ctx.set_ctx(trust_ctx)
+
+                LOG.debug("Cron trigger security context: %s", trust_ctx)
+
                 LOG.debug(
                     "Starting workflow '%s' by cron trigger '%s'",
                     trigger.workflow.name,
