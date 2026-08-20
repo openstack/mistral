@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    The execution report endpoint (``GET /v2/executions/<id>/report``) and
+    the sub-executions endpoints (``GET /v2/executions/<id>/executions`` and
+    ``GET /v2/tasks/<id>/executions``) now enforce the ``executions:get``
+    RBAC policy, like the other execution-read endpoints. Previously they
+    skipped ``acl.enforce``, so an operator ``policy.yaml`` restricting
+    execution reads was not applied to these two routes. Tenant isolation
+    was unaffected (results are still project-scoped); this only bypassed
+    custom policy restrictions.
