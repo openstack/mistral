@@ -138,6 +138,10 @@ class InvalidActionException(MistralException):
     http_code = 400
 
 
+class UrlNotAllowedException(MistralException):
+    http_code = 400
+
+
 class ActionRegistrationException(MistralException):
     message = "Failed to register action"
 

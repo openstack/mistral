@@ -731,6 +731,54 @@ expression_opts = [
     ),
 ]
 
+action_std_http_opts = [
+    cfg.ListOpt(
+        'allowed_hosts',
+        default=[],
+        help=_('Optional allow-list of hostnames that the std.http action '
+               'and the webhook notifier may connect to. If empty (the '
+               'default) any host is allowed except those blocked by the '
+               'egress policy; if set, only these hosts are allowed.')
+    ),
+    cfg.ListOpt(
+        'denied_cidrs',
+        default=['127.0.0.0/8', '::1/128', '169.254.0.0/16', 'fe80::/10'],
+        help=_('CIDR ranges that outbound std.http / webhook requests may '
+               'not target (SSRF mitigation). Defaults to loopback and '
+               'link-local, so the cloud metadata service (169.254.169.254) '
+               'and localhost are blocked out of the box. Operators can '
+               'widen it - e.g. append 10.0.0.0/8,172.16.0.0/12,'
+               '192.168.0.0/16 to also block RFC1918 internal networks - '
+               'or narrow it (even to an empty list) to re-enable those '
+               'targets. An empty list disables the address check '
+               '(the http/https scheme check and allowed_hosts still '
+               'apply).')
+    ),
+    cfg.IntOpt(
+        'default_timeout',
+        default=60,
+        min=0,
+        help=_('Default timeout (seconds) applied to a std.http request when '
+               'the action does not set its own timeout. Prevents a slow or '
+               'never-ending peer from pinning the executor. 0 means no '
+               'default timeout (not recommended).')
+    ),
+    cfg.IntOpt(
+        'max_response_size_bytes',
+        default=5242880,
+        min=0,
+        help=_('Maximum size (bytes) of a std.http response, checked against '
+               'the response Content-Length before buffering it into the '
+               'action result. Defaults to 5 MiB, which is above the '
+               'persistable result size ([engine] '
+               'execution_field_size_limit_kb, 1 MiB by default) so it does '
+               'not reject a response that could otherwise be stored, while '
+               'preventing a very large body from exhausting executor '
+               'memory. 0 disables the check. Responses without a '
+               'Content-Length are not bounded by this option.')
+    ),
+]
+
 yaql_opts = [
     cfg.IntOpt(
         'limit_iterators',
@@ -847,6 +895,7 @@ PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
 EXPRESSIONS_GROUP = "expressions"
+ACTION_STD_HTTP_GROUP = 'action_std_http'
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -884,6 +933,7 @@ CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 CONF.register_opts(expression_opts, group=EXPRESSIONS_GROUP)
+CONF.register_opts(action_std_http_opts, group=ACTION_STD_HTTP_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -927,6 +977,7 @@ def list_opts():
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
         (EXPRESSIONS_GROUP, expression_opts),
+        (ACTION_STD_HTTP_GROUP, action_std_http_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),

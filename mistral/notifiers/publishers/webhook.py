@@ -19,6 +19,7 @@ import requests
 from oslo_log import log as logging
 
 from mistral.notifiers import base
+from mistral.utils import egress
 
 
 LOG = logging.getLogger(__name__)
@@ -30,7 +31,17 @@ class WebhookPublisher(base.NotificationPublisher):
         url = kwargs.get('url')
         headers = kwargs.get('headers', {})
 
-        resp = requests.post(url, data=json.dumps(data), headers=headers)
+        # SSRF egress policy: the webhook url comes from the caller-supplied
+        # notify params, so validate it before the engine issues the POST.
+        egress.validate_url(url)
+
+        resp = requests.post(
+            url,
+            data=json.dumps(data),
+            headers=headers,
+            timeout=(3, 10),
+            allow_redirects=False
+        )
 
         LOG.info("Webook request url=%s code=%s", url, resp.status_code)
 

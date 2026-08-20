@@ -1,0 +1,27 @@
+---
+security:
+  - |
+    The ``std.http`` action and the webhook notifier now enforce an
+    outbound egress policy to mitigate server-side request forgery (SSRF).
+    Both used to connect to any user-supplied URL, so a workflow author
+    could make the executor/engine reach the cloud metadata service
+    (``169.254.169.254``) or internal endpoints. Requests to non-http(s)
+    schemes and to hosts that resolve to a denied CIDR are now rejected.
+
+    The deny-list is fully operator-controlled through the new
+    ``[action_std_http] denied_cidrs`` option, which defaults to loopback
+    and link-local (``127.0.0.0/8``, ``::1/128``, ``169.254.0.0/16``,
+    ``fe80::/10`` - so the metadata service and localhost are blocked out
+    of the box). Operators can widen it (e.g. add RFC1918) or narrow it -
+    even to an empty list - to re-enable those targets. An optional
+    ``[action_std_http] allowed_hosts`` restricts connections to an
+    explicit host allow-list. Operators who do not want ``std.http`` at all
+    can instead disable the action via the action provider denylist.
+
+    In addition, ``std.http`` now applies a default request timeout
+    (``[action_std_http] default_timeout``, default 60s) when the action
+    does not set its own, and can reject an over-large response via
+    ``[action_std_http] max_response_size_bytes`` (default 5 MiB, above the
+    1 MiB persistable result size; set 0 to disable).
+    The webhook notifier no longer follows redirects and uses a bounded
+    timeout.

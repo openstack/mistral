@@ -21,17 +21,21 @@ import smtplib
 import time
 from urllib import parse
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import requests
 
 from mistral import exceptions as exc
 from mistral import utils
+from mistral.utils import egress
 from mistral.utils import javascript
 from mistral.utils import rest_utils
 from mistral.utils import ssh_utils
 from mistral_lib import actions
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 
 class EchoAction(actions.Action):
@@ -207,6 +211,12 @@ class HTTPAction(actions.Action):
         self.verify = verify
 
     def run(self, context):
+        # SSRF egress policy: reject non-http(s) schemes and hosts that
+        # resolve to blocked addresses (loopback / link-local incl. the
+        # cloud metadata service, plus operator-configured CIDRs) before
+        # issuing the request.
+        egress.validate_url(self.url)
+
         LOG.info(
             "Running HTTP action "
             "[url=%s, method=%s, params=%s, body=%s, json=%s,"
@@ -233,6 +243,12 @@ class HTTPAction(actions.Action):
             else:
                 action_verify = None
 
+            # Default the request timeout so a slow/never-ending peer
+            # cannot pin the executor forever.
+            timeout = self.timeout
+            if timeout is None:
+                timeout = CONF.action_std_http.default_timeout
+
             resp = requests.request(
                 self.method,
                 self.url,
@@ -242,7 +258,7 @@ class HTTPAction(actions.Action):
                 headers=self.headers,
                 cookies=self.cookies,
                 auth=self.auth,
-                timeout=self.timeout,
+                timeout=timeout,
                 allow_redirects=self.allow_redirects,
                 proxies=self.proxies,
                 verify=action_verify
@@ -253,6 +269,24 @@ class HTTPAction(actions.Action):
                 context.execution.action_execution_id
             )
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
+
+        # Reject an over-large response (by declared Content-Length) before
+        # buffering it into the action result. 0 disables the cap. Note:
+        # responses without a Content-Length (e.g. chunked) are not bounded
+        # here - the request timeout above is the backstop for those.
+        max_size = CONF.action_std_http.max_response_size_bytes
+
+        if max_size:
+            content_length = resp.headers.get('Content-Length')
+
+            if content_length and int(content_length) > max_size:
+                if hasattr(resp, 'close'):
+                    resp.close()
+
+                raise exc.ActionException(
+                    "HTTP response is too large (Content-Length=%s, "
+                    "limit=%s bytes)." % (content_length, max_size)
+                )
 
         LOG.info(
             "HTTP action response:\n%s\n%s",
