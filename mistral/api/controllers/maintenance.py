@@ -14,6 +14,7 @@ import pecan
 from pecan import rest
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -35,8 +36,15 @@ class Maintenance(resource.Resource):
 
 class MaintenanceController(rest.RestController):
 
+    @rest_utils.wrap_pecan_controller_exception
     @pecan.expose('json')
     def get(self):
+        # Enforce the policy while the request context is still available:
+        # the maintenance status exposes cluster-wide operational state and
+        # is restricted to administrators. This must run before the context
+        # is cleared below.
+        acl.enforce('maintenance:get', context.ctx())
+
         context.set_ctx(None)
 
         maintenance_status = db_api.get_maintenance_status()
@@ -52,6 +60,13 @@ class MaintenanceController(rest.RestController):
         status_code=200
     )
     def put(self, new_maintenance_status):
+        # Enforce the policy while the request context is still available:
+        # changing the maintenance status is a cluster-wide operation that
+        # pauses running executions across all projects, so it is
+        # restricted to administrators. This must run before the context
+        # is cleared below.
+        acl.enforce('maintenance:update', context.ctx())
+
         context.set_ctx(None)
 
         new_maintenance_status.status = maintenance.change_maintenance_mode(
