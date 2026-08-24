@@ -23,6 +23,7 @@ from mistral.policies import dynamic_actions
 from mistral.policies import environment
 from mistral.policies import event_trigger
 from mistral.policies import execution
+from mistral.policies import maintenance
 from mistral.policies import member
 from mistral.policies import service
 from mistral.policies import task
@@ -41,6 +42,7 @@ def list_rules():
         environment.list_rules(),
         event_trigger.list_rules(),
         execution.list_rules(),
+        maintenance.list_rules(),
         member.list_rules(),
         service.list_rules(),
         task.list_rules(),
