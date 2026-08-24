@@ -1,0 +1,12 @@
+---
+security:
+  - |
+    The cluster maintenance endpoint is now guarded by policy. Reading the
+    status (``GET /maintenance``) requires the new ``maintenance:get``
+    rule and changing it (``PUT /maintenance``) requires the new
+    ``maintenance:update`` rule; both default to admin only
+    (``rule:admin_only``). Previously the endpoint enforced no policy, so
+    any authenticated token holder could read the status or switch the
+    cluster to ``PAUSED`` - a cluster-wide operation that pauses running
+    executions across all projects. Operators who need to grant these to
+    non-admins can override the rules in ``policy.yaml``.
