@@ -223,3 +223,41 @@ class SSHActionTest(base.BaseTest):
         self.assertEqual('stdout', result['stdout'])
         self.assertEqual('stderr', result['stderr'])
         self.assertEqual(0, result['exit_code'])
+
+    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
+    def test_typed_action_exception_reaches_caller(self, mocked_method):
+        # A typed ActionException raised by the SSH layer carries a
+        # deliberate, safe message and must reach the caller as-is,
+        # instead of being masked by the generic "Failed to execute" text.
+        mocked_method.side_effect = exc.ActionException(
+            'a deliberate, safe reason'
+        )
+
+        action = std.SSHAction('ls', 'localhost', 'user')
+
+        exception = self.assertRaises(exc.ActionException, action.run, None)
+
+        self.assertIn('a deliberate, safe reason', str(exception))
+
+    @mock.patch.object(
+        mistral.utils.ssh_utils, 'execute_command_via_gateway'
+    )
+    def test_proxied_generic_error_is_still_masked(self, mocked_method):
+        # A non-ActionException failure (e.g. a paramiko/host error) must
+        # still be masked so it cannot leak information to the caller.
+        mocked_method.side_effect = RuntimeError('sensitive gateway detail')
+
+        action = std.SSHProxiedAction(
+            cmd='ls',
+            host='target',
+            username='user',
+            private_key_filename=None,
+            gateway_host='gateway',
+            proxy_command=None
+        )
+
+        exception = self.assertRaises(exc.ActionException, action.run, None)
+
+        self.assertIn("Failed to execute ssh cmd 'ls' on ['target']",
+                      str(exception))
+        self.assertNotIn('sensitive gateway detail', str(exception))

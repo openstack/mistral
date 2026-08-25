@@ -535,6 +535,10 @@ class SSHAction(actions.Action):
                 return results
 
             return result
+        except exc.ActionException:
+            # A typed ActionException already carries a deliberate, safe
+            # message. Let it reach the caller as-is.
+            raise
         except Exception as e:
             return raise_exc(parent_exc=e)
 
