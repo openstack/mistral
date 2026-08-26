@@ -83,10 +83,6 @@ def force_fail_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.ERROR, msg)
 
 
-def cancel_workflow(wf_ex, msg=None):
-    stop_workflow(wf_ex, states.CANCELLED, msg)
-
-
 @profiler.trace('workflow-handler-check-and-complete', hide_args=True)
 def check_and_complete(wf_ex_id):
     wf_ex = db_api.load_workflow_execution(wf_ex_id)
