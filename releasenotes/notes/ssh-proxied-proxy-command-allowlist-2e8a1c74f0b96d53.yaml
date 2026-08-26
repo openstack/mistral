@@ -1,0 +1,23 @@
+---
+security:
+  - |
+    Fixed a remote code execution vulnerability in the ``std.ssh_proxied``
+    action. The action passed a caller-supplied ``proxy_command`` straight
+    to ``paramiko.ProxyCommand``, which runs it as a local subprocess on
+    the executor host - before any SSH authentication and regardless of
+    the SSH credentials or gateway supplied. Any authenticated,
+    project-scoped user could therefore run arbitrary commands on every
+    Mistral executor by submitting the action through the standard
+    action-execution API.
+
+    ``proxy_command`` is now rejected unless its exact value appears in the
+    new ``[action_std_ssh] allowed_proxy_commands`` allow-list, which is
+    empty by default. Existing deployments that rely on a ``proxy_command``
+    must add the exact command string to this option; otherwise the action
+    fails with a clear error instead of executing it.
+upgrade:
+  - |
+    The ``std.ssh_proxied`` action now refuses any ``proxy_command`` that is
+    not listed in the new ``[action_std_ssh] allowed_proxy_commands`` config
+    option (empty by default). If you use ``proxy_command``, add its exact
+    value to this option.
