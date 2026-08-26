@@ -87,7 +87,7 @@ class ExecutorServer(service_base.MistralService):
         LOG.debug(
             "Received RPC request 'run_action'"
             "[action=%s, action_ex_id=%s, timeout=%s]",
-            action,
+            type(action).__name__,
             action_ex_id,
             timeout
         )
@@ -106,7 +106,7 @@ class ExecutorServer(service_base.MistralService):
         LOG.debug(
             "Sending action result to engine"
             " [action=%s, action_ex_id=%s]",
-            action,
+            type(action).__name__,
             action_ex_id
         )
 

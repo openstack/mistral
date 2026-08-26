@@ -466,7 +466,7 @@ class ExecutorClient(exe.Executor):
 
         LOG.info(
             "Send RPC request 'run_action' [action=%s, action_ex_id=%s]",
-            action,
+            type(action).__name__,
             action_ex_id
         )
 

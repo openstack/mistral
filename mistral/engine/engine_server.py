@@ -25,7 +25,6 @@ from mistral.services import action_heartbeat_sender
 from mistral.services import expiration_policy
 from mistral.utils import profiler as profiler_utils
 from mistral.utils import resource_limits
-from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -136,13 +135,15 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
 
+        # Log the workflow identifier and the (non-sensitive) description.
+        # The input carries user-supplied secrets (e.g. an ssh
+        # private_key/password) and params/env may carry credentials, so
+        # neither is logged.
         LOG.info(
-            "Received RPC request 'start_workflow'[workflow_identifier=%s, "
-            "workflow_input=%s, description=%s, params=%s]",
+            "Received RPC request 'start_workflow' "
+            "[workflow_identifier=%s, description=%s]",
             wf_identifier,
-            utils.cut(wf_input),
-            description,
-            params
+            description
         )
 
         return self.engine.start_workflow(
@@ -160,7 +161,7 @@ class EngineServer(service_base.MistralService):
 
         """
         LOG.info(
-            "Received RPC request 'start_task'[task_ex_id=%s, first_run=%s]",
+            "Received RPC request 'start_task' [task_ex_id=%s, first_run=%s]",
             task_ex_id,
             first_run
         )
@@ -186,14 +187,12 @@ class EngineServer(service_base.MistralService):
         :param params: extra parameters to run Action.
         :return: Action execution.
         """
+        # Log only the action name: the input carries user-supplied secrets
+        # (a std.ssh* action's private_key/password), and params/env may
+        # carry credentials, so neither is logged.
         LOG.info(
-            "Received RPC request 'start_action'[name=%s, input=%s, "
-            "description=%s, namespace=%s params=%s]",
-            action_name,
-            utils.cut(action_input),
-            description,
-            namespace,
-            params
+            "Received RPC request 'start_action' [name=%s]",
+            action_name
         )
 
         return self.engine.start_action(
@@ -213,11 +212,13 @@ class EngineServer(service_base.MistralService):
         :param wf_action: True if given id points to a workflow execution.
         :return: Action execution.
         """
+        # Log only the action execution id: the result can carry
+        # user-supplied secrets (an action may return a password, a token,
+        # an HTTP response body with credentials, ...), and cut_repr() only
+        # masks values under known key names, so it is not logged.
         LOG.info(
-            "Received RPC request 'on_action_complete'[action_ex_id=%s, "
-            "result=%s]",
-            action_ex_id,
-            result.cut_repr() if result else '<unknown>'
+            "Received RPC request 'on_action_complete' [action_ex_id=%s]",
+            action_ex_id
         )
         return self.engine.on_action_complete(action_ex_id, result, wf_action)
 
@@ -231,7 +232,7 @@ class EngineServer(service_base.MistralService):
         :return: Action execution.
         """
         LOG.info(
-            "Received RPC request 'on_action_update'"
+            "Received RPC request 'on_action_update' "
             "[action_ex_id=%s, state=%s]",
             action_ex_id,
             state
@@ -247,7 +248,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'pause_workflow'[execution_id=%s]",
+            "Received RPC request 'pause_workflow' [execution_id=%s]",
             wf_ex_id
         )
 
@@ -266,7 +267,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'rerun_workflow'[task_ex_id=%s]",
+            "Received RPC request 'rerun_workflow' [task_ex_id=%s]",
             task_ex_id
         )
 
@@ -281,7 +282,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'resume_workflow'[wf_ex_id=%s]",
+            "Received RPC request 'resume_workflow' [wf_ex_id=%s]",
             wf_ex_id
         )
 
@@ -303,7 +304,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'stop_workflow'[execution_id=%s,"
+            "Received RPC request 'stop_workflow' [execution_id=%s,"
             " state=%s, message=%s]",
             wf_ex_id,
             state,
@@ -320,7 +321,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'rollback_workflow'[execution_id=%s]",
+            "Received RPC request 'rollback_workflow' [execution_id=%s]",
             wf_ex_id
         )
 
@@ -333,7 +334,8 @@ class EngineServer(service_base.MistralService):
         :param action_ex_ids: Action execution ids.
         """
         LOG.info(
-            "Received RPC request 'report_running_actions'[action_ex_ids=%s]",
+            "Received RPC request 'report_running_actions' "
+            "[action_ex_ids=%s]",
             action_ex_ids
         )
 
