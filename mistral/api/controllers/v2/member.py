@@ -25,6 +25,7 @@ from mistral.api.controllers.v2 import resources
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral.services import security
 from mistral.utils import rest_utils
 
 
@@ -130,6 +131,18 @@ class MembersController(rest.RestController):
         def _create_resource_member():
             with db_api.transaction():
                 wf_db = db_api.get_workflow_definition(self.resource_id)
+
+                # Only the owner of a resource may share it. A project that
+                # merely has the resource shared with it (an accepted
+                # member) can read the definition through the shared-resource
+                # query, but it must not be able to re-share it with a third
+                # project - doing so would grant access without the owner's
+                # consent and create a membership the owner cannot see or
+                # revoke.
+                if wf_db.project_id != security.get_project_id():
+                    raise exc.NotAllowedException(
+                        "Only the owner of a resource can share it."
+                    )
 
                 if wf_db.scope != 'private':
                     raise exc.WorkflowException(
