@@ -698,6 +698,22 @@ keycloak_oidc_opts = [
     )
 ]
 
+action_std_ssh_opts = [
+    cfg.ListOpt(
+        'allowed_proxy_commands',
+        default=[],
+        help=_('Allow-list of SSH ProxyCommand strings that the '
+               'std.ssh_proxied action may use. The proxy_command is run '
+               'as a local subprocess on the executor host before SSH '
+               'authentication, so a caller-supplied value is a remote '
+               'code execution vector. The action input is matched against '
+               'this list by exact string; anything not listed is '
+               'rejected. Empty (the default) disables proxy_command '
+               'entirely, so an ordinary user cannot run commands on the '
+               'executor. Only add entries you fully trust and that do not '
+               'take attacker-controllable arguments.')
+    ),
+]
 
 yaql_opts = [
     cfg.IntOpt(
@@ -815,6 +831,7 @@ CONTEXT_VERSIONING_GROUP = 'context_versioning'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
+ACTION_STD_SSH_GROUP = 'action_std_ssh'
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -855,6 +872,7 @@ CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
+CONF.register_opts(action_std_ssh_opts, group=ACTION_STD_SSH_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -901,6 +919,7 @@ def list_opts():
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
+        (ACTION_STD_SSH_GROUP, action_std_ssh_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),

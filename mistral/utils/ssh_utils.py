@@ -16,6 +16,7 @@ from os import path
 
 import io
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import paramiko
 
@@ -121,6 +122,22 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
     proxy = None
 
     if proxy_command:
+        # SECURITY: paramiko.ProxyCommand runs the given string as a local
+        # subprocess on the executor host (before any SSH authentication),
+        # so a caller-supplied proxy_command is a remote code execution
+        # vector. Only run commands an operator has explicitly allow-listed
+        # via [action_std_ssh] allowed_proxy_commands (empty by default,
+        # which rejects proxy_command entirely). Match by exact string to
+        # avoid argument smuggling.
+        allowed = cfg.CONF.action_std_ssh.allowed_proxy_commands
+
+        if proxy_command not in allowed:
+            raise exc.ActionException(
+                "proxy_command is not permitted. An administrator must add "
+                "the exact command to the [action_std_ssh] "
+                "allowed_proxy_commands configuration option to enable it."
+            )
+
         LOG.debug('Creating proxy using command: %s', proxy_command)
 
         proxy = paramiko.ProxyCommand(proxy_command)
