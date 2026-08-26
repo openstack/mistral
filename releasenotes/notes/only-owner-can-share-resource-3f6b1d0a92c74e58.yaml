@@ -1,0 +1,15 @@
+---
+security:
+  - |
+    Fixed a resource-sharing privilege escalation. Only the owner of a
+    workflow may now share it (create a membership for it). Previously the
+    share endpoint (``POST /v2/workflows/<id>/members``) only checked that
+    the caller could see the workflow and that it was private. A project
+    that had a workflow shared with it and accepted the share can read the
+    definition through the shared-resource query, and could therefore
+    re-share the owner's private workflow with a third project without the
+    owner's consent. The derived membership was owned by the re-sharing
+    project, so the real owner could neither see nor revoke it, while the
+    third project could accept it and read and execute the owner's private
+    workflow. The share operation is now rejected with 403 unless the
+    caller is the resource owner.

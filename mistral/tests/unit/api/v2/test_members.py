@@ -152,6 +152,49 @@ class TestMembersController(base.APITest):
         self.assertEqual(404, resp.status_int)
 
     @mock.patch('mistral.context.AuthHook.before')
+    def test_accepted_member_cannot_reshare(self, auth_mock):
+        # Owner (project A) shares the private workflow with member B.
+        resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
+
+        self.assertEqual(201, resp.status_int)
+
+        # Switch to member B and accept the share. Once accepted, B can
+        # read A's private workflow through the shared-resource query.
+        get_b = mock.MagicMock(return_value='11-22-33')
+
+        with mock.patch(GET_PROJECT_PATH, get_b):
+            resp = self.app.put_json(
+                '%s/11-22-33' % MEMBER_URL,
+                {'status': 'accepted'}
+            )
+
+            self.assertEqual(200, resp.status_int)
+
+            # B (an accepted member, not the owner) must not be able to
+            # re-share A's workflow with a third project C.
+            resp = self.app.post_json(
+                MEMBER_URL,
+                {'member_id': 'third-project-C'},
+                expect_errors=True
+            )
+
+            self.assertEqual(403, resp.status_int)
+            self.assertIn(
+                "Only the owner of a resource can share it",
+                resp.body.decode()
+            )
+
+        # And no membership for C leaked into the database.
+        member_c = db_api.get_resource_members(
+            WORKFLOW_MEMBER_PENDING['resource_id'], 'workflow'
+        )
+
+        self.assertNotIn(
+            'third-project-C',
+            [m.member_id for m in member_c]
+        )
+
+    @mock.patch('mistral.context.AuthHook.before')
     def test_get_other_memberships(self, auth_mock):
         resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
 
