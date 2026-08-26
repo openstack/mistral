@@ -23,6 +23,7 @@ from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.event_engine import default_event_engine as evt_eng
 from mistral.rpc import clients as rpc
+from mistral.services import maintenance
 from mistral.services import workflows
 from mistral.tests.unit import base
 
@@ -61,6 +62,24 @@ class EventEngineTest(base.DbTestCase):
         self.wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
         EVENT_TRIGGER['workflow_id'] = self.wf.id
+
+    @mock.patch(
+        'mistral.event_engine.default_event_engine.db_api'
+        '.get_maintenance_status'
+    )
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_start_workflow_skipped_during_maintenance(self, mock_status):
+        e_engine = evt_eng.DefaultEventEngine()
+
+        # Event triggers must not start workflows while the cluster is
+        # entering or in maintenance mode.
+        for status in (maintenance.PAUSING, maintenance.PAUSED):
+            mock_status.return_value = status
+            e_engine.engine_client.start_workflow.reset_mock()
+
+            e_engine._start_workflow([EVENT_TRIGGER], {})
+
+            e_engine.engine_client.start_workflow.assert_not_called()
 
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_start_with_no_triggers(self):

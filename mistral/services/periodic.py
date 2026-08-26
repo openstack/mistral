@@ -24,6 +24,7 @@ from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
 from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
+from mistral.services import maintenance as maintenance_service
 from mistral.services import security
 from mistral.services import triggers
 
@@ -36,6 +37,23 @@ _periodic_tasks = {}
 
 
 def process_cron_triggers_v2(self, ctx):
+    # Do not start new workflows while the cluster is in (or entering)
+    # maintenance mode. The API blocks workflow starts via the maintenance
+    # hook, but cron triggers start workflows through a direct RPC call
+    # that bypasses it, so the check has to be repeated here. The triggers
+    # are left untouched (not advanced), so they fire normally once
+    # maintenance is lifted.
+    maintenance_status = db_api_v2.get_maintenance_status()
+
+    if maintenance_status in (maintenance_service.PAUSING,
+                              maintenance_service.PAUSED):
+        LOG.debug(
+            "Mistral is in maintenance mode (%s); skipping cron triggers.",
+            maintenance_status
+        )
+
+        return
+
     LOG.debug("Processing cron triggers...")
 
     for trigger in triggers.get_next_cron_triggers():

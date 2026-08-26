@@ -30,6 +30,7 @@ from mistral import exceptions
 from mistral import expressions
 from mistral import messaging as mistral_messaging
 from mistral.rpc import clients as rpc
+from mistral.services import maintenance as maintenance_service
 from mistral.services import security
 from mistral.utils import safe_yaml
 
@@ -234,6 +235,23 @@ class DefaultEventEngine(base.EventEngine):
 
     def _start_workflow(self, triggers, event_params):
         """Start workflows defined in event triggers."""
+        # Do not start new workflows while the cluster is in (or entering)
+        # maintenance mode. The API blocks workflow starts via the
+        # maintenance hook, but event triggers start workflows through a
+        # direct RPC call that bypasses it, so the check has to be repeated
+        # here.
+        maintenance_status = db_api.get_maintenance_status()
+
+        if maintenance_status in (maintenance_service.PAUSING,
+                                  maintenance_service.PAUSED):
+            LOG.debug(
+                "Mistral is in maintenance mode (%s); skipping event "
+                "triggers.",
+                maintenance_status
+            )
+
+            return
+
         for t in triggers:
             LOG.info('Start to process event trigger: %s', t['id'])
 
