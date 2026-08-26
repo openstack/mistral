@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fixed the health check (``[healthcheck] enabled = true``) answering
+    *every* request with a 200 and a 0-byte body, so that requests for
+    missing resources returned 200 instead of 404. Recent
+    ``oslo.middleware`` releases dropped the internal ``/healthcheck`` path
+    match from the Healthcheck middleware, so wrapping it around the whole
+    application made it intercept all paths. The API now routes only
+    ``/healthcheck`` to the middleware and passes every other request to
+    the application.
