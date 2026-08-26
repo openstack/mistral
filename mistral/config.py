@@ -266,7 +266,18 @@ engine_opts = [
                '"{{ [0] * 2000000000 }}"). 0 (the default) disables the '
                'limit. Tune it to the memory budget of the engine process; '
                'note that it caps the whole process, not only expression '
-               'evaluation.')
+               'evaluation. WARNING: RLIMIT_AS bounds *virtual* memory, '
+               'which in a threaded process is far larger than resident '
+               'memory - thread stacks (~8 MiB each) and glibc malloc '
+               'arenas (~64 MiB of virtual memory each, up to one per '
+               'thread) count toward it. Set too low, the limit can be '
+               'reached while resident memory is still small, and the '
+               'engine then fails to create threads with '
+               '"RuntimeError: can\'t start new thread". Budget generously '
+               'for virtual memory (several GiB), set MALLOC_ARENA_MAX=2 in '
+               'the environment to shrink the glibc arena reservations, or '
+               'prefer a cgroup / container memory limit, which bounds '
+               'resident memory without this side effect.')
     ),
     cfg.IntOpt(
         'execution_integrity_check_delay',
