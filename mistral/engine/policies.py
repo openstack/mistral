@@ -152,16 +152,6 @@ def build_fail_on_policy(policies_spec):
             if fail_on_policy else None)
 
 
-def _ensure_context_has_key(runtime_context, key):
-    if not runtime_context:
-        runtime_context = {}
-
-    if key not in runtime_context:
-        runtime_context.update({key: {}})
-
-    return runtime_context
-
-
 class WaitBeforePolicy(base.TaskPolicy):
     _schema = {
         "properties": {

@@ -294,17 +294,6 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
     return query.all()
 
 
-def get_db_objects(model, insecure=False, **filters):
-    # Allow admin to retrieve all objects by overwriting insecure
-    if context.has_ctx():
-        insecure = context.ctx().is_admin or insecure
-
-    query = b.model_query(model) if insecure else _secure_query(model)
-    query = db_filters.apply_filters(query, model, **filters)
-
-    return query
-
-
 def _get_count(model, insecure=False, **filters):
     # Allow admin to retrieve all objects by overwriting insecure
     if context.has_ctx():

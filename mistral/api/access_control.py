@@ -113,24 +113,3 @@ def _ensure_enforcer_initialization():
         _ENFORCER = policy.Enforcer(cfg.CONF)
         _ENFORCER.register_defaults(policies.list_rules())
         _ENFORCER.load_rules()
-
-
-def get_limited_to(headers):
-    """Return the user and project the request should be limited to.
-
-    :param headers: HTTP headers dictionary
-    :return: A tuple of (user, project), set to None if there's no limit on
-    one of these.
-
-    """
-    return headers.get('X-User-Id'), headers.get('X-Project-Id')
-
-
-def get_limited_to_project(headers):
-    """Return the project the request should be limited to.
-
-    :param headers: HTTP headers dictionary
-    :return: A project, or None if there's no limit on it.
-
-    """
-    return get_limited_to(headers)[1]
