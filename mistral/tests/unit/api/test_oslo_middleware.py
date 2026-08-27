@@ -14,7 +14,11 @@
 
 """Tests http_proxy_to_wsgi middleware."""
 
+import webob
+
+from mistral.api import app as api_app
 from mistral.tests.unit.api import base
+from mistral.tests.unit import base as test_base
 from oslo_config import cfg
 from oslo_middleware import healthcheck
 from oslo_middleware import http_proxy_to_wsgi
@@ -64,3 +68,39 @@ class TestHealthcheckMiddleware(base.APITest):
 
         # Create the application.
         super(TestHealthcheckMiddleware, self).setUp()
+
+
+class TestHealthcheckPathDispatch(test_base.BaseTest):
+    """The healthcheck must only answer on /healthcheck.
+
+    Recent oslo.middleware Healthcheck, wrapped around the whole app,
+    answers every request with 200, so a missing resource returns 200
+    instead of 404. mistral routes only /healthcheck to it.
+    """
+
+    @staticmethod
+    def _real_app(environ, start_response):
+        start_response('404 Not Found', [('Content-Type', 'text/plain')])
+        return [b'not found']
+
+    def setUp(self):
+        super(TestHealthcheckPathDispatch, self).setUp()
+
+        self.dispatched = api_app._mount_healthcheck(self._real_app)
+
+    def _get(self, path):
+        return webob.Request.blank(path).get_response(self.dispatched)
+
+    def test_healthcheck_path_is_answered_by_healthcheck(self):
+        resp = self._get('/healthcheck')
+
+        self.assertEqual(200, resp.status_int)
+
+    def test_other_paths_reach_the_real_app(self):
+        # The bug was that these returned 200 from the healthcheck instead
+        # of reaching the real application.
+        for path in ('/v2/workflows/does-not-exist', '/', '/anything'):
+            resp = self._get(path)
+
+            self.assertEqual(404, resp.status_int)
+            self.assertIn(b'not found', resp.body)

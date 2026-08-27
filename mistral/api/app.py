@@ -31,6 +31,31 @@ from mistral.services import periodic
 
 LOG = logging.getLogger(__name__)
 
+HEALTHCHECK_PATH = '/healthcheck'
+
+
+def _mount_healthcheck(app):
+    """Route only /healthcheck to the oslo.middleware healthcheck.
+
+    Recent oslo.middleware versions dropped the internal path match from
+    the Healthcheck *middleware*: wrapped around the whole application it
+    answers every request with a 200 (a 0-byte health response), so a
+    request to a non-existent resource returns 200 instead of 404. The
+    healthcheck is meant to be mounted at its own path now, so we dispatch
+    on the path ourselves and send everything except /healthcheck straight
+    to the real application.
+    See lp-2163387
+    """
+    hc = healthcheck.Healthcheck(app, cfg.CONF)
+
+    def dispatch(environ, start_response):
+        if environ.get('PATH_INFO', '') == HEALTHCHECK_PATH:
+            return hc(environ, start_response)
+
+        return app(environ, start_response)
+
+    return dispatch
+
 
 def get_pecan_config():
     # Set up the pecan configuration.
@@ -96,9 +121,9 @@ def setup_app(config=None):
     # Create HTTPProxyToWSGI wrapper
     app = http_proxy_to_wsgi.HTTPProxyToWSGI(app, cfg.CONF)
 
-    # Create a healthcheck wrapper
+    # Create a healthcheck wrapper (only answering on /healthcheck).
     if cfg.CONF.healthcheck.enabled:
-        app = healthcheck.Healthcheck(app, cfg.CONF)
+        app = _mount_healthcheck(app)
 
     # Create a CORS wrapper, and attach mistral-specific defaults that must be
     # included in all CORS responses.
