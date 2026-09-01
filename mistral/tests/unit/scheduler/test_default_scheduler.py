@@ -65,7 +65,7 @@ class DefaultSchedulerTest(base.DbTestCase):
         self.addCleanup(self.timeout_thread.stop)
 
         def reraise_timeout(t):
-            """Re-raise a thread timeout if occured"""
+            """Re-raise a thread timeout if occurred"""
             if t.exception:
                 raise t.exception
         self.addCleanup(reraise_timeout, self.timeout_thread)

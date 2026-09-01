@@ -18,7 +18,7 @@
 class MistralFailuresBase(Exception):
     """Base class for mistral errors and exceptions"""
 
-    message = "An unknow failure occured"
+    message = "An unknown failure occurred"
 
     http_code = 500
 
@@ -33,7 +33,7 @@ class MistralFailuresBase(Exception):
     def code(self):
         """This is here for webob to read.
 
-        https://github.com/Pylons/webob/blob/master/webob/exc.py
+        https://github.com/Pylons/webob/blob/main/src/webob/exc.py
         """
         return self.http_code
 
