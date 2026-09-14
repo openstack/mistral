@@ -33,8 +33,6 @@ def cleanup():
 
 
 def get_notifier(notifier_name):
-    global _NOTIFIERS
-
     if not _NOTIFIERS.get(notifier_name):
         mgr = driver.DriverManager(
             'mistral.notifiers',
@@ -48,8 +46,6 @@ def get_notifier(notifier_name):
 
 
 def get_notification_publisher(publisher_name):
-    global _NOTIFICATION_PUBLISHERS
-
     if not _NOTIFICATION_PUBLISHERS.get(publisher_name):
         mgr = driver.DriverManager(
             'mistral.notification.publishers',

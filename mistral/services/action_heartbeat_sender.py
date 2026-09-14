@@ -33,8 +33,6 @@ _running_actions = set()
 
 
 def add_action(action_ex_id):
-    global _enabled
-
     # With run-action there is no actions_ex_id assigned.
     if action_ex_id and _enabled:
         rpc.get_engine_client().process_action_heartbeats([action_ex_id])
@@ -43,16 +41,12 @@ def add_action(action_ex_id):
 
 
 def remove_action(action_ex_id):
-    global _enabled
-
     if action_ex_id and _enabled:
         _running_actions.discard(action_ex_id)
 
 
 def send_action_heartbeats():
     LOG.debug('Running heartbeat sender...')
-
-    global _running_actions
 
     if not _running_actions:
         return
@@ -61,8 +55,6 @@ def send_action_heartbeats():
 
 
 def _loop():
-    global _stopped
-
     # This is an administrative thread so we need to set an admin
     # security context.
     auth_ctx.set_ctx(
