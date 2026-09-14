@@ -103,8 +103,6 @@ def instantiate_spec(spec_cls, data, validate=False):
 
     polymorphic_val = data.get(key_name, key_default)
 
-    global _POLYMORPHIC_CACHE
-
     cache_key = (spec_cls, polymorphic_val)
 
     concrete_spec_cls = _POLYMORPHIC_CACHE.get(cache_key)

@@ -85,7 +85,6 @@ def launch_any(options):
 
     # Wait for the services to finish now
     # This main process will do nothing starting from now
-    global SERVER_PROCESS_MANAGER
     if SERVER_PROCESS_MANAGER:
         sys.exit(SERVER_PROCESS_MANAGER.wait())
 

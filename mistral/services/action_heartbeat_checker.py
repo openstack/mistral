@@ -114,8 +114,6 @@ def handle_expired_actions():
 
 
 def _loop():
-    global _stopped
-
     # This is an administrative thread so we need to set an admin
     # security context.
     auth_ctx.set_ctx(

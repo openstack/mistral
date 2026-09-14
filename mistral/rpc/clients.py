@@ -67,7 +67,6 @@ def cleanup():
 
 def get_engine_client():
     global _ENGINE_CLIENT
-    global _ENGINE_CLIENT_LOCK
 
     with _ENGINE_CLIENT_LOCK:
         if not _ENGINE_CLIENT:
@@ -78,7 +77,6 @@ def get_engine_client():
 
 def get_executor_client():
     global _EXECUTOR_CLIENT
-    global _EXECUTOR_CLIENT_LOCK
 
     with _EXECUTOR_CLIENT_LOCK:
         if not _EXECUTOR_CLIENT:
@@ -89,7 +87,6 @@ def get_executor_client():
 
 def get_event_engine_client():
     global _EVENT_ENGINE_CLIENT
-    global _EVENT_ENGINE_CLIENT_LOCK
 
     with _EVENT_ENGINE_CLIENT_LOCK:
         if not _EVENT_ENGINE_CLIENT:
@@ -100,7 +97,6 @@ def get_event_engine_client():
 
 def get_notifier_client():
     global _NOTIFIER_CLIENT
-    global _NOTIFIER_CLIENT_LOCK
 
     with _NOTIFIER_CLIENT_LOCK:
         if not _NOTIFIER_CLIENT:

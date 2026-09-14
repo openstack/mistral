@@ -25,8 +25,6 @@ def cleanup():
 
 
 def get_executor(exec_type):
-    global _EXECUTORS
-
     if not _EXECUTORS.get(exec_type):
         mgr = driver.DriverManager(
             'mistral.executors',
