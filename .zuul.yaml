@@ -61,8 +61,11 @@
         - openstack-tox-cover:
             voting: false
             irrelevant-files:
+              - ^\.gitignore$
+              - ^\.gitreview$
               - ^.zuul.yaml$
               - ^.*\.rst$
+              - ^api-ref/.*$
               - ^doc/.*$
               - ^releasenotes/.*$
         - mistral-devstack
