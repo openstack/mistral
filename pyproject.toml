@@ -9,7 +9,7 @@ authors = [
     {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 dynamic = ["version", "dependencies"]
 requires-python = ">=3.11"
 classifiers = [
@@ -117,7 +117,5 @@ py_mini_racer = "mistral.utils.javascript:PyMiniRacerEvaluator"
 legacy = "mistral.services.legacy_scheduler:LegacyScheduler"
 default = "mistral.scheduler.default_scheduler:DefaultScheduler"
 
-[tool.setuptools]
-packages = [
-    "mistral"
-]
+[tool.setuptools.packages.find]
+include = ["mistral*"]
