@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Trust lookups and deletions now use the keystone configured in
+    ``[keystone_authtoken] auth_url``, the same one trusts are created in,
+    instead of the first identity endpoint of the service catalog. This
+    fixes "Could not find trust" errors and leaked trusts in deployments
+    with one keystone per region. See LP#1862940.
