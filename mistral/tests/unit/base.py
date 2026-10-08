@@ -305,6 +305,8 @@ class DbTestCase(BaseTest):
                     db_api.delete_resource_members()
                     db_api.delete_delayed_calls()
                     db_api.delete_scheduled_jobs()
+                    db_api.delete_dynamic_action_definitions()
+                    db_api.delete_code_sources()
 
         sqlite_lock.cleanup()
 
