@@ -33,8 +33,8 @@ def id_column():
 class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
     """Base class for all Mistral SQLAlchemy DB Models."""
 
-    created_at = sa.Column(sa.DateTime, default=lambda: utils.utc_now_sec())
-    updated_at = sa.Column(sa.DateTime, onupdate=lambda: utils.utc_now_sec())
+    created_at = sa.Column(sa.DateTime, default=utils.utc_now_sec)
+    updated_at = sa.Column(sa.DateTime, onupdate=utils.utc_now_sec)
 
     __table__ = None
 
