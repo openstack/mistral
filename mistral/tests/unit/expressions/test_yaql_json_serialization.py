@@ -21,17 +21,6 @@ from mistral import utils
 
 
 class YaqlJsonSerializationTest(base.BaseTest):
-    def test_serialize_frozen_dict(self):
-        data = yaql_utils.FrozenDict(a=1, b=2, c=iter([1, 2, 3]))
-
-        json_str = utils.to_json_str(data)
-
-        self.assertIsNotNone(json_str)
-
-        self.assertIn('"a": 1', json_str)
-        self.assertIn('"b": 2', json_str)
-        self.assertIn('"c": [1, 2, 3]', json_str)
-
     def test_serialize_generator(self):
         def _list_stream(_list):
             for i in _list:

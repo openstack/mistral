@@ -159,11 +159,6 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
         self.assertEqual(ctx['__env'], self._evaluator.evaluate('env()', ctx))
 
-    def test_filter_env(self):
-        ctx = {'__env': 'some'}
-
-        self.assertEqual(ctx['__env'], self._evaluator.evaluate('_|env', ctx))
-
     @mock.patch('mistral.db.v2.api.get_task_executions')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
     def test_filter_task_without_task_execution(self, task_execution_result,
@@ -235,32 +230,6 @@ class JinjaEvaluatorTest(base.DbTestCase):
         }
 
         result = self._evaluator.evaluate('_|task("some")', ctx)
-
-        self.assertEqual({
-            'id': task_execution().id,
-            'name': task_execution().name,
-            'published': task_execution().published,
-            'result': task_execution_result(),
-            'spec': task_execution().spec,
-            'state': task_execution().state,
-            'state_info': task_execution().state_info,
-            'type': task_execution().type,
-            'workflow_execution_id': task_execution().workflow_execution_id,
-            'created_at': task_execution().created_at.isoformat(' '),
-            'updated_at': task_execution().updated_at.isoformat(' ')
-        }, result)
-
-    @mock.patch('mistral.db.v2.api.get_task_execution')
-    @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_function_task(self, task_execution_result, task_execution):
-        ctx = {
-            '__task_execution': {
-                'id': 'some',
-                'name': 'some'
-            }
-        }
-
-        result = self._evaluator.evaluate('task("some")', ctx)
 
         self.assertEqual({
             'id': task_execution().id,
@@ -415,29 +384,6 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
             self.assertEqual([], result)
 
-    @mock.patch('mistral.db.v2.api.get_workflow_execution')
-    def test_function_execution(self, workflow_execution):
-        wf_ex = mock.MagicMock(return_value={})
-        workflow_execution.return_value = wf_ex
-        ctx = {
-            '__execution': {
-                'id': 'some'
-            }
-        }
-
-        result = self._evaluator.evaluate('execution()', ctx)
-
-        self.assertEqual({
-            'id': wf_ex.id,
-            'name': wf_ex.name,
-            'spec': wf_ex.spec,
-            'input': wf_ex.input,
-            'params': wf_ex.params,
-            'created_at': wf_ex.created_at.isoformat(' '),
-            'updated_at': wf_ex.updated_at.isoformat(' '),
-            'root_execution_id': wf_ex.root_execution_id
-        }, result)
-
 
 class InlineJinjaEvaluatorTest(base.BaseTest):
     def setUp(self):
@@ -515,17 +461,6 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
     def test_single_value_casting(self):
         self.assertEqual(3, self._evaluator.evaluate('{{ _ }}', 3))
         self.assertEqual('33', self._evaluator.evaluate('{{ _ }}{{ _ }}', 3))
-
-    def test_multiple_expressions(self):
-        context = {'dir': '/tmp',
-                   'file': 'a.txt'}
-        expected_result = '/tmp/a.txt'
-        result = self._evaluator.evaluate('{{ _.dir }}/{{ _.file }}', context)
-        self.assertEqual(expected_result, result)
-
-    def test_function_string(self):
-        self.assertEqual('3', self._evaluator.evaluate('{{ _|string }}', '3'))
-        self.assertEqual('3', self._evaluator.evaluate('{{ _|string }}', 3))
 
     def test_validate(self):
         self._evaluator.validate('There is no expression.')

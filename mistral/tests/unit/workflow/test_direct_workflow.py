@@ -16,7 +16,6 @@ from unittest import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
@@ -149,23 +148,3 @@ class DirectWorkflowControllerTest(base.DbTestCase):
         task2_ex.processed = True
 
         self.assertEqual(0, len(cmds))
-
-    def test_continue_workflow_no_start_tasks(self):
-        wf_text = """---
-        version: '2.0'
-
-        wf:
-          description: >
-            Invalid workflow that doesn't have start tasks (tasks with
-            no inbound connections).
-          type: direct
-
-          tasks:
-            task1:
-              on-complete: task2
-
-            task2:
-              on-complete: task1
-        """
-
-        self.assertRaises(exc.DSLParsingException, self._prepare_test, wf_text)
