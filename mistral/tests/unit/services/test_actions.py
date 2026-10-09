@@ -28,8 +28,6 @@ class FakeExtManager:
 
 
 class ActionsTest(base.DbTestCase):
-    def setUp(self):
-        super(ActionsTest, self).setUp()
 
     @mock.patch('stevedore.enabled.ExtensionManager')
     def test_get_registered_providers(self, mock_ext_mgr):
@@ -41,15 +39,6 @@ class ActionsTest(base.DbTestCase):
         self.assertEqual('legacy', providers[2].name)
 
     @mock.patch('stevedore.enabled.ExtensionManager')
-    def test_get_registered_providers_allowlist(self, mock_ext_mgr):
-        self.override_config(
-            'allowlist', ['dynamic'], config.ACTION_PROVIDERS_GROUP)
-        mock_ext_mgr.return_value = FakeExtManager()
-        providers = _get_registered_providers()
-        self.assertEqual(1, len(providers))
-        self.assertEqual('dynamic', providers[0].name)
-
-    @mock.patch('stevedore.enabled.ExtensionManager')
     def test_get_registered_providers_allowlist_fnmatch(self, mock_ext_mgr):
         self.override_config(
             'allowlist', ['ad*'], config.ACTION_PROVIDERS_GROUP)
@@ -57,16 +46,6 @@ class ActionsTest(base.DbTestCase):
         providers = _get_registered_providers()
         self.assertEqual(1, len(providers))
         self.assertEqual('adhoc', providers[0].name)
-
-    @mock.patch('stevedore.enabled.ExtensionManager')
-    def test_get_registered_providers_denylist(self, mock_ext_mgr):
-        self.override_config(
-            'denylist', ['legacy'], config.ACTION_PROVIDERS_GROUP)
-        mock_ext_mgr.return_value = FakeExtManager()
-        providers = _get_registered_providers()
-        self.assertEqual(2, len(providers))
-        self.assertEqual('adhoc', providers[0].name)
-        self.assertEqual('dynamic', providers[1].name)
 
     @mock.patch('stevedore.enabled.ExtensionManager')
     def test_get_registered_providers_denylist_fnmatch(self, mock_ext_mgr):

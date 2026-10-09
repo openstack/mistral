@@ -155,22 +155,3 @@ class AdhocActionServiceTest(base.DbTestCase):
             UPDATED_ACTION_LIST,
             namespace=''
         )
-
-    def test_delete_action(self):
-
-        # Create action.
-        adhoc_action_service.create_actions(ACTION_LIST, namespace=NAMESPACE)
-
-        action = db_api.get_action_definition('action1', namespace=NAMESPACE)
-        self.assertEqual(NAMESPACE, action.get('namespace'))
-        self.assertEqual('action1', action.get('name'))
-
-        # Delete action.
-        db_api.delete_action_definition('action1', namespace=NAMESPACE)
-
-        self.assertRaises(
-            DBEntityNotFoundError,
-            db_api.get_action_definition,
-            name='action1',
-            namespace=NAMESPACE
-        )

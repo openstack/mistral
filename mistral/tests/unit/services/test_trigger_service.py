@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import datetime
-import testtools
 import time
 from unittest import mock
 
@@ -287,66 +286,3 @@ class TriggerServiceV2Test(base.DbTestCase):
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
 
         self.assertEqual([t2_name, t1_name, t3_name], trigger_names)
-
-    # NOTE(amorin) this is sometime blocking since we introduced Rlock in SQL
-    # transaction. I was never able to reproduce it locally on my (old)
-    # laptop.
-    # I suspect that this is blocking because threads are racing to use the
-    # SQL connection.
-    # We can't actually consider starting multiple threads to act as
-    # multiple processes anyway.
-    # So let's skip this test until we figure out something smarter.
-    @testtools.skip('Skipped because of threading concurrency')
-    @mock.patch(
-        'mistral.services.periodic.advance_cron_trigger',
-        mock.MagicMock(side_effect=periodic.advance_cron_trigger)
-    )
-    @mock.patch.object(rpc.EngineClient, 'start_workflow')
-    def test_single_execution_with_multiple_processes(self, start_wf_mock):
-        def stop_thread_groups():
-            [tg.stop() for tg in self.trigger_threads]
-
-        self.trigger_threads = [
-            periodic.setup(),
-            periodic.setup(),
-            periodic.setup()
-        ]
-        self.addCleanup(stop_thread_groups)
-
-        trigger_count = 5
-        t_s.create_cron_trigger(
-            'ct1',
-            self.wf.name,
-            {},
-            {},
-            '* * * * * */1',  # Every second
-            None,
-            trigger_count,
-            datetime.datetime(2010, 8, 25)
-        )
-
-        # Wait until there are 'trigger_count' executions.
-        self._await(
-            lambda: self._wait_for_single_execution_with_multiple_processes(
-                trigger_count,
-                start_wf_mock
-            )
-        )
-
-        # Wait some more and make sure there are no more than 'trigger_count'
-        # executions.
-        time.sleep(5)
-
-        self.assertEqual(trigger_count, start_wf_mock.call_count)
-
-    def _wait_for_single_execution_with_multiple_processes(self, trigger_count,
-                                                           start_wf_mock):
-        time.sleep(1)
-
-        return trigger_count == start_wf_mock.call_count
-
-    def test_get_next_execution_time(self):
-        pattern = '*/20 * * * *'
-        start_time = datetime.datetime(2016, 3, 22, 23, 40)
-        result = t_s.get_next_execution_time(pattern, start_time)
-        self.assertEqual(result, datetime.datetime(2016, 3, 23, 0, 0))

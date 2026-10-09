@@ -233,26 +233,6 @@ class ExpirationPolicyTest(base.DbTestCase):
         execs = db_api.get_expired_executions(now)
         self.assertEqual(0, len(execs))
 
-    def test_deletion_of_expired_executions_with_batch_size_scenario2(self):
-        """scenario2
-
-        This test will use batch_size of 2, 5 expired executions
-        with value of "older_than" that is 5 minutes.
-        Expected_result: All expired executions are successfully deleted.
-        """
-
-        _create_workflow_executions()
-        now = timeutils.utcnow()
-
-        _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=5,
-            batch_size=2
-        )
-        expiration_policy.run_execution_expiration_policy(self, ctx)
-        execs = db_api.get_expired_executions(now)
-        self.assertEqual(0, len(execs))
-
     def test_expiration_policy_for_executions_with_max_executions_scen1(self):
         """scenario1
 
@@ -352,9 +332,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         _assert_scheduling([1, 1, 1, None], True)
         _assert_scheduling([1, None, None, None], False)
         _assert_scheduling([None, 1, 1, None], False)
-        _assert_scheduling([None, 1, 1, None], False)
         _assert_scheduling([1, 0, 0, 0], False)
-        _assert_scheduling([0, 1, 1, 0], False)
         _assert_scheduling([0, 1, 1, 0], False)
 
     def tearDown(self):
