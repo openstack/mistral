@@ -56,8 +56,8 @@ class ServiceLauncherTest(base.DbTestCase):
         launch.launch_any(['api', 'executor'])
 
         # Make sure we tried to start 2 services
-        mock_launch_service.call_count = 2
-        mock_wait.call_count = 2
+        self.assertEqual(2, mock_launch_service.call_count)
+        mock_wait.assert_called_once_with()
         mock_exit.assert_called_once()
 
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
