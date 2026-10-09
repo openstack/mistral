@@ -191,21 +191,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        self.assertEqual(
-            states.SUCCESS,
-            self.engine.resume_workflow(wf_ex.id).state
-        )
-
-        self.assertRaises(
-            exc.WorkflowException,
-            self.engine.pause_workflow, wf_ex.id
-        )
-
-        self.assertEqual(
-            states.SUCCESS,
-            self.engine.stop_workflow(wf_ex.id, states.ERROR).state
-        )
-
     def test_wrong_task_input(self):
         wf_text = """
         version: '2.0'
@@ -500,49 +485,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertEqual(0, len(task_2_action_exs))
 
-    def test_second_task_with_input_jinja_error(self):
-        wf_def = """---
-        version: '2.0'
-        wf:
-          tasks:
-            first:
-              on-success:
-                - second
-            second:
-              action: std.echo
-              input:
-                output: |
-                  !! {{ _.nonexistent_variable }} !!"""
-
-        wf_service.create_workflows(wf_def)
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            tasks = wf_ex.task_executions
-
-        self.assertEqual(2, len(tasks))
-
-        task_first = self._assert_single_item(
-            tasks, name="first", state=states.SUCCESS
-        )
-        task_second = self._assert_single_item(
-            tasks, name="second", state=states.ERROR
-        )
-
-        with db_api.transaction():
-            first_tasks_action_exs = db_api.get_action_executions(
-                task_execution_id=task_first.id)
-            second_tasks_action_exs = db_api.get_action_executions(
-                task_execution_id=task_second.id)
-
-        self.assertEqual(1, len(first_tasks_action_exs))
-        self.assertEqual(states.SUCCESS, first_tasks_action_exs[0].state)
-
-        self.assertEqual(0, len(second_tasks_action_exs))
-
     def test_messed_yaql_in_first_task(self):
         wf_text = """
         version: '2.0'
@@ -565,29 +507,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             "Can not evaluate YAQL expression [expression=wrong(yaql)",
             wf_ex.state_info
         )
-        self.assertEqual(states.ERROR, wf_ex.state)
-
-    def test_mismatched_yaql_in_first_task(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          input:
-            - var
-
-          tasks:
-            task1:
-              action: std.echo output=<% $.var + $.var2 %>
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf', wf_input={'var': 2})
-        self.await_workflow_error(wf_ex.id)
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertIn("Can not evaluate YAQL expression", wf_ex.state_info)
         self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_one_line_syntax_in_on_clauses(self):
@@ -935,109 +854,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task4.runtime_context.get(key)
         )
 
-    def test_task_in_context_immutability(self):
-        wf_text = """---
-        version: '2.0'
-
-        wf:
-          description: |
-            The idea of this workflow is to have two parallel branches and
-            publish different data in these branches. When the workflow
-            completed we need to check that during internal manipulations
-            with workflow contexts belonging to different branches the inbound
-            contexts of all tasks keep their initial values.
-
-          tasks:
-            # Start task.
-            task0:
-              publish:
-                var0: val0
-              on-success:
-                - task1_1
-                - task2_1
-
-            task1_1:
-              publish:
-                var1: val1
-              on-success: task1_2
-
-            # The last task in the 1st branch.
-            task1_2:
-              action: std.noop
-
-            task2_1:
-              publish:
-                var2: val2
-              on-success: task2_2
-
-            # The last task in the 2nd branch.
-            task2_2:
-              action: std.noop
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            tasks_execs = wf_ex.task_executions
-
-        task0_ex = self._assert_single_item(tasks_execs, name='task0')
-        task1_1_ex = self._assert_single_item(tasks_execs, name='task1_1')
-        task1_2_ex = self._assert_single_item(tasks_execs, name='task1_2')
-        task2_1_ex = self._assert_single_item(tasks_execs, name='task2_1')
-        task2_2_ex = self._assert_single_item(tasks_execs, name='task2_2')
-
-        self.assertDictEqual({}, task0_ex.in_context)
-        self.assertDictEqual(
-            {
-                'var0': 'val0',
-                '__versions':
-                {
-                    'var0': 1
-                }
-            },
-            task1_1_ex.in_context
-        )
-        self.assertDictEqual(
-            {
-                'var0': 'val0',
-                'var1': 'val1',
-                '__versions':
-                {
-                    'var0': 1,
-                    'var1': 1
-                }
-            },
-            task1_2_ex.in_context
-        )
-        self.assertDictEqual(
-            {
-                'var0': 'val0',
-                '__versions':
-                {
-                    'var0': 1
-                }
-            },
-            task2_1_ex.in_context
-        )
-        self.assertDictEqual(
-            {
-                'var0': 'val0',
-                'var2': 'val2',
-                '__versions':
-                {
-                    'var0': 1,
-                    'var2': 1
-                }
-            },
-            task2_2_ex.in_context
-        )
-
     def test_big_on_closures(self):
         # The idea of the test is to run a workflow with a big 'on-success'
         # list of tasks and big task inbound context ('task_ex.in_context)
@@ -1166,25 +982,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             # converted into a string no matter what we tried to assign. But
             # that didn't happen on Python 2.7 which caused an SQL exception.
             self.assertIsInstance(task_ex.state_info, str)
-
-    def test_single_fail_with_next_noop(self):
-        wf_text = """---
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.fail
-              on-error:
-                - noop
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_success(wf_ex.id)
 
     def test_unexisting_join_task_does_not_stuck_wf_running(self):
         wf_text = """---

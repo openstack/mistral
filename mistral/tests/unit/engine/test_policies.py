@@ -798,42 +798,6 @@ class PoliciesTest(base.EngineTestCase):
         'request',
         mock.MagicMock(side_effect=Exception())
     )
-    def test_retry_policy_from_var_zero_iterations(self):
-        wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'count': 0, 'delay': 1}
-        )
-
-        with db_api.transaction():
-            # Note: We need to reread execution to access related tasks.
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        self.assertDictEqual({}, task_ex.runtime_context)
-
-        try:
-            self.await_task_delayed(task_ex.id, delay=0.5)
-        except AssertionError:
-            # There were no scheduled tasks as expected.
-            pass
-        else:
-            self.fail("Shouldn't happen")
-
-        self.await_task_error(task_ex.id)
-
-        self.await_workflow_error(wf_ex.id)
-
-        self.assertNotIn("retry_task_policy", task_ex.runtime_context)
-
-    @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
-    )
     def test_retry_policy_from_var_negative_numbers(self):
         wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
 

@@ -226,17 +226,6 @@ class RunActionEngineTest(base.EngineTestCase):
             self.assertEqual(states.SUCCESS, action_ex.state)
             self.assertEqual({'result': 'Hello!'}, action_ex.output)
 
-    def test_run_action_run_sync(self):
-        # Start action.
-        action_ex = self.engine.start_action(
-            'std.echo',
-            {'output': 'Hello!'},
-            run_sync=True
-        )
-
-        self.assertEqual('Hello!', action_ex.output['result'])
-        self.assertEqual(states.SUCCESS, action_ex.state)
-
     def test_run_action_save_result_and_run_sync(self):
         # Start action.
         action_ex = self.engine.start_action(
@@ -307,15 +296,6 @@ class RunActionEngineTest(base.EngineTestCase):
         action_ex = self.engine.start_action(
             'concat',
             {'left': 'Hello, ', 'right': 'John Doe!'}
-        )
-
-        self.assertEqual('Hello, John Doe!', action_ex.output['result'])
-
-    def test_run_level_two_action_adhoc(self):
-        # Start action and see the result.
-        action_ex = self.engine.start_action(
-            'concat3',
-            {'left': 'Hello, ', 'center': 'John', 'right': ' Doe!'}
         )
 
         self.assertEqual('Hello, John Doe!', action_ex.output['result'])

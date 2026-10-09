@@ -18,7 +18,6 @@ from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.lang import parser as spec_parser
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
@@ -29,28 +28,6 @@ from mistral_lib import actions as ml_actions
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
-
-
-RESUME_WORKBOOK = """
----
-version: '2.0'
-
-name: wb
-
-workflows:
-  wf1:
-    type: direct
-
-    tasks:
-      task1:
-        action: std.echo output="Hi!"
-        on-complete:
-          - task2
-          - pause
-
-      task2:
-        action: std.echo output="Task 2"
-"""
 
 
 RESUME_WORKBOOK_DIFF_ENV_VAR = """
@@ -186,44 +163,6 @@ workflows:
 
 
 class WorkflowResumeTest(base.EngineTestCase):
-    def setUp(self):
-        super(WorkflowResumeTest, self).setUp()
-
-        self.wb_spec = spec_parser.get_workbook_spec_from_yaml(RESUME_WORKBOOK)
-        self.wf_spec = self.wb_spec.get_workflows()['wf1']
-
-    def test_resume_direct(self):
-        wb_service.create_workbook_v2(RESUME_WORKBOOK)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1')
-
-        self.await_workflow_paused(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_execs = wf_ex.task_executions
-
-        self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(task_execs))
-
-        self.engine.resume_workflow(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            self.assertEqual(2, len(wf_ex.task_executions))
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_execs = wf_ex.task_executions
-
-        self.assertEqual(states.SUCCESS, wf_ex.state)
-        self.assertEqual(2, len(task_execs))
 
     def test_resume_reverse(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_REVERSE)

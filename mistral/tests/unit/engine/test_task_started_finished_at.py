@@ -19,8 +19,6 @@ from mistral.services import workflows as wf_service
 
 
 class TaskStartedFinishedAtTest(base.EngineTestCase):
-    def setUp(self):
-        super(TaskStartedFinishedAtTest, self).setUp()
 
     def test_started_finished_fields_updated_after_rerun(self):
         wf_text = """

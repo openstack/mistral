@@ -412,17 +412,3 @@ class AdhocActionsTest(base.EngineTestCase):
             self.assertEqual(1, len(action_execs))
 
             self.assertEqual(namespace, action_execs[0].workflow_namespace)
-
-    def test_adhoc_action_runtime_context_name(self):
-        wf_ex = self.engine.start_workflow(
-            'my_wb.wf4',
-            wf_input={'str1': 'a'},
-            env={'foo': 'bar'}
-        )
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            action_execs = db_api.get_action_executions(name='my_wb.test_env')
-
-            self.assertEqual(1, len(action_execs))

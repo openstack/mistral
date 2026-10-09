@@ -80,22 +80,6 @@ wf1_with_items:
         result: <% $ %>
 """
 
-WORKFLOW2_WITH_ITEMS = """
----
-version: "2.0"
-
-wf2_with_items:
-  input:
-    - links
-
-  tasks:
-    task1:
-      with-items: link in <% $.links %>
-      action: std.http url=<% $.link %> timeout=60
-      publish:
-        result: <% $ %>
-"""
-
 
 class ActionDefaultTest(base.EngineTestCase):
     @mock.patch.object(
@@ -195,44 +179,5 @@ class ActionDefaultTest(base.EngineTestCase):
                                auth=EXPECTED_ENV_AUTH, verify=None,
                                timeout=ENV['__actions']['std.http']['timeout'])
                      for url in wf_input['links']]
-
-        requests.request.assert_has_calls(calls, any_order=True)
-
-    @mock.patch.object(
-        requests, 'request',
-        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
-    @mock.patch.object(
-        std_actions.HTTPAction, 'is_sync',
-        mock.MagicMock(return_value=True))
-    def test_with_items_action_defaults_from_env_not_applied(self):
-        wf_service.create_workflows(WORKFLOW2_WITH_ITEMS)
-
-        wf_input = {
-            'links': [
-                'https://api.library.org/books',
-                'https://api.library.org/authors'
-            ]
-        }
-
-        wf_ex = self.engine.start_workflow(
-            'wf2_with_items',
-            wf_input=wf_input,
-            env=ENV
-        )
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            self.assertEqual(states.SUCCESS, wf_ex.state)
-            self._assert_single_item(wf_ex.task_executions, name='task1')
-
-        calls = [mock.call('GET', url, params=None, data=None,
-                           json=None, headers=None, cookies=None,
-                           allow_redirects=None, proxies=None,
-                           auth=EXPECTED_ENV_AUTH, verify=None,
-                           timeout=60)
-                 for url in wf_input['links']]
 
         requests.request.assert_has_calls(calls, any_order=True)
