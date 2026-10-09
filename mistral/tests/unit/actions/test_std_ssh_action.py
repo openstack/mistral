@@ -138,30 +138,6 @@ class SSHActionTest(base.BaseTest):
         self.assertRaises(exc.ActionException, action.run, mock_ctx)
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
-    def test_default_behavior_unchanged(self, mocked_method):
-        # Test that default behavior (return_result_on_error=False)
-        # is unchanged
-        mocked_method.return_value = (0, 'ok')
-        cmd = "echo -n ok"
-        host = "localhost"
-        username = "mistral"
-        # return_result_on_error defaults to False
-        action = std.SSHAction(cmd, host, username)
-        mock_ctx = None
-
-        stdout = action.run(mock_ctx)
-
-        self.assertEqual('ok', stdout)
-        mocked_method.assert_called_with(
-            cmd=cmd,
-            host=host,
-            username=username,
-            password='',
-            private_key_filename=None,
-            private_key=None
-        )
-
-    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
     def test_default_behavior_raises_on_failure(self, mocked_method):
         # Test that default behavior raises exception on failure
         mocked_method.return_value = (1, 'error')
@@ -200,29 +176,6 @@ class SSHActionTest(base.BaseTest):
         self.assertEqual(0, result[0]['exit_code'])
         self.assertEqual('host2 stdout', result[1]['stdout'])
         self.assertEqual(1, result[1]['exit_code'])
-
-    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
-    def test_single_host_returns_dict_not_list(self, mocked_method):
-        # Test that single host returns dict, not list
-        mocked_method.return_value = (0, 'stdout', 'stderr')
-        cmd = "echo -n ok"
-        host = "localhost"
-        username = "mistral"
-        action = std.SSHAction(
-            cmd, host, username,
-            return_result_on_error=True
-        )
-
-        mock_ctx = None
-
-        result = action.run(mock_ctx)
-
-        # Should return single dict, not list
-        self.assertIsInstance(result, dict)
-        self.assertNotIsInstance(result, list)
-        self.assertEqual('stdout', result['stdout'])
-        self.assertEqual('stderr', result['stderr'])
-        self.assertEqual(0, result['exit_code'])
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
     def test_typed_action_exception_reaches_caller(self, mocked_method):

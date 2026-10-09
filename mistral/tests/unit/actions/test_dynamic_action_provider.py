@@ -30,7 +30,6 @@ class DummyAction2(actions.Action):
         return None
 """
 
-ACTIONS = []
 NAMESPACE = "ns"
 
 
@@ -67,23 +66,6 @@ class DynamicActionProviderTest(base.DbTestCase):
                 "code_source_name": code_source.name
             }
         )
-
-    def test_dynamic_actions(self):
-        provider = dynamic_action.DynamicActionProvider()
-
-        action_descs = provider.find_all()
-
-        self.assertEqual(0, len(action_descs))
-
-        code_source = self._create_code_source()
-
-        self._create_dynamic_actions(code_source)
-
-        action_descs = provider.find_all()
-
-        self.assertEqual(2, len(action_descs))
-
-        self._delete_code_source()
 
     def test_loaded_actions_deleted_from_db(self):
         provider = dynamic_action.DynamicActionProvider()

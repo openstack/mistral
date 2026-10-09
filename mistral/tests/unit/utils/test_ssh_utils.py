@@ -120,19 +120,12 @@ class SSHUtilsTest(base.BaseTest):
 
     def test_to_paramiko_private_key_rejects_path_traversal(self):
         """Files containing '..' are rejected with DataAccessException."""
-        self.assertRaises(
-            exc.DataAccessException,
-            ssh_utils._to_paramiko_private_key,
-            '../../../etc/passwd',
-        )
-
-    def test_to_paramiko_private_key_rejects_path_traversal_backslash(self):
-        """Files containing '..\\' are rejected with DataAccessException."""
-        self.assertRaises(
-            exc.DataAccessException,
-            ssh_utils._to_paramiko_private_key,
-            'foo..\\bar',
-        )
+        for filename in ('../../../etc/passwd', 'foo..\\bar'):
+            self.assertRaises(
+                exc.DataAccessException,
+                ssh_utils._to_paramiko_private_key,
+                filename,
+            )
 
     def test_to_paramiko_private_key_rsa_from_file(self):
         """RSA key loaded from file via private_key_filename."""
