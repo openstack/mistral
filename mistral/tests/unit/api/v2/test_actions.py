@@ -12,15 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
 from unittest import mock
 
 import sqlalchemy as sa
 
-from mistral.actions import adhoc
 from mistral.db.v2 import api as db_api
-from mistral.db.v2.sqlalchemy import models
-from mistral.lang import parser as spec_parser
 from mistral.services import adhoc_actions
 from mistral.tests.unit.api import base
 
@@ -102,29 +98,6 @@ ACTION_DSL_PARSE_EXCEPTION = """
 %
 """
 
-ACTION_SPEC = spec_parser.get_action_list_spec_from_yaml(ADHOC_ACTION_YAML)[0]
-
-ACTION_DEF_VALUES = {
-    'id': '123e4567-e89b-12d3-a456-426655440000',
-    'name': 'my_action',
-    'is_system': False,
-    'description': 'My super cool action.',
-    'tags': ['test', 'v2'],
-    'definition': ADHOC_ACTION_YAML,
-    'spec': ACTION_SPEC.to_dict(),
-    'input': '',
-    'project_id': None,
-    'scope': 'public',
-    'namespace': None
-}
-
-
-ACTION_DEF = models.ActionDefinition()
-ACTION_DEF.update(ACTION_DEF_VALUES)
-
-ACTION_DESC = adhoc.AdHocActionDescriptor(ACTION_DEF)
-
-
 UPDATED_ADHOC_ACTION_YAML = """
 ---
 version: '2.0'
@@ -135,14 +108,6 @@ my_action:
   base-input:
     output: "{$.str1}{$.str2}{$.str3}"
 """
-
-UPDATED_ACTION_DEF = copy.copy(ACTION_DEF)
-UPDATED_ACTION_DEF['definition'] = UPDATED_ADHOC_ACTION_YAML
-UPDATED_ACTION = copy.deepcopy(ACTION_DEF_VALUES)
-UPDATED_ACTION['definition'] = UPDATED_ADHOC_ACTION_YAML
-
-MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_DEF])
-MOCK_UPDATED_ACTION = mock.MagicMock(return_value=UPDATED_ACTION_DEF)
 
 
 class TestActionsController(base.APITest):
@@ -198,12 +163,6 @@ class TestActionsController(base.APITest):
         resp = self.app.get('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
-
-    def test_get_by_id(self):
-        # NOTE(rakhmerov): We can't support this case anymore because
-        # action descriptors can now be identified only by names and
-        # namespaces.
-        pass
 
     def test_get_within_project_id(self):
         # Create an adhoc action for the purpose of the test.
@@ -491,16 +450,16 @@ class TestActionsController(base.APITest):
             set(expected_dict.items()).issubset(set(param_dict.items()))
         )
 
-    def test_get_all_sort_date_asc(self):
-        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
-        resp = self.app.get('/v2/actions?sort_keys=created_at&sort_dirs=asc')
-        self.assertEqual(200, resp.status_int)
-
-    def test_get_all_sort_date_desc(self):
+    def test_get_all_sort_date(self):
         adhoc_actions.create_actions(ADHOC_ACTION_YAML_A)
         adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)
-        resp = self.app.get('/v2/actions?sort_keys=created_at&sort_dirs=desc')
-        self.assertEqual(200, resp.status_int)
+
+        for direction in ('asc', 'desc'):
+            resp = self.app.get(
+                '/v2/actions?sort_keys=created_at&sort_dirs=%s' % direction
+            )
+
+            self.assertEqual(200, resp.status_int)
 
     def test_get_all_pagination_marker(self):
         adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)

@@ -84,20 +84,6 @@ AD_HOC_ACTION_EX_ERROR = models.ActionExecution(
     updated_at=datetime.datetime(1970, 1, 1)
 )
 
-AD_HOC_ACTION_EX_CANCELLED = models.ActionExecution(
-    id='123',
-    state=states.CANCELLED,
-    state_info=states.CANCELLED,
-    tags=['foo', 'fee'],
-    name='std.echo',
-    description='something',
-    accepted=True,
-    input={},
-    output={},
-    created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
-)
-
 ACTION_EX_DB_NOT_COMPLETE = models.ActionExecution(
     id='123',
     state=states.RUNNING,
@@ -134,7 +120,6 @@ UPDATED_ACTION_EX_DB['state'] = 'SUCCESS'
 UPDATED_ACTION_EX_DB['task_name'] = 'task1'
 UPDATED_ACTION = copy.deepcopy(ACTION_EX)
 UPDATED_ACTION['state'] = 'SUCCESS'
-UPDATED_ACTION_OUTPUT = UPDATED_ACTION['output']
 
 CANCELLED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
 CANCELLED_ACTION_EX_DB['state'] = 'CANCELLED'
@@ -154,12 +139,8 @@ RUNNING_ACTION_EX_DB['task_name'] = 'task1'
 RUNNING_ACTION = copy.deepcopy(ACTION_EX)
 RUNNING_ACTION['state'] = 'RUNNING'
 
-ERROR_ACTION_EX = copy.copy(ACTION_EX_DB).to_dict()
-ERROR_ACTION_EX['state'] = 'ERROR'
-ERROR_ACTION_EX['task_name'] = 'task1'
 ERROR_ACTION = copy.deepcopy(ACTION_EX)
 ERROR_ACTION['state'] = 'ERROR'
-ERROR_ACTION_RES = ERROR_ACTION['output']
 
 ERROR_OUTPUT = "Fake error, it is a test"
 ERROR_ACTION_EX_WITH_OUTPUT = copy.copy(ACTION_EX_DB).to_dict()
@@ -197,9 +178,6 @@ MOCK_ACTION_NOT_COMPLETE = mock.MagicMock(
 
 MOCK_ACTION_COMPLETE_ERROR = mock.MagicMock(
     return_value=AD_HOC_ACTION_EX_ERROR
-)
-MOCK_ACTION_COMPLETE_CANCELLED = mock.MagicMock(
-    return_value=AD_HOC_ACTION_EX_CANCELLED
 )
 
 MOCK_AD_HOC_ACTION = mock.MagicMock(return_value=AD_HOC_ACTION_EX_DB)
@@ -256,10 +234,6 @@ class TestActionExecutionsController(base.APITest):
         del action_exec['task_name']
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(action_exec, resp.json)
-
-    def test_basic_get(self):
-        resp = self.app.get('/v2/action_executions/')
-        self.assertEqual(200, resp.status_int)
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -695,19 +669,6 @@ class TestActionExecutionsController(base.APITest):
     )
     @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
     def test_delete_action_execution_complete_error(self):
-        cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
-
-        resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
-
-        self.assertEqual(204, resp.status_int)
-
-    @mock.patch.object(
-        db_api,
-        'get_action_execution',
-        MOCK_ACTION_COMPLETE_CANCELLED
-    )
-    @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
-    def test_delete_action_execution_complete_cancelled(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
 
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)

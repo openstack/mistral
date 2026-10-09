@@ -20,7 +20,6 @@ from mistral.api import app as api_app
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as test_base
 from oslo_config import cfg
-from oslo_middleware import healthcheck
 from oslo_middleware import http_proxy_to_wsgi
 
 
@@ -45,29 +44,6 @@ class TestHTTPProxyToWSGIMiddleware(base.APITest):
 
         # Create the application.
         super(TestHTTPProxyToWSGIMiddleware, self).setUp()
-
-
-class TestHealthcheckMiddleware(base.APITest):
-    """Test oslo_middleware Healthcheck.
-
-    It checks that oslo_middleware middleware Healthcheck is executed
-    when enabled.
-    """
-
-    def setUp(self):
-        # Make sure the Healthcheck options are registered
-        cfg.CONF.register_opts(healthcheck.OPTS,
-                               'oslo_middleware')
-
-        # Enable healthcheck middleware.
-        self.override_config(
-            "enabled",
-            True,
-            group='healthcheck'
-        )
-
-        # Create the application.
-        super(TestHealthcheckMiddleware, self).setUp()
 
 
 class TestHealthcheckPathDispatch(test_base.BaseTest):

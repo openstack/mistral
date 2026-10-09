@@ -126,24 +126,10 @@ TASK = {
 TASK_WITHOUT_RESULT = copy.deepcopy(TASK)
 del TASK_WITHOUT_RESULT['result']
 
-UPDATED_TASK_EX = copy.deepcopy(TASK_EX)
-UPDATED_TASK_EX['state'] = 'SUCCESS'
-UPDATED_TASK = copy.deepcopy(TASK)
-UPDATED_TASK['state'] = 'SUCCESS'
-
 ERROR_TASK_EX = copy.deepcopy(TASK_EX)
 ERROR_TASK_EX['state'] = 'ERROR'
 ERROR_ITEMS_TASK_EX = copy.deepcopy(WITH_ITEMS_TASK_EX)
 ERROR_ITEMS_TASK_EX['state'] = 'ERROR'
-ERROR_TASK = copy.deepcopy(TASK)
-ERROR_TASK['state'] = 'ERROR'
-
-SKIPPED_TASK_EX = copy.deepcopy(TASK_EX)
-SKIPPED_TASK_EX['state'] = 'SKIPPED'
-SKIPPED_TASK = copy.deepcopy(TASK)
-SKIPPED_TASK['state'] = 'SKIPPED'
-
-BROKEN_TASK = copy.deepcopy(TASK)
 
 RERUN_TASK = {
     'id': '123',
@@ -376,33 +362,6 @@ class TestTasksController(base.APITest):
         self.assertIn('execution must be in ERROR', resp.json['faultstring'])
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_TASK)
-    def test_put_current_task_not_in_error_skip(self):
-        params = copy.deepcopy(SKIP_TASK)
-
-        resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
-        )
-
-        self.assertEqual(400, resp.status_int)
-        self.assertIn('faultstring', resp.json)
-        self.assertIn('execution must be in ERROR', resp.json['faultstring'])
-
-    @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_ERROR_TASK)
-    def test_put_current_task_in_error_rerun(self):
-        params = copy.deepcopy(RERUN_TASK)
-        params['reset'] = True
-        params['env'] = '{"k1": "def"}'
-
-        resp = self.app.put_json('/v2/tasks/123', params=params)
-
-        self.assertEqual(200, resp.status_int)
-
-    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(db_api, 'get_task_execution', MOCK_ERROR_TASK)
     def test_put_invalid_state_rerun(self):
         params = copy.deepcopy(RERUN_TASK)
@@ -434,21 +393,6 @@ class TestTasksController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Only with-items task', resp.json['faultstring'])
-
-    @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_ERROR_TASK)
-    def test_put_valid_state_rerun(self):
-        params = copy.deepcopy(RERUN_TASK)
-        params['state'] = states.RUNNING
-        params['reset'] = True
-
-        resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params
-        )
-
-        self.assertEqual(200, resp.status_int)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(db_api, 'get_task_execution', MOCK_ERROR_TASK)

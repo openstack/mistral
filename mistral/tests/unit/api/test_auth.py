@@ -10,50 +10,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import datetime
-
-from oslo_utils import timeutils
-from oslo_utils import uuidutils
 import pecan
 import pecan.testing
 
 from mistral.api import app as pecan_app
 from mistral.tests.unit.api import base
-
-
-WORKBOOKS = [
-    {
-        'name': 'my_workbook',
-        'description': 'My cool Mistral workbook',
-        'scope': None,
-        'tags': ['deployment', 'demo']
-    }
-]
-
-
-PKI_TOKEN_VERIFIED = {
-    'token': {
-        'methods': ['password'],
-        'roles': [{'id': uuidutils.generate_uuid(dashed=False),
-                   'name': 'admin'}],
-        'expires_at': datetime.datetime.isoformat(
-            timeutils.utcnow() + datetime.timedelta(seconds=60)
-        ),
-        'project': {
-            'domain': {'id': 'default', 'name': 'Default'},
-            'id': uuidutils.generate_uuid(dashed=False),
-            'name': 'Mistral'
-        },
-        'catalog': [],
-        'extras': {},
-        'user': {
-            'domain': {'id': 'default', 'name': 'Default'},
-            'id': uuidutils.generate_uuid(dashed=False),
-            'name': 'admin'
-        },
-        'issued_at': datetime.datetime.isoformat(timeutils.utcnow())
-    }
-}
 
 
 class TestKeystoneMiddleware(base.APITest):

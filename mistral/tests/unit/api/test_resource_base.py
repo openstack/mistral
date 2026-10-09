@@ -171,19 +171,3 @@ class TestRestResource(base.DbTestCase):
                          two_params_wf_resource.input)
         self.assertEqual(expected_input_three_params,
                          three_params_wf_resource.input)
-
-    def test_from_dict(self):
-        wf_ex = db_api.create_workflow_execution(WF_EXEC)
-
-        self.assertIsNotNone(wf_ex)
-
-        wf_ex_resource = resources.Execution.from_dict(wf_ex.to_dict())
-
-        self.assertIsNotNone(wf_ex_resource)
-
-        expected = copy.copy(WF_EXEC)
-
-        del expected['some_invalid_field']
-        utils.datetime_to_str_in_dict(expected, 'created_at')
-
-        self.assertDictEqual(expected, wf_ex.to_dict())

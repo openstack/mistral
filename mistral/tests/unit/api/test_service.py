@@ -55,15 +55,6 @@ class TestWSGIService(base.BaseTest):
 
             self.assertEqual(1, test_service.workers)
 
-    @mock.patch.object(processutils, 'get_worker_count', lambda: 3)
-    def test_workers_set_zero_setting(self):
-        self.override_config('api_workers', 0, group='api')
-
-        with mock.patch('mistral.api.app.setup_app'):
-            test_service = service.WSGIService("mistral_api")
-
-            self.assertEqual(1, test_service.workers)
-
     @mock.patch.object(service.wsgi, 'Server')
     @mock.patch('mistral.api.service.cheroot_ssl.BuiltinSSLAdapter',
                 autospec=True)

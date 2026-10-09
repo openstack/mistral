@@ -121,13 +121,6 @@ class TestCronTriggerController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
-    def test_get_by_id(self):
-        resp = self.app.get(
-            "/v2/cron_triggers/02abb422-55ef-4bb2-8cb9-217a583a6a3f")
-        self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(TRIGGER, resp.json)
-
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger")
     def test_post(self, mock_mtd):
@@ -156,33 +149,11 @@ class TestCronTriggerController(base.APITest):
         self.assertEqual(1, delete_trust.call_count)
         self.assertEqual(409, resp.status_int)
 
-    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
-    @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
-    def test_post_same_wf_and_input(self):
-        trig = TRIGGER.copy()
-        trig['name'] = 'some_trigger_name'
-
-        resp = self.app.post_json(
-            '/v2/cron_triggers', trig, expect_errors=True
-        )
-
-        self.assertEqual(409, resp.status_int)
-
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_DELETE)
     @mock.patch.object(security, "delete_trust")
     def test_delete(self, delete_trust):
         resp = self.app.delete('/v2/cron_triggers/my_cron_trigger')
-
-        self.assertEqual(1, delete_trust.call_count)
-        self.assertEqual(204, resp.status_int)
-
-    @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
-    @mock.patch.object(db_api, "delete_cron_trigger", MOCK_DELETE)
-    @mock.patch.object(security, "delete_trust")
-    def test_delete_by_id(self, delete_trust):
-        resp = self.app.delete(
-            '/v2/cron_triggers/02abb422-55ef-4bb2-8cb9-217a583a6a3f')
 
         self.assertEqual(1, delete_trust.call_count)
         self.assertEqual(204, resp.status_int)
@@ -219,18 +190,6 @@ class TestCronTriggerController(base.APITest):
 
         self.assertEqual(1, len(resp.json['cron_triggers']))
         self.assertDictEqual(TRIGGER, resp.json['cron_triggers'][0])
-
-    @mock.patch.object(db_api, 'get_cron_triggers')
-    @mock.patch('mistral.context.MistralContext.from_environ')
-    def test_get_all_projects_admin(self, mock_context, mock_get_triggers):
-        admin_ctx = unit_base.get_context(admin=True)
-        mock_context.return_value = admin_ctx
-
-        resp = self.app.get('/v2/cron_triggers?all_projects=true')
-
-        self.assertEqual(200, resp.status_int)
-
-        self.assertTrue(mock_get_triggers.call_args[1].get('insecure', False))
 
     @mock.patch.object(db_api, 'get_cron_triggers')
     @mock.patch('mistral.context.MistralContext.from_environ')

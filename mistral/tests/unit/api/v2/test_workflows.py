@@ -15,7 +15,6 @@
 
 import copy
 import datetime
-import hashlib
 from unittest import mock
 
 import json
@@ -926,16 +925,6 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertIn('project_id', resp.json)
 
-    def test_post_checksum_workflow_added(self):
-        resp = self.app.post(
-            '/v2/workflows',
-            WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
-        )
-        body = resp.json
-        checksum = body['workflows'][0]['checksum']
-        self.assertIsNotNone(checksum)
-
     def test_put_checksum_workflow_updated(self):
         resp = self.app.post(
             '/v2/workflows',
@@ -944,6 +933,7 @@ class TestWorkflowsController(base.APITest):
         )
         body = resp.json
         checksum_old = body['workflows'][0]['checksum']
+        self.assertIsNotNone(checksum_old)
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION_UPDATED,
@@ -952,20 +942,3 @@ class TestWorkflowsController(base.APITest):
         body = resp.json
         checksum = body['workflows'][0]['checksum']
         self.assertTrue(checksum != checksum_old)
-
-    def test_checksum_has_md5_format(self):
-        resp = self.app.post(
-            '/v2/workflows',
-            WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
-        )
-        body = resp.json
-        checksum = body['workflows'][0]['checksum']
-        self.assertTrue(self.is_valid_checksum(checksum))
-
-    def is_valid_checksum(self, checksum):
-        try:
-            hashlib.md5(checksum.encode(), usedforsecurity=False)
-            return True
-        except Exception:
-            return False
