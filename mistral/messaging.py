@@ -22,10 +22,10 @@ import abc
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_messaging import notify
 from oslo_messaging.notify import dispatcher
 from oslo_messaging.notify import listener
 from oslo_messaging import target
-from oslo_messaging import transport
 from oslo_utils import timeutils
 
 LOG = logging.getLogger(__name__)
@@ -100,7 +100,7 @@ def get_pool_name(exchange):
 
 def start_listener(conf, exchange, topic, endpoints):
     """Starts up a notification listener."""
-    trans = transport.get_transport(conf)
+    trans = notify.get_notification_transport(conf)
     targets = [target.Target(exchange=exchange, topic=topic)]
     pool_name = get_pool_name(exchange)
 
