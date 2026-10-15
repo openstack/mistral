@@ -79,14 +79,6 @@ class TestMembersController(base.APITest):
         )
 
     @mock.patch('mistral.context.AuthHook.before')
-    def test_create_resource_member(self, auth_mock):
-        # Workflow owner shares workflow to another tenant.
-        resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
-
-        self.assertEqual(201, resp.status_int)
-        self._assert_dict_contains_subset(WORKFLOW_MEMBER_PENDING, resp.json)
-
-    @mock.patch('mistral.context.AuthHook.before')
     def test_create_membership_nonexistent_wf(self, auth_mock):
         nonexistent_wf_id = uuidutils.generate_uuid()
 

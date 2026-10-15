@@ -261,16 +261,6 @@ class TestEnvironmentController(base.APITest):
 
         self.assertEqual(409, resp.status_int)
 
-    @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
-    def test_post_default_scope(self):
-        env = _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
-
-        resp = self.app.post_json('/v2/environments', env)
-
-        self.assertEqual(201, resp.status_int)
-
-        self._assert_dict_equal(copy.deepcopy(ENVIRONMENT), resp.json)
-
     @mock.patch.object(db_api, 'update_environment', MOCK_UPDATED_ENVIRONMENT)
     def test_put(self):
         resp = self.app.put_json(

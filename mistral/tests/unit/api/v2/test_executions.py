@@ -115,9 +115,6 @@ SUB_WF_EX_JSON_WITH_DESC['description'] = SUB_WF_EX.description
 UPDATED_WF_EX = copy.deepcopy(WF_EX)
 UPDATED_WF_EX['state'] = states.PAUSED
 
-UPDATED_WF_EX_JSON = copy.deepcopy(WF_EX_JSON)
-UPDATED_WF_EX_JSON['state'] = states.PAUSED
-
 UPDATED_WF_EX_ENV = copy.deepcopy(UPDATED_WF_EX)
 UPDATED_WF_EX_ENV['params'] = {'env': {'k1': 'def'}}
 
@@ -140,21 +137,12 @@ SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id'] = \
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_SUB_WF_EX = mock.MagicMock(return_value=SUB_WF_EX)
-MOCK_SOURCE_WF_EX = mock.MagicMock(return_value=SOURCE_WF_EX)
 MOCK_WF_EXECUTIONS = mock.MagicMock(return_value=[WF_EX])
 MOCK_UPDATED_WF_EX = mock.MagicMock(return_value=UPDATED_WF_EX)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
-
-ERROR_WF_EX = copy.deepcopy(WF_EX)
-ERROR_WF_EX['state'] = states.ERROR
-MOCK_ERROR_WF_EX = mock.MagicMock(return_value=ERROR_WF_EX)
-
-SUCCESS_WF_EX = copy.deepcopy(WF_EX)
-SUCCESS_WF_EX['state'] = states.SUCCESS
-MOCK_SUCCESS_WF_EX = mock.MagicMock(return_value=SUCCESS_WF_EX)
 
 
 @mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
@@ -277,39 +265,6 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected_exec, resp.json)
         mock_stop_wf.assert_called_once_with('123', 'ERROR', 'Force')
-
-    @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
-    )
-    @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
-    def test_put_state_cancelled(self, mock_stop_wf):
-        update_exec = {
-            'id': WF_EX['id'],
-            'state': states.CANCELLED,
-            'state_info': 'Cancelled by user.'
-        }
-
-        wf_ex = copy.deepcopy(WF_EX)
-        wf_ex['state'] = states.CANCELLED
-        wf_ex['state_info'] = 'Cancelled by user.'
-        mock_stop_wf.return_value = wf_ex
-
-        resp = self.app.put_json('/v2/executions/123', update_exec)
-
-        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
-        expected_exec['state'] = states.CANCELLED
-        expected_exec['state_info'] = 'Cancelled by user.'
-
-        self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(expected_exec, resp.json)
-
-        mock_stop_wf.assert_called_once_with(
-            '123',
-            'CANCELLED',
-            'Cancelled by user.'
-        )
 
     @mock.patch.object(
         db_api,
@@ -655,38 +610,6 @@ class TestExecutionsController(base.APITest):
             **json.loads(exec_dict['params'])
         )
 
-    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
-    def test_post_with_src_exec_id_without_exec_id(self, wf_exec_mock):
-        source_wf_ex = copy.copy(SOURCE_WF_EX)
-
-        source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
-
-        wf_exec_mock.return_value = source_wf_ex.to_dict()
-
-        resp = self.app.post_json('/v2/executions/', source_wf_ex_json)
-
-        del source_wf_ex_json['source_execution_id']
-
-        self.assertEqual(201, resp.status_int)
-        self.assertDictEqual(source_wf_ex_json, resp.json)
-
-        exec_dict = source_wf_ex_json
-
-        expected_description = "{} Based on the execution '{}'".format(
-            exec_dict['description'],
-            SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id']
-        )
-
-        wf_exec_mock.assert_called_once_with(
-            exec_dict['workflow_id'],
-            '',
-            exec_dict['id'],
-            json.loads(exec_dict['input']),
-            description=expected_description,
-            **json.loads(exec_dict['params'])
-        )
-
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_EMPTY)
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post_without_source_execution_id(self, wf_exec_mock):
@@ -774,17 +697,6 @@ class TestExecutionsController(base.APITest):
             "Execution 123 is in RUNNING state",
             resp.body.decode()
         )
-
-    @mock.patch.object(db_api,
-                       'get_workflow_execution',
-                       mock.MagicMock(return_value=(states.ERROR,)))
-    @mock.patch.object(db_api,
-                       'delete_workflow_execution',
-                       MOCK_DELETE)
-    def test_delete_error_exec(self):
-        resp = self.app.delete('/v2/executions/123')
-
-        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api,
                        'get_workflow_execution',

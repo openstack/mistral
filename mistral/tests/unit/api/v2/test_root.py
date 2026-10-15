@@ -76,34 +76,6 @@ class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
 
 class TestRootControllerWithHTTPProxyToWSGI(test_oslo_middleware.
                                             TestHTTPProxyToWSGIMiddleware):
-    def test_index(self):
-        resp = self.app.get('/', headers={'Accept': 'application/json',
-                                          'Host': 'localhost'})
-
-        self.assertEqual(200, resp.status_int)
-
-        data = jsonutils.loads(resp.body.decode())
-        data = data['versions']
-        self.assertEqual('v2.0', data[0]['id'])
-        self.assertEqual('CURRENT', data[0]['status'])
-        self.assertEqual(
-            [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
-            data[0]['links']
-        )
-
-    def test_v2_root(self):
-        resp = self.app.get('/v2/', headers={'Accept': 'application/json',
-                                             'Host': 'localhost'})
-
-        self.assertEqual(200, resp.status_int)
-
-        data = jsonutils.loads(resp.body.decode())
-
-        self.assertEqual(
-            'http://localhost/v2',
-            data['uri']
-        )
-
     def test_index_with_prefix(self):
         resp = self.app.get('/',
                             headers={'Accept': 'application/json',

@@ -18,6 +18,35 @@ from mistral.tests.unit.api import base
 from mistral.tests.unit.engine import base as engine_base
 from mistral.workflow import states
 
+NESTED_WB_TEXT = """---
+version: '2.0'
+
+name: wb
+
+workflows:
+  parent_wf:
+    tasks:
+      task1:
+        action: std.noop
+        on-success: task2
+
+      task2:
+        workflow: sub_wf
+        on-success: task3
+
+      task3:
+        action: std.fail
+
+  sub_wf:
+    tasks:
+      task1:
+        action: std.noop
+        on-success: task2
+
+      task2:
+        action: std.fail
+"""
+
 
 class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
     def test_simple_sequence_wf(self):
@@ -102,36 +131,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(2, stat['total_tasks_count'])
 
     def test_nested_wf(self):
-        wb_text = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          parent_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                workflow: sub_wf
-                on-success: task3
-
-              task3:
-                action: std.fail
-
-          sub_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                action: std.fail
-        """
-
-        wb_service.create_workbook_v2(wb_text)
+        wb_service.create_workbook_v2(NESTED_WB_TEXT)
 
         wf_ex = self.engine.start_workflow('wb.parent_wf')
 
@@ -217,36 +217,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(4, stat['total_tasks_count'])
 
     def test_statistics_only(self):
-        wb_text = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          parent_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                workflow: sub_wf
-                on-success: task3
-
-              task3:
-                action: std.fail
-
-          sub_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                action: std.fail
-        """
-
-        wb_service.create_workbook_v2(wb_text)
+        wb_service.create_workbook_v2(NESTED_WB_TEXT)
 
         wf_ex = self.engine.start_workflow('wb.parent_wf')
 
@@ -318,36 +289,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertTrue(stat['estimated_time'] == -1)
 
     def test_nested_wf_errors_only(self):
-        wb_text = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          parent_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                workflow: sub_wf
-                on-success: task3
-
-              task3:
-                action: std.fail
-
-          sub_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                action: std.fail
-        """
-
-        wb_service.create_workbook_v2(wb_text)
+        wb_service.create_workbook_v2(NESTED_WB_TEXT)
 
         wf_ex = self.engine.start_workflow('wb.parent_wf')
 
@@ -414,36 +356,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(2, stat['total_tasks_count'])
 
     def test_nested_wf_max_depth(self):
-        wb_text = """---
-        version: '2.0'
-
-        name: wb
-
-        workflows:
-          parent_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                workflow: sub_wf
-                on-success: task3
-
-              task3:
-                action: std.fail
-
-          sub_wf:
-            tasks:
-              task1:
-                action: std.noop
-                on-success: task2
-
-              task2:
-                action: std.fail
-        """
-
-        wb_service.create_workbook_v2(wb_text)
+        wb_service.create_workbook_v2(NESTED_WB_TEXT)
 
         wf_ex = self.engine.start_workflow('wb.parent_wf')
 
