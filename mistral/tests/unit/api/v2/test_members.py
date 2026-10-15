@@ -15,7 +15,6 @@
 import copy
 from unittest import mock
 
-from oslo_config import cfg
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
@@ -63,8 +62,6 @@ class TestMembersController(base.APITest):
 
         WORKFLOW_MEMBER_ACCEPTED = copy.deepcopy(WORKFLOW_MEMBER_PENDING)
         WORKFLOW_MEMBER_ACCEPTED['status'] = 'accepted'
-
-        cfg.CONF.set_default('auth_enable', True, group='pecan')
 
     def test_membership_api_without_auth(self):
         self.override_config('auth_enable', False, group='pecan')

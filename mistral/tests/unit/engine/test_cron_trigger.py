@@ -47,7 +47,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
                        type('trust', (object,), {'id': 'my_trust_id'}))
     @mock.patch('mistral.rpc.clients.get_engine_client')
     def test_start_workflow(self, get_engine_client_mock):
-        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        self.override_config('auth_enable', True, group='pecan')
 
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
@@ -64,7 +64,10 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         self.assertEqual('my_trust_id', t.trust_id)
 
-        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        # Processing the triggers must happen with authentication
+        # disabled: override the value set above for the trigger
+        # creation. Both overrides are restored on cleanup.
+        self.override_config('auth_enable', False, group='pecan')
 
         next_trigger = triggers.get_next_cron_triggers()[0]
         next_execution_time_before = next_trigger.next_execution_time
