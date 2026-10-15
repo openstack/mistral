@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo_config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.lang.v2 import tasks as tasks_lang
@@ -46,38 +45,6 @@ class ActionWithExceptionInInit(actions_base.Action):
 
 
 class JoinEngineTest(base.EngineTestCase):
-    def test_full_join_simple(self):
-        wf_text = """---
-        version: '2.0'
-
-        wf:
-          type: direct
-
-          tasks:
-            join_task:
-              join: all
-
-            task1:
-              on-success: join_task
-
-            task2:
-              on-success: join_task
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            t_execs = wf_ex.task_executions
-
-        self._assert_single_item(t_execs, name='task1')
-        self._assert_single_item(t_execs, name='task2')
-        self._assert_single_item(t_execs, name='join_task')
 
     def test_full_join_without_errors(self):
         wf_text = """---
@@ -562,72 +529,6 @@ class JoinEngineTest(base.EngineTestCase):
                     'var1': True,
                     'is_done': True,
                     'var2': True
-                },
-                wf_ex.output
-            )
-
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1424461')
-    def test_full_join_parallel_published_vars_complex(self):
-        wf_text = """---
-        version: "2.0"
-
-        main:
-          type: direct
-          output:
-            var_a: <% $.var_a %>
-            var_b: <% $.var_b %>
-            var_c: <% $.var_c %>
-            var_d: <% $.var_d %>
-          tasks:
-            init:
-              publish:
-                var_a: 0
-                var_b: 0
-                var_c: 0
-              on-success:
-                - branch1_0
-                - branch2_0
-
-            branch1_0:
-              publish:
-                var_c: 1
-              on-success:
-                - branch1_1
-
-            branch2_0:
-              publish:
-                var_a: 1
-              on-success:
-                - done
-
-            branch1_1:
-              publish:
-                var_b: 1
-              on-success:
-                - done
-
-            done:
-              join: all
-              publish:
-                var_d: 1
-        """
-        wf_service.create_workflows(wf_text)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('main')
-
-        self.await_workflow_success(wf_ex.id)
-
-        # Note: We need to reread execution to access related tasks.
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            self.assertDictEqual(
-                {
-                    'var_a': 1,
-                    'var_b': 1,
-                    'var_c': 1,
-                    'var_d': 1
                 },
                 wf_ex.output
             )

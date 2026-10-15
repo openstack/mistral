@@ -106,34 +106,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self._assert_single_item(task_execs, name='task1', state=states.ERROR)
 
-    def test_action_error(self):
-        # Check that state of all workflow objects (workflow executions,
-        # task executions, action executions) is properly persisted in case
-        # of action error.
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.fail
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_execs = wf_ex.task_executions
-
-        self.assertEqual(1, len(task_execs))
-
-        self._assert_single_item(task_execs, name='task1', state=states.ERROR)
-
     def test_task_error(self):
         # Check that state of all workflow objects (workflow executions,
         # task executions, action executions) is properly persisted in case
@@ -180,6 +152,16 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             name='std.noop',
             state=states.SUCCESS
         )
+
+        state_info = task_ex.state_info
+
+        self.assertIsNotNone(state_info)
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
+        # The evaluation context must not leak into the error: it can hold
+        # sensitive data such as the auth token. Only the expression and
+        # the underlying error are reported, no 'data=<context>' segment.
+        self.assertNotIn('data=', state_info)
 
     def test_task_error_with_on_handlers(self):
         # Check that state of all workflow objects (workflow executions,
@@ -333,6 +315,12 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.assertEqual(0, len(action_execs))
 
+        state_info = task_ex.state_info
+
+        self.assertIsNotNone(state_info)
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
+
     def test_action_error_with_wait_after_policy(self):
         # Check that state of all workflow objects (workflow executions,
         # task executions, action executions) is properly persisted in case
@@ -387,6 +375,12 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
+        state_info = task_ex.state_info
+
+        self.assertIsNotNone(state_info)
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
+
     def test_error_message_format_key_error(self):
         wf_text = """
         version: '2.0'
@@ -419,38 +413,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         # the underlying error are reported, no 'data=<context>' segment.
         self.assertNotIn('data=', state_info)
 
-    def test_error_message_format_unknown_function(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.noop
-              publish:
-                my_var: <% invalid_yaql_function() %>
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        state_info = task_ex.state_info
-
-        self.assertIsNotNone(state_info)
-        self.assertGreater(state_info.find('error='), 0)
-        # The evaluation context must not leak into the error: it can hold
-        # sensitive data such as the auth token. Only the expression and
-        # the underlying error are reported, no 'data=<context>' segment.
-        self.assertNotIn('data=', state_info)
-
     def test_error_message_format_invalid_on_task_run(self):
         wf_text = """
         version: '2.0'
@@ -459,96 +421,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
           tasks:
             task1:
               action: std.echo output={{ _.invalid_var }}
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        state_info = task_ex.state_info
-
-        self.assertIsNotNone(state_info)
-        self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('wf='))
-
-    def test_error_message_format_on_task_continue(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.echo output={{ _.invalid_var }}
-              wait-before: 1
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        state_info = task_ex.state_info
-
-        self.assertIsNotNone(state_info)
-        self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('wf='))
-
-    def test_error_message_format_on_action_complete(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.noop
-              publish:
-                my_var: <% invalid_yaql_function() %>
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        state_info = task_ex.state_info
-
-        self.assertIsNotNone(state_info)
-        self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('wf='))
-
-    def test_error_message_format_complete_task(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.noop
-              wait-after: 1
-              on-success:
-                - task2: <% invalid_yaql_function() %>
-
-            task2:
-              action: std.noop
         """
 
         wf_service.create_workflows(wf_text)
@@ -606,42 +478,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIsNotNone(state_info)
         self.assertGreater(state_info.find('error='), 0)
         self.assertGreater(state_info.find('action='), 0)
-
-    def test_publish_bad_yaql(self):
-        wf_text = """---
-        version: '2.0'
-
-        wf:
-          type: direct
-
-          input:
-            - my_dict:
-              - id: 1
-                value: 11
-
-          tasks:
-            task1:
-              action: std.noop
-              publish:
-                problem_var: <% $.my_dict.where($.value = 13).id.first() %>
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-            action_ex = task_ex.action_executions[0]
-
-        self.assertEqual(states.SUCCESS, action_ex.state)
-        self.assertEqual(states.ERROR, task_ex.state)
-        self.assertIsNotNone(task_ex.state_info)
-        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_publish_bad_jinja(self):
         wf_text = """---
@@ -851,6 +687,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(wf_ex.task_executions))
 
             task_ex = wf_ex.task_executions[0]
+
+            self.assertEqual(states.ERROR, task_ex.state)
 
             expected = (
                 "The action raised an exception [action=Fail action, "

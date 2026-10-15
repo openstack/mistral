@@ -15,7 +15,6 @@
 from unittest import mock
 
 from oslo_config import cfg
-import testtools
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
@@ -119,29 +118,6 @@ workflows:
       t1:
         with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %> [<% env().var1 %>]"
-        publish:
-          v1: <% task(t1).result %>
-        on-success:
-          - t2
-      t2:
-        action: std.echo output="Task 2"
-"""
-
-WITH_ITEMS_WORKBOOK_CONCURRENCY = """
----
-version: '2.0'
-
-name: wb3
-
-workflows:
-  wf1:
-    type: direct
-
-    tasks:
-      t1:
-        with-items: i in <% list(range(0, 4)) %>
-        action: std.echo output="Task 1.<% $.i %>"
-        concurrency: 2
         publish:
           v1: <% task(t1).result %>
         on-success:
@@ -541,87 +517,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
             ['Task 1.0', 'Task 1.1', 'Task 1.2'],
             task_1_ex.published.get('v1')
         )
-
-        # Check action executions of task 2.
-        self.assertEqual(states.SUCCESS, task_2_ex.state)
-
-        task_2_action_exs = db_api.get_action_executions(
-            task_execution_id=task_2_ex.id
-        )
-
-        self.assertEqual(1, len(task_2_action_exs))
-
-    @testtools.skip('Restore concurrency support.')
-    @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.MagicMock(
-            side_effect=[
-                exc.ActionException(),  # Mock task1 exception for initial run.
-                'Task 1.1',             # Mock task1 success for initial run.
-                exc.ActionException(),  # Mock task1 exception for initial run.
-                'Task 1.3',             # Mock task1 success for initial run.
-                'Task 1.0',             # Mock task1 success for rerun.
-                'Task 1.2',             # Mock task1 success for rerun.
-                'Task 2'                # Mock task2 success.
-            ]
-        )
-    )
-    def test_rerun_with_items_concurrency(self):
-        wb_service.create_workbook_v2(WITH_ITEMS_WORKBOOK_CONCURRENCY)
-
-        # Run workflow and fail task.
-        wf_ex = self.engine.start_workflow('wb3.wf1')
-
-        self.await_workflow_error(wf_ex.id)
-
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(1, len(wf_ex.task_executions))
-
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
-
-        self.assertEqual(states.ERROR, task_1_ex.state)
-
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
-        )
-
-        self.assertEqual(4, len(task_1_action_exs))
-
-        # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(task_1_ex.id, reset=False)
-
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertIsNone(wf_ex.state_info)
-
-        self.await_workflow_success(wf_ex.id)
-
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertEqual(states.SUCCESS, wf_ex.state)
-        self.assertIsNone(wf_ex.state_info)
-        self.assertEqual(2, len(wf_ex.task_executions))
-
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
-        task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
-
-        # Check action executions of task 1.
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-        self.assertIsNone(task_1_ex.state_info)
-
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
-        )
-
-        # The action executions that succeeded should not re-run.
-        self.assertEqual(6, len(task_1_action_exs))
-        self.assertListEqual(['Task 1.0', 'Task 1.1', 'Task 1.2', 'Task 1.3'],
-                             task_1_ex.published.get('v1'))
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, task_2_ex.state)

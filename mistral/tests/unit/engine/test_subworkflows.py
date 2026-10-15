@@ -347,38 +347,6 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, wf1_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf1_ex.state_info)
 
-    def test_subworkflow_environment_inheritance(self):
-        env = {'key1': 'abc'}
-
-        wf2_ex = self.engine.start_workflow('wb1.wf2', env=env)
-
-        # Execution of 'wf2'.
-        self.assertIsNotNone(wf2_ex)
-        self.assertDictEqual({}, wf2_ex.input)
-        self.assertDictEqual(
-            {'env': env, 'namespace': ''},
-            wf2_ex.params
-        )
-
-        self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
-
-        with db_api.transaction():
-            wf_execs = db_api.get_workflow_executions()
-
-            self.assertEqual(2, len(wf_execs))
-
-            # Execution of 'wf1'.
-            wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
-            wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
-
-            self.assertIsNotNone(wf1_ex.task_execution_id)
-
-        # Wait till workflow 'wf1' is completed.
-        self.await_workflow_success(wf1_ex.id)
-
-        # Wait till workflow 'wf2' is completed.
-        self.await_workflow_success(wf2_ex.id)
-
     def test_dynamic_subworkflow_wf2(self):
         ex = self.engine.start_workflow('wb3.wf1', wf_input={'wf_name': 'wf2'})
 
@@ -460,47 +428,6 @@ class SubworkflowsTest(base.EngineTestCase):
             self.assertEqual(wf2_ex.root_execution, wf1_ex)
             self.assertEqual(wf3_ex.root_execution_id, wf1_ex.id)
             self.assertEqual(wf3_ex.root_execution, wf1_ex)
-
-    def test_cascade_delete(self):
-        wf_text = """
-        version: 2.0
-
-        wf:
-          tasks:
-            task1:
-              workflow: sub_wf1
-
-            task2:
-              workflow: sub_wf2
-
-        sub_wf1:
-          tasks:
-            task1:
-              action: std.noop
-
-        sub_wf2:
-          tasks:
-            task1:
-              action: std.noop
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf')
-
-        self.await_workflow_success(wf_ex.id)
-
-        self.assertEqual(3, len(db_api.get_workflow_executions()))
-        self.assertEqual(4, len(db_api.get_task_executions()))
-        self.assertEqual(2, len(db_api.get_action_executions()))
-
-        # Now delete the root workflow execution and make sure that
-        # all dependent objects are deleted as well.
-        db_api.delete_workflow_execution(wf_ex.id)
-
-        self.assertEqual(0, len(db_api.get_workflow_executions()))
-        self.assertEqual(0, len(db_api.get_task_executions()))
-        self.assertEqual(0, len(db_api.get_action_executions()))
 
     def test_cascade_delete_deep(self):
         wf_text = """

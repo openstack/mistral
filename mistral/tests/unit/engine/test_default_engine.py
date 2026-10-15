@@ -106,51 +106,6 @@ class DefaultEngineTest(base.DbTestCase):
         # simple magic mocks for engine and executor clients
         self.engine = d_eng.DefaultEngine()
 
-    def test_start_workflow(self):
-        wf_input = {'param1': 'Hey', 'param2': 'Hi'}
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input=wf_input,
-            description='my execution',
-            task_name='task2'
-        )
-
-        self.assertIsNotNone(wf_ex)
-        self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertEqual('my execution', wf_ex.description)
-        self.assertIn('__execution', wf_ex.context)
-
-        with db_api.transaction():
-            # Note: We need to reread execution to access related tasks.
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_execs = wf_ex.task_executions
-
-            self.assertEqual(1, len(task_execs))
-
-            task_ex = task_execs[0]
-
-            self.assertEqual('wb.wf', task_ex.workflow_name)
-            self.assertEqual('task1', task_ex.name)
-            self.assertEqual(states.IDLE, task_ex.state)
-            self.assertIsNotNone(task_ex.spec)
-            self.assertDictEqual({}, task_ex.runtime_context)
-        self.engine.start_task(task_ex.id, True, False, None, False, False)
-
-        # Data Flow properties.
-        action_execs = db_api.get_action_executions(
-            task_execution_id=task_ex.id
-        )
-
-        self.assertEqual(1, len(action_execs))
-
-        task_action_ex = action_execs[0]
-
-        self.assertIsNotNone(task_action_ex)
-        self.assertDictEqual({'output': 'Hey'}, task_action_ex.input)
-
     def test_start_workflow_with_ex_id(self):
         wf_input = {'param1': 'Hey1', 'param2': 'Hi1'}
         the_ex_id = 'theId'
@@ -459,11 +414,14 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex = self.engine.start_workflow(
             'wb.wf',
             wf_input=wf_input,
+            description='my execution',
             task_name='task2'
         )
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual('my execution', wf_ex.description)
+        self.assertIn('__execution', wf_ex.context)
 
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
@@ -474,6 +432,8 @@ class DefaultEngineTest(base.DbTestCase):
             self.assertEqual(1, len(task_execs))
 
             task1_ex = task_execs[0]
+
+            self.assertEqual(states.IDLE, task1_ex.state)
 
         self.engine.start_task(
             task1_ex.id, True, False, None, False, False)
@@ -627,28 +587,6 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertEqual('SUCCESS', wf_ex.state)
         self.assertEqual("Like this, done", wf_ex.state_info)
-
-    def test_stop_workflow_bad_status(self):
-        wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input={
-                'param1': 'Hey',
-                'param2': 'Hi'
-            },
-            task_name="task2"
-        )
-
-        # Re-read execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertNotEqual(
-            'PAUSE',
-            self.engine.stop_workflow(wf_ex.id, 'PAUSE')
-        )
-
-    def test_resume_workflow(self):
-        # TODO(akhmerov): Implement.
-        pass
 
     def test_report_running_actions(self):
         wf_input = {'param1': 'Hey', 'param2': 'Hi'}

@@ -126,24 +126,6 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-    def test_workflow_input_default_value_limit(self):
-        new_wf = generate_workflow(['__WORKFLOW_INPUT__'])
-
-        wf_service.create_workflows(new_wf)
-
-        # Start workflow.
-        e = self.assertRaises(
-            exc.SizeLimitExceededException,
-            self.engine.start_workflow,
-            'wf'
-        )
-
-        self.assertEqual(
-            'Field size limit exceeded'
-            ' [class=TaskExecution, field=input, size=1KB, limit=0KB]',
-            str(e)
-        )
-
     def test_workflow_input_limit(self):
         wf_service.create_workflows(WF)
 

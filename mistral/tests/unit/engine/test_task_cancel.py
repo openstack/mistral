@@ -13,10 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import testtools
-from unittest import mock
-
-from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
@@ -306,73 +302,3 @@ class TaskCancelTest(base.EngineTestCase):
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.CANCELLED, task_1_action_exs[0].state)
         self.assertIsNone(task_1_action_exs[0].state_info)
-
-    @testtools.skip('Restore concurrency support.')
-    @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.MagicMock(
-            side_effect=[
-                'Task 2'                # Mock task2 success.
-            ]
-        )
-    )
-    def test_cancel_with_items_concurrency(self):
-        wb_def = """
-            version: '2.0'
-
-            name: wb1
-
-            workflows:
-              wf1:
-                tasks:
-                  t1:
-                    with-items: i in <% list(range(0, 4)) %>
-                    action: std.async_noop
-                    concurrency: 2
-                    on-success:
-                      - t2
-                  t2:
-                    action: std.echo output="Task 2"
-        """
-
-        wb_service.create_workbook_v2(wb_def)
-
-        wf1_ex = self.engine.start_workflow('wb1.wf1')
-
-        self.await_workflow_state(wf1_ex.id, states.RUNNING)
-
-        with db_api.transaction():
-            wf1_execs = db_api.get_workflow_executions()
-
-            wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
-            wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
-            )
-
-        wf1_t1_action_exs = db_api.get_action_executions(
-            task_execution_id=wf1_t1_ex.id
-        )
-
-        self.assertEqual(2, len(wf1_t1_action_exs))
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[1].state)
-
-        # Cancel action execution for task.
-        for wf1_t1_action_ex in wf1_t1_action_exs:
-            self.engine.on_action_complete(
-                wf1_t1_action_ex.id,
-                ml_actions.Result(cancel=True)
-            )
-
-        self.await_task_cancelled(wf1_t1_ex.id)
-        self.await_workflow_cancelled(wf1_ex.id)
-
-        wf1_t1_action_exs = db_api.get_action_executions(
-            task_execution_id=wf1_t1_ex.id
-        )
-
-        self.assertEqual(2, len(wf1_t1_action_exs))
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[1].state)

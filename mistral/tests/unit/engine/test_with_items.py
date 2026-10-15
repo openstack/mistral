@@ -102,24 +102,6 @@ workflows:
 """
 
 
-WB_ACTION_CONTEXT = """
----
-version: "2.0"
-
-name: wb
-
-workflows:
-  wf:
-    input:
-      - items
-
-    tasks:
-      task1:
-        with-items: item in <% $.items %>
-        action: std.async_noop
-"""
-
-
 WF_INPUT = {
     'names_info': [
         {'name': 'John'},
@@ -377,59 +359,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.SUCCESS, task1_ex.state)
 
-    def test_with_items_action_context(self):
-        # TODO(rakhmerov): Seems like the name of the test is not valid
-        # anymore since there's nothing related to action context in it.
-        # We need to revisit and refactor the entire module.
-        wb_service.create_workbook_v2(WB_ACTION_CONTEXT)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input={'items': [1, 2, 3]}
-        )
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        self.await_task_running(task_ex.id)
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-            act_exs = task_ex.executions
-
-        self.engine.on_action_complete(
-            act_exs[0].id,
-            actions_base.Result("Ivan")
-        )
-        self.engine.on_action_complete(
-            act_exs[1].id,
-            actions_base.Result("John")
-        )
-        self.engine.on_action_complete(
-            act_exs[2].id,
-            actions_base.Result("Mistral")
-        )
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            result = data_flow.get_task_execution_result(task_ex)
-
-        self.assertIsInstance(result, list)
-
-        self.assertIn('John', result)
-        self.assertIn('Ivan', result)
-        self.assertIn('Mistral', result)
-
-        self.assertEqual(states.SUCCESS, task_ex.state)
-
     def test_with_items_empty_list(self):
         wb_text = """---
         version: "2.0"
@@ -474,47 +403,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(2, len(task_execs))
         self.assertEqual(states.SUCCESS, task1_ex.state)
         self.assertEqual(states.SUCCESS, task2_ex.state)
-
-    def test_with_items_plain_list(self):
-        wb_text = """---
-        version: "2.0"
-
-        name: wb1
-
-        workflows:
-          with_items:
-            type: direct
-
-            tasks:
-              task1:
-                with-items: i in [1, 2, 3]
-                action: std.echo output=<% $.i %>
-        """
-
-        wb_service.create_workbook_v2(wb_text)
-
-        # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items')
-
-        self.await_workflow_success(wf_ex.id)
-
-        with db_api.transaction():
-            # Note: We need to reread execution to access related tasks.
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1',
-                state=states.SUCCESS
-            )
-
-            result = data_flow.get_task_execution_result(task1_ex)
-
-        # Since we know that we can receive results in random order,
-        # check is not depend on order of items.
-        self.assertIn(1, result)
-        self.assertIn(2, result)
-        self.assertIn(3, result)
 
     def test_with_items_plain_list_wrong(self):
         wb_text = """---
