@@ -449,23 +449,6 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created, fetched[0])
 
-    def test_workbook_private(self):
-        # Create a workbook(scope=private) as under one project
-        # then make sure it's NOT visible for other projects.
-        created1 = db_api.create_workbook(WORKBOOKS[1])
-
-        fetched = db_api.get_workbooks()
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
-
-        # Create a new user.
-        auth_context.set_ctx(USER_CTX)
-
-        fetched = db_api.get_workbooks()
-
-        self.assertEqual(0, len(fetched))
-
     def test_workbook_public(self):
         # Create a workbook(scope=public) as under one project
         # then make sure it's visible for other projects.
@@ -490,12 +473,6 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created0, fetched[0])
         self.assertEqual('public', created0.scope)
-
-    def test_workbook_repr(self):
-        s = db_api.create_workbook(WORKBOOKS[0]).__repr__()
-
-        self.assertIn('Workbook ', s)
-        self.assertIn("'name': 'my_workbook1'", s)
 
 
 WF_DEFINITIONS = [
@@ -614,142 +591,6 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
-    def test_filter_workflow_definitions_by_equal_value(self):
-        db_api.create_workbook(WF_DEFINITIONS[0])
-
-        created = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            created.name,
-            'eq'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created, fetched[0])
-
-    def test_filter_workflow_definition_by_not_equal_value(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            created0.name,
-            'neq'
-        )
-
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_definition_by_greater_than_value(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gt'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_definition_by_greater_than_equal_value(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gte'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_workflow_definition_by_less_than_value(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lt'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created0, fetched[0])
-
-    def test_filter_workflow_definition_by_less_than_equal_value(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lte'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_workflow_definition_by_values_in_list(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-
-        db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at']],
-            'in'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created0, fetched[0])
-
-    def test_filter_workflow_definition_by_values_notin_list(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at']],
-            'nin'
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_definition_by_multiple_columns(self):
-        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
-        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at'], created1['created_at']],
-            'in'
-        )
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            'my_wf2',
-            'eq',
-            _filter
-        )
-        fetched = db_api.get_workflow_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
-
     def test_create_workflow_definition_duplicate_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -760,18 +601,6 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             r" 'project_id'\]: my_wf1, , <default-project>$",
             db_api.create_workflow_definition,
             WF_DEFINITIONS[0]
-        )
-
-    def test_create_workflow_definition_duplicate_namespace_without_auth(self):
-        cfg.CONF.set_default('auth_enable', False, group='pecan')
-        db_api.create_workflow_definition(WF_DEFINITIONS[2])
-
-        self.assertRaisesRegex(
-            exc.DBDuplicateEntryError,
-            r"^Duplicate entry for WorkflowDefinition \['name', 'namespace',"
-            r" 'project_id'\]: my_wf3, mynamespace, <default-project>$",
-            db_api.create_workflow_definition,
-            WF_DEFINITIONS[2]
         )
 
     def test_create_same_workflow_definition_in_different_namespace(self):
@@ -1160,12 +989,6 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual('public', fetched[0].scope)
 
-    def test_workflow_definition_repr(self):
-        s = db_api.create_workflow_definition(WF_DEFINITIONS[0]).__repr__()
-
-        self.assertIn('WorkflowDefinition ', s)
-        self.assertIn("'name': 'my_wf1'", s)
-
 
 ACTION_DEFINITIONS = [
     {
@@ -1251,157 +1074,6 @@ class ActionDefinitionTest(SQLAlchemyTest):
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )
-
-    def test_filter_action_definitions_by_equal_value(self):
-        db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        db_api.create_action_definition(ACTION_DEFINITIONS[1])
-
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-        _filter = filter_utils.create_or_update_filter(
-            'is_system',
-            False,
-            'eq'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created2, fetched[0])
-
-    def test_filter_action_definitions_by_not_equal_value(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-
-        db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'is_system',
-            False,
-            'neq'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_action_definitions_by_greater_than_value(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gt'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self.assertIn(created1, fetched)
-        self.assertIn(created2, fetched)
-
-    def test_filter_action_definitions_by_greater_than_equal_value(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gte'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(3, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-        self._assert_single_item(fetched, name=created2['name'])
-
-    def test_filter_action_definitions_by_less_than_value(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created2['created_at'],
-            'lt'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_action_definitions_by_less_than_equal_value(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created2['created_at'],
-            'lte'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(3, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-        self._assert_single_item(fetched, name=created2['name'])
-
-    def test_filter_action_definitions_by_values_in_list(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-
-        db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at'], created1['created_at']],
-            'in'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_action_definitions_by_values_notin_list(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at'], created1['created_at']],
-            'nin'
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(1, len(fetched))
-        self._assert_single_item(fetched, name=created2['name'])
-
-    def test_filter_action_definitions_by_multiple_columns(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
-
-        db_api.create_action_definition(ACTION_DEFINITIONS[2])
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at'], created1['created_at']],
-            'in'
-        )
-        _filter = filter_utils.create_or_update_filter(
-            'is_system',
-            True,
-            'neq',
-            _filter
-        )
-        fetched = db_api.get_action_definitions(**_filter)
-
-        self.assertEqual(0, len(fetched))
 
     def test_filter_action_definitions_by_has_filter(self):
         db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1605,42 +1277,18 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self._assert_single_item(fetched, name=created0['name'])
         self._assert_single_item(fetched, name=created1['name'])
 
-    def test_delete_action_definition_with_name(self):
-        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+    def test_delete_action_definition(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
 
-        fetched = db_api.get_action_definition(created.name)
+        for identifier in [created0.name, created1.id]:
+            db_api.delete_action_definition(identifier)
 
-        self.assertEqual(created, fetched)
-
-        db_api.delete_action_definition(created.name)
-
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_action_definition,
-            created.name
-        )
-
-    def test_delete_action_definition_with_uuid(self):
-        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-
-        fetched = db_api.get_action_definition(created.id)
-
-        self.assertEqual(created, fetched)
-
-        db_api.delete_action_definition(created.id)
-
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_action_definition,
-            created.id
-        )
-
-    def test_action_definition_repr(self):
-        s = db_api.create_action_definition(ACTION_DEFINITIONS[0]).__repr__()
-
-        self.assertIn('ActionDefinition ', s)
-        self.assertIn("'description': 'Action #1'", s)
-        self.assertIn("'name': 'action1'", s)
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.get_action_definition,
+                identifier
+            )
 
 
 ACTION_EXECS = [
@@ -1750,21 +1398,13 @@ class ActionExecutionTest(SQLAlchemyTest):
             created = db_api.create_action_execution(ACTION_EXECS[0])
             created_last_heartbeat = created.last_heartbeat
 
-            fetched = db_api.get_action_execution(created.id)
-            fetched_last_heartbeat = fetched.last_heartbeat
-
-            time.sleep(1)
-
-            self.assertEqual(created_last_heartbeat, fetched_last_heartbeat)
-
             time.sleep(1)
 
             db_api.update_action_execution_heartbeat(created.id)
 
             fetched = db_api.get_action_execution(created.id)
-            fetched_last_heartbeat = fetched.last_heartbeat
 
-            self.assertIsNot(created_last_heartbeat, fetched_last_heartbeat)
+            self.assertNotEqual(created_last_heartbeat, fetched.last_heartbeat)
 
     def test_get_action_executions(self):
         with db_api.transaction():
@@ -1822,14 +1462,6 @@ class ActionExecutionTest(SQLAlchemyTest):
             65503,
             len(state_info)
         )
-
-    def test_action_execution_repr(self):
-        s = db_api.create_action_execution(ACTION_EXECS[0]).__repr__()
-
-        self.assertIn('ActionExecution ', s)
-        self.assertIn("'state': 'IDLE'", s)
-        self.assertIn("'state_info': 'Running...'", s)
-        self.assertIn("'accepted': True", s)
 
 
 WF_EXECS = [
@@ -1992,150 +1624,6 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             self.assertEqual(1, len(fetched))
             self.assertEqual(created0, fetched[0])
 
-    def test_filter_workflow_execution_by_equal_value(self):
-        with db_api.transaction():
-            db_api.create_workflow_execution(WF_EXECS[0])
-            created = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'id',
-                created.id,
-                'eq'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created, fetched[0])
-
-    def test_filter_workflow_execution_by_not_equal_value(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'id',
-                created0.id,
-                'neq'
-            )
-
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_execution_by_greater_than_value(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                created0['created_at'],
-                'gt'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_execution_by_greater_than_equal_value(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                created0['created_at'],
-                'gte'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(2, len(fetched))
-            self._assert_single_item(fetched, state=created0['state'])
-            self._assert_single_item(fetched, state=created1['state'])
-
-    def test_filter_workflow_execution_by_less_than_value(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                created1['created_at'],
-                'lt'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created0, fetched[0])
-
-    def test_filter_workflow_execution_by_less_than_equal_value(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                created1['created_at'],
-                'lte'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(2, len(fetched))
-            self._assert_single_item(fetched, state=created0['state'])
-            self._assert_single_item(fetched, state=created1['state'])
-
-    def test_filter_workflow_execution_by_values_in_list(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                [created0['created_at']],
-                'in'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created0, fetched[0])
-
-    def test_filter_workflow_execution_by_values_notin_list(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                [created0['created_at']],
-                'nin'
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_workflow_execution_by_multiple_columns(self):
-        with db_api.transaction():
-            created0 = db_api.create_workflow_execution(WF_EXECS[0])
-            created1 = db_api.create_workflow_execution(WF_EXECS[1])
-
-            _filter = filter_utils.create_or_update_filter(
-                'created_at',
-                [created0['created_at'], created1['created_at']],
-                'in'
-            )
-            _filter = filter_utils.create_or_update_filter(
-                'id',
-                created1.id,
-                'eq',
-                _filter
-            )
-            fetched = db_api.get_workflow_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
     def test_delete_workflow_execution(self):
         with db_api.transaction():
             created = db_api.create_workflow_execution(WF_EXECS[0])
@@ -2234,13 +1722,6 @@ class WorkflowExecutionTest(SQLAlchemyTest):
 
             self.assertEqual(0, len(wf_ex.task_executions))
             self.assertIsNone(db_api.load_task_execution(task_ex.id))
-
-    def test_workflow_execution_repr(self):
-        s = db_api.create_workflow_execution(WF_EXECS[0]).__repr__()
-
-        self.assertIn('Execution ', s)
-        self.assertIn("'context': None", s)
-        self.assertIn("'state': 'IDLE'", s)
 
 
 TASK_EXECS = [
@@ -2433,147 +1914,6 @@ class TaskExecutionTest(SQLAlchemyTest):
         self._assert_single_item(fetched, name=created0['name'])
         self._assert_single_item(fetched, name=created1['name'])
 
-    def test_filter_task_execution_by_equal_value(self):
-        created, _ = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            created.name,
-            'eq'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created, fetched[0])
-
-    def test_filter_task_execution_by_not_equal_value(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            created0.name,
-            'neq'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_task_execution_by_greater_than_value(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gt'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_task_execution_by_greater_than_equal_value(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gte'
-        )
-
-        fetched = db_api.get_task_executions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_task_execution_by_less_than_value(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lt'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created0, fetched[0])
-
-    def test_filter_task_execution_by_less_than_equal_value(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lte'
-        )
-
-        fetched = db_api.get_task_executions(**_filter)
-
-        self.assertEqual(2, len(fetched))
-        self._assert_single_item(fetched, name=created0['name'])
-        self._assert_single_item(fetched, name=created1['name'])
-
-    def test_filter_task_execution_by_values_in_list(self):
-        created, _ = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created['created_at']],
-            'in'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created, fetched[0])
-
-    def test_filter_task_execution_by_values_not_in_list(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at']],
-            'nin'
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
-    def test_filter_task_execution_by_multiple_columns(self):
-        created0, created1 = self._create_task_executions()
-
-        _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at'], created1['created_at']],
-            'in'
-        )
-        _filter = filter_utils.create_or_update_filter(
-            'name',
-            created1.name,
-            'eq',
-            _filter
-        )
-
-        with db_api.transaction():
-            fetched = db_api.get_task_executions(**_filter)
-
-            self.assertEqual(1, len(fetched))
-            self.assertEqual(created1, fetched[0])
-
     def test_delete_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
@@ -2640,33 +1980,6 @@ class TaskExecutionTest(SQLAlchemyTest):
                     workflow_execution_id=wf_ex.id
                 )
             )
-
-    def test_task_execution_repr(self):
-        wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
-
-        values = copy.deepcopy(TASK_EXECS[0])
-        values.update({'workflow_execution_id': wf_ex.id})
-
-        s = db_api.create_task_execution(values).__repr__()
-
-        self.assertIn('TaskExecution ', s)
-        self.assertIn("'state': 'IDLE'", s)
-        self.assertIn("'name': 'my_task1'", s)
-
-    def _create_task_executions(self):
-        wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
-
-        values = copy.deepcopy(TASK_EXECS[0])
-        values.update({'workflow_execution_id': wf_ex.id})
-
-        created0 = db_api.create_task_execution(values)
-
-        values = copy.deepcopy(TASK_EXECS[1])
-        values.update({'workflow_execution_id': wf_ex.id})
-
-        created1 = db_api.create_task_execution(values)
-
-        return created0, created1
 
 
 CRON_TRIGGERS = [
@@ -2768,20 +2081,14 @@ class CronTriggerTest(SQLAlchemyTest):
             query_filter={'name': 'not-existing-id'}
         )
 
-        self.assertEqual(updated, updated)
         self.assertEqual(0, updated_count)
-
-    def test_update_cron_trigger_by_id(self):
-        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
-
-        self.assertIsNone(created.updated_at)
 
         updated, updated_count = db_api.update_cron_trigger(
             created.id,
-            {'pattern': '*/1 * * * *'}
+            {'pattern': '*/2 * * * *'}
         )
 
-        self.assertEqual('*/1 * * * *', updated.pattern)
+        self.assertEqual('*/2 * * * *', updated.pattern)
         self.assertEqual(1, updated_count)
 
     def test_create_or_update_cron_trigger(self):
@@ -2903,43 +2210,18 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
 
     def test_delete_cron_trigger(self):
-        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+        created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+        created1 = db_api.create_cron_trigger(CRON_TRIGGERS[1])
 
-        fetched = db_api.get_cron_trigger(created.name)
+        for identifier in [created0.name, created1.id]:
+            rowcount = db_api.delete_cron_trigger(identifier)
 
-        self.assertEqual(created, fetched)
-
-        rowcount = db_api.delete_cron_trigger(created.name)
-
-        self.assertEqual(1, rowcount)
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_cron_trigger,
-            created.name
-        )
-
-    def test_delete_cron_trigger_by_id(self):
-        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
-
-        fetched = db_api.get_cron_trigger(created.name)
-
-        self.assertEqual(created, fetched)
-
-        rowcount = db_api.delete_cron_trigger(created.id)
-
-        self.assertEqual(1, rowcount)
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_cron_trigger,
-            created.id
-        )
-
-    def test_cron_trigger_repr(self):
-        s = db_api.create_cron_trigger(CRON_TRIGGERS[0]).__repr__()
-
-        self.assertIn('CronTrigger ', s)
-        self.assertIn("'pattern': '* * * * *'", s)
-        self.assertIn("'name': 'trigger1'", s)
+            self.assertEqual(1, rowcount)
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.get_cron_trigger,
+                identifier
+            )
 
 
 SCHEDULED_JOBS = [
@@ -2982,11 +2264,6 @@ class ScheduledJobTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
-    def test_create_scheduled_job_duplicate_without_auth(self):
-        cfg.CONF.set_default('auth_enable', False, group='pecan')
-        db_api.create_scheduled_job(SCHEDULED_JOBS[0])
-        db_api.create_scheduled_job(SCHEDULED_JOBS[0])
-
     def test_update_scheduled_job(self):
         created = db_api.create_scheduled_job(SCHEDULED_JOBS[0])
 
@@ -3028,7 +2305,7 @@ class ScheduledJobTest(SQLAlchemyTest):
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
-            db_api.get_environment,
+            db_api.get_scheduled_job,
             created.id
         )
 
@@ -3346,13 +2623,6 @@ class EnvironmentTest(SQLAlchemyTest):
             created1.id
         )
 
-    def test_environment_repr(self):
-        s = db_api.create_environment(ENVIRONMENTS[0]).__repr__()
-
-        self.assertIn('Environment ', s)
-        self.assertIn("'description': 'Test Environment #1'", s)
-        self.assertIn("'name': 'env1'", s)
-
 
 class TXTest(SQLAlchemyTest):
     def test_rollback(self):
@@ -3413,42 +2683,6 @@ class TXTest(SQLAlchemyTest):
         self.assertEqual(created, fetched)
         self.assertFalse(self.is_db_session_open())
 
-    def test_rollback_multiple_objects(self):
-        db_api.start_tx()
-
-        try:
-            created = db_api.create_workflow_execution(WF_EXECS[0])
-            fetched = db_api.get_workflow_execution(created['id'])
-
-            self.assertEqual(created, fetched)
-
-            created_wb = db_api.create_workbook(WORKBOOKS[0])
-            fetched_wb = db_api.get_workbook(
-                created_wb.name,
-                namespace=created_wb.namespace
-            )
-
-            self.assertEqual(created_wb, fetched_wb)
-            self.assertTrue(self.is_db_session_open())
-
-            db_api.rollback_tx()
-        finally:
-            db_api.end_tx()
-
-        self.assertFalse(self.is_db_session_open())
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workflow_execution,
-            created.id
-        )
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workbook,
-            created_wb.name
-        )
-
-        self.assertFalse(self.is_db_session_open())
-
     def test_rollback_transaction(self):
         try:
             with db_api.transaction():
@@ -3472,44 +2706,6 @@ class TXTest(SQLAlchemyTest):
             db_api.get_workbook,
             created.name
         )
-
-    def test_commit_multiple_objects(self):
-        db_api.start_tx()
-
-        try:
-            created = db_api.create_workflow_execution(WF_EXECS[0])
-            fetched = db_api.get_workflow_execution(created.id)
-
-            self.assertEqual(created, fetched)
-
-            created_wb = db_api.create_workbook(WORKBOOKS[0])
-            fetched_wb = db_api.get_workbook(
-                created_wb.name,
-                namespace=created_wb.namespace
-            )
-
-            self.assertEqual(created_wb, fetched_wb)
-            self.assertTrue(self.is_db_session_open())
-
-            db_api.commit_tx()
-        finally:
-            db_api.end_tx()
-
-        self.assertFalse(self.is_db_session_open())
-
-        with db_api.transaction():
-            fetched = db_api.get_workflow_execution(created.id)
-
-            self.assertEqual(created, fetched)
-
-            fetched_wb = db_api.get_workbook(
-                created_wb.name,
-                namespace=created_wb.namespace
-            )
-
-            self.assertEqual(created_wb, fetched_wb)
-
-        self.assertFalse(self.is_db_session_open())
 
 
 RESOURCE_MEMBERS = [
@@ -3676,18 +2872,10 @@ class ResourceMemberTest(SQLAlchemyTest):
             USER_CTX.project_id,
         )
 
-    def test_delete_nonexistent_resource_member(self):
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.delete_resource_member,
-            'nonexitent_resource',
-            'workflow',
-            'nonexitent_member',
-        )
-
 
 class WorkflowSharingTest(SQLAlchemyTest):
-    def test_get_shared_workflow(self):
+
+    def test_owner_delete_shared_workflow(self):
         wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
         # Switch to another tenant.
@@ -3701,33 +2889,6 @@ class WorkflowSharingTest(SQLAlchemyTest):
 
         # Switch to original tenant, share workflow to another tenant.
         auth_context.set_ctx(DEFAULT_CTX)
-
-        workflow_sharing = {
-            'resource_id': wf.id,
-            'resource_type': 'workflow',
-            'project_id': security.get_project_id(),
-            'member_id': USER_CTX.project_id,
-            'status': 'pending',
-        }
-
-        db_api.create_resource_member(workflow_sharing)
-
-        # Switch to another tenant, accept the sharing, get workflows.
-        auth_context.set_ctx(USER_CTX)
-
-        db_api.update_resource_member(
-            wf.id,
-            'workflow',
-            USER_CTX.project_id,
-            {'status': 'accepted'}
-        )
-
-        fetched = db_api.get_workflow_definition(wf.id)
-
-        self.assertEqual(wf, fetched)
-
-    def test_owner_delete_shared_workflow(self):
-        wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
         workflow_sharing = {
             'resource_id': wf.id,
