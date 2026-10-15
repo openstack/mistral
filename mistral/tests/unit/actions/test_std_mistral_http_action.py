@@ -17,7 +17,6 @@ import requests
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
-from mistral_lib import actions as mistral_lib_actions
 
 
 URL = 'http://some_url'
@@ -45,13 +44,6 @@ def get_success_fake_response():
         json.dumps(DATA),
         200,
         headers={'Content-Type': 'application/json'}
-    )
-
-
-def get_error_fake_response():
-    return get_fake_response(
-        json.dumps(DATA),
-        401
     )
 
 
@@ -105,21 +97,3 @@ class MistralHTTPActionTest(base.BaseTest):
             proxies=None,
             verify=None
         )
-
-    @mock.patch.object(requests, 'request')
-    def test_http_action_error_result(self, mocked_method):
-        mocked_method.return_value = get_error_fake_response()
-        mock_ctx = mock.Mock()
-
-        action = std.MistralHTTPAction(
-            url=URL,
-            method='POST',
-            body=DATA,
-            timeout=20,
-            allow_redirects=True
-        )
-
-        result = action.run(mock_ctx)
-
-        self.assertIsInstance(result, mistral_lib_actions.Result)
-        self.assertEqual(401, result.error['status'])

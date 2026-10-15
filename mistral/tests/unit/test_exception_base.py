@@ -38,14 +38,10 @@ class ExceptionTest(base.BaseTest):
         self.assertIn("Database object already exists", str(exc))
         self.assertEqual(409, exc.http_code,)
 
-    def test_default_code(self):
+    def test_default_code_and_message(self):
         exc = exceptions.EngineException()
 
         self.assertEqual(500, exc.http_code)
-
-    def test_default_message(self):
-        exc = exceptions.EngineException()
-
         self.assertIn("An unknown exception occurred", str(exc))
 
     def test_one_param_initializer(self):

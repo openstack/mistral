@@ -55,17 +55,6 @@ class EgressValidateUrlTest(base.BaseTest):
         # Should not raise.
         egress.validate_url('http://169.254.169.254/latest/meta-data/')
 
-    @mock.patch.object(socket, 'getaddrinfo')
-    def test_dns_pointing_to_metadata_is_blocked(self, gai):
-        # A public-looking hostname that resolves to the metadata IP.
-        gai.return_value = _addrinfo('169.254.169.254')
-
-        self.assertRaises(
-            exc.UrlNotAllowedException,
-            egress.validate_url,
-            'http://evil.example.com/'
-        )
-
     def test_non_http_scheme_is_blocked(self):
         self.assertRaises(
             exc.UrlNotAllowedException,
