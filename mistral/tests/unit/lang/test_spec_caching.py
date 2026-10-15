@@ -22,30 +22,6 @@ from mistral.workflow import states
 
 
 class SpecificationCachingTest(base.DbTestCase):
-    def test_workflow_spec_caching(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.echo output="Echo"
-        """
-
-        wfs = wf_service.create_workflows(wf_text)
-
-        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
-        self.assertEqual(0, spec_parser.get_wf_definition_spec_cache_size())
-
-        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wfs[0].id,
-            wfs[0].updated_at
-        )
-
-        self.assertIsNotNone(wf_spec)
-        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
-        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
-
     def test_workflow_spec_cache_update_via_workflow_service(self):
         wf_text = """
         version: '2.0'

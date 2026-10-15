@@ -377,16 +377,6 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         }
 
         tests = [
-            # ({'workflows': []}, True),
-            # ({'workflows': {}}, True),
-            # ({'workflows': None}, True),
-            # ({'workflows': {'version': None}}, True),
-            # ({'workflows': {'version': ''}}, True),
-            # ({'workflows': {'version': '1.0'}}, True),
-            # ({'workflows': {'version': '2.0'}}, False),
-            # ({'workflows': {'version': 2.0}}, False),
-            # ({'workflows': {'version': 2}}, False),
-            # ({'workflows': {'wf1': workflows['wf1']}}, False),
             ({'workflows': {'version': '2.0', 'wf1': 'wf1'}}, True),
             ({'workflows': workflows}, False)
         ]

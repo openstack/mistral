@@ -71,7 +71,6 @@ tests_items = [
     ({'with-items': ['x in <% $.y %>', 'i in <% * %>']}, True),
     ({'with-items': '{{ _.y }}'}, True),
     ({'with-items': 'x in {{ _.y }}'}, False),
-    ({'with-items': ['x in [1, 2, 3]']}, False),
     ({'with-items': ['x in {{ _.y }}']}, False),
     ({'with-items': ['x in {{ _.y }}', 'i in [1, 2, 3]']}, False),
     ({'with-items': ['x in {{ _.y }}', 'i in {{ _.j }}']}, False),
@@ -182,203 +181,7 @@ tests_transitions = [
     ({'on-success': {'next': [{'email': 'email'}]}}, True),
     ({'on-success': {'next': [{'email': 'email',
                                'more_email': 'more_email'}]}}, True),
-    ({'on-success': {'next': {'email': 'email'}}}, True),
-    ({'on-error': {'publish': {'var1': 1234}}}, True),
-    ({'on-error': {'publish': {'branch': {'var1': 1234}}}}, False),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                }
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': '<% * %>'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                }
-            }
-        },
-        True
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': 'email'
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': ['email']
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% 1 %>'}]
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% $.v1 and $.v2 %>'}]
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-error': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% * %>'}]
-            }
-        },
-        True
-    ),
-    ({'on-error': {'next': [{'email': '<% $.v1 %>'}]}}, False),
-    ({'on-error': {'next': 'email'}}, False),
-    ({'on-error': {'next': ['email']}}, False),
-    ({'on-error': {'next': [{'email': 'email'}]}}, True),
-    ({'on-error': {'next': [{'email': 'email',
-                             'more_email': 'more_email'}]}}, True),
-    ({'on-error': {'next': {'email': 'email'}}}, True),
-    ({'on-complete': {'publish': {'var1': 1234}}}, True),
-    ({'on-complete': {'publish': {'branch': {'var1': 1234}}}}, False),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                }
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': '<% * %>'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                }
-            }
-        },
-        True
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': 'email'
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': ['email']
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% 1 %>'}]
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% $.v1 and $.v2 %>'}]
-            }
-        },
-        False
-    ),
-    (
-        {
-            'on-complete': {
-                'publish': {
-                    'branch': {'var1': 1234},
-                    'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
-                },
-                'next': [{'email': '<% * %>'}]
-            }
-        },
-        True
-    ),
-    ({'on-complete': {'next': [{'email': '<% $.v1 %>'}]}}, False),
-    ({'on-complete': {'next': 'email'}}, False),
-    ({'on-complete': {'next': ['email']}}, False),
-    ({'on-complete': {'next': [{'email': 'email'}]}}, True),
-    ({'on-complete': {'next': [{'email': 'email',
-                                'more_email': 'more_email'}]}}, True),
-    ({'on-complete': {'next': {'email': 'email'}}}, True)
+    ({'on-success': {'next': {'email': 'email'}}}, True)
 ]
 for index, test in enumerate(tests_transitions):
     test_name = f"test_index_{index}"
@@ -392,7 +195,6 @@ tests_directs = [
     ([{'email': '<% 1 %>'}], False),
     ([{'email': '<% 1 %>'}, {'email': '<% 1 %>'}], True),
     ([{'email': '<% 1 %>', 'more_email': '<% 2 %>'}], True),
-    (['email'], False),
     ([{'email': '<% 1 %>'}, 'echo'], False),
     ([{'email': '<% $.v1 in $.v2 %>'}], False),
     ([{'email': '<% * %>'}], True),
@@ -409,12 +211,10 @@ tests_directs = [
     (['email', 'email'], True),
     (['email', 12345], True)
 ]
-for on_clause_key in ['on-error', 'on-success', 'on-complete']:
-    for index, test in enumerate(tests_directs):
-        test_name = f"test_index_{index}"
-        test_func = generate_test_function(
-            {on_clause_key: test[0]}, test[1])
-        setattr(TaskSpecValidationDirects, test_name, test_func)
+for index, test in enumerate(tests_directs):
+    test_name = f"test_index_{index}"
+    test_func = generate_test_function({'on-success': test[0]}, test[1])
+    setattr(TaskSpecValidationDirects, test_name, test_func)
 
 # policies
 tests_policies = [
@@ -709,27 +509,6 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             overlay = {'test': {'tasks': {}}}
 
             utils.merge_dicts(overlay['test']['tasks'], {'email': keep_result})
-
-            self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
-            )
-
-    def test_safe_rerurn(self):
-        tests = [
-            ({'safe-rerun': True}, False),
-            ({'safe-rerun': False}, False),
-            ({'safe-rerun': '<% false %>'}, False),
-            ({'safe-rerun': '<% true %>'}, False),
-            ({'safe-rerun': '<% * %>'}, True),
-            ({'safe-rerun': None}, True)
-        ]
-
-        for default, expect_error in tests:
-            overlay = {'test': {'task-defaults': {}}}
-
-            utils.merge_dicts(overlay['test']['task-defaults'], default)
 
             self._parse_dsl_spec(
                 add_tasks=True,

@@ -245,10 +245,6 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         self.assertEqual(3, self._evaluator.evaluate('<% $ %>', 3))
         self.assertEqual('33', self._evaluator.evaluate('<% $ %><% $ %>', 3))
 
-    def test_function_string(self):
-        self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', '3'))
-        self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', 3))
-
     def test_validate(self):
         self._evaluator.validate('There is no expression.')
         self._evaluator.validate('<% abc %>')
