@@ -3917,7 +3917,10 @@ class LockTest(SQLAlchemyTest):
         # It doesn't test the real intention of this model though.
         db_api.create_named_lock('lock1')
 
-        locks = db_api.get_named_locks()
+        locks = [
+            lock for lock in db_api.get_named_locks()
+            if lock.name == 'lock1'
+        ]
 
         self.assertEqual(1, len(locks))
 
@@ -3925,13 +3928,19 @@ class LockTest(SQLAlchemyTest):
 
         db_api.delete_named_lock('invalid_lock_id', 'fake')
 
-        locks = db_api.get_named_locks()
+        locks = [
+            lock for lock in db_api.get_named_locks()
+            if lock.name == 'lock1'
+        ]
 
         self.assertEqual(1, len(locks))
 
         db_api.delete_named_lock(locks[0].id, 'lock1')
 
-        locks = db_api.get_named_locks()
+        locks = [
+            lock for lock in db_api.get_named_locks()
+            if lock.name == 'lock1'
+        ]
 
         self.assertEqual(0, len(locks))
 
@@ -3940,10 +3949,22 @@ class LockTest(SQLAlchemyTest):
 
         with db_api.named_lock(name):
             # Make sure that within 'with' section the lock record exists.
-            self.assertEqual(1, len(db_api.get_named_locks()))
+            self.assertEqual(
+                1,
+                len([
+                    lock for lock in db_api.get_named_locks()
+                    if lock.name == name
+                ])
+            )
 
         # Make sure that outside 'with' section the lock record does not exist.
-        self.assertEqual(0, len(db_api.get_named_locks()))
+        self.assertEqual(
+            0,
+            len([
+                lock for lock in db_api.get_named_locks()
+                if lock.name == name
+            ])
+        )
 
     def test_internal_get_direct_subworkflows(self):
         def wex(wex_id, tex_id=None):
