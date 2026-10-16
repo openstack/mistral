@@ -22,14 +22,20 @@ from mistral import context as auth_ctx
 CONF = cfg.CONF
 
 
+def _v3_auth_url():
+    auth_url = CONF.keystone_authtoken.auth_url.rstrip('/')
+    if not auth_url.endswith('/v3'):
+        auth_url += '/v3'
+
+    return auth_url
+
+
 def client():
     ctx = auth_ctx.ctx()
 
     # NOTE(amorin) admin_token plugin does no version discovery, so we have
     # to hand it a fully-qualified v3 endpoint.
-    auth_url = CONF.keystone_authtoken.auth_url.rstrip('/')
-    if not auth_url.endswith('/v3'):
-        auth_url += '/v3'
+    auth_url = _v3_auth_url()
 
     # NOTE(amorin) use admin_token plugin to avoid re-authenticating
     # which is not always possible
@@ -96,4 +102,9 @@ def _admin_client(trust_id=None):
             auth=auth
         )
 
-        return ks_client.Client(session=sess)
+        # Trusts are created against auth_url by client(), so use the same
+        # keystone instead of picking one from the catalog.
+        return ks_client.Client(
+            session=sess,
+            endpoint_override=_v3_auth_url()
+        )
