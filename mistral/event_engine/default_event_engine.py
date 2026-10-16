@@ -139,7 +139,6 @@ class DefaultEventEngine(base.EventEngine):
         self.engine_client = rpc.get_engine_client()
         self.event_queue = queue.Queue()
 
-        self._stopped = False
         self._thread = threading.Thread(target=self._loop)
         self._thread.daemon = True
 
@@ -158,7 +157,7 @@ class DefaultEventEngine(base.EventEngine):
         self._start_listeners()
 
     def stop(self):
-        self._stopped = True
+        self.event_queue.put(None)
         self._thread.join()
         for listener in self.exchange_topic_listener_map.values():
             listener.stop()
@@ -294,60 +293,58 @@ class DefaultEventEngine(base.EventEngine):
 
         This function is called in a thread.
         """
-        while not self._stopped:
-            try:
-                # Get from queue (nowait)
-                # It may raise a queue.Empty if there is nothing in queue
-                # but thanks to while loop we will continue getting until
-                # the thread got stopped.
-                event = self.event_queue.get_nowait()
-                context = event.get('context')
-                event_type = event.get('event_type')
-
-                # NOTE(kong): Use lock here to protect event_triggers_map
-                # variable from being updated outside the thread.
-                with self.lock:
-                    if event_type in self.event_triggers_map:
-                        triggers = self.event_triggers_map[event_type]
-
-                        # There may be more projects registered the same event.
-                        project_ids = [t['project_id'] for t in triggers]
-
-                        any_public = any(
-                            [t['scope'] == 'public' for t in triggers]
-                        )
-
-                        # Skip the event doesn't belong to any event trigger
-                        # owner.
-                        if (not any_public and CONF.pecan.auth_enable and
-                                context.get('project_id', '')
-                                not in project_ids):
-                            self.event_queue.task_done()
-                            continue
-
-                        # Need to choose what trigger(s) should be called
-                        # exactly.
-                        triggers_to_call = []
-                        for t in triggers:
-                            project_trigger = (
-                                t['project_id'] == context.get('project_id')
-                            )
-                            public_trigger = t['scope'] == 'public'
-                            if project_trigger or public_trigger:
-                                triggers_to_call.append(t)
-
-                        LOG.debug('Start to handle event: %s, %d trigger(s) '
-                                  'registered.', event_type, len(triggers))
-
-                        event_params = self.notification_converter.convert(
-                            event_type,
-                            event
-                        )
-
-                        self._start_workflow(triggers_to_call, event_params)
+        while True:
+            event = self.event_queue.get()
+            if event is None:
+                # Put by stop().
                 self.event_queue.task_done()
-            except queue.Empty:
-                pass
+                break
+
+            context = event.get('context')
+            event_type = event.get('event_type')
+
+            # NOTE(kong): Use lock here to protect event_triggers_map
+            # variable from being updated outside the thread.
+            with self.lock:
+                if event_type in self.event_triggers_map:
+                    triggers = self.event_triggers_map[event_type]
+
+                    # There may be more projects registered the same event.
+                    project_ids = [t['project_id'] for t in triggers]
+
+                    any_public = any(
+                        [t['scope'] == 'public' for t in triggers]
+                    )
+
+                    # Skip the event doesn't belong to any event trigger
+                    # owner.
+                    if (not any_public and CONF.pecan.auth_enable and
+                            context.get('project_id', '')
+                            not in project_ids):
+                        self.event_queue.task_done()
+                        continue
+
+                    # Need to choose what trigger(s) should be called
+                    # exactly.
+                    triggers_to_call = []
+                    for t in triggers:
+                        project_trigger = (
+                            t['project_id'] == context.get('project_id')
+                        )
+                        public_trigger = t['scope'] == 'public'
+                        if project_trigger or public_trigger:
+                            triggers_to_call.append(t)
+
+                    LOG.debug('Start to handle event: %s, %d trigger(s) '
+                              'registered.', event_type, len(triggers))
+
+                    event_params = self.notification_converter.convert(
+                        event_type,
+                        event
+                    )
+
+                    self._start_workflow(triggers_to_call, event_params)
+            self.event_queue.task_done()
 
     def process_notification_event(self, notification):
         """Callback function by event handler.
