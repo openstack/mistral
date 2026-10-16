@@ -175,6 +175,22 @@ class EventEngineTest(base.DbTestCase):
 
     @mock.patch('mistral.messaging.start_listener')
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_idle_loop_blocks_until_stopped(self, mock_start):
+        e_engine = evt_eng.DefaultEventEngine()
+        get = mock.Mock(wraps=e_engine.event_queue.get)
+        e_engine.event_queue.get = get
+
+        e_engine.start()
+        time.sleep(0.5)
+        e_engine.stop()
+
+        # At most one get() waiting while idle and one returning the stop
+        # sentinel. A polling loop makes thousands.
+        self.assertLessEqual(get.call_count, 2)
+        self.assertFalse(e_engine._thread.is_alive())
+
+    @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_process_event_queue(self, mock_start):
         EVENT_TRIGGER['project_id'] = self.ctx.project_id
         db_api.create_event_trigger(EVENT_TRIGGER)
