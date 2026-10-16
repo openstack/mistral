@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The event engine now listens for notifications on the transport set by
+    ``[oslo_messaging_notifications] transport_url``. It used to listen on
+    the RPC transport from ``[DEFAULT] transport_url``, so event triggers
+    never fired when notifications were sent to a separate bus. When
+    ``[oslo_messaging_notifications] transport_url`` is not set, the
+    ``[DEFAULT]`` one is still used.
