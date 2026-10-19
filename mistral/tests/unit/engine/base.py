@@ -61,7 +61,7 @@ class EngineTestCase(base.DbTestCase):
         # Get transport here to let oslo.messaging setup default config
         # before changing the rpc_backend to the fake driver; otherwise,
         # oslo.messaging will throw exception.
-        messaging.get_transport(CONF)
+        messaging.get_rpc_transport(CONF)
 
         # Set the transport to 'fake' for Engine tests.
         CONF.set_default('transport_url', 'fake:/')
