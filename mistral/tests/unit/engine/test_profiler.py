@@ -26,7 +26,6 @@ from mistral.workflow import states
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
-cfg.CONF.set_default('enabled', True, group='profiler')
 cfg.CONF.set_default('hmac_keys', 'foobar', group='profiler')
 cfg.CONF.set_default('profiler_log_name', 'profile_trace', group='profiler')
 
@@ -43,6 +42,17 @@ class EngineProfilerTest(base.EngineTestCase):
         self.ctx_serializer = context.RpcContextSerializer()
 
     def test_profile_trace(self):
+        # Enable the profiler only for this test, and not for the whole
+        # worker process: when the suite dispatches tests to worker
+        # processes dynamically, this module is imported by every worker
+        # for the discovery, and a worker-wide profiler would be
+        # initialized by the engine operations of any unrelated test
+        # running a workflow. The background threads of such tests may
+        # still be running when test_no_profile_trace runs, and their
+        # traces would then be recorded by the notifier mock set up
+        # here, failing that test.
+        self.override_config('enabled', True, 'profiler')
+
         wf_def = """
         version: '2.0'
         wf:
