@@ -60,6 +60,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
         # constant to None so it gets initialized again with the new values
         # upon the first use.
         yaql_expression.YAQL_ENGINE = None
+        # The engine is cached process-wide: restore it on cleanup, so
+        # that the tests running after this one in the same worker
+        # process get an engine created with the restored options
+        # instead of the overridden ones.
+        self.addCleanup(setattr, yaql_expression, 'YAQL_ENGINE', None)
 
         wf_text = """---
         version: '2.0'
@@ -110,6 +115,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
         # Setting YAQL engine to None so it reinitialized again with the
         # right values upon the next use.
         yaql_expression.YAQL_ENGINE = None
+        # The engine is cached process-wide: restore it on cleanup, so
+        # that the tests running after this one in the same worker
+        # process get an engine created with the restored options
+        # instead of the overridden ones.
+        self.addCleanup(setattr, yaql_expression, 'YAQL_ENGINE', None)
 
         eng_svc = engine_server.get_oslo_service(setup_profiler=False)
 
@@ -131,6 +141,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
         # Setting YAQL engine to None so it reinitialized again with the
         # right values upon the next use.
         yaql_expression.YAQL_ENGINE = None
+        # The engine is cached process-wide: restore it on cleanup, so
+        # that the tests running after this one in the same worker
+        # process get an engine created with the restored options
+        # instead of the overridden ones.
+        self.addCleanup(setattr, yaql_expression, 'YAQL_ENGINE', None)
 
         wf_text = """---
         version: '2.0'
@@ -178,6 +193,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
         # Setting YAQL engine to None so it reinitialized again with the
         # right values upon the next use.
         yaql_expression.YAQL_ENGINE = None
+        # The engine is cached process-wide: restore it on cleanup, so
+        # that the tests running after this one in the same worker
+        # process get an engine created with the restored options
+        # instead of the overridden ones.
+        self.addCleanup(setattr, yaql_expression, 'YAQL_ENGINE', None)
 
         wf_text = """---
         version: '2.0'

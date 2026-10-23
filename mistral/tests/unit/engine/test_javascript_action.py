@@ -99,6 +99,11 @@ class JavaScriptEngineTest(base.EngineTestCase):
         # Setting YAQL engine to None so it reinitialized again with the
         # right values upon the next use.
         yaql_expression.YAQL_ENGINE = None
+        # The engine is cached process-wide: restore it on cleanup, so
+        # that the tests running after this one in the same worker
+        # process get an engine created with the restored options
+        # instead of the overridden ones.
+        self.addCleanup(setattr, yaql_expression, 'YAQL_ENGINE', None)
 
         wf_text = """---
         version: '2.0'
