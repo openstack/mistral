@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Deleting an ad-hoc action definition is now checked like updating one:
+    a non-admin user can no longer delete a public action definition of
+    another project, such as the preinstalled ``std.wait_ssh``.
+
+    When several projects have an action definition with the same name, a
+    delete now removes the one of the caller's project, instead of any of
+    them.

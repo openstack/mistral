@@ -1278,10 +1278,10 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self._assert_single_item(fetched, name=created1['name'])
 
     def test_delete_action_definition(self):
-        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
-        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        for attr in ('name', 'id'):
+            created = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+            identifier = getattr(created, attr)
 
-        for identifier in [created0.name, created1.id]:
             db_api.delete_action_definition(identifier)
 
             self.assertRaises(
@@ -1289,6 +1289,76 @@ class ActionDefinitionTest(SQLAlchemyTest):
                 db_api.get_action_definition,
                 identifier
             )
+
+    def test_delete_other_project_action_definition(self):
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        created = db_api.create_action_definition(values)
+
+        # Switch to another project.
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_action_definition,
+            created.name
+        )
+
+    def test_delete_other_project_action_definition_by_admin(self):
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        created = db_api.create_action_definition(values)
+
+        # Switch to admin in another project.
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_action_definition(created['id'])
+
+        # Switch back.
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_action_definition,
+            created['id']
+        )
+
+    def test_delete_system_action_definition(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+
+        self.assertRaises(
+            exc.InvalidActionException,
+            db_api.delete_action_definition,
+            created.name
+        )
+
+    def test_delete_action_definition_with_same_name_in_other_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        other = db_api.create_action_definition(values)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        created = db_api.create_action_definition(
+            copy.deepcopy(ACTION_DEFINITIONS[2])
+        )
+
+        db_api.delete_action_definition(created.name)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_action_definition_by_id,
+            created.id
+        )
+
+        fetched = db_api.get_action_definition(other.id)
+
+        self.assertEqual(other.project_id, fetched.project_id)
 
 
 ACTION_EXECS = [
