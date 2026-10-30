@@ -95,6 +95,10 @@ function configure_mistral {
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
     fi
 
+    # NOTE(tkajinam): This is required for IPv6 tests which attempts to access
+    # to ::1
+    iniset $MISTRAL_CONF_FILE action_std_http denied_cidrs ""
+
     write_uwsgi_config "$MISTRAL_UWSGI_CONF" "$MISTRAL_UWSGI" "/workflow" "" "mistral-api"
 }
 
@@ -173,6 +177,11 @@ function stop_mistral {
 function configure_tempest_for_mistral {
     if is_service_enabled tempest; then
         iniset $TEMPEST_CONFIG mistral_api service_api_supported True
+
+        # Add contents for std.http action tests
+        sudo mkdir /var/www/html/mistral-tempest/
+        sudo cp ${MISTRAL_DIR}/devstack/files/*.html /var/www/html/mistral-tempest/
+        iniset $TEMPEST_CONFIG mistral http_server_url http://${SERVICE_HOST}/mistral-tempest
     fi
 }
 
