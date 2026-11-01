@@ -12,9 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""
-"""
-
 import sys
 
 
@@ -35,7 +32,7 @@ def main():
     try:
         in_file_name = str(sys.argv[1])
         out_file_name = str(sys.argv[2])
-    except:
+    except IndexError:
         _print_help()
 
         return "Failed to parse arguments."
@@ -57,25 +54,26 @@ def main():
             if len(tokens[1]) > 10:
                 continue
 
-            trace_name = tokens[5]
-            trace_name = trace_name[0:len(trace_name) - 5]
+            trace_name = tokens[5][:-5]
 
             duration = float(tokens[1])
 
             if trace_name not in d:
                 d[trace_name] = [duration, duration, 1]
             else:
-                l = d[trace_name]
+                stats = d[trace_name]
 
-                l[0] = l[0] + duration
-                l[2] = l[2] + 1
+                stats[0] = stats[0] + duration
+                stats[2] = stats[2] + 1
 
-                if duration > l[1]:
-                    l[1] = duration
+                if duration > stats[1]:
+                    stats[1] = duration
 
     result = sorted(d.items(), key=lambda x: x[1][0], reverse=True)
 
-    out_f.write('Total time | Max time | Avg time | Occurrences | Trace name\n')
+    out_f.write(
+        'Total time | Max time | Avg time | Occurrences | Trace name\n'
+    )
     out_f.write('-' * 90)
     out_f.write('-\n')
 
@@ -86,7 +84,7 @@ def main():
                 item[1][1],
                 item[1][0] / item[1][2],
                 item[1][2],
-                item[0]
+                item[0],
             )
         )
 
