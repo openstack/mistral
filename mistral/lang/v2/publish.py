@@ -44,7 +44,7 @@ class PublishSpec(base.BaseSpec):
     def validate_semantics(self):
         if not self._branch and not self._global and not self._atomic:
             raise exc.InvalidModelException(
-                "Either 'branch', 'global' or 'atomic' must be specified: "
+                "Either 'branch', 'global' or 'atomic' must be specified: %s"
                 % self._data
             )
 
