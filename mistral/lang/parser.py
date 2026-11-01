@@ -100,14 +100,6 @@ def get_action_spec(spec_dict):
     return None
 
 
-def get_action_spec_from_yaml(text, action_name):
-    spec_dict = parse_yaml(text)
-
-    spec_dict['name'] = action_name
-
-    return get_action_spec(spec_dict)
-
-
 def get_action_list_spec(spec_dict, validate):
     return base.instantiate_spec(
         actions_v2.ActionListSpec, spec_dict, validate
@@ -140,10 +132,6 @@ def get_workflow_list_spec(spec_dict, validate):
         spec_dict,
         validate
     )
-
-
-def get_workflow_spec_from_yaml(text):
-    return get_workflow_spec(parse_yaml(text))
 
 
 def get_workflow_list_spec_from_yaml(text, validate=True):

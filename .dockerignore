@@ -4,7 +4,6 @@ doc/
 functionaltests/
 mistral.egg-info/
 playbooks/
-rally-jobs/
 releasenotes/
 envs/
 

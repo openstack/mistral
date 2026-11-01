@@ -82,12 +82,6 @@ class TaskLogicalState(object):
     def get_state_info(self):
         return self.state_info
 
-    def get_cardinality(self):
-        return self.cardinality
-
-    def get_triggered_by(self):
-        return self.get_triggered_by
-
 
 class WorkflowController(object):
     """Workflow Controller base class.

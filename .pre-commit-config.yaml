@@ -13,7 +13,6 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
-        exclude: '^rally-jobs/task-mistral\.yaml$'
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.19
     hooks:

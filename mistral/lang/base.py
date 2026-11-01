@@ -310,24 +310,6 @@ class BaseSpec(object):
             if isinstance(prop_data, dict):
                 prop_data['version'] = self._version
 
-    def _as_dict(self, prop_name):
-        prop_val = self._data.get(prop_name)
-
-        if not prop_val:
-            return {}
-
-        if isinstance(prop_val, dict):
-            return prop_val
-        elif isinstance(prop_val, list):
-            result = {}
-
-            for t in prop_val:
-                result.update(t if isinstance(t, dict) else {t: ''})
-
-            return result
-        elif isinstance(prop_val, str):
-            return {prop_val: ''}
-
     @staticmethod
     @profiler.trace('lang-base-parse-cmd-and-input', hide_args=True)
     def _parse_cmd_and_input(cmd_str):
@@ -435,9 +417,6 @@ class BaseSpecList(object):
                     v['version'] = self._version
 
                 self.items[k] = instantiate_spec(self.item_class, v, validate)
-
-    def item_keys(self):
-        return self.items.keys()
 
     def __iter__(self):
         return iter(self.items.values())

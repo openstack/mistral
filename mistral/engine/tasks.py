@@ -137,12 +137,6 @@ class Task(object, metaclass=abc.ABCMeta):
     def is_waiting(self):
         return self.waiting
 
-    def is_created(self):
-        return self.created
-
-    def is_state_changed(self):
-        return self.state_changed
-
     def get_expression_context(self, ctx=None):
         assert self.task_ex
 

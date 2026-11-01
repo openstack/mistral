@@ -161,17 +161,6 @@ def fields_list_to_cls_fields_tuple(model, f):
     return tuple(cls_fields)
 
 
-def filters_to_dict(**kwargs):
-    """Return only non-null values
-
-    :param kwargs: All possible filters
-    :type kwargs: dict
-    :return: Actual filters
-    :rtype: dict
-    """
-    return {k: v for k, v in kwargs.items() if v is not None}
-
-
 def get_all(list_cls, cls, get_all_function, get_function,
             resource_function=None, marker=None, limit=None,
             sort_keys=None, sort_dirs=None, fields=None,

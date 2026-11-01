@@ -49,10 +49,6 @@ def do_alembic_command(config, cmd, *args, **kwargs):
         alembic_u.err(str(e))
 
 
-def do_check_migration(config, _cmd):
-    do_alembic_command(config, 'branches')
-
-
 def do_upgrade(config, cmd):
     if not CONF.command.revision and not CONF.command.delta:
         raise SystemExit('You must provide a revision or relative delta')

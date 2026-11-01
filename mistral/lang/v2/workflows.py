@@ -274,9 +274,6 @@ class DirectWorkflowSpec(WorkflowSpec):
     def has_inbound_transitions(self, task_spec):
         return len(self.find_inbound_task_specs(task_spec)) > 0
 
-    def has_outbound_transitions(self, task_spec):
-        return len(self.find_outbound_task_specs(task_spec)) > 0
-
     def find_outbound_task_names(self, task_name):
         t_names = set()
 

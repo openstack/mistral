@@ -79,9 +79,6 @@ class RunTask(WorkflowCommand):
     def is_waiting(self):
         return self.wait
 
-    def get_unique_key(self):
-        return self.unique_key
-
     def __repr__(self):
         return (
             "Run task [workflow=%s, task=%s, waif_flag=%s, triggered_by=%s]" %
