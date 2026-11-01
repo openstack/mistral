@@ -45,8 +45,7 @@ class TestDynamicActionsController(base.APITest):
         self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
-            '/v2/code_sources?name=test_dummy_module',
-            TEST_MODULE_TEXT
+            '/v2/code_sources?name=test_dummy_module', TEST_MODULE_TEXT
         )
 
         self.code_source_id = resp.json['id']
@@ -60,8 +59,8 @@ class TestDynamicActionsController(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'code_source_id': self.code_source_id
-            }
+                'code_source_id': self.code_source_id,
+            },
         )
 
     def test_post(self):
@@ -70,8 +69,8 @@ class TestDynamicActionsController(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'code_source_id': self.code_source_id
-            }
+                'code_source_id': self.code_source_id,
+            },
         )
 
         # Check the structure of the response.
@@ -104,10 +103,7 @@ class TestDynamicActionsController(base.APITest):
 
         resp = self.app.put_json(
             '/v2/dynamic_actions',
-            {
-                'name': 'dummy_action',
-                'class_name': 'NewDummyAction'
-            }
+            {'name': 'dummy_action', 'class_name': 'NewDummyAction'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -157,8 +153,7 @@ class TestDynamicActionsController(base.APITest):
         self.app.delete('/v2/dynamic_actions/dummy_action')
 
         resp = self.app.get(
-            '/v2/dynamic_actions/dummy_action',
-            expect_errors=True
+            '/v2/dynamic_actions/dummy_action', expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)

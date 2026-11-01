@@ -22,23 +22,13 @@ rules = [
         name=ACTION_EXECUTIONS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create new action execution.',
-        operations=[
-            {
-                'path': '/v2/action_executions',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/action_executions', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTION_EXECUTIONS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete the specified action execution.',
-        operations=[
-            {
-                'path': '/v2/action_executions',
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': '/v2/action_executions', 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTION_EXECUTIONS % 'get',
@@ -47,32 +37,22 @@ rules = [
         operations=[
             {
                 'path': '/v2/action_executions/{action_execution_id}',
-                'method': 'GET'
+                'method': 'GET',
             }
-        ]
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ACTION_EXECUTIONS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all tasks within the execution.',
-        operations=[
-            {
-                'path': '/v2/action_executions',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/action_executions', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTION_EXECUTIONS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update the specified action execution.',
-        operations=[
-            {
-                'path': '/v2/action_executions',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/action_executions', 'method': 'PUT'}],
+    ),
 ]
 
 

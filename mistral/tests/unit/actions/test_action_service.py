@@ -19,14 +19,10 @@ from mistral.tests.unit import base
 class LegacyActionProviderTest(base.DbTestCase):
     def test_get_system_action_provider(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
         self.override_config(
-            'only_builtin_actions',
-            True,
-            'legacy_action_provider'
+            'only_builtin_actions', True, 'legacy_action_provider'
         )
 
         system_provider = actions.get_system_action_provider()

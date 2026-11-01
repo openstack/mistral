@@ -35,14 +35,16 @@ from mistral_lib import utils
 DEFAULT_CTX = test_base.get_context()
 USER_CTX = test_base.get_context(default=False)
 ADM_CTX = test_base.get_context(default=False, admin=True)
-THIRD_CTX = auth_context.MistralContext.from_dict({
-    'user_name': 'test-third',
-    'user': '7-7-7-7',
-    'tenant': '77-66-55',
-    'project_id': '77-66-55',
-    'project_name': 'test-third',
-    'is_admin': False
-})
+THIRD_CTX = auth_context.MistralContext.from_dict(
+    {
+        'user_name': 'test-third',
+        'user': '7-7-7-7',
+        'tenant': '77-66-55',
+        'project_id': '77-66-55',
+        'project_name': 'test-third',
+        'is_admin': False,
+    }
+)
 
 WORKBOOKS = [
     {
@@ -55,7 +57,7 @@ WORKBOOKS = [
         'updated_at': None,
         'project_id': '1233',
         'trust_id': '1234',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
     },
     {
         'name': 'my_workbook2',
@@ -68,7 +70,7 @@ WORKBOOKS = [
         'updated_at': None,
         'project_id': '1233',
         'trust_id': '12345',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
     },
     {
         'name': 'my_workbook3',
@@ -81,8 +83,8 @@ WORKBOOKS = [
         'updated_at': None,
         'project_id': '1233',
         'trust_id': '12345',
-        'created_at': datetime.datetime(2018, 7, 1, 15, 1, 0)
-    }
+        'created_at': datetime.datetime(2018, 7, 1, 15, 1, 0),
+    },
 ]
 
 
@@ -91,8 +93,9 @@ class SQLAlchemyTest(test_base.DbTestCase):
         super(SQLAlchemyTest, self).setUp()
 
         cfg.CONF.set_default('auth_enable', True, group='pecan')
-        self.addCleanup(cfg.CONF.set_default, 'auth_enable', False,
-                        group='pecan')
+        self.addCleanup(
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
+        )
 
 
 class WorkbookTest(SQLAlchemyTest):
@@ -127,7 +130,7 @@ class WorkbookTest(SQLAlchemyTest):
             fetched = db_api.get_workbook(
                 created['name'],
                 namespace=created['namespace'],
-                fields=(db_models.Workbook.scope,)
+                fields=(db_models.Workbook.scope,),
             )
 
             self.assertNotEqual(created, fetched)
@@ -144,7 +147,7 @@ class WorkbookTest(SQLAlchemyTest):
             r"\['name', 'namespace', 'project_id'\]:"
             r" my_workbook1, test, <default-project>$",
             db_api.create_workbook,
-            WORKBOOKS[0]
+            WORKBOOKS[0],
         )
 
     def test_update_workbook(self):
@@ -154,17 +157,13 @@ class WorkbookTest(SQLAlchemyTest):
 
         updated = db_api.update_workbook(
             created.name,
-            {
-                'definition': 'my new definition',
-                'namespace': 'test'
-            }
+            {'definition': 'my new definition', 'namespace': 'test'},
         )
 
         self.assertEqual('my new definition', updated.definition)
 
         fetched = db_api.get_workbook(
-            created['name'],
-            namespace=created['namespace']
+            created['name'], namespace=created['namespace']
         )
 
         self.assertEqual(updated, fetched)
@@ -182,7 +181,7 @@ class WorkbookTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_workbook,
             created.name,
-            {'definition': 'my new definition', 'namespace': 'test'}
+            {'definition': 'my new definition', 'namespace': 'test'},
         )
 
         auth_context.set_ctx(USER_CTX)
@@ -205,8 +204,7 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertNotEqual(other.id, mine.id)
 
         updated = db_api.update_workbook(
-            mine.name,
-            {'definition': 'my new definition', 'namespace': 'test'}
+            mine.name, {'definition': 'my new definition', 'namespace': 'test'}
         )
 
         self.assertEqual(mine.id, updated.id)
@@ -233,23 +231,20 @@ class WorkbookTest(SQLAlchemyTest):
         mine = db_api.create_workbook(values)
 
         self.assertEqual(
-            mine.id,
-            db_api.get_workbook('my_workbook1', namespace='test').id
+            mine.id, db_api.get_workbook('my_workbook1', namespace='test').id
         )
         self.assertEqual(
-            mine.id,
-            db_api.load_workbook('my_workbook1', namespace='test').id
+            mine.id, db_api.load_workbook('my_workbook1', namespace='test').id
         )
 
         auth_context.set_ctx(THIRD_CTX)
 
         self.assertEqual(
-            public.id,
-            db_api.get_workbook('my_workbook1', namespace='test').id
+            public.id, db_api.get_workbook('my_workbook1', namespace='test').id
         )
         self.assertEqual(
             public.id,
-            db_api.load_workbook('my_workbook1', namespace='test').id
+            db_api.load_workbook('my_workbook1', namespace='test').id,
         )
 
     def test_create_or_update_workbook(self):
@@ -258,26 +253,20 @@ class WorkbookTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_workbook(name, namespace=namespace))
 
-        created = db_api.create_or_update_workbook(
-            name,
-            WORKBOOKS[0]
-        )
+        created = db_api.create_or_update_workbook(name, WORKBOOKS[0])
 
         self.assertIsNotNone(created)
         self.assertIsNotNone(created.name)
 
         updated = db_api.create_or_update_workbook(
             created.name,
-            {
-                'definition': 'my new definition',
-                'namespace': 'test'
-            }
+            {'definition': 'my new definition', 'namespace': 'test'},
         )
 
         self.assertEqual('my new definition', updated.definition)
         self.assertEqual(
             'my new definition',
-            db_api.load_workbook(updated.name, updated.namespace).definition
+            db_api.load_workbook(updated.name, updated.namespace).definition,
         )
 
         fetched = db_api.get_workbook(created.name, created.namespace)
@@ -299,9 +288,7 @@ class WorkbookTest(SQLAlchemyTest):
 
         created = db_api.create_workbook(WORKBOOKS[1])
         _filter = filter_utils.create_or_update_filter(
-            'name',
-            created.name,
-            'eq'
+            'name', created.name, 'eq'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -313,9 +300,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'name',
-            created0.name,
-            'neq'
+            'name', created0.name, 'neq'
         )
 
         fetched = db_api.get_workbooks(**_filter)
@@ -328,9 +313,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gt'
+            'created_at', created0['created_at'], 'gt'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -342,9 +325,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created0['created_at'],
-            'gte'
+            'created_at', created0['created_at'], 'gte'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -357,9 +338,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lt'
+            'created_at', created1['created_at'], 'lt'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -371,9 +350,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            created1['created_at'],
-            'lte'
+            'created_at', created1['created_at'], 'lte'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -387,9 +364,7 @@ class WorkbookTest(SQLAlchemyTest):
         db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at']],
-            'in'
+            'created_at', [created0['created_at']], 'in'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -401,9 +376,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'created_at',
-            [created0['created_at']],
-            'nin'
+            'created_at', [created0['created_at']], 'nin'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -417,13 +390,10 @@ class WorkbookTest(SQLAlchemyTest):
         _filter = filter_utils.create_or_update_filter(
             'created_at',
             [created0['created_at'], created1['created_at']],
-            'in'
+            'in',
         )
         _filter = filter_utils.create_or_update_filter(
-            'name',
-            'my_workbook2',
-            'eq',
-            _filter
+            'name', 'my_workbook2', 'eq', _filter
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -434,11 +404,7 @@ class WorkbookTest(SQLAlchemyTest):
         db_api.create_workbook(WORKBOOKS[0])
         db_api.create_workbook(WORKBOOKS[1])
 
-        _filter = filter_utils.create_or_update_filter(
-            'tags',
-            "mc",
-            'eq'
-        )
+        _filter = filter_utils.create_or_update_filter('tags', "mc", 'eq')
         fetched = db_api.get_workbooks(**_filter)
 
         self.assertEqual(2, len(fetched))
@@ -448,9 +414,7 @@ class WorkbookTest(SQLAlchemyTest):
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
         _filter = filter_utils.create_or_update_filter(
-            'tags',
-            "mc,hammer",
-            'eq'
+            'tags', "mc,hammer", 'eq'
         )
         fetched = db_api.get_workbooks(**_filter)
 
@@ -470,7 +434,7 @@ class WorkbookTest(SQLAlchemyTest):
             exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created.name,
-            created.namespace
+            created.namespace,
         )
 
     def test_delete_other_project_workbook(self):
@@ -485,7 +449,7 @@ class WorkbookTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.delete_workbook,
             created.name,
-            created.namespace
+            created.namespace,
         )
 
         auth_context.set_ctx(USER_CTX)
@@ -507,7 +471,7 @@ class WorkbookTest(SQLAlchemyTest):
             exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created.name,
-            created.namespace
+            created.namespace,
         )
 
     def test_delete_workbook_prefers_own_project(self):
@@ -557,8 +521,9 @@ class WorkbookTest(SQLAlchemyTest):
         # Assert that the project_id stored is actually the context's
         # project_id not the one given.
         self.assertEqual(created0.project_id, auth_context.ctx().project_id)
-        self.assertNotEqual(WORKBOOKS[0]['project_id'],
-                            auth_context.ctx().project_id)
+        self.assertNotEqual(
+            WORKBOOKS[0]['project_id'], auth_context.ctx().project_id
+        )
 
         # Create a new user.
         auth_context.set_ctx(USER_CTX)
@@ -580,7 +545,7 @@ WF_DEFINITIONS = [
         'project_id': '1233',
         'trust_id': '1234',
         'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
-        'namespace': ''
+        'namespace': '',
     },
     {
         'name': 'my_wf2',
@@ -591,7 +556,7 @@ WF_DEFINITIONS = [
         'project_id': '1233',
         'trust_id': '12345',
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
-        'namespace': ''
+        'namespace': '',
     },
     {
         'name': 'my_wf3',
@@ -602,7 +567,7 @@ WF_DEFINITIONS = [
         'project_id': '1233',
         'trust_id': '12345',
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
-        'namespace': 'mynamespace'
+        'namespace': 'mynamespace',
     },
     {
         'name': 'my_wf1_with_namespace',
@@ -613,7 +578,7 @@ WF_DEFINITIONS = [
         'project_id': '1233',
         'trust_id': '1234',
         'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
-        'namespace': 'abc'
+        'namespace': 'abc',
     },
     {
         'name': 'my_wf1_with_namespace',
@@ -624,7 +589,7 @@ WF_DEFINITIONS = [
         'project_id': '1233',
         'trust_id': '1234',
         'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
-        'namespace': 'def'
+        'namespace': 'def',
     },
 ]
 
@@ -635,11 +600,10 @@ CRON_TRIGGER = {
     'workflow_name': 'my_wf1',
     'workflow_id': None,
     'workflow_input': {},
-    'next_execution_time':
-        utils.utc_now_sec() + datetime.timedelta(days=1),
+    'next_execution_time': utils.utc_now_sec() + datetime.timedelta(days=1),
     'remaining_executions': 42,
     'scope': 'private',
-    'project_id': '<default-project>'
+    'project_id': '<default-project>',
 }
 
 
@@ -656,24 +620,16 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         mine = db_api.create_workflow_definition(values)
 
-        self.assertEqual(
-            mine.id,
-            db_api.get_workflow_definition('my_wf1').id
-        )
-        self.assertEqual(
-            mine.id,
-            db_api.load_workflow_definition('my_wf1').id
-        )
+        self.assertEqual(mine.id, db_api.get_workflow_definition('my_wf1').id)
+        self.assertEqual(mine.id, db_api.load_workflow_definition('my_wf1').id)
 
         auth_context.set_ctx(THIRD_CTX)
 
         self.assertEqual(
-            public.id,
-            db_api.get_workflow_definition('my_wf1').id
+            public.id, db_api.get_workflow_definition('my_wf1').id
         )
         self.assertEqual(
-            public.id,
-            db_api.load_workflow_definition('my_wf1').id
+            public.id, db_api.load_workflow_definition('my_wf1').id
         )
 
     def test_load_workflow_definition_namespace_takes_precedence(self):
@@ -690,7 +646,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(
             public.id,
-            db_api.load_workflow_definition('my_wf1', namespace='ns1').id
+            db_api.load_workflow_definition('my_wf1', namespace='ns1').id,
         )
 
     def test_create_and_get_and_load_workflow_definition(self):
@@ -711,8 +667,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
             fetched = db_api.get_workflow_definition(
-                created.name,
-                fields=(db_models.WorkflowDefinition.scope,)
+                created.name, fields=(db_models.WorkflowDefinition.scope,)
             )
 
             self.assertNotEqual(created, fetched)
@@ -744,7 +699,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             r"^Duplicate entry for WorkflowDefinition \['name', 'namespace',"
             r" 'project_id'\]: my_wf1, , <default-project>$",
             db_api.create_workflow_definition,
-            WF_DEFINITIONS[0]
+            WF_DEFINITIONS[0],
         )
 
     def test_create_same_workflow_definition_in_different_namespace(self):
@@ -755,13 +710,9 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertIsNone(db_api.load_workflow_definition(name, namespace1))
         self.assertIsNone(db_api.load_workflow_definition(name, namespace2))
 
-        created1 = db_api.create_workflow_definition(
-            WF_DEFINITIONS[3]
-        )
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[3])
 
-        created2 = db_api.create_workflow_definition(
-            WF_DEFINITIONS[4]
-        )
+        created2 = db_api.create_workflow_definition(WF_DEFINITIONS[4])
 
         self.assertIsNotNone(created1)
         self.assertIsNotNone(created2)
@@ -770,11 +721,13 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertIsNotNone(created1.namespace)
         self.assertIsNotNone(created2.namespace)
 
-        fetched1 = db_api.get_workflow_definition(created1.name,
-                                                  created1.namespace)
+        fetched1 = db_api.get_workflow_definition(
+            created1.name, created1.namespace
+        )
 
-        fetched2 = db_api.get_workflow_definition(created2.name,
-                                                  created2.namespace)
+        fetched2 = db_api.get_workflow_definition(
+            created2.name, created2.namespace
+        )
 
         self.assertEqual(created1, fetched1)
         self.assertEqual(created2, fetched2)
@@ -787,7 +740,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         # Update workflow using workflow name as identifier.
         updated = db_api.update_workflow_definition(
             created['name'],
-            {'definition': 'my new definition', 'scope': 'private'}
+            {'definition': 'my new definition', 'scope': 'private'},
         )
 
         self.assertEqual('my new definition', updated.definition)
@@ -803,8 +756,8 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             {
                 'name': 'updated_name',
                 'definition': 'my new definition',
-                'scope': 'private'
-            }
+                'scope': 'private',
+            },
         )
 
         self.assertEqual('updated_name', updated.name)
@@ -825,7 +778,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_workflow_definition,
             created.name,
-            {'definition': 'my new definition', 'scope': 'private'}
+            {'definition': 'my new definition', 'scope': 'private'},
         )
 
     def test_update_other_project_workflow_by_admin(self):
@@ -839,7 +792,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             {
                 'definition': 'my new definition',
                 'scope': 'public',
-            }
+            },
         )
 
         self.assertEqual('my new definition', updated.definition)
@@ -862,10 +815,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         updated = db_api.update_workflow_definition(
             created['id'],
-            {
-                'definition': 'my new definition',
-                'scope': 'public'
-            }
+            {'definition': 'my new definition', 'scope': 'public'},
         )
 
         self.assertEqual('my new definition', updated.definition)
@@ -876,8 +826,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertIsNone(db_api.load_workflow_definition(name))
 
         created = db_api.create_or_update_workflow_definition(
-            name,
-            WF_DEFINITIONS[0]
+            name, WF_DEFINITIONS[0]
         )
 
         self.assertIsNotNone(created)
@@ -885,13 +834,13 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         updated = db_api.create_or_update_workflow_definition(
             created.name,
-            {'definition': 'my new definition', 'scope': 'private'}
+            {'definition': 'my new definition', 'scope': 'private'},
         )
 
         self.assertEqual('my new definition', updated.definition)
         self.assertEqual(
             'my new definition',
-            db_api.load_workflow_definition(updated.name).definition
+            db_api.load_workflow_definition(updated.name).definition,
         )
 
         fetched = db_api.get_workflow_definition(created.name)
@@ -908,8 +857,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         created = db_api.create_or_update_workflow_definition(
-            other.name,
-            copy.deepcopy(WF_DEFINITIONS[1])
+            other.name, copy.deepcopy(WF_DEFINITIONS[1])
         )
 
         self.assertNotEqual(other.id, created.id)
@@ -924,8 +872,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         values['definition'] = 'my new definition'
 
         updated = db_api.create_or_update_workflow_definition(
-            created.name,
-            values
+            created.name, values
         )
 
         self.assertEqual(created.id, updated.id)
@@ -955,7 +902,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_workflow_definition,
             created['name'],
-            {'scope': 'private'}
+            {'scope': 'private'},
         )
 
     def test_update_wf_scope_event_trigger_associated_in_diff_tenant(self):
@@ -976,7 +923,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_workflow_definition,
             created.id,
-            {'scope': 'private'}
+            {'scope': 'private'},
         )
 
     def test_update_wf_scope_event_trigger_associated_in_same_tenant(self):
@@ -988,8 +935,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         db_api.create_event_trigger(event_trigger)
 
         updated = db_api.update_workflow_definition(
-            created.id,
-            {'scope': 'private'}
+            created.id, {'scope': 'private'}
         )
 
         self.assertEqual('private', updated.scope)
@@ -1003,8 +949,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         db_api.create_cron_trigger(cron_trigger)
 
         updated = db_api.update_workflow_definition(
-            created['name'],
-            {'scope': 'private'}
+            created['name'], {'scope': 'private'}
         )
 
         self.assertEqual('private', updated.scope)
@@ -1041,7 +986,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             self.assertRaises(
                 exc.DBEntityNotFoundError,
                 db_api.get_workflow_definition,
-                identifier
+                identifier,
             )
 
     def test_delete_workflow_definition_has_event_trigger(self):
@@ -1055,9 +1000,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(trigger.workflow_id, created.id)
 
         self.assertRaises(
-            exc.DBError,
-            db_api.delete_workflow_definition,
-            created.id
+            exc.DBError, db_api.delete_workflow_definition, created.id
         )
 
     def test_delete_other_project_workflow_definition(self):
@@ -1069,7 +1012,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.NotAllowedException,
             db_api.delete_workflow_definition,
-            created.name
+            created.name,
         )
 
     def test_delete_other_project_workflow_definition_by_admin(self):
@@ -1086,7 +1029,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_workflow_definition,
-            created['id']
+            created['id'],
         )
 
     def test_workflow_definition_private(self):
@@ -1120,8 +1063,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         # project_id not the one given.
         self.assertEqual(created0.project_id, auth_context.ctx().project_id)
         self.assertNotEqual(
-            WF_DEFINITIONS[0]['project_id'],
-            auth_context.ctx().project_id
+            WF_DEFINITIONS[0]['project_id'], auth_context.ctx().project_id
         )
 
         # Create a new user.
@@ -1143,7 +1085,7 @@ ACTION_DEFINITIONS = [
         'attributes': None,
         'project_id': '<default-project>',
         'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
-        'namespace': ''
+        'namespace': '',
     },
     {
         'name': 'action2',
@@ -1153,7 +1095,7 @@ ACTION_DEFINITIONS = [
         'attributes': None,
         'project_id': '<default-project>',
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
-        'namespace': ''
+        'namespace': '',
     },
     {
         'name': 'action3',
@@ -1164,7 +1106,7 @@ ACTION_DEFINITIONS = [
         'attributes': None,
         'project_id': '<default-project>',
         'created_at': datetime.datetime(2016, 12, 1, 15, 2, 0),
-        'namespace': ''
+        'namespace': '',
     },
 ]
 
@@ -1194,13 +1136,9 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         auth_context.set_ctx(THIRD_CTX)
 
+        self.assertEqual(public.id, db_api.get_action_definition('action3').id)
         self.assertEqual(
-            public.id,
-            db_api.get_action_definition('action3').id
-        )
-        self.assertEqual(
-            public.id,
-            db_api.load_action_definition('action3').id
+            public.id, db_api.load_action_definition('action3').id
         )
 
     def test_create_and_get_and_load_action_definition(self):
@@ -1221,8 +1159,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
             fetched = db_api.get_action_definition(
-                created.name,
-                fields=(db_models.ActionDefinition.scope,)
+                created.name, fields=(db_models.ActionDefinition.scope,)
             )
 
             self.assertNotEqual(created, fetched)
@@ -1244,7 +1181,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             r"^Duplicate entry for Action \['name', 'namespace',"
             r" 'project_id'\]: action1, , <default-project>$",
             db_api.create_action_definition,
-            ACTION_DEFINITIONS[0]
+            ACTION_DEFINITIONS[0],
         )
 
     def test_filter_action_definitions_by_has_filter(self):
@@ -1271,8 +1208,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated = db_api.update_action_definition(
-            created.name,
-            {'description': 'my new desc'}
+            created.name, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
@@ -1288,8 +1224,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated = db_api.update_action_definition(
-            created.id,
-            {'description': 'my new desc'}
+            created.id, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
@@ -1311,7 +1246,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_action_definition,
             created.name,
-            {'description': 'my new desc'}
+            {'description': 'my new desc'},
         )
 
     def test_update_other_project_action_definition_by_admin(self):
@@ -1321,8 +1256,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         auth_context.set_ctx(ADM_CTX)
 
         updated = db_api.update_action_definition(
-            created.id,
-            {'description': 'my new desc'}
+            created.id, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
@@ -1334,7 +1268,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             exc.InvalidActionException,
             db_api.update_action_definition,
             created.name,
-            {'description': 'my new desc'}
+            {'description': 'my new desc'},
         )
 
     def test_update_action_definition_with_same_name_in_other_project(self):
@@ -1356,8 +1290,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         # The update must touch the action definition of the current
         # project, not the one of another project with the same name.
         updated = db_api.update_action_definition(
-            created.name,
-            {'description': 'my new desc'}
+            created.name, {'description': 'my new desc'}
         )
 
         self.assertEqual(created.id, updated.id)
@@ -1376,22 +1309,20 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertIsNone(db_api.load_action_definition(name))
 
         created = db_api.create_or_update_action_definition(
-            name,
-            ACTION_DEFINITIONS[2]
+            name, ACTION_DEFINITIONS[2]
         )
 
         self.assertIsNotNone(created)
         self.assertIsNotNone(created.name)
 
         updated = db_api.create_or_update_action_definition(
-            created.name,
-            {'description': 'my new desc'}
+            created.name, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
         self.assertEqual(
             'my new desc',
-            db_api.load_action_definition(updated.name).description
+            db_api.load_action_definition(updated.name).description,
         )
 
         fetched = db_api.get_action_definition(created.name)
@@ -1408,8 +1339,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         created = db_api.create_or_update_action_definition(
-            other.name,
-            copy.deepcopy(ACTION_DEFINITIONS[2])
+            other.name, copy.deepcopy(ACTION_DEFINITIONS[2])
         )
 
         self.assertNotEqual(other.id, created.id)
@@ -1424,8 +1354,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         values['description'] = 'my new desc'
 
         updated = db_api.create_or_update_action_definition(
-            created.name,
-            values
+            created.name, values
         )
 
         self.assertEqual(created.id, updated.id)
@@ -1459,7 +1388,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             self.assertRaises(
                 exc.DBEntityNotFoundError,
                 db_api.get_action_definition,
-                identifier
+                identifier,
             )
 
     def test_delete_other_project_action_definition(self):
@@ -1474,7 +1403,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.NotAllowedException,
             db_api.delete_action_definition,
-            created.name
+            created.name,
         )
 
     def test_delete_other_project_action_definition_by_admin(self):
@@ -1494,7 +1423,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_action_definition,
-            created['id']
+            created['id'],
         )
 
     def test_delete_system_action_definition(self):
@@ -1503,7 +1432,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.InvalidActionException,
             db_api.delete_action_definition,
-            created.name
+            created.name,
         )
 
     def test_delete_action_definition_with_same_name_in_other_project(self):
@@ -1525,7 +1454,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_action_definition_by_id,
-            created.id
+            created.id,
         )
 
         fetched = db_api.get_action_definition(other.id)
@@ -1543,7 +1472,7 @@ ACTION_EXECS = [
         'task_id': None,
         'tags': [],
         'accepted': True,
-        'output': {"result": "value"}
+        'output': {"result": "value"},
     },
     {
         'spec': None,
@@ -1554,8 +1483,8 @@ ACTION_EXECS = [
         'task_id': None,
         'tags': ['deployment'],
         'accepted': False,
-        'output': {"result": "value"}
-    }
+        'output': {"result": "value"},
+    },
 ]
 
 
@@ -1579,8 +1508,7 @@ class ActionExecutionTest(SQLAlchemyTest):
             created = db_api.create_action_execution(ACTION_EXECS[0])
 
             fetched = db_api.get_action_execution(
-                created.id,
-                fields=(db_models.ActionExecution.name,)
+                created.id, fields=(db_models.ActionExecution.name,)
             )
 
             self.assertNotEqual(created, fetched)
@@ -1594,14 +1522,12 @@ class ActionExecutionTest(SQLAlchemyTest):
             self.assertIsNone(created.updated_at)
 
             updated = db_api.update_action_execution(
-                created.id,
-                {'state': 'RUNNING', 'state_info': "Running..."}
+                created.id, {'state': 'RUNNING', 'state_info': "Running..."}
             )
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_action_execution(updated.id).state
+                'RUNNING', db_api.load_action_execution(updated.id).state
             )
 
             fetched = db_api.get_action_execution(created.id)
@@ -1621,14 +1547,12 @@ class ActionExecutionTest(SQLAlchemyTest):
 
         with db_api.transaction():
             updated = db_api.create_or_update_action_execution(
-                created.id,
-                {'state': 'RUNNING'}
+                created.id, {'state': 'RUNNING'}
             )
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_action_execution(updated.id).state
+                'RUNNING', db_api.load_action_execution(updated.id).state
             )
 
             fetched = db_api.get_action_execution(created.id)
@@ -1653,19 +1577,29 @@ class ActionExecutionTest(SQLAlchemyTest):
             created0 = db_api.create_action_execution(WF_EXECS[0])
             db_api.create_action_execution(ACTION_EXECS[1])
 
-            fetched = db_api.get_action_executions(
-                state=WF_EXECS[0]['state']
-            )
+            fetched = db_api.get_action_executions(state=WF_EXECS[0]['state'])
 
             self.assertEqual(1, len(fetched))
             self.assertEqual(created0, fetched[0])
 
     def test_filter_action_executions_by_json_fields(self):
         inputs = [
-            {'method': 'GET', 'url': 'http://a', 'n': 1, 'flag': True,
-             'nested': {'x': 1}, 'items': [1, 2]},
-            {'method': 'POST', 'url': 'http://a', 'n': 2, 'flag': False,
-             'nested': {'x': 2}, 'items': [1]},
+            {
+                'method': 'GET',
+                'url': 'http://a',
+                'n': 1,
+                'flag': True,
+                'nested': {'x': 1},
+                'items': [1, 2],
+            },
+            {
+                'method': 'POST',
+                'url': 'http://a',
+                'n': 2,
+                'flag': False,
+                'nested': {'x': 2},
+                'items': [1],
+            },
             {'method': 'GET', 'url': 'http://b', 'n': '1'},
         ]
         ids = [
@@ -1710,9 +1644,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         db_api.delete_action_execution(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_action_execution,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_action_execution, created.id
         )
 
     def test_delete_other_tenant_action_execution(self):
@@ -1724,7 +1656,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.delete_action_execution,
-            created.id
+            created.id,
         )
 
     def test_trim_status_info(self):
@@ -1733,16 +1665,12 @@ class ActionExecutionTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated = db_api.update_action_execution(
-            created.id,
-            {'state': 'FAILED', 'state_info': ".." * 65536}
+            created.id, {'state': 'FAILED', 'state_info': ".." * 65536}
         )
 
         self.assertEqual('FAILED', updated.state)
         state_info = db_api.load_action_execution(updated.id).state_info
-        self.assertEqual(
-            65503,
-            len(state_info)
-        )
+        self.assertEqual(65503, len(state_info))
 
 
 WF_EXECS = [
@@ -1757,7 +1685,7 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
-        'output': None
+        'output': None,
     },
     {
         'spec': {},
@@ -1770,8 +1698,8 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
-        'output': None
-    }
+        'output': None,
+    },
 ]
 
 
@@ -1797,8 +1725,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             created = db_api.create_workflow_execution(WF_EXECS[0])
 
             fetched = db_api.get_workflow_execution(
-                created.id,
-                fields=(db_models.WorkflowExecution.state,)
+                created.id, fields=(db_models.WorkflowExecution.state,)
             )
 
             self.assertNotEqual(created, fetched)
@@ -1812,14 +1739,12 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             self.assertIsNone(created.updated_at)
 
             updated = db_api.update_workflow_execution(
-                created.id,
-                {'state': 'RUNNING', 'state_info': "Running..."}
+                created.id, {'state': 'RUNNING', 'state_info': "Running..."}
             )
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_workflow_execution(updated.id).state
+                'RUNNING', db_api.load_workflow_execution(updated.id).state
             )
 
             fetched = db_api.get_workflow_execution(created.id)
@@ -1834,16 +1759,14 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             auth_context.set_ctx(ADM_CTX)
 
             updated = db_api.update_workflow_execution(
-                created.id,
-                {'state': 'RUNNING', 'state_info': "Running..."}
+                created.id, {'state': 'RUNNING', 'state_info': "Running..."}
             )
 
             auth_context.set_ctx(DEFAULT_CTX)
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_workflow_execution(updated.id).state
+                'RUNNING', db_api.load_workflow_execution(updated.id).state
             )
 
             fetched = db_api.get_workflow_execution(created.id)
@@ -1861,7 +1784,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
                 exc.DBEntityNotFoundError,
                 db_api.update_workflow_execution,
                 created.id,
-                {'state': 'RUNNING', 'state_info': "Running..."}
+                {'state': 'RUNNING', 'state_info': "Running..."},
             )
 
     def test_create_or_update_workflow_execution(self):
@@ -1871,22 +1794,19 @@ class WorkflowExecutionTest(SQLAlchemyTest):
 
         with db_api.transaction():
             created = db_api.create_or_update_workflow_execution(
-                id,
-                WF_EXECS[0]
+                id, WF_EXECS[0]
             )
 
             self.assertIsNotNone(created)
             self.assertIsNotNone(created.id)
 
             updated = db_api.create_or_update_workflow_execution(
-                created.id,
-                {'state': 'RUNNING'}
+                created.id, {'state': 'RUNNING'}
             )
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_workflow_execution(updated.id).state
+                'RUNNING', db_api.load_workflow_execution(updated.id).state
             )
 
             fetched = db_api.get_workflow_execution(created.id)
@@ -1918,7 +1838,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_workflow_execution,
-            created.id
+            created.id,
         )
 
     def test_delete_workflow_execution_by_admin(self):
@@ -1935,7 +1855,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_workflow_execution,
-            created.id
+            created.id,
         )
 
     def test_delete_workflow_execution_by_other_fail(self):
@@ -1945,7 +1865,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.delete_workflow_execution,
-            created.id
+            created.id,
         )
 
     def test_trim_status_info(self):
@@ -1954,16 +1874,12 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated = db_api.update_workflow_execution(
-            created.id,
-            {'state': 'FAILED', 'state_info': ".." * 65536}
+            created.id, {'state': 'FAILED', 'state_info': ".." * 65536}
         )
 
         self.assertEqual('FAILED', updated.state)
         state_info = db_api.load_workflow_execution(updated.id).state_info
-        self.assertEqual(
-            65503,
-            len(state_info)
-        )
+        self.assertEqual(65503, len(state_info))
 
     def test_task_executions(self):
         # Add an associated object into collection.
@@ -2017,7 +1933,7 @@ TASK_EXECS = [
         'in_context': None,
         'runtime_context': None,
         'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
-        'updated_at': None
+        'updated_at': None,
     },
     {
         'workflow_execution_id': '1',
@@ -2030,7 +1946,7 @@ TASK_EXECS = [
         'in_context': {'image_id': '123123'},
         'runtime_context': None,
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
-        'updated_at': None
+        'updated_at': None,
     },
 ]
 
@@ -2067,8 +1983,7 @@ class TaskExecutionTest(SQLAlchemyTest):
             created = db_api.create_task_execution(values)
 
             fetched = db_api.get_task_execution(
-                created.id,
-                fields=(db_models.TaskExecution.name,)
+                created.id, fields=(db_models.TaskExecution.name,)
             )
 
             self.assertNotEqual(created, fetched)
@@ -2104,8 +2019,7 @@ class TaskExecutionTest(SQLAlchemyTest):
             self.assertEqual(2, len(task.action_executions))
 
             self.assertNotIsInstance(
-                task.action_executions[0].task_execution,
-                list
+                task.action_executions[0].task_execution, list
             )
 
         # Remove associated objects from collection.
@@ -2132,8 +2046,7 @@ class TaskExecutionTest(SQLAlchemyTest):
 
         with db_api.transaction():
             updated = db_api.update_task_execution(
-                created.id,
-                {'workflow_name': 'new_wf'}
+                created.id, {'workflow_name': 'new_wf'}
             )
 
             self.assertEqual('new_wf', updated.workflow_name)
@@ -2160,14 +2073,12 @@ class TaskExecutionTest(SQLAlchemyTest):
 
         with db_api.transaction():
             updated = db_api.create_or_update_task_execution(
-                created.id,
-                {'state': 'RUNNING'}
+                created.id, {'state': 'RUNNING'}
             )
 
             self.assertEqual('RUNNING', updated.state)
             self.assertEqual(
-                'RUNNING',
-                db_api.load_task_execution(updated.id).state
+                'RUNNING', db_api.load_task_execution(updated.id).state
             )
 
             fetched = db_api.get_task_execution(created.id)
@@ -2211,9 +2122,7 @@ class TaskExecutionTest(SQLAlchemyTest):
             db_api.delete_task_execution(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_task_execution,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_task_execution, created.id
         )
 
     def test_get_incomplete_task_executions(self):
@@ -2236,7 +2145,7 @@ class TaskExecutionTest(SQLAlchemyTest):
                 1,
                 db_api.get_incomplete_task_executions_count(
                     workflow_execution_id=wf_ex.id
-                )
+                ),
             )
 
             # Add one more task.
@@ -2259,7 +2168,7 @@ class TaskExecutionTest(SQLAlchemyTest):
                 1,
                 db_api.get_incomplete_task_executions_count(
                     workflow_execution_id=wf_ex.id
-                )
+                ),
             )
 
 
@@ -2271,11 +2180,11 @@ CRON_TRIGGERS = [
         'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {},
-        'next_execution_time':
-            utils.utc_now_sec() + datetime.timedelta(days=1),
+        'next_execution_time': utils.utc_now_sec()
+        + datetime.timedelta(days=1),
         'remaining_executions': 42,
         'scope': 'private',
-        'project_id': '<default-project>'
+        'project_id': '<default-project>',
     },
     {
         'id': '22222222-2222-2222-2222-2222222c2222',
@@ -2284,11 +2193,11 @@ CRON_TRIGGERS = [
         'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {'param': 'val'},
-        'next_execution_time':
-            utils.utc_now_sec() + datetime.timedelta(days=1),
+        'next_execution_time': utils.utc_now_sec()
+        + datetime.timedelta(days=1),
         'remaining_executions': 42,
         'scope': 'private',
-        'project_id': '<default-project>'
+        'project_id': '<default-project>',
     },
 ]
 
@@ -2324,7 +2233,7 @@ class CronTriggerTest(SQLAlchemyTest):
             r"^Duplicate entry for cron trigger \['name', 'project_id'\]:"
             r" trigger1, <default-project>$",
             db_api.create_cron_trigger,
-            CRON_TRIGGERS[0]
+            CRON_TRIGGERS[0],
         )
 
     def test_update_cron_trigger(self):
@@ -2333,8 +2242,7 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated, updated_count = db_api.update_cron_trigger(
-            created.name,
-            {'pattern': '*/1 * * * *'}
+            created.name, {'pattern': '*/1 * * * *'}
         )
 
         self.assertEqual('*/1 * * * *', updated.pattern)
@@ -2349,7 +2257,7 @@ class CronTriggerTest(SQLAlchemyTest):
         updated, updated_count = db_api.update_cron_trigger(
             created.name,
             {'pattern': '*/1 * * * *'},
-            query_filter={'name': created.name}
+            query_filter={'name': created.name},
         )
 
         self.assertEqual(updated, fetched)
@@ -2359,14 +2267,13 @@ class CronTriggerTest(SQLAlchemyTest):
         updated, updated_count = db_api.update_cron_trigger(
             created.name,
             {'pattern': '*/1 * * * *'},
-            query_filter={'name': 'not-existing-id'}
+            query_filter={'name': 'not-existing-id'},
         )
 
         self.assertEqual(0, updated_count)
 
         updated, updated_count = db_api.update_cron_trigger(
-            created.id,
-            {'pattern': '*/2 * * * *'}
+            created.id, {'pattern': '*/2 * * * *'}
         )
 
         self.assertEqual('*/2 * * * *', updated.pattern)
@@ -2383,8 +2290,7 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertIsNotNone(created.name)
 
         updated = db_api.create_or_update_cron_trigger(
-            created.name,
-            {'pattern': '*/1 * * * *'}
+            created.name, {'pattern': '*/1 * * * *'}
         )
 
         self.assertEqual('*/1 * * * *', updated.pattern)
@@ -2508,7 +2414,7 @@ class CronTriggerTest(SQLAlchemyTest):
         fetched = db_api.get_cron_triggers(
             insecure=True,
             pattern='* * * * *',
-            project_id=security.DEFAULT_PROJECT_ID
+            project_id=security.DEFAULT_PROJECT_ID,
         )
 
         self.assertEqual(1, len(fetched))
@@ -2523,9 +2429,7 @@ class CronTriggerTest(SQLAlchemyTest):
 
             self.assertEqual(1, rowcount)
             self.assertRaises(
-                exc.DBEntityNotFoundError,
-                db_api.get_cron_trigger,
-                identifier
+                exc.DBEntityNotFoundError, db_api.get_cron_trigger, identifier
             )
 
 
@@ -2537,9 +2441,9 @@ SCHEDULED_JOBS = [
             'server': 'localhost',
             'database': 'test',
             'timeout': 600,
-            'verbose': True
+            'verbose': True,
         },
-        'execute_at': datetime.datetime(2019, 7, 6, 15, 1, 0)
+        'execute_at': datetime.datetime(2019, 7, 6, 15, 1, 0),
     },
     {
         'run_after': 50,
@@ -2549,9 +2453,9 @@ SCHEDULED_JOBS = [
             'server': 'localhost',
             'database': 'test',
             'timeout': 600,
-            'verbose': True
+            'verbose': True,
         },
-        'execute_at': datetime.datetime(2019, 7, 6, 20, 30, 0)
+        'execute_at': datetime.datetime(2019, 7, 6, 20, 30, 0),
     },
 ]
 
@@ -2576,12 +2480,11 @@ class ScheduledJobTest(SQLAlchemyTest):
 
         updated = db_api.update_scheduled_job(
             created.id,
-            {'captured_at': datetime.datetime(2019, 7, 6, 20, 30, 0)}
+            {'captured_at': datetime.datetime(2019, 7, 6, 20, 30, 0)},
         )
 
         self.assertEqual(
-            datetime.datetime(2019, 7, 6, 20, 30, 0),
-            updated[0].captured_at
+            datetime.datetime(2019, 7, 6, 20, 30, 0), updated[0].captured_at
         )
 
         fetched = db_api.get_scheduled_job(created.id)
@@ -2609,9 +2512,7 @@ class ScheduledJobTest(SQLAlchemyTest):
         db_api.delete_scheduled_job(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_scheduled_job,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_scheduled_job, created.id
         )
 
     def test_get_scheduled_jobs_count(self):
@@ -2640,7 +2541,7 @@ CODE_SOURCES = [
         'version': 1,
         'namespace': '',
         'scope': 'public',
-        'tags': []
+        'tags': [],
     }
 ]
 
@@ -2665,8 +2566,7 @@ class CodeSourceTest(SQLAlchemyTest):
         self.assertNotEqual(other.id, mine.id)
 
         updated = db_api.update_code_source(
-            'cs1',
-            {'content': 'def f():\n    return 2\n'}
+            'cs1', {'content': 'def f():\n    return 2\n'}
         )
 
         self.assertEqual(mine.id, updated.id)
@@ -2680,16 +2580,12 @@ class CodeSourceTest(SQLAlchemyTest):
 
     def test_delete_code_source(self):
         for attr in ('name', 'id'):
-            created = db_api.create_code_source(
-                copy.deepcopy(CODE_SOURCES[0])
-            )
+            created = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
 
             db_api.delete_code_source(getattr(created, attr))
 
             self.assertRaises(
-                exc.DBEntityNotFoundError,
-                db_api.get_code_source,
-                created.id
+                exc.DBEntityNotFoundError, db_api.get_code_source, created.id
             )
 
     def test_delete_code_source_in_namespace(self):
@@ -2701,9 +2597,7 @@ class CodeSourceTest(SQLAlchemyTest):
         db_api.delete_code_source('cs1', namespace='ns1')
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_code_source,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_code_source, created.id
         )
 
     def test_delete_other_project_code_source(self):
@@ -2712,15 +2606,11 @@ class CodeSourceTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
-            exc.NotAllowedException,
-            db_api.delete_code_source,
-            created.name
+            exc.NotAllowedException, db_api.delete_code_source, created.name
         )
 
         self.assertRaises(
-            exc.NotAllowedException,
-            db_api.delete_code_source,
-            created.id
+            exc.NotAllowedException, db_api.delete_code_source, created.id
         )
 
     def test_delete_other_project_code_source_by_admin(self):
@@ -2733,9 +2623,7 @@ class CodeSourceTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_code_source,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_code_source, created.id
         )
 
     def test_delete_code_source_prefers_own_project(self):
@@ -2750,9 +2638,7 @@ class CodeSourceTest(SQLAlchemyTest):
         db_api.delete_code_source('cs1')
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_code_source,
-            mine.id
+            exc.DBEntityNotFoundError, db_api.get_code_source, mine.id
         )
 
         fetched = db_api.get_code_source(other.id)
@@ -2765,7 +2651,7 @@ DYNAMIC_ACTIONS = [
         'name': 'dyn1',
         'class_name': 'MyClass',
         'namespace': '',
-        'scope': 'public'
+        'scope': 'public',
     }
 ]
 
@@ -2801,8 +2687,7 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         self.assertNotEqual(other.id, mine.id)
 
         updated = db_api.update_dynamic_action_definition(
-            'dyn1',
-            {'class_name': 'UpdatedClass'}
+            'dyn1', {'class_name': 'UpdatedClass'}
         )
 
         self.assertEqual(mine.id, updated.id)
@@ -2824,7 +2709,7 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
             self.assertRaises(
                 exc.DBEntityNotFoundError,
                 db_api.get_dynamic_action_definition,
-                created.id
+                created.id,
             )
 
             db_api.delete_code_sources()
@@ -2837,7 +2722,7 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_dynamic_action_definition,
-            created.id
+            created.id,
         )
 
     def test_delete_other_project_dynamic_action(self):
@@ -2848,13 +2733,13 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.NotAllowedException,
             db_api.delete_dynamic_action_definition,
-            created.name
+            created.name,
         )
 
         self.assertRaises(
             exc.NotAllowedException,
             db_api.delete_dynamic_action_definition,
-            created.id
+            created.id,
         )
 
     def test_delete_other_project_dynamic_action_by_admin(self):
@@ -2869,7 +2754,7 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_dynamic_action_definition,
-            created.id
+            created.id,
         )
 
     def test_delete_dynamic_action_prefers_own_project(self):
@@ -2886,7 +2771,7 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_dynamic_action_definition,
-            mine.id
+            mine.id,
         )
 
         fetched = db_api.get_dynamic_action_definition(other.id)
@@ -2903,8 +2788,8 @@ ENVIRONMENTS = [
             'server': 'localhost',
             'database': 'test',
             'timeout': 600,
-            'verbose': True
-        }
+            'verbose': True,
+        },
     },
     {
         'name': 'env2',
@@ -2914,9 +2799,9 @@ ENVIRONMENTS = [
             'server': '127.0.0.1',
             'database': 'temp',
             'timeout': 300,
-            'verbose': False
-        }
-    }
+            'verbose': False,
+        },
+    },
 ]
 
 
@@ -2948,7 +2833,7 @@ class EnvironmentTest(SQLAlchemyTest):
             r"^Duplicate entry for Environment \['name', 'project_id'\]: "
             r"env1, None$",
             db_api.create_environment,
-            ENVIRONMENTS[0]
+            ENVIRONMENTS[0],
         )
 
     def test_update_environment(self):
@@ -2957,8 +2842,7 @@ class EnvironmentTest(SQLAlchemyTest):
         self.assertIsNone(created.updated_at)
 
         updated = db_api.update_environment(
-            created.name,
-            {'description': 'my new desc'}
+            created.name, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
@@ -2980,7 +2864,7 @@ class EnvironmentTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_environment,
             created.name,
-            {'description': 'my new desc'}
+            {'description': 'my new desc'},
         )
 
         auth_context.set_ctx(USER_CTX)
@@ -3003,8 +2887,7 @@ class EnvironmentTest(SQLAlchemyTest):
         self.assertNotEqual(other.id, mine.id)
 
         updated = db_api.update_environment(
-            mine.name,
-            {'description': 'my new desc'}
+            mine.name, {'description': 'my new desc'}
         )
 
         self.assertEqual(mine.id, updated.id)
@@ -3049,14 +2932,12 @@ class EnvironmentTest(SQLAlchemyTest):
         self.assertIsNotNone(created.name)
 
         updated = db_api.create_or_update_environment(
-            created.name,
-            {'description': 'my new desc'}
+            created.name, {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated.description)
         self.assertEqual(
-            'my new desc',
-            db_api.load_environment(updated.name).description
+            'my new desc', db_api.load_environment(updated.name).description
         )
 
         fetched = db_api.get_environment(created.name)
@@ -3083,9 +2964,7 @@ class EnvironmentTest(SQLAlchemyTest):
         db_api.delete_environment(created.name)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_environment,
-            created.name
+            exc.DBEntityNotFoundError, db_api.get_environment, created.name
         )
 
     def test_delete_other_project_environment(self):
@@ -3097,9 +2976,7 @@ class EnvironmentTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
-            exc.NotAllowedException,
-            db_api.delete_environment,
-            created.name
+            exc.NotAllowedException, db_api.delete_environment, created.name
         )
 
         auth_context.set_ctx(USER_CTX)
@@ -3118,9 +2995,7 @@ class EnvironmentTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_environment,
-            created.name
+            exc.DBEntityNotFoundError, db_api.get_environment, created.name
         )
 
     def test_delete_environment_prefers_own_project(self):
@@ -3145,20 +3020,14 @@ class EnvironmentTest(SQLAlchemyTest):
         created0 = db_api.create_environment(ENVIRONMENTS[0])
         created1 = db_api.create_environment(ENVIRONMENTS[1])
 
-        db_api.delete_environments(
-            name={'in': [created0.name, created1.name]}
+        db_api.delete_environments(name={'in': [created0.name, created1.name]})
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError, db_api.get_environment, created0.id
         )
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_environment,
-            created0.id
-        )
-
-        self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_environment,
-            created1.id
+            exc.DBEntityNotFoundError, db_api.get_environment, created1.id
         )
 
 
@@ -3179,9 +3048,7 @@ class TXTest(SQLAlchemyTest):
 
         self.assertFalse(self.is_db_session_open())
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workbook,
-            created['id']
+            exc.DBEntityNotFoundError, db_api.get_workbook, created['id']
         )
         self.assertFalse(self.is_db_session_open())
 
@@ -3226,8 +3093,7 @@ class TXTest(SQLAlchemyTest):
             with db_api.transaction():
                 created = db_api.create_workbook(WORKBOOKS[0])
                 fetched = db_api.get_workbook(
-                    created.name,
-                    namespace=created.namespace
+                    created.name, namespace=created.namespace
                 )
 
                 self.assertEqual(created, fetched)
@@ -3240,9 +3106,7 @@ class TXTest(SQLAlchemyTest):
 
         self.assertFalse(self.is_db_session_open())
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workbook,
-            created.name
+            exc.DBEntityNotFoundError, db_api.get_workbook, created.name
         )
 
 
@@ -3272,7 +3136,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         fetched = db_api.get_resource_member(
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
-            USER_CTX.project_id
+            USER_CTX.project_id,
         )
 
         self.assertEqual(created_1, fetched)
@@ -3283,7 +3147,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         fetched = db_api.get_resource_member(
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
-            USER_CTX.project_id
+            USER_CTX.project_id,
         )
 
         self.assertEqual(created_1, fetched)
@@ -3294,7 +3158,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             db_api.get_resource_member,
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
-            created_2.member_id
+            created_2.member_id,
         )
 
     def test_create_resource_member_duplicate(self):
@@ -3306,7 +3170,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             r" 'resource_type', 'member_id'\]:"
             r" 123e4567-e89b-12d3-a456-426655440000, workflow, 99-88-33$",
             db_api.create_resource_member,
-            RESOURCE_MEMBERS[0]
+            RESOURCE_MEMBERS[0],
         )
 
     def test_get_resource_members_by_owner(self):
@@ -3345,7 +3209,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             created.resource_id,
             'workflow',
             USER_CTX.project_id,
-            {'status': 'accepted'}
+            {'status': 'accepted'},
         )
 
         self.assertEqual(created.id, updated.id)
@@ -3360,7 +3224,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             created.resource_id,
             'workflow',
             USER_CTX.project_id,
-            {'status': 'accepted'}
+            {'status': 'accepted'},
         )
 
     def test_delete_resource_member(self):
@@ -3412,7 +3276,6 @@ class ResourceMemberTest(SQLAlchemyTest):
 
 
 class WorkflowSharingTest(SQLAlchemyTest):
-
     def test_owner_delete_shared_workflow(self):
         wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
@@ -3420,9 +3283,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workflow_definition,
-            wf.id
+            exc.DBEntityNotFoundError, db_api.get_workflow_definition, wf.id
         )
 
         # Switch to original tenant, share workflow to another tenant.
@@ -3442,10 +3303,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         db_api.update_resource_member(
-            wf.id,
-            'workflow',
-            USER_CTX.project_id,
-            {'status': 'accepted'}
+            wf.id, 'workflow', USER_CTX.project_id, {'status': 'accepted'}
         )
 
         fetched = db_api.get_workflow_definition(wf.id)
@@ -3461,9 +3319,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_workflow_definition,
-            wf.id
+            exc.DBEntityNotFoundError, db_api.get_workflow_definition, wf.id
         )
 
     def test_owner_delete_shared_workflow_has_crontrigger(self):
@@ -3483,10 +3339,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         db_api.update_resource_member(
-            wf.id,
-            'workflow',
-            USER_CTX.project_id,
-            {'status': 'accepted'}
+            wf.id, 'workflow', USER_CTX.project_id, {'status': 'accepted'}
         )
 
         # Create cron trigger using the shared workflow.
@@ -3497,9 +3350,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
-            exc.DBError,
-            db_api.delete_workflow_definition,
-            wf.id
+            exc.DBError, db_api.delete_workflow_definition, wf.id
         )
 
 
@@ -3550,7 +3401,7 @@ class EventTriggerTest(SQLAlchemyTest):
             r" 'event', 'workflow_id', 'project_id'\]:"
             r" openstack, notification, compute.create_instance, .*$",
             db_api.create_event_trigger,
-            EVENT_TRIGGERS[0]
+            EVENT_TRIGGERS[0],
         )
 
     def test_get_event_triggers_not_insecure(self):
@@ -3577,8 +3428,9 @@ class EventTriggerTest(SQLAlchemyTest):
         self.assertEqual(2, len(fetched))
 
     def test_get_event_triggers_specific_fields_insecure(self):
-        fetched = db_api.get_event_triggers(fields=['name', 'workflow_id'],
-                                            insecure=True)
+        fetched = db_api.get_event_triggers(
+            fields=['name', 'workflow_id'], insecure=True
+        )
 
         self.assertEqual(0, len(fetched))
 
@@ -3589,10 +3441,7 @@ class EventTriggerTest(SQLAlchemyTest):
         # foreign constraint.
         new_wf = db_api.create_workflow_definition({'name': 'my_wf1'})
 
-        db_api.update_event_trigger(
-            created.id,
-            {'workflow_id': new_wf.id}
-        )
+        db_api.update_event_trigger(created.id, {'workflow_id': new_wf.id})
 
         updated = db_api.get_event_trigger(created.id)
 
@@ -3604,16 +3453,14 @@ class EventTriggerTest(SQLAlchemyTest):
         db_api.delete_event_trigger(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_event_trigger,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_event_trigger, created.id
         )
 
     def test_delete_event_trigger_not_found(self):
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.delete_event_trigger,
-            '09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
+            '09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
         )
 
     def _create_other_project_event_trigger(self, scope='public'):
@@ -3638,7 +3485,7 @@ class EventTriggerTest(SQLAlchemyTest):
             exc.NotAllowedException,
             db_api.update_event_trigger,
             created.id,
-            {'workflow_id': new_wf.id, 'workflow_input': {'k': 'v'}}
+            {'workflow_id': new_wf.id, 'workflow_input': {'k': 'v'}},
         )
 
         fetched = db_api.get_event_trigger(created.id)
@@ -3653,7 +3500,7 @@ class EventTriggerTest(SQLAlchemyTest):
             exc.DBEntityNotFoundError,
             db_api.update_event_trigger,
             created.id,
-            {'name': 'new_name'}
+            {'name': 'new_name'},
         )
 
     def test_update_other_project_event_trigger_by_admin(self):
@@ -3671,9 +3518,7 @@ class EventTriggerTest(SQLAlchemyTest):
         created = self._create_other_project_event_trigger()
 
         self.assertRaises(
-            exc.NotAllowedException,
-            db_api.delete_event_trigger,
-            created.id
+            exc.NotAllowedException, db_api.delete_event_trigger, created.id
         )
 
         self.assertIsNotNone(db_api.get_event_trigger(created.id))
@@ -3682,9 +3527,7 @@ class EventTriggerTest(SQLAlchemyTest):
         created = self._create_other_project_event_trigger(scope='private')
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.delete_event_trigger,
-            created.id
+            exc.DBEntityNotFoundError, db_api.delete_event_trigger, created.id
         )
 
         auth_context.set_ctx(USER_CTX)
@@ -3701,9 +3544,7 @@ class EventTriggerTest(SQLAlchemyTest):
         auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_event_trigger,
-            created.id
+            exc.DBEntityNotFoundError, db_api.get_event_trigger, created.id
         )
 
 
@@ -3714,8 +3555,7 @@ class LockTest(SQLAlchemyTest):
         db_api.create_named_lock('lock1')
 
         locks = [
-            lock for lock in db_api.get_named_locks()
-            if lock.name == 'lock1'
+            lock for lock in db_api.get_named_locks() if lock.name == 'lock1'
         ]
 
         self.assertEqual(1, len(locks))
@@ -3725,8 +3565,7 @@ class LockTest(SQLAlchemyTest):
         db_api.delete_named_lock('invalid_lock_id', 'fake')
 
         locks = [
-            lock for lock in db_api.get_named_locks()
-            if lock.name == 'lock1'
+            lock for lock in db_api.get_named_locks() if lock.name == 'lock1'
         ]
 
         self.assertEqual(1, len(locks))
@@ -3734,8 +3573,7 @@ class LockTest(SQLAlchemyTest):
         db_api.delete_named_lock(locks[0].id, 'lock1')
 
         locks = [
-            lock for lock in db_api.get_named_locks()
-            if lock.name == 'lock1'
+            lock for lock in db_api.get_named_locks() if lock.name == 'lock1'
         ]
 
         self.assertEqual(0, len(locks))
@@ -3747,19 +3585,25 @@ class LockTest(SQLAlchemyTest):
             # Make sure that within 'with' section the lock record exists.
             self.assertEqual(
                 1,
-                len([
-                    lock for lock in db_api.get_named_locks()
-                    if lock.name == name
-                ])
+                len(
+                    [
+                        lock
+                        for lock in db_api.get_named_locks()
+                        if lock.name == name
+                    ]
+                ),
             )
 
         # Make sure that outside 'with' section the lock record does not exist.
         self.assertEqual(
             0,
-            len([
-                lock for lock in db_api.get_named_locks()
-                if lock.name == name
-            ])
+            len(
+                [
+                    lock
+                    for lock in db_api.get_named_locks()
+                    if lock.name == name
+                ]
+            ),
         )
 
     def test_internal_get_direct_subworkflows(self):

@@ -48,31 +48,26 @@ class ExecutionExpirationPolicy(periodic_task.PeriodicTasks):
 
         if interval and ((ot and ot >= 1) or (mfe and mfe >= 1)):
             _periodic_task = periodic_task.periodic_task(
-                spacing=interval * 60,
-                run_immediately=True
-
+                spacing=interval * 60, run_immediately=True
             )
             self.add_periodic_task(
                 _periodic_task(run_execution_expiration_policy)
             )
         else:
-            LOG.debug("Expiration policy disabled. Evaluation_interval "
-                      "is not configured or both older_than and "
-                      "max_finished_executions < '1'.")
+            LOG.debug(
+                "Expiration policy disabled. Evaluation_interval "
+                "is not configured or both older_than and "
+                "max_finished_executions < '1'."
+            )
 
 
-def _delete_executions(batch_size, expiration_time,
-                       max_finished_executions):
+def _delete_executions(batch_size, expiration_time, max_finished_executions):
     _delete_until_depleted(
-        lambda: db_api.get_expired_executions(
-            expiration_time,
-            batch_size
-        )
+        lambda: db_api.get_expired_executions(expiration_time, batch_size)
     )
     _delete_until_depleted(
         lambda: db_api.get_superfluous_executions(
-            max_finished_executions,
-            batch_size
+            max_finished_executions, batch_size
         )
     )
 
@@ -96,7 +91,7 @@ def _delete(executions):
                 user_id=None,
                 project_id=execution.project_id,
                 auth_token=None,
-                is_admin=True
+                is_admin=True,
             )
             auth_ctx.set_ctx(ctx)
 
@@ -104,12 +99,14 @@ def _delete(executions):
                 'Delete execution id : %s from date : %s '
                 'according to expiration policy',
                 execution.id,
-                execution.updated_at
+                execution.updated_at,
             )
             db_api.delete_workflow_execution(execution.id)
         except Exception as e:
-            msg = ("Failed to delete [execution_id=%s]\n %s"
-                   % (execution.id, traceback.format_exc(e)))
+            msg = "Failed to delete [execution_id=%s]\n %s" % (
+                execution.id,
+                traceback.format_exc(e),
+            )
             LOG.warning(msg)
         finally:
             auth_ctx.set_ctx(None)
@@ -136,8 +133,10 @@ def _check_ignored_states_config():
     for state in ignored_states:
         if state not in states.TERMINAL_STATES:
             raise ValueError(
-                '{} is not a terminal state. The valid states are [{}]'
-                .format(state, states.TERMINAL_STATES))
+                '{} is not a terminal state. The valid states are [{}]'.format(
+                    state, states.TERMINAL_STATES
+                )
+            )
 
 
 def setup():
@@ -147,17 +146,14 @@ def setup():
     _check_ignored_states_config()
 
     ctx = auth_ctx.MistralContext(
-        user_id=None,
-        project_id=None,
-        auth_token=None,
-        is_admin=True
+        user_id=None, project_id=None, auth_token=None, is_admin=True
     )
 
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
-        context=ctx
+        context=ctx,
     )
 
     return tg

@@ -40,9 +40,7 @@ def to_json_str(obj):
             # because "to_primitive" limits the depth for custom classes,
             # if they are present in the object graph being traversed.
             return jsonutils.to_primitive(
-                result,
-                convert_instances=True,
-                fallback=_fallback
+                result, convert_instances=True, fallback=_fallback
             )
 
         return value

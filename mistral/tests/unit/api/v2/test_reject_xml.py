@@ -41,7 +41,7 @@ class TestRejectXML(base.APITest):
             '/v2/environments',
             XML_BOMB,
             headers={'Content-Type': content_type},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(415, resp.status_int)
@@ -65,7 +65,7 @@ class TestRejectXML(base.APITest):
         resp = self.app.post_json(
             '/v2/environments',
             {'not': 'a valid environment'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertNotEqual(415, resp.status_int)

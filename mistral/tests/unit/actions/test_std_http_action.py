@@ -24,39 +24,23 @@ from mistral_lib import actions as mistral_lib_actions
 
 URL = 'http://some_url'
 
-DATA = {
-    'server': {
-        'id': '12345',
-        'metadata': {
-            'name': 'super_server'
-        }
-    }
-}
+DATA = {'server': {'id': '12345', 'metadata': {'name': 'super_server'}}}
 
 ACTION_LOGGER = 'mistral.actions.std_actions'
 
 
 def get_fake_response(content, code, **kwargs):
-    return base.FakeHTTPResponse(
-        content,
-        code,
-        **kwargs
-    )
+    return base.FakeHTTPResponse(content, code, **kwargs)
 
 
 def get_success_fake_response():
     return get_fake_response(
-        json.dumps(DATA),
-        200,
-        headers={'Content-Type': 'application/json'}
+        json.dumps(DATA), 200, headers={'Content-Type': 'application/json'}
     )
 
 
 def get_error_fake_response():
-    return get_fake_response(
-        json.dumps(DATA),
-        401
-    )
+    return get_fake_response(json.dumps(DATA), 401)
 
 
 class HTTPActionTest(base.BaseTest):
@@ -66,11 +50,7 @@ class HTTPActionTest(base.BaseTest):
         mock_ctx = mock.Mock()
 
         action = std.HTTPAction(
-            url=URL,
-            method='POST',
-            body=DATA,
-            timeout=20,
-            allow_redirects=True
+            url=URL, method='POST', body=DATA, timeout=20, allow_redirects=True
         )
 
         DATA_STR = json.dumps(DATA)
@@ -97,7 +77,7 @@ class HTTPActionTest(base.BaseTest):
             auth=None,
             allow_redirects=True,
             proxies=None,
-            verify=None
+            verify=None,
         )
 
     @mock.patch.object(requests, 'request')
@@ -106,11 +86,7 @@ class HTTPActionTest(base.BaseTest):
         mock_ctx = mock.Mock()
 
         action = std.HTTPAction(
-            url=URL,
-            method='POST',
-            body=DATA,
-            timeout=20,
-            allow_redirects=True
+            url=URL, method='POST', body=DATA, timeout=20, allow_redirects=True
         )
 
         result = action.run(mock_ctx)
@@ -123,11 +99,7 @@ class HTTPActionTest(base.BaseTest):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
 
-        action = std.HTTPAction(
-            url=URL,
-            method='POST',
-            auth='user:password'
-        )
+        action = std.HTTPAction(url=URL, method='POST', auth='user:password')
 
         action.run(mock_ctx)
 
@@ -139,11 +111,19 @@ class HTTPActionTest(base.BaseTest):
         mocked_method.return_value = get_success_fake_response()
         mock_ctx = mock.Mock()
 
-        headers = {'int_header': 33, 'bool_header': True,
-                   'float_header': 3.0, 'regular_header': 'teststring'}
+        headers = {
+            'int_header': 33,
+            'bool_header': True,
+            'float_header': 3.0,
+            'regular_header': 'teststring',
+        }
 
-        safe_headers = {'int_header': '33', 'bool_header': 'True',
-                        'float_header': '3.0', 'regular_header': 'teststring'}
+        safe_headers = {
+            'int_header': '33',
+            'bool_header': 'True',
+            'float_header': '3.0',
+            'regular_header': 'teststring',
+        }
 
         action = std.HTTPAction(
             url=URL,
@@ -196,9 +176,7 @@ class HTTPActionTest(base.BaseTest):
 
         action = std.HTTPAction(url=URL, method='POST', body=sensitive_data)
 
-        mocked_method.return_value = get_fake_response(
-            content='', code=201
-        )
+        mocked_method.return_value = get_fake_response(content='', code=201)
         mock_ctx = mock.Mock()
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
@@ -213,7 +191,7 @@ class HTTPActionTest(base.BaseTest):
         action = std.HTTPAction(
             url=URL,
             method='POST',
-            json={'user': 'admin', 'password': 'hunter2'}
+            json={'user': 'admin', 'password': 'hunter2'},
         )
 
         mocked_method.return_value = get_fake_response(content='', code=201)
@@ -224,36 +202,28 @@ class HTTPActionTest(base.BaseTest):
         self.assertNotIn('hunter2', logs.output[0])
         self.assertIn("'user': 'admin'", logs.output[0])
 
-        self.override_config('hide_request_body', True,
-                             group='action_logging')
+        self.override_config('hide_request_body', True, group='action_logging')
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
             action.run(mock.Mock())
 
         self.assertNotIn('admin', logs.output[0])
         self.assertEqual(
-            'hunter2',
-            mocked_method.call_args[1]['json']['password']
+            'hunter2', mocked_method.call_args[1]['json']['password']
         )
 
     @mock.patch.object(requests, 'request')
     def test_http_action_hides_request_headers_if_needed(self, mocked_method):
         sensitive_header = 'Authorization'
         self.override_config(
-            'sensitive_headers',
-            [sensitive_header],
-            group='action_logging'
+            'sensitive_headers', [sensitive_header], group='action_logging'
         )
 
-        headers = {
-            sensitive_header: 'Bearer 13e7aa3fc23e50bc1529dc136791d34d'
-        }
+        headers = {sensitive_header: 'Bearer 13e7aa3fc23e50bc1529dc136791d34d'}
 
         action = std.HTTPAction(url=URL, method='GET', headers=headers)
 
-        mocked_method.return_value = get_fake_response(
-            content='', code=200
-        )
+        mocked_method.return_value = get_fake_response(content='', code=200)
         mock_ctx = mock.Mock()
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
@@ -268,9 +238,7 @@ class HTTPActionTest(base.BaseTest):
     @mock.patch.object(requests, 'request')
     def test_http_action_hides_response_body_if_needed(self, mocked_method):
         self.override_config(
-            'hide_response_body',
-            True,
-            group='action_logging'
+            'hide_response_body', True, group='action_logging'
         )
 
         action = std.HTTPAction(url=URL, method='GET')
@@ -318,14 +286,12 @@ class HTTPActionTest(base.BaseTest):
         headers = {
             'authorization': 'Bearer 13e7aa3fc23e50bc1529dc136791d34d',
             'X-Auth-Token': 'gAAAAABkeystonetoken',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
         }
 
         action = std.HTTPAction(url=URL, method='GET', headers=headers)
 
-        mocked_method.return_value = get_fake_response(
-            content='', code=200
-        )
+        mocked_method.return_value = get_fake_response(content='', code=200)
         mock_ctx = mock.Mock()
 
         with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
@@ -337,5 +303,5 @@ class HTTPActionTest(base.BaseTest):
         self.assertIn("headers={'Accept': 'application/json'}", log)
         self.assertEqual(
             headers['authorization'],
-            mocked_method.call_args[1]['headers']['authorization']
+            mocked_method.call_args[1]['headers']['authorization'],
         )

@@ -30,11 +30,7 @@ WF = models.WorkflowDefinition(
     spec={
         'version': '2.0',
         'name': 'my_wf',
-        'tasks': {
-            'task1': {
-                'action': 'std.noop'
-            }
-        }
+        'tasks': {'task1': {'action': 'std.noop'}},
     }
 )
 WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
@@ -48,15 +44,15 @@ TRIGGER = {
     'workflow_input': '{}',
     'workflow_params': '{}',
     'scope': 'private',
-    'remaining_executions': 42
+    'remaining_executions': 42,
 }
 
 trigger_values = copy.deepcopy(TRIGGER)
-trigger_values['workflow_input'] = json.loads(
-    trigger_values['workflow_input'])
+trigger_values['workflow_input'] = json.loads(trigger_values['workflow_input'])
 
 trigger_values['workflow_params'] = json.loads(
-    trigger_values['workflow_params'])
+    trigger_values['workflow_params']
+)
 
 TRIGGER_DB = models.CronTrigger()
 TRIGGER_DB.update(trigger_values)
@@ -82,7 +78,10 @@ class TestCronTriggerController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_cron_trigger')
     def test_get_with_fields_filter(self, mocked_get):
-        mocked_get.return_value = (TRIGGER['id'], TRIGGER['name'],)
+        mocked_get.return_value = (
+            TRIGGER['id'],
+            TRIGGER['name'],
+        )
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger?fields=name')
         expected = {
             'id': TRIGGER['id'],
@@ -97,7 +96,7 @@ class TestCronTriggerController(base.APITest):
         mocked_get.return_value = (
             TRIGGER['id'],
             TRIGGER['name'],
-            TRIGGER['pattern']
+            TRIGGER['pattern'],
         )
         resp = self.app.get(
             '/v2/cron_triggers/my_cron_trigger?fields=name,pattern'
@@ -111,15 +110,14 @@ class TestCronTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected, resp.json)
         mocked_get.assert_called_once_with(
-            'my_cron_trigger',
-            fields=['id', 'name', 'pattern']
+            'my_cron_trigger', fields=['id', 'name', 'pattern']
         )
 
     @mock.patch('mistral.db.v2.api.get_cron_trigger')
     def test_get_with_invalid_fields(self, mocked_get):
         resp = self.app.get(
             '/v2/cron_triggers/my_cron_trigger?fields=bogus,name,trust_id',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -131,7 +129,7 @@ class TestCronTriggerController(base.APITest):
     def test_get_with_hidden_field(self, mocked_get):
         resp = self.app.get(
             '/v2/cron_triggers/my_cron_trigger?fields=trust_id',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -142,7 +140,7 @@ class TestCronTriggerController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            TRIGGER_DB  # Successful run
+            TRIGGER_DB,  # Successful run
         ]
 
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
@@ -150,8 +148,9 @@ class TestCronTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
 
-    @mock.patch.object(db_api, "get_cron_trigger",
-                       return_value=TRIGGER_DB_WITH_PROJECT_ID)
+    @mock.patch.object(
+        db_api, "get_cron_trigger", return_value=TRIGGER_DB_WITH_PROJECT_ID
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
 
@@ -161,8 +160,7 @@ class TestCronTriggerController(base.APITest):
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get(
-            '/v2/cron_triggers/my_cron_trigger',
-            expect_errors=True
+            '/v2/cron_triggers/my_cron_trigger', expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
@@ -201,8 +199,9 @@ class TestCronTriggerController(base.APITest):
     @mock.patch('mistral.auth.get_auth_handler', mock.Mock())
     def test_post_trust_forbidden(self, keystone, create_mtd):
         self.override_config('auth_enable', True, group='pecan')
-        keystone.client.return_value.trusts.create.side_effect = \
+        keystone.client.return_value.trusts.create.side_effect = (
             ks_exc.Forbidden()
+        )
 
         resp = self.app.post_json(
             '/v2/cron_triggers', TRIGGER, expect_errors=True
@@ -224,8 +223,7 @@ class TestCronTriggerController(base.APITest):
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete(
-            '/v2/cron_triggers/my_cron_trigger',
-            expect_errors=True
+            '/v2/cron_triggers/my_cron_trigger', expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
@@ -244,7 +242,7 @@ class TestCronTriggerController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [TRIGGER_DB]  # Successful run
+            [TRIGGER_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/cron_triggers')
@@ -270,7 +268,7 @@ class TestCronTriggerController(base.APITest):
         self.assertTrue(mock_get_triggers.call_args[1].get('insecure', False))
         self.assertEqual(
             {'eq': '192796e61c174f718d6147b129f3f2ff'},
-            mock_get_triggers.call_args[1].get('project_id')
+            mock_get_triggers.call_args[1].get('project_id'),
         )
 
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_EMPTY)

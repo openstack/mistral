@@ -26,6 +26,7 @@ class MistralService(service.Service):
     The term 'service' here means any Mistral component that can run as
     an independent process.
     """
+
     def __init__(self, setup_profiler=True):
         super(MistralService, self).__init__()
         self._setup_profiler = setup_profiler

@@ -25,17 +25,13 @@ DATA = {
     "server": {
         "id": "03ea824a-aa24-4105-9131-66c48ae54acf",
         "name": "cloud-fedora",
-        "status": "ACTIVE"
+        "status": "ACTIVE",
     },
-    "status": "OK"
+    "status": "OK",
 }
 
 SERVERS = {
-    "servers": [
-        {'name': 'centos'},
-        {'name': 'ubuntu'},
-        {'name': 'fedora'}
-    ]
+    "servers": [{'name': 'centos'}, {'name': 'ubuntu'}, {'name': 'fedora'}]
 }
 
 WF_EXECS = [
@@ -51,7 +47,7 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
-        'output': None
+        'output': None,
     },
     {
         'spec': {},
@@ -66,8 +62,8 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
-        'output': None
-    }
+        'output': None,
+    },
 ]
 
 
@@ -84,11 +80,14 @@ class JinjaEvaluatorTest(base.DbTestCase):
     def test_expression_result(self):
         res = self._evaluator.evaluate('_.server', DATA)
 
-        self.assertEqual({
-            'id': '03ea824a-aa24-4105-9131-66c48ae54acf',
-            'name': 'cloud-fedora',
-            'status': 'ACTIVE'
-        }, res)
+        self.assertEqual(
+            {
+                'id': '03ea824a-aa24-4105-9131-66c48ae54acf',
+                'name': 'cloud-fedora',
+                'status': 'ACTIVE',
+            },
+            res,
+        )
 
         res = self._evaluator.evaluate('_.server.id', DATA)
 
@@ -100,8 +99,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
     def test_select_result(self):
         res = self._evaluator.evaluate(
-            '_.servers|selectattr("name", "equalto", "ubuntu")',
-            SERVERS
+            '_.servers|selectattr("name", "equalto", "ubuntu")', SERVERS
         )
 
         item = list(res)[0]
@@ -113,19 +111,15 @@ class JinjaEvaluatorTest(base.DbTestCase):
         self.assertEqual('3', self._evaluator.evaluate('_|string', 3))
 
     def test_function_len(self):
-        self.assertEqual(
-            3,
-            self._evaluator.evaluate('_|length', 'hey')
-        )
+        self.assertEqual(3, self._evaluator.evaluate('_|length', 'hey'))
 
         data = [{'some': 'thing'}]
 
         self.assertEqual(
             1,
             self._evaluator.evaluate(
-                '_|selectattr("some", "equalto", "thing")|list|length',
-                data
-            )
+                '_|selectattr("some", "equalto", "thing")|list|length', data
+            ),
         )
 
     def test_validate(self):
@@ -136,17 +130,17 @@ class JinjaEvaluatorTest(base.DbTestCase):
         self._evaluator.validate('_.a1 * _.a2')
 
     def test_validate_failed(self):
-        self.assertRaises(exc.JinjaGrammarException,
-                          self._evaluator.validate,
-                          '*')
+        self.assertRaises(
+            exc.JinjaGrammarException, self._evaluator.validate, '*'
+        )
 
-        self.assertRaises(exc.JinjaEvaluationException,
-                          self._evaluator.validate,
-                          [1, 2, 3])
+        self.assertRaises(
+            exc.JinjaEvaluationException, self._evaluator.validate, [1, 2, 3]
+        )
 
-        self.assertRaises(exc.JinjaEvaluationException,
-                          self._evaluator.validate,
-                          {'a': 1})
+        self.assertRaises(
+            exc.JinjaEvaluationException, self._evaluator.validate, {'a': 1}
+        )
 
     def test_function_uuid(self):
         uuid = self._evaluator.evaluate('uuid()', {})
@@ -165,123 +159,119 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_filter_task_without_task_execution(self, task_execution_result,
-                                                task_executions):
+    def test_filter_task_without_task_execution(
+        self, task_execution_result, task_executions
+    ):
         task = mock.MagicMock(return_value={})
         task_executions.return_value = [task]
 
-        ctx = {
-            '__task_execution': None,
-            '__execution': {
-                'id': 'some'
-            }
-        }
+        ctx = {'__task_execution': None, '__execution': {'id': 'some'}}
 
         result = self._evaluator.evaluate('_|task("some")', ctx)
 
-        self.assertEqual({
-            'id': task.id,
-            'name': task.name,
-            'published': task.published,
-            'result': task_execution_result(),
-            'spec': task.spec,
-            'state': task.state,
-            'state_info': task.state_info,
-            'type': task.type,
-            'workflow_execution_id': task.workflow_execution_id,
-            'created_at': task.created_at.isoformat(' '),
-            'updated_at': task.updated_at.isoformat(' '),
-        }, result)
+        self.assertEqual(
+            {
+                'id': task.id,
+                'name': task.name,
+                'published': task.published,
+                'result': task_execution_result(),
+                'spec': task.spec,
+                'state': task.state,
+                'state_info': task.state_info,
+                'type': task.type,
+                'workflow_execution_id': task.workflow_execution_id,
+                'created_at': task.created_at.isoformat(' '),
+                'updated_at': task.updated_at.isoformat(' '),
+            },
+            result,
+        )
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_filter_tasks_without_task_execution(self, task_execution_result,
-                                                 task_executions):
+    def test_filter_tasks_without_task_execution(
+        self, task_execution_result, task_executions
+    ):
         task = mock.MagicMock(return_value={})
         task_executions.return_value = [task]
-        ctx = {
-            '__task_execution': None,
-            '__execution': {
-                'id': 'some'
-            }
-        }
+        ctx = {'__task_execution': None, '__execution': {'id': 'some'}}
 
         result = self._evaluator.evaluate('_|tasks()', ctx)
 
-        self.assertEqual([{
-            'id': task.id,
-            'name': task.name,
-            'published': task.published,
-            'result': task_execution_result(),
-            'spec': task.spec,
-            'state': task.state,
-            'state_info': task.state_info,
-            'type': task.type,
-            'workflow_execution_id': task.workflow_execution_id,
-            'created_at': task.created_at.isoformat(' '),
-            'updated_at': task.updated_at.isoformat(' ')
-        }], result)
+        self.assertEqual(
+            [
+                {
+                    'id': task.id,
+                    'name': task.name,
+                    'published': task.published,
+                    'result': task_execution_result(),
+                    'spec': task.spec,
+                    'state': task.state,
+                    'state_info': task.state_info,
+                    'type': task.type,
+                    'workflow_execution_id': task.workflow_execution_id,
+                    'created_at': task.created_at.isoformat(' '),
+                    'updated_at': task.updated_at.isoformat(' '),
+                }
+            ],
+            result,
+        )
 
     @mock.patch('mistral.db.v2.api.get_task_execution')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_filter_task_with_taskexecution(self, task_execution_result,
-                                            task_execution):
-        ctx = {
-            '__task_execution': {
-                'id': 'some',
-                'name': 'some'
-            }
-        }
+    def test_filter_task_with_taskexecution(
+        self, task_execution_result, task_execution
+    ):
+        ctx = {'__task_execution': {'id': 'some', 'name': 'some'}}
 
         result = self._evaluator.evaluate('_|task("some")', ctx)
 
-        self.assertEqual({
-            'id': task_execution().id,
-            'name': task_execution().name,
-            'published': task_execution().published,
-            'result': task_execution_result(),
-            'spec': task_execution().spec,
-            'state': task_execution().state,
-            'state_info': task_execution().state_info,
-            'type': task_execution().type,
-            'workflow_execution_id': task_execution().workflow_execution_id,
-            'created_at': task_execution().created_at.isoformat(' '),
-            'updated_at': task_execution().updated_at.isoformat(' ')
-        }, result)
+        self.assertEqual(
+            {
+                'id': task_execution().id,
+                'name': task_execution().name,
+                'published': task_execution().published,
+                'result': task_execution_result(),
+                'spec': task_execution().spec,
+                'state': task_execution().state,
+                'state_info': task_execution().state_info,
+                'type': task_execution().type,
+                'workflow_execution_id': (
+                    task_execution().workflow_execution_id
+                ),
+                'created_at': task_execution().created_at.isoformat(' '),
+                'updated_at': task_execution().updated_at.isoformat(' '),
+            },
+            result,
+        )
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
     def test_filter_execution(self, workflow_execution):
         wf_ex = mock.MagicMock(return_value={})
         workflow_execution.return_value = wf_ex
-        ctx = {
-            '__execution': {
-                'id': 'some'
-            }
-        }
+        ctx = {'__execution': {'id': 'some'}}
 
         result = self._evaluator.evaluate('_|execution', ctx)
 
-        self.assertEqual({
-            'id': wf_ex.id,
-            'name': wf_ex.name,
-            'spec': wf_ex.spec,
-            'input': wf_ex.input,
-            'params': wf_ex.params,
-            'created_at': wf_ex.created_at.isoformat(' '),
-            'updated_at': wf_ex.updated_at.isoformat(' '),
-            'root_execution_id': wf_ex.root_execution_id
-        }, result)
+        self.assertEqual(
+            {
+                'id': wf_ex.id,
+                'name': wf_ex.name,
+                'spec': wf_ex.spec,
+                'input': wf_ex.input,
+                'params': wf_ex.params,
+                'created_at': wf_ex.created_at.isoformat(' '),
+                'updated_at': wf_ex.updated_at.isoformat(' '),
+                'root_execution_id': wf_ex.root_execution_id,
+            },
+            result,
+        )
 
     def test_executions(self):
         with db_api.transaction(read_only=True):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
-            ctx = {
-                '__execution': {
-                    'id': 'some'
-                }
-            }
+            ctx = {'__execution': {'id': 'some'}}
 
             result = self._evaluator.evaluate('_|executions()', ctx)
 
@@ -307,12 +297,10 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
         with db_api.transaction():
             self._evaluator.evaluate(
-                'executions()[0].update({"state": "ERROR"})',
-                ctx
+                'executions()[0].update({"state": "ERROR"})', ctx
             )
             self._evaluator.evaluate(
-                'executions()[0].context.update({"image_id": "666"})',
-                ctx
+                'executions()[0].context.update({"image_id": "666"})', ctx
             )
 
         with db_api.transaction():
@@ -326,11 +314,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
-            ctx = {
-                '__execution': {
-                    'id': 'some'
-                }
-            }
+            ctx = {'__execution': {'id': 'some'}}
 
             result = self._evaluator.evaluate('_|executions("one")', ctx)
 
@@ -346,11 +330,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
-            ctx = {
-                '__execution': {
-                    'id': 'some'
-                }
-            }
+            ctx = {'__execution': {'id': 'some'}}
 
             result = self._evaluator.evaluate(
                 '_|executions(state="RUNNING")', ctx
@@ -369,11 +349,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
-            ctx = {
-                '__execution': {
-                    'id': 'some'
-                }
-            }
+            ctx = {'__execution': {'id': 'some'}}
 
             result = self._evaluator.evaluate(
                 '_|executions(from_time="2000-01-01")', ctx
@@ -398,11 +374,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
-            ctx = {
-                '__execution': {
-                    'id': 'some'
-                }
-            }
+            ctx = {'__execution': {'id': 'some'}}
 
             result = self._evaluator.evaluate(
                 '_|executions(to_time="2020-01-01")', ctx
@@ -446,8 +418,8 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
                 'project_id': '1-2-3-4',
                 'vm_count': 28,
                 'active_vm_count': 0,
-                'net_count': 1
-            }
+                'net_count': 1,
+            },
         )
 
         expected_result = """
@@ -481,8 +453,8 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
                 'project_id': '1-2-3-4',
                 'vm_count': 28,
                 'active_vm_count': 0,
-                'net_count': 1
-            }
+                'net_count': 1,
+            },
         )
 
         expected_result = """
@@ -511,21 +483,24 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
         self._evaluator.validate('The value is {{ _.a1 }}.')
 
     def test_validate_failed(self):
-        self.assertRaises(exc.JinjaGrammarException,
-                          self._evaluator.validate,
-                          'The value is {{ * }}.')
+        self.assertRaises(
+            exc.JinjaGrammarException,
+            self._evaluator.validate,
+            'The value is {{ * }}.',
+        )
 
-        self.assertRaises(exc.JinjaEvaluationException,
-                          self._evaluator.validate,
-                          [1, 2, 3])
+        self.assertRaises(
+            exc.JinjaEvaluationException, self._evaluator.validate, [1, 2, 3]
+        )
 
-        self.assertRaises(exc.JinjaEvaluationException,
-                          self._evaluator.validate,
-                          {'a': 1})
+        self.assertRaises(
+            exc.JinjaEvaluationException, self._evaluator.validate, {'a': 1}
+        )
 
     def test_wrong_expression(self):
-        res = self._evaluator.evaluate("{{ _.status == 'Invalid value' }}",
-                                       DATA)
+        res = self._evaluator.evaluate(
+            "{{ _.status == 'Invalid value' }}", DATA
+        )
         self.assertFalse(res)
 
         # One thing to note about Jinja is that by default it would not raise
@@ -539,60 +514,66 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
             exc.JinjaEvaluationException,
             self._evaluator.evaluate,
             '{{ _.wrong_key }}',
-            DATA
+            DATA,
         )
 
         self.assertRaises(
             exc.JinjaEvaluationException,
             self._evaluator.evaluate,
             '{{ invalid_expression_string }}',
-            DATA
+            DATA,
         )
 
         self.assertRaises(
             exc.JinjaEvaluationException,
             self._evaluator.evaluate,
             '!! {{ _.nonexistent_variable }} !!',
-            DATA
+            DATA,
         )
 
     def test_bounded_repetition(self):
-        self.assertEqual('ababab', self._evaluator.evaluate("{{ 'ab' * 3 }}",
-                                                            {}))
+        self.assertEqual(
+            'ababab', self._evaluator.evaluate("{{ 'ab' * 3 }}", {})
+        )
         self.assertEqual([0, 0], self._evaluator.evaluate('{{ [0] * 2 }}', {}))
         self.assertEqual(12, self._evaluator.evaluate('{{ 3 * 4 }}', {}))
 
-        for expression in ("{{ 'a' * 10 ** 9 }}",
-                           "{{ 10 ** 9 * 'a' }}",
-                           '{{ [0] * 2000000000 }}',
-                           "{% set s = 'a' * 10 ** 9 %}{{ s }}"):
+        for expression in (
+            "{{ 'a' * 10 ** 9 }}",
+            "{{ 10 ** 9 * 'a' }}",
+            '{{ [0] * 2000000000 }}',
+            "{% set s = 'a' * 10 ** 9 %}{{ s }}",
+        ):
             e = self.assertRaises(
                 exc.JinjaEvaluationException,
                 self._evaluator.evaluate,
                 expression,
-                {}
+                {},
             )
 
             self.assertIn('Repetition result exceeds', str(e))
 
     def test_bounded_integers(self):
         self.assertEqual(1024, self._evaluator.evaluate('{{ 2 ** 10 }}', {}))
-        self.assertEqual(1, self._evaluator.evaluate('{{ 1 ** (10 ** 12) }}',
-                                                     {}))
+        self.assertEqual(
+            1, self._evaluator.evaluate('{{ 1 ** (10 ** 12) }}', {})
+        )
         self.assertEqual(0.01, self._evaluator.evaluate('{{ 10 ** -2 }}', {}))
 
-        self.assertEqual(10 ** 20, self._evaluator.evaluate(
-            '{{ 10 ** 10 * 10 ** 10 }}', {}
-        ))
+        self.assertEqual(
+            10**20, self._evaluator.evaluate('{{ 10 ** 10 * 10 ** 10 }}', {})
+        )
 
-        for expression in ('{{ 10 ** (10 ** 10) }}',
-                           '{% set ns = namespace(x=2 ** 60000) %}'
-                           '{% set ns.x = ns.x * ns.x %}{{ ns.x }}'):
+        for expression in (
+            '{{ 10 ** (10 ** 10) }}',
+            '{% set ns = namespace(x=2 ** 60000) %}'
+            '{% set ns.x = ns.x * ns.x %}{{ ns.x }}',
+        ):
             e = self.assertRaises(
                 exc.JinjaEvaluationException,
                 self._evaluator.evaluate,
                 expression,
-                {}
+                {},
             )
 
             self.assertIn('Integer result exceeds', str(e))
@@ -606,7 +587,7 @@ class ImmutableSandboxTest(base.BaseTest):
         self._data = {
             'my_dict': {'a': 1},
             'my_list': [1, 2],
-            '__env': {'key': 'value'}
+            '__env': {'key': 'value'},
         }
 
     def test_mutating_methods_rejected(self):
@@ -624,7 +605,7 @@ class ImmutableSandboxTest(base.BaseTest):
             "{% set l = [] %}{{ l.append(1) }}",
             "{{ dict.update(_.my_dict, {'hacked': 1}) }}",
             "{{ dict.setdefault(_.my_dict, 'hacked', 1) }}",
-            "Value: {{ _.my_list.append(3) }}"
+            "Value: {{ _.my_list.append(3) }}",
         ]
 
         for expression in expressions:
@@ -632,7 +613,7 @@ class ImmutableSandboxTest(base.BaseTest):
                 exc.JinjaEvaluationException,
                 self._evaluator.evaluate,
                 expression,
-                self._data
+                self._data,
             )
 
             self.assertIn('is unsafe', str(e))
@@ -641,9 +622,9 @@ class ImmutableSandboxTest(base.BaseTest):
             {
                 'my_dict': {'a': 1},
                 'my_list': [1, 2],
-                '__env': {'key': 'value'}
+                '__env': {'key': 'value'},
             },
-            self._data
+            self._data,
         )
 
     def test_read_and_build_still_work(self):
@@ -659,13 +640,12 @@ class ImmutableSandboxTest(base.BaseTest):
             ('{{ _.my_list + [3] }}', [1, 2, 3]),
             ("{{ {'nested': _.my_dict} }}", {'nested': {'a': 1}}),
             ('{{ _.my_list | map("string") | list }}', ['1', '2']),
-            ('{{ env() }}', {'key': 'value'})
+            ('{{ env() }}', {'key': 'value'}),
         ]
 
         for expression, expected in cases:
             self.assertEqual(
-                expected,
-                self._evaluator.evaluate(expression, self._data)
+                expected, self._evaluator.evaluate(expression, self._data)
             )
 
         self.assertEqual({'a': 1}, self._data['my_dict'])
@@ -675,8 +655,7 @@ class ImmutableSandboxTest(base.BaseTest):
         self.override_config('immutable_sandbox', False, 'jinja')
 
         self._evaluator.evaluate(
-            "{{ _.my_dict.update({'b': 2}) }}",
-            self._data
+            "{{ _.my_dict.update({'b': 2}) }}", self._data
         )
         self._evaluator.evaluate('{{ _.my_list.append(3) }}', self._data)
 

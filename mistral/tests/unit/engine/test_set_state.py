@@ -26,7 +26,6 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class TestSetState(base.EngineTestCase):
-
     def test_set_state(self):
         wf_text = """
         version: '2.0'

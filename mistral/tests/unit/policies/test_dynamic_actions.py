@@ -54,7 +54,7 @@ class TestDynamicActionPolicy(base.APITest):
         resp = self.app.post(
             '/v2/code_sources?name=test_dummy_module',
             TEST_MODULE_TEXT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.code_source_id = resp.json['id']
@@ -72,8 +72,8 @@ class TestDynamicActionPolicy(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'code_source_id': self.code_source_id
-            }
+                'code_source_id': self.code_source_id,
+            },
         )
 
         self.ctx.is_admin = False
@@ -88,9 +88,9 @@ class TestDynamicActionPolicy(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'code_source_id': self.code_source_id
+                'code_source_id': self.code_source_id,
             },
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -105,8 +105,8 @@ class TestDynamicActionPolicy(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'code_source_id': self.code_source_id
-            }
+                'code_source_id': self.code_source_id,
+            },
         )
 
         self.assertEqual(201, resp.status_int)
@@ -120,9 +120,9 @@ class TestDynamicActionPolicy(base.APITest):
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
                 'code_source_id': self.code_source_id,
-                'scope': 'public'
+                'scope': 'public',
             },
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -139,8 +139,8 @@ class TestDynamicActionPolicy(base.APITest):
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
                 'code_source_id': self.code_source_id,
-                'scope': 'public'
-            }
+                'scope': 'public',
+            },
         )
 
         self.assertEqual(201, resp.status_int)
@@ -154,9 +154,9 @@ class TestDynamicActionPolicy(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'scope': 'public'
+                'scope': 'public',
             },
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -172,8 +172,8 @@ class TestDynamicActionPolicy(base.APITest):
             {
                 'name': 'dummy_action',
                 'class_name': 'DummyAction',
-                'scope': 'public'
-            }
+                'scope': 'public',
+            },
         )
 
         self.assertEqual(200, resp.status_int)
@@ -183,8 +183,7 @@ class TestDynamicActionPolicy(base.APITest):
         self._create_dynamic_action_as_admin()
 
         resp = self.app.get(
-            '/v2/dynamic_actions/dummy_action',
-            expect_errors=True
+            '/v2/dynamic_actions/dummy_action', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -200,10 +199,7 @@ class TestDynamicActionPolicy(base.APITest):
         self.assertEqual(200, resp.status_int)
 
     def test_dynamic_action_list_not_allowed(self):
-        resp = self.app.get(
-            '/v2/dynamic_actions',
-            expect_errors=True
-        )
+        resp = self.app.get('/v2/dynamic_actions', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -221,8 +217,7 @@ class TestDynamicActionPolicy(base.APITest):
         )
 
         resp = self.app.get(
-            '/v2/dynamic_actions?all_projects=1',
-            expect_errors=True
+            '/v2/dynamic_actions?all_projects=1', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -240,11 +235,8 @@ class TestDynamicActionPolicy(base.APITest):
 
         resp = self.app.put_json(
             '/v2/dynamic_actions',
-            {
-                'name': 'dummy_action',
-                'class_name': 'NewDummyAction'
-            },
-            expect_errors=True
+            {'name': 'dummy_action', 'class_name': 'NewDummyAction'},
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -257,10 +249,7 @@ class TestDynamicActionPolicy(base.APITest):
 
         resp = self.app.put_json(
             '/v2/dynamic_actions',
-            {
-                'name': 'dummy_action',
-                'class_name': 'NewDummyAction'
-            }
+            {'name': 'dummy_action', 'class_name': 'NewDummyAction'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -269,8 +258,7 @@ class TestDynamicActionPolicy(base.APITest):
         self._create_dynamic_action_as_admin()
 
         resp = self.app.delete(
-            '/v2/dynamic_actions/dummy_action',
-            expect_errors=True
+            '/v2/dynamic_actions/dummy_action', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -284,8 +272,7 @@ class TestDynamicActionPolicy(base.APITest):
         self.app.delete('/v2/dynamic_actions/dummy_action')
 
         resp = self.app.get(
-            '/v2/dynamic_actions/dummy_action',
-            expect_errors=True
+            '/v2/dynamic_actions/dummy_action', expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)

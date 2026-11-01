@@ -22,28 +22,18 @@ rules = [
         name=MAINTENANCE % 'get',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return the cluster maintenance status. This exposes '
-                    'cluster-wide operational state, so it is restricted '
-                    'to administrators.',
-        operations=[
-            {
-                'path': '/maintenance',
-                'method': 'GET'
-            }
-        ]
+        'cluster-wide operational state, so it is restricted '
+        'to administrators.',
+        operations=[{'path': '/maintenance', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=MAINTENANCE % 'update',
         check_str=base.RULE_ADMIN_ONLY,
         description='Change the cluster maintenance status. Pausing '
-                    'maintenance pauses running executions across all '
-                    'projects, so this is restricted to administrators.',
-        operations=[
-            {
-                'path': '/maintenance',
-                'method': 'PUT'
-            }
-        ]
-    )
+        'maintenance pauses running executions across all '
+        'projects, so this is restricted to administrators.',
+        operations=[{'path': '/maintenance', 'method': 'PUT'}],
+    ),
 ]
 
 

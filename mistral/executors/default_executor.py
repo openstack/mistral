@@ -40,8 +40,17 @@ class DefaultExecutor(base.Executor):
         self._engine_client = rpc.get_engine_client()
 
     @profiler.trace('default-executor-run-action', hide_args=True)
-    def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
-                   redelivered=False, target=None, async_=True, timeout=None):
+    def run_action(
+        self,
+        action,
+        action_ex_id,
+        safe_rerun,
+        exec_ctx,
+        redelivered=False,
+        target=None,
+        async_=True,
+        timeout=None,
+    ):
         """Runs action.
 
         :param action: Action to run.
@@ -68,21 +77,20 @@ class DefaultExecutor(base.Executor):
                 exec_ctx,
                 redelivered,
                 safe_rerun,
-                timeout
+                timeout,
             )
         finally:
             action_heartbeat_sender.remove_action(action_ex_id)
 
-    def _do_run_action(self, action, action_ex_id, exec_ctx,
-                       redelivered, safe_rerun,
-                       timeout):
+    def _do_run_action(
+        self, action, action_ex_id, exec_ctx, redelivered, safe_rerun, timeout
+    ):
         def send_error_back(error_msg):
             error_result = mistral_lib.Result(error=error_msg)
 
             if action_ex_id:
                 self._engine_client.on_action_complete(
-                    action_ex_id,
-                    error_result
+                    action_ex_id, error_result
                 )
 
                 return None
@@ -120,8 +128,8 @@ class DefaultExecutor(base.Executor):
             msg = (
                 "Refusing to run the action: the executor has %s abandoned "
                 "timed-out action threads still running (limit: %s) "
-                "[action=%s, action_ex_id=%s]" %
-                (_abandoned_count, max_abandoned, action, action_ex_id)
+                "[action=%s, action_ex_id=%s]"
+                % (_abandoned_count, max_abandoned, action, action_ex_id)
             )
             LOG.error(msg)
 
@@ -142,7 +150,7 @@ class DefaultExecutor(base.Executor):
             thread = ThreadWithException(
                 target=_thread_run_action,
                 args=[action.run, context.ctx(), action_ctx, result_ptr],
-                daemon=True
+                daemon=True,
             )
             thread.start()
             thread.join(timeout=timeout)
@@ -153,9 +161,12 @@ class DefaultExecutor(base.Executor):
                 # A thread cannot be killed, and joining it would pin this
                 # executor worker forever: abandon it.
                 self._abandon(result_ptr)
-                LOG.warning("The action %s timed out after %s seconds, "
-                            "abandoning the action thread.",
-                            action_ex_id, timeout)
+                LOG.warning(
+                    "The action %s timed out after %s seconds, "
+                    "abandoning the action thread.",
+                    action_ex_id,
+                    timeout,
+                )
                 raise Exception("Timeout after %s seconds" % (timeout))
 
             # Note: it's made for backwards compatibility with already
@@ -176,9 +187,7 @@ class DefaultExecutor(base.Executor):
         try:
             if action_ex_id and (action.is_sync() or result.is_error()):
                 self._engine_client.on_action_complete(
-                    action_ex_id,
-                    result,
-                    async_=True
+                    action_ex_id, result, async_=True
                 )
 
         except exc.MistralException as e:
@@ -189,8 +198,7 @@ class DefaultExecutor(base.Executor):
             # serialized.
             msg = (
                 "Failed to complete action due to a Mistral exception "
-                "[action=%s, action_ex_id=%s]\n %s" %
-                (action, action_ex_id, e)
+                "[action=%s, action_ex_id=%s]\n %s" % (action, action_ex_id, e)
             )
 
             LOG.exception(msg)
@@ -201,8 +209,7 @@ class DefaultExecutor(base.Executor):
             # log the error.
             msg = (
                 "Failed to complete action due to an unexpected exception "
-                "[action=%s, action_ex_id=%s]\n %s" %
-                (action, action_ex_id, e)
+                "[action=%s, action_ex_id=%s]\n %s" % (action, action_ex_id, e)
             )
 
             LOG.exception(msg)

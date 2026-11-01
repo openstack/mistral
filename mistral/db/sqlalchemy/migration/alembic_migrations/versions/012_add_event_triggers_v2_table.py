@@ -47,21 +47,17 @@ def upgrade():
         sa.Column('workflow_params', st.JsonEncoded(), nullable=True),
         sa.Column('workflow_input', st.JsonEncoded(), nullable=True),
         sa.Column('trust_id', sa.String(length=80), nullable=True),
-
         sa.ForeignKeyConstraint(
             ['workflow_id'],
             ['workflow_definitions_v2.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint(
-            'exchange',
-            'topic',
-            'event',
-            'workflow_id',
-            'project_id'
+            'exchange', 'topic', 'event', 'workflow_id', 'project_id'
         ),
         sa.Index(
             'event_triggers_v2_project_id_workflow_id',
-            'project_id', 'workflow_id'
-        )
+            'project_id',
+            'workflow_id',
+        ),
     )

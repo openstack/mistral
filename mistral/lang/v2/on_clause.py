@@ -22,22 +22,22 @@ NEXT_TASK = {
         {
             "type": "string",
             "pattern": r"^\S+$",
-            "description": "Task name (e.g.: `task1`)"
+            "description": "Task name (e.g.: `task1`)",
         },
         {
             "type": "string",
             "pattern": r"^\w+ \w+=(.*)$",
             "description": "Task name with dict parameter "
-                           "(e.g.: `fail msg=\"test\"`, "
-                           "`fail msg=<% task() %>`)"
+            "(e.g.: `fail msg=\"test\"`, "
+            "`fail msg=<% task() %>`)",
         },
         {
             "type": "string",
             "pattern": r"^\w+\(\w+=(.*)\)$",
             "description": "Task name with func parameter "
-                           "(e.g.: `fail(msg=\"test\")`, "
-                           "`fail(msg=<% task() %>)`)"
-        }
+            "(e.g.: `fail(msg=\"test\")`, "
+            "`fail(msg=<% task() %>)`)",
+        },
     ]
 }
 
@@ -49,20 +49,15 @@ TASK_WITH_EXPRESSION = {
         x['pattern']: types.EXPRESSION for x in NEXT_TASK['oneOf']
     },
     "description": "All next task variants plus expression (e.g.: "
-                   "`task1: <% $.vm_id != null %>`, "
-                   "`fail(msg=\"test\"): <% $.vm_id != null %>`)."
+    "`task1: <% $.vm_id != null %>`, "
+    "`fail(msg=\"test\"): <% $.vm_id != null %>`).",
 }
 
 LIST_OF_TASKS = {
     "type": "array",
-    "items": {
-        "oneOf": [
-            NEXT_TASK,
-            TASK_WITH_EXPRESSION
-        ]
-    },
+    "items": {"oneOf": [NEXT_TASK, TASK_WITH_EXPRESSION]},
     "uniqueItems": True,
-    "minItems": 1
+    "minItems": 1,
 }
 
 ADVANCED_PUBLISHING_DICT = {
@@ -70,15 +65,9 @@ ADVANCED_PUBLISHING_DICT = {
     "minProperties": 1,
     "properties": {
         "publish": publish.PublishSpec.get_schema(),
-        "next": {
-            "oneOf": [
-                NEXT_TASK,
-                TASK_WITH_EXPRESSION,
-                LIST_OF_TASKS
-            ]
-        }
+        "next": {"oneOf": [NEXT_TASK, TASK_WITH_EXPRESSION, LIST_OF_TASKS]},
     },
-    "additionalProperties": False
+    "additionalProperties": False,
 }
 
 
@@ -88,7 +77,7 @@ class OnClauseSpec(base.BaseSpec):
             NEXT_TASK,
             TASK_WITH_EXPRESSION,
             LIST_OF_TASKS,
-            ADVANCED_PUBLISHING_DICT
+            ADVANCED_PUBLISHING_DICT,
         ]
     }
 

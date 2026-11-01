@@ -29,10 +29,12 @@ class CreateTrustTest(base.BaseTest):
     @mock.patch.object(security, 'auth_ctx')
     def test_create_trust_uses_ctx_user_id_as_trustor(self, m_ctx, m_ks):
         m_ctx.ctx.return_value = mock.Mock(
-            user_id='real-user', roles=['member'], project_id='proj-1')
+            user_id='real-user', roles=['member'], project_id='proj-1'
+        )
         m_ks.client.return_value = mock.Mock(user_id='should-not-be-used')
-        m_ks.client_for_admin.return_value.session.get_user_id.return_value \
-            = 'mistral-svc'
+        m_ks.client_for_admin.return_value.session.get_user_id.return_value = (
+            'mistral-svc'
+        )
 
         security.create_trust()
 
@@ -48,9 +50,9 @@ class CreateTrustTest(base.BaseTest):
     @mock.patch.object(security, 'auth_ctx')
     def test_create_trust_forbidden(self, m_ctx, m_ks):
         m_ctx.ctx.return_value = mock.Mock(
-            user_id='real-user', roles=['member'], project_id='proj-1')
-        m_ks.client.return_value.trusts.create.side_effect = \
-            ks_exc.Forbidden()
+            user_id='real-user', roles=['member'], project_id='proj-1'
+        )
+        m_ks.client.return_value.trusts.create.side_effect = ks_exc.Forbidden()
 
         e = self.assertRaises(exc.NotAllowedException, security.create_trust)
 
@@ -141,9 +143,12 @@ class RefreshContextTest(base.BaseTest):
         )
 
         return context.MistralContext(
-            user_id='user', project_id='proj', auth_token='old',
-            trust_id='trust-1', is_trust_scoped=True,
-            expires_at=expires_at.isoformat()
+            user_id='user',
+            project_id='proj',
+            auth_token='old',
+            trust_id='trust-1',
+            is_trust_scoped=True,
+            expires_at=expires_at.isoformat(),
         )
 
     @mock.patch.object(security, 'create_context')

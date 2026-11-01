@@ -31,10 +31,7 @@ class AllowedExpressionLanguagesTest(base.BaseTest):
         )
 
         self.assertRaises(
-            exc.EvaluationException,
-            expressions.evaluate,
-            '{{ 1 + 2 }}',
-            {}
+            exc.EvaluationException, expressions.evaluate, '{{ 1 + 2 }}', {}
         )
 
     def test_jinja_validation_rejected_when_disabled(self):
@@ -43,9 +40,7 @@ class AllowedExpressionLanguagesTest(base.BaseTest):
         )
 
         self.assertRaises(
-            exc.ExpressionGrammarException,
-            expressions.validate,
-            '{{ 1 + 2 }}'
+            exc.ExpressionGrammarException, expressions.validate, '{{ 1 + 2 }}'
         )
 
     def test_yaql_still_works_when_jinja_disabled(self):

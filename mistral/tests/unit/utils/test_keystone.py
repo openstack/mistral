@@ -37,34 +37,34 @@ class AdminClientTest(base.BaseTest):
         ks_loading.register_auth_conf_options(cfg.CONF, 'keystone_authtoken')
         cfg.CONF.register_opts(
             ks_loading.get_auth_plugin_conf_options('password'),
-            group='keystone_authtoken'
+            group='keystone_authtoken',
         )
         cfg.CONF.set_default(
-            'auth_url',
-            'http://localhost/identity/v3',
-            'keystone_authtoken'
+            'auth_url', 'http://localhost/identity/v3', 'keystone_authtoken'
         )
 
         self.override_config('auth_type', 'password', 'keystone_authtoken')
 
     def test_client_for_trusts_uses_auth_url(self, m_loading, m_ks):
-        self.override_config('auth_url', 'https://keystone.example/v3',
-                             'keystone_authtoken')
+        self.override_config(
+            'auth_url', 'https://keystone.example/v3', 'keystone_authtoken'
+        )
 
         keystone.client_for_trusts('trust-id')
 
         m_ks.Client.assert_called_once_with(
             session=m_loading.load_session_from_conf_options.return_value,
-            endpoint_override='https://keystone.example/v3'
+            endpoint_override='https://keystone.example/v3',
         )
 
     def test_client_for_trusts_appends_v3(self, m_loading, m_ks):
-        self.override_config('auth_url', 'https://keystone.example/',
-                             'keystone_authtoken')
+        self.override_config(
+            'auth_url', 'https://keystone.example/', 'keystone_authtoken'
+        )
 
         keystone.client_for_trusts('trust-id')
 
         m_ks.Client.assert_called_once_with(
             session=m_loading.load_session_from_conf_options.return_value,
-            endpoint_override='https://keystone.example/v3'
+            endpoint_override='https://keystone.example/v3',
         )

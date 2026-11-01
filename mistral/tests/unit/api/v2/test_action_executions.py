@@ -53,7 +53,7 @@ ACTION_EX_DB = models.ActionExecution(
     input={},
     output={},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 AD_HOC_ACTION_EX_DB = models.ActionExecution(
@@ -67,7 +67,7 @@ AD_HOC_ACTION_EX_DB = models.ActionExecution(
     input={},
     output={},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 AD_HOC_ACTION_EX_ERROR = models.ActionExecution(
@@ -81,7 +81,7 @@ AD_HOC_ACTION_EX_ERROR = models.ActionExecution(
     input={},
     output={},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 ACTION_EX_DB_NOT_COMPLETE = models.ActionExecution(
@@ -95,7 +95,7 @@ ACTION_EX_DB_NOT_COMPLETE = models.ActionExecution(
     input={},
     output={},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 ACTION_EX = {
@@ -112,7 +112,7 @@ ACTION_EX = {
     'input': '{}',
     'output': '{}',
     'created_at': '1970-01-01 00:00:00',
-    'updated_at': '1970-01-01 00:00:00'
+    'updated_at': '1970-01-01 00:00:00',
 }
 
 UPDATED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
@@ -149,9 +149,7 @@ ERROR_ACTION_EX_WITH_OUTPUT['task_name'] = 'task1'
 ERROR_ACTION_EX_WITH_OUTPUT['output'] = {"output": ERROR_OUTPUT}
 ERROR_ACTION_WITH_OUTPUT = copy.deepcopy(ACTION_EX)
 ERROR_ACTION_WITH_OUTPUT['state'] = 'ERROR'
-ERROR_ACTION_WITH_OUTPUT['output'] = (
-    '{"output": "%s"}' % ERROR_OUTPUT
-)
+ERROR_ACTION_WITH_OUTPUT['output'] = '{"output": "%s"}' % ERROR_OUTPUT
 ERROR_ACTION_RES_WITH_OUTPUT = {"output": ERROR_OUTPUT}
 
 DEFAULT_ERROR_OUTPUT = "Unknown error"
@@ -198,7 +196,7 @@ class TestActionExecutionsController(base.APITest):
             cfg.CONF.set_default,
             'allow_action_execution_deletion',
             False,
-            group='api'
+            group='api',
         )
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
@@ -211,7 +209,10 @@ class TestActionExecutionsController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_action_execution')
     def test_get_with_fields_filter(self, mocked_get):
-        mocked_get.return_value = (ACTION_EX['id'], ACTION_EX['name'],)
+        mocked_get.return_value = (
+            ACTION_EX['id'],
+            ACTION_EX['name'],
+        )
         resp = self.app.get('/v2/action_executions/123?fields=name')
         expected = {
             'id': ACTION_EX['id'],
@@ -226,7 +227,7 @@ class TestActionExecutionsController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            ACTION_EX_DB  # Successful run
+            ACTION_EX_DB,  # Successful run
         ]
 
         resp = self.app.get('/v2/action_executions/123')
@@ -241,31 +242,36 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, 'get_action_execution',
-                       return_value=ACTION_EX_DB_WITH_PROJECT_ID)
+    @mock.patch.object(
+        db_api,
+        'get_action_execution',
+        return_value=ACTION_EX_DB_WITH_PROJECT_ID,
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/action_executions/123')
 
         self.assertEqual(200, resp.status_int)
         self.assertIn('project_id', resp.json)
 
-    @mock.patch.object(oslo_client.OsloRPCClient, 'sync_call',
-                       mock.MagicMock(side_effect=oslo_exc.MessagingTimeout))
+    @mock.patch.object(
+        oslo_client.OsloRPCClient,
+        'sync_call',
+        mock.MagicMock(side_effect=oslo_exc.MessagingTimeout),
+    )
     def test_post_timeout(self):
 
         resp = self.app.post_json(
             '/v2/action_executions',
-            {
-                'name': 'std.sleep',
-                'input': {'seconds': 80}
-            },
-            expect_errors=True
+            {'name': 'std.sleep', 'input': {'seconds': 80}},
+            expect_errors=True,
         )
 
         error_msg = resp.json['faultstring']
-        self.assertEqual(error_msg,
-                         'This rpc call "start_action" took longer than '
-                         'configured 60 seconds.')
+        self.assertEqual(
+            error_msg,
+            'This rpc call "start_action" took longer than '
+            'configured 60 seconds.',
+        )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post(self, f):
@@ -276,8 +282,8 @@ class TestActionExecutionsController(base.APITest):
             {
                 'name': 'std.echo',
                 'input': "{}",
-                'params': '{"save_result": true, "run_sync": true}'
-            }
+                'params': '{"save_result": true, "run_sync": true}',
+            },
         )
 
         self.assertEqual(201, resp.status_int)
@@ -293,7 +299,7 @@ class TestActionExecutionsController(base.APITest):
             description=None,
             save_result=True,
             run_sync=True,
-            namespace=''
+            namespace='',
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -302,11 +308,7 @@ class TestActionExecutionsController(base.APITest):
 
         resp = self.app.post_json(
             '/v2/action_executions',
-            {
-                'name': 'std.echo',
-                'input': "{}",
-                'params': '{"timeout": 2}'
-            }
+            {'name': 'std.echo', 'input': "{}", 'params': '{"timeout": 2}'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -321,7 +323,7 @@ class TestActionExecutionsController(base.APITest):
             json.loads(action_exec['input']),
             description=None,
             timeout=2,
-            namespace=''
+            namespace='',
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -333,8 +335,8 @@ class TestActionExecutionsController(base.APITest):
             {
                 'name': 'std.echo',
                 'input': {},
-                'params': '{"save_result": true}'
-            }
+                'params': '{"save_result": true}',
+            },
         )
 
         self.assertEqual(201, resp.status_int)
@@ -349,7 +351,7 @@ class TestActionExecutionsController(base.APITest):
             json.loads(action_exec['input']),
             description=None,
             save_result=True,
-            namespace=''
+            namespace='',
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -358,40 +360,33 @@ class TestActionExecutionsController(base.APITest):
         f.return_value['output'] = {'result': '123'}
 
         resp = self.app.post_json(
-            '/v2/action_executions',
-            {'name': 'nova.servers_list'}
+            '/v2/action_executions', {'name': 'nova.servers_list'}
         )
 
         self.assertEqual(201, resp.status_int)
         self.assertEqual('{"result": "123"}', resp.json['output'])
 
-        f.assert_called_once_with('nova.servers_list', {},
-                                  description=None,
-                                  namespace='')
+        f.assert_called_once_with(
+            'nova.servers_list', {}, description=None, namespace=''
+        )
 
     def test_post_bad_result(self):
         resp = self.app.post_json(
-            '/v2/action_executions',
-            {'input': 'null'},
-            expect_errors=True
+            '/v2/action_executions', {'input': 'null'}, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
 
     def test_post_bad_input(self):
         resp = self.app.post_json(
-            '/v2/action_executions',
-            {'input': None},
-            expect_errors=True
+            '/v2/action_executions', {'input': None}, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
 
     def test_post_bad_json_input(self):
         resp = self.app.post_json(
-            '/v2/action_executions',
-            {'input': 2},
-            expect_errors=True
+            '/v2/action_executions', {'input': 2}, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -406,8 +401,7 @@ class TestActionExecutionsController(base.APITest):
         self.assertDictEqual(UPDATED_ACTION, resp.json)
 
         f.assert_called_once_with(
-            UPDATED_ACTION['id'],
-            ml_actions.Result(data=ACTION_EX_DB.output)
+            UPDATED_ACTION['id'], ml_actions.Result(data=ACTION_EX_DB.output)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -415,8 +409,7 @@ class TestActionExecutionsController(base.APITest):
         f.return_value = ERROR_ACTION_EX_WITH_OUTPUT
 
         resp = self.app.put_json(
-            '/v2/action_executions/123',
-            ERROR_ACTION_WITH_OUTPUT
+            '/v2/action_executions/123', ERROR_ACTION_WITH_OUTPUT
         )
 
         self.assertEqual(200, resp.status_int)
@@ -424,7 +417,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_WITH_OUTPUT['id'],
-            ml_actions.Result(error=ERROR_ACTION_RES_WITH_OUTPUT)
+            ml_actions.Result(error=ERROR_ACTION_RES_WITH_OUTPUT),
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -437,15 +430,14 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
-            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT)
+            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT),
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_error_with_unknown_reason_output_none(self, f):
         f.return_value = ERROR_ACTION_EX_FOR_EMPTY_OUTPUT
         resp = self.app.put_json(
-            '/v2/action_executions/123',
-            ERROR_ACTION_WITH_NONE_OUTPUT
+            '/v2/action_executions/123', ERROR_ACTION_WITH_NONE_OUTPUT
         )
 
         self.assertEqual(200, resp.status_int)
@@ -453,7 +445,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
-            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT)
+            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT),
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -466,8 +458,7 @@ class TestActionExecutionsController(base.APITest):
         self.assertDictEqual(CANCELLED_ACTION, resp.json)
 
         on_action_complete_mock_func.assert_called_once_with(
-            CANCELLED_ACTION['id'],
-            ml_actions.Result(cancel=True)
+            CANCELLED_ACTION['id'], ml_actions.Result(cancel=True)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_update')
@@ -480,8 +471,7 @@ class TestActionExecutionsController(base.APITest):
         self.assertDictEqual(PAUSED_ACTION, resp.json)
 
         on_action_update_mock_func.assert_called_once_with(
-            PAUSED_ACTION['id'],
-            PAUSED_ACTION['state']
+            PAUSED_ACTION['id'], PAUSED_ACTION['state']
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_update')
@@ -494,20 +484,15 @@ class TestActionExecutionsController(base.APITest):
         self.assertDictEqual(RUNNING_ACTION, resp.json)
 
         on_action_update_mock_func.assert_called_once_with(
-            RUNNING_ACTION['id'],
-            RUNNING_ACTION['state']
+            RUNNING_ACTION['id'], RUNNING_ACTION['state']
         )
 
     @mock.patch.object(
-        rpc_clients.EngineClient,
-        'on_action_complete',
-        MOCK_NOT_FOUND
+        rpc_clients.EngineClient, 'on_action_complete', MOCK_NOT_FOUND
     )
     def test_put_no_action_ex(self):
         resp = self.app.put_json(
-            '/v2/action_executions/123',
-            UPDATED_ACTION,
-            expect_errors=True
+            '/v2/action_executions/123', UPDATED_ACTION, expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
@@ -517,9 +502,7 @@ class TestActionExecutionsController(base.APITest):
         action['state'] = 'DELAYED'
 
         resp = self.app.put_json(
-            '/v2/action_executions/123',
-            action,
-            expect_errors=True
+            '/v2/action_executions/123', action, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -527,9 +510,7 @@ class TestActionExecutionsController(base.APITest):
 
     def test_put_bad_result(self):
         resp = self.app.put_json(
-            '/v2/action_executions/123',
-            BROKEN_ACTION,
-            expect_errors=True
+            '/v2/action_executions/123', BROKEN_ACTION, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -573,7 +554,7 @@ class TestActionExecutionsController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [ACTION_EX_DB]  # Successful run
+            [ACTION_EX_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/action_executions')
@@ -585,8 +566,9 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(1, len(resp.json['action_executions']))
         self.assertDictEqual(action_exec, resp.json['action_executions'][0])
 
-    @mock.patch.object(rest_utils, 'get_all',
-                       return_value=resources.ActionExecutions())
+    @mock.patch.object(
+        rest_utils, 'get_all', return_value=resources.ActionExecutions()
+    )
     def test_get_all_without_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions')
 
@@ -596,11 +578,12 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(
             action_execution._get_action_execution_resource_for_list,
-            resource_function
+            resource_function,
         )
 
-    @mock.patch.object(rest_utils, 'get_all',
-                       return_value=resources.ActionExecutions())
+    @mock.patch.object(
+        rest_utils, 'get_all', return_value=resources.ActionExecutions()
+    )
     def test_get_all_with_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions?include_output=true')
 
@@ -609,8 +592,7 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertEqual(
-            action_execution._get_action_execution_resource,
-            resource_function
+            action_execution._get_action_execution_resource, resource_function
         )
 
     @mock.patch.object(db_api, 'get_action_executions', MOCK_EMPTY)
@@ -643,8 +625,7 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(403, resp.status_int)
         self.assertIn(
-            "Action execution deletion is not allowed",
-            resp.body.decode()
+            "Action execution deletion is not allowed", resp.body.decode()
         )
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
@@ -655,14 +636,11 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(403, resp.status_int)
         self.assertIn(
-            "Only ad-hoc action execution can be deleted",
-            resp.body.decode()
+            "Only ad-hoc action execution can be deleted", resp.body.decode()
         )
 
     @mock.patch.object(
-        db_api,
-        'get_action_execution',
-        MOCK_ACTION_NOT_COMPLETE
+        db_api, 'get_action_execution', MOCK_ACTION_NOT_COMPLETE
     )
     def test_delete_action_execution_not_complete(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
@@ -672,13 +650,11 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(403, resp.status_int)
         self.assertIn(
             "Only completed action execution can be deleted",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     @mock.patch.object(
-        db_api,
-        'get_action_execution',
-        MOCK_ACTION_COMPLETE_ERROR
+        db_api, 'get_action_execution', MOCK_ACTION_COMPLETE_ERROR
     )
     @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
     def test_delete_action_execution_complete_error(self):

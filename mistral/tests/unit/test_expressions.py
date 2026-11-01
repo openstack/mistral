@@ -22,17 +22,13 @@ DATA = {
     "server": {
         "id": "03ea824a-aa24-4105-9131-66c48ae54acf",
         "name": "cloud-fedora",
-        "status": "ACTIVE"
+        "status": "ACTIVE",
     },
-    "status": "OK"
+    "status": "OK",
 }
 
 SERVERS = {
-    "servers": [
-        {'name': 'centos'},
-        {'name': 'ubuntu'},
-        {'name': 'fedora'}
-    ]
+    "servers": [{'name': 'centos'}, {'name': 'ubuntu'}, {'name': 'fedora'}]
 }
 
 
@@ -51,7 +47,7 @@ class ExpressionsTest(base.BaseTest):
             'j': 'World',
             'k': 'Mistral',
             'l': 'awesome',
-            'm': 'the way we roll'
+            'm': 'the way we roll',
         }
 
         test_cases = [
@@ -63,11 +59,11 @@ class ExpressionsTest(base.BaseTest):
             ('<% $.h.len() >= $.b + $.c %>', True),
             ('<% 100 in $.h %>', False),
             ('<% $.a in $.h%>', True),
-            ('<% ''OpenStack'' in $.i %>', True),
+            ('<% OpenStack in $.i %>', True),
             ('Hello, <% $.j %>!', 'Hello, World!'),
             ('<% $.k %> is <% $.l %>!', 'Mistral is awesome!'),
             ('This is <% $.m %>.', 'This is the way we roll.'),
-            ('<% 1 + 1 = 3 %>', False)
+            ('<% 1 + 1 = 3 %>', False),
         ]
 
         for expression, expected in test_cases:
@@ -80,51 +76,35 @@ class ExpressionsTest(base.BaseTest):
             'parameters': {
                 'p1': 'My string',
                 'p2': '<% $.param2 %>',
-                'p3': ''
+                'p3': '',
             },
-            'publish': {
-                'new_key11': 'new_key1'
-            }
+            'publish': {'new_key11': 'new_key1'},
         }
 
         modified_task = expr.evaluate_recursively(
-            task_spec_dict,
-            {'param2': 'val32'}
+            task_spec_dict, {'param2': 'val32'}
         )
 
         self.assertDictEqual(
             {
-                'parameters': {
-                    'p1': 'My string',
-                    'p2': 'val32',
-                    'p3': ''
-                },
-                'publish': {
-                    'new_key11': 'new_key1'
-                }
+                'parameters': {'p1': 'My string', 'p2': 'val32', 'p3': ''},
+                'publish': {'new_key11': 'new_key1'},
             },
-            modified_task
+            modified_task,
         )
 
     def test_evaluate_recursively_arbitrary_dict(self):
-        context = {
-            "auth_token": "123",
-            "project_id": "mistral"
-        }
+        context = {"auth_token": "123", "project_id": "mistral"}
 
         data = {
             "parameters": {
                 "parameter1": {
                     "name1": "<% $.auth_token %>",
-                    "name2": "val_name2"
+                    "name2": "val_name2",
                 },
-                "param2": [
-                    "var1",
-                    "var2",
-                    "/servers/<% $.project_id %>/bla"
-                ]
+                "param2": ["var1", "var2", "/servers/<% $.project_id %>/bla"],
             },
-            "token": "<% $.auth_token %>"
+            "token": "<% $.auth_token %>",
         }
 
         applied = expr.evaluate_recursively(data, context)
@@ -132,15 +112,12 @@ class ExpressionsTest(base.BaseTest):
         self.assertDictEqual(
             {
                 "parameters": {
-                    "parameter1": {
-                        "name1": "123",
-                        "name2": "val_name2"
-                    },
-                    "param2": ["var1", "var2", "/servers/mistral/bla"]
+                    "parameter1": {"name1": "123", "name2": "val_name2"},
+                    "param2": ["var1", "var2", "/servers/mistral/bla"],
                 },
-                "token": "123"
+                "token": "123",
             },
-            applied
+            applied,
         )
 
     def test_evaluate_recursively_environment(self):
@@ -152,14 +129,12 @@ class ExpressionsTest(base.BaseTest):
             '__actions': {
                 'std.sql': {
                     'conn': 'mysql://admin:secret@<% env().host %>'
-                            '/<% env().db %>'
+                    '/<% env().db %>'
                 }
-            }
+            },
         }
 
-        context = {
-            '__env': environment
-        }
+        context = {'__env': environment}
 
         defaults = context['__env']['__actions']['std.sql']
         applied = expr.evaluate_recursively(defaults, context)
@@ -168,18 +143,16 @@ class ExpressionsTest(base.BaseTest):
         self.assertEqual(expected, applied['conn'])
 
     def test_validate_jinja_with_yaql_context(self):
-        self.assertRaises(exc.JinjaGrammarException,
-                          expr.validate,
-                          '{{ $ }}')
+        self.assertRaises(exc.JinjaGrammarException, expr.validate, '{{ $ }}')
 
     def test_validate_mixing_jinja_and_yaql(self):
-        self.assertRaises(exc.ExpressionGrammarException,
-                          expr.validate,
-                          '<% $.a %>{{ _.a }}')
+        self.assertRaises(
+            exc.ExpressionGrammarException, expr.validate, '<% $.a %>{{ _.a }}'
+        )
 
-        self.assertRaises(exc.ExpressionGrammarException,
-                          expr.validate,
-                          '{{ _.a }}<% $.a %>')
+        self.assertRaises(
+            exc.ExpressionGrammarException, expr.validate, '{{ _.a }}<% $.a %>'
+        )
 
     def test_evaluate_mixing_jinja_and_yaql(self):
         actual = expr.evaluate('<% $.a %>{{ _.a }}', {'a': 'b'})

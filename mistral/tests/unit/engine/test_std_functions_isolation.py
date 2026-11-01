@@ -64,12 +64,10 @@ class StdFunctionsIsolationTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1 = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
             task2 = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
 
             self.assertNotIn('hacked', wf_ex.params)

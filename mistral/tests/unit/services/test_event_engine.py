@@ -103,13 +103,12 @@ class EventEngineTest(base.DbTestCase):
         self.assertEqual(1, len(e_engine.exchange_topic_events_map))
         self.assertEqual(
             EVENT_TYPE,
-            list(e_engine.exchange_topic_events_map[EXCHANGE_TOPIC])[0]
+            list(e_engine.exchange_topic_events_map[EXCHANGE_TOPIC])[0],
         )
         self.assertEqual(1, len(e_engine.event_triggers_map))
         self.assertEqual(1, len(e_engine.event_triggers_map[EVENT_TYPE]))
         self._assert_dict_contains_subset(
-            trigger.to_dict(),
-            e_engine.event_triggers_map[EVENT_TYPE][0]
+            trigger.to_dict(), e_engine.event_triggers_map[EVENT_TYPE][0]
         )
         self.assertEqual(1, len(e_engine.exchange_topic_listener_map))
 
@@ -128,9 +127,7 @@ class EventEngineTest(base.DbTestCase):
 
         endpoint = mock_start.call_args[0][3][0]
 
-        self.assertTrue(
-            endpoint.filter_rule.match({}, 'pub', '(', {}, {})
-        )
+        self.assertTrue(endpoint.filter_rule.match({}, 'pub', '(', {}, {}))
         self.assertFalse(
             endpoint.filter_rule.match({}, 'pub', EVENT_TYPE, {}, {})
         )
@@ -163,14 +160,12 @@ class EventEngineTest(base.DbTestCase):
             'timestamp': '',
             'context': {
                 'project_id': '%s' % self.ctx.project_id,
-                'user_id': 'fake_user'
+                'user_id': 'fake_user',
             },
         }
 
         # Moreover, assert that trigger.project_id != event.project_id
-        self.assertNotEqual(
-            trigger.project_id, event['context']['project_id']
-        )
+        self.assertNotEqual(trigger.project_id, event['context']['project_id'])
 
         with mock.patch.object(e_engine, 'engine_client') as client_mock:
             e_engine.event_queue.put(event)
@@ -182,25 +177,24 @@ class EventEngineTest(base.DbTestCase):
             args, kwargs = client_mock.start_workflow.call_args
 
             self.assertEqual(
-                (EVENT_TRIGGER['workflow_id'], '', None, {}),
-                args
+                (EVENT_TRIGGER['workflow_id'], '', None, {}), args
             )
             self.assertDictEqual(
                 {
                     'service': 'fake_publisher',
                     'project_id': '%s' % self.ctx.project_id,
                     'user_id': 'fake_user',
-                    'timestamp': ''
+                    'timestamp': '',
                 },
-                kwargs['event_params']
+                kwargs['event_params'],
             )
             self.assertDictEqual(
                 {
                     'type': 'event_trigger',
                     'id': trigger.id,
-                    'name': trigger.name
+                    'name': trigger.name,
                 },
-                kwargs['triggered_by']
+                kwargs['triggered_by'],
             )
 
     @mock.patch('mistral.messaging.start_listener')
@@ -236,7 +230,7 @@ class EventEngineTest(base.DbTestCase):
             'timestamp': '',
             'context': {
                 'project_id': '%s' % self.ctx.project_id,
-                'user_id': 'fake_user'
+                'user_id': 'fake_user',
             },
         }
 
@@ -250,17 +244,16 @@ class EventEngineTest(base.DbTestCase):
             args, kwargs = client_mock.start_workflow.call_args
 
             self.assertEqual(
-                (EVENT_TRIGGER['workflow_id'], '', None, {}),
-                args
+                (EVENT_TRIGGER['workflow_id'], '', None, {}), args
             )
             self.assertDictEqual(
                 {
                     'service': 'fake_publisher',
                     'project_id': '%s' % self.ctx.project_id,
                     'user_id': 'fake_user',
-                    'timestamp': ''
+                    'timestamp': '',
                 },
-                kwargs['event_params']
+                kwargs['event_params'],
             )
 
     @mock.patch('mistral.messaging.start_listener')
@@ -271,10 +264,14 @@ class EventEngineTest(base.DbTestCase):
 
         e_engine = evt_eng.DefaultEventEngine()
         e_engine.notification_converter.definitions = [
-            evt_eng.EventDefinition({
-                'event_types': EVENT_TYPE,
-                'properties': {'resource_id': '<% $.payload.instance_id %>'}
-            })
+            evt_eng.EventDefinition(
+                {
+                    'event_types': EVENT_TYPE,
+                    'properties': {
+                        'resource_id': '<% $.payload.instance_id %>'
+                    },
+                }
+            )
         ]
         e_engine.start()
         self.addCleanup(e_engine.stop)
@@ -287,7 +284,7 @@ class EventEngineTest(base.DbTestCase):
                 'timestamp': '',
                 'context': {
                     'project_id': '%s' % self.ctx.project_id,
-                    'user_id': 'fake_user'
+                    'user_id': 'fake_user',
                 },
             }
 
@@ -298,7 +295,7 @@ class EventEngineTest(base.DbTestCase):
             self._await(
                 lambda: client_mock.start_workflow.call_count == 1,
                 delay=0.1,
-                timeout=10
+                timeout=10,
             )
 
             self.assertTrue(e_engine._thread.is_alive())
@@ -306,8 +303,7 @@ class EventEngineTest(base.DbTestCase):
             _, kwargs = client_mock.start_workflow.call_args
 
             self.assertDictEqual(
-                {'resource_id': '12345'},
-                kwargs['event_params']
+                {'resource_id': '12345'}, kwargs['event_params']
             )
 
     @mock.patch.object(evt_eng.security, 'create_context')
@@ -321,21 +317,22 @@ class EventEngineTest(base.DbTestCase):
 
         for i in range(2):
             t = copy.deepcopy(EVENT_TRIGGER)
-            t.update({
-                'id': 'trigger-%s' % i,
-                'workflow_id': 'wf-%s' % i,
-                'workflow_namespace': '',
-                'trust_id': None,
-                'project_id': self.ctx.project_id
-            })
+            t.update(
+                {
+                    'id': 'trigger-%s' % i,
+                    'workflow_id': 'wf-%s' % i,
+                    'workflow_namespace': '',
+                    'trust_id': None,
+                    'project_id': self.ctx.project_id,
+                }
+            )
             triggers.append(t)
 
         e_engine._start_workflow(triggers, {})
 
         e_engine.engine_client.start_workflow.assert_called_once()
         self.assertEqual(
-            'wf-1',
-            e_engine.engine_client.start_workflow.call_args[0][0]
+            'wf-1', e_engine.engine_client.start_workflow.call_args[0][0]
         )
 
     @mock.patch.object(evt_eng.security, 'create_context', mock.Mock())
@@ -344,16 +341,18 @@ class EventEngineTest(base.DbTestCase):
         e_engine = evt_eng.DefaultEventEngine()
 
         t = copy.deepcopy(EVENT_TRIGGER)
-        t.update({
-            'id': 'trigger-id',
-            'workflow_namespace': '',
-            'trust_id': None,
-            'project_id': self.ctx.project_id,
-            'workflow_params': {
-                'env': {'k': 'v'},
-                'task_execution_id': 'foreign-task-id'
+        t.update(
+            {
+                'id': 'trigger-id',
+                'workflow_namespace': '',
+                'trust_id': None,
+                'project_id': self.ctx.project_id,
+                'workflow_params': {
+                    'env': {'k': 'v'},
+                    'task_execution_id': 'foreign-task-id',
+                },
             }
-        })
+        )
 
         e_engine._start_workflow([t], {})
 
@@ -368,47 +367,48 @@ class NotificationsConverterTest(base.BaseTest):
         definition_cfg = [
             {
                 'event_types': EVENT_TYPE,
-                'properties': {'resource_id': '<% $.payload.instance_id %>'}
+                'properties': {'resource_id': '<% $.payload.instance_id %>'},
             }
         ]
 
         converter = evt_eng.NotificationsConverter()
-        converter.definitions = [evt_eng.EventDefinition(event_def)
-                                 for event_def in reversed(definition_cfg)]
+        converter.definitions = [
+            evt_eng.EventDefinition(event_def)
+            for event_def in reversed(definition_cfg)
+        ]
 
         notification = {
             'event_type': EVENT_TYPE,
             'payload': {'instance_id': '12345'},
             'publisher': 'fake_publisher',
             'timestamp': '',
-            'context': {'project_id': 'fake_project', 'user_id': 'fake_user'}
+            'context': {'project_id': 'fake_project', 'user_id': 'fake_user'},
         }
 
         event = converter.convert(EVENT_TYPE, notification)
 
-        self.assertDictEqual(
-            {'resource_id': '12345'},
-            event
-        )
+        self.assertDictEqual({'resource_id': '12345'}, event)
 
     def test_convert_event_type_not_defined(self):
         definition_cfg = [
             {
                 'event_types': EVENT_TYPE,
-                'properties': {'resource_id': '<% $.payload.instance_id %>'}
+                'properties': {'resource_id': '<% $.payload.instance_id %>'},
             }
         ]
 
         converter = evt_eng.NotificationsConverter()
-        converter.definitions = [evt_eng.EventDefinition(event_def)
-                                 for event_def in reversed(definition_cfg)]
+        converter.definitions = [
+            evt_eng.EventDefinition(event_def)
+            for event_def in reversed(definition_cfg)
+        ]
 
         notification = {
             'event_type': 'fake_event',
             'payload': {'instance_id': '12345'},
             'publisher': 'fake_publisher',
             'timestamp': '',
-            'context': {'project_id': 'fake_project', 'user_id': 'fake_user'}
+            'context': {'project_id': 'fake_project', 'user_id': 'fake_user'},
         }
 
         event = converter.convert('fake_event', notification)
@@ -418,7 +418,7 @@ class NotificationsConverterTest(base.BaseTest):
                 'service': 'fake_publisher',
                 'project_id': 'fake_project',
                 'user_id': 'fake_user',
-                'timestamp': ''
+                'timestamp': '',
             },
-            event
+            event,
         )

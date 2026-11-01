@@ -74,7 +74,7 @@ def _admin_client(trust_id=None):
             password=CONF.keystone_authtoken.admin_password,
             project_name=project_name,
             auth_url=auth_url,
-            trusts=trust_id
+            trusts=trust_id,
         )
 
         return cl
@@ -92,19 +92,12 @@ def _admin_client(trust_id=None):
             kwargs['trust_id'] = trust_id
 
         auth = loading.load_auth_from_conf_options(
-            CONF,
-            'keystone_authtoken',
-            **kwargs
+            CONF, 'keystone_authtoken', **kwargs
         )
         sess = loading.load_session_from_conf_options(
-            CONF,
-            'keystone',
-            auth=auth
+            CONF, 'keystone', auth=auth
         )
 
         # Trusts are created against auth_url by client(), so use the same
         # keystone instead of picking one from the catalog.
-        return ks_client.Client(
-            session=sess,
-            endpoint_override=_v3_auth_url()
-        )
+        return ks_client.Client(session=sess, endpoint_override=_v3_auth_url())

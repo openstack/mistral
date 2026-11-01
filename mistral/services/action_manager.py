@@ -35,8 +35,7 @@ def _register_preinstalled_adhoc_actions():
         action_definition = open(action_path).read()
 
         adhoc_actions.create_or_update_actions(
-            action_definition,
-            scope='public'
+            action_definition, scope='public'
         )
 
 

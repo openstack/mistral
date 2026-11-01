@@ -168,8 +168,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
     def test_run_workflow_with_adhoc_action(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf1',
-            wf_input={'str1': 'a', 'str2': 'b'}
+            'my_wb.wf1', wf_input={'str1': 'a', 'str2': 'b'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -180,22 +179,21 @@ class AdhocActionsTest(base.EngineTestCase):
             self.assertDictEqual(
                 {
                     'workflow_result': 'a+b and a+b',
-                    'concat_task_result': 'a+b and a+b'
+                    'concat_task_result': 'a+b and a+b',
                 },
-                wf_ex.output
+                wf_ex.output,
             )
 
     def test_run_adhoc_action_without_input_value(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf2',
-            wf_input={'str1': 'a', 'str2': 'b'}
+            'my_wb.wf2', wf_input={'str1': 'a', 'str2': 'b'}
         )
 
         self.await_workflow_success(wf_ex.id)
 
         expected_output = {
             'workflow_result': 'a+b and a+b',
-            'concat_task_result': 'a+b and a+b'
+            'concat_task_result': 'a+b and a+b',
         }
 
         with db_api.transaction():
@@ -205,8 +203,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
     def test_run_adhoc_action_without_sufficient_input_value(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf3',
-            wf_input={'str1': 'a', 'str2': 'b'}
+            'my_wb.wf3', wf_input={'str1': 'a', 'str2': 'b'}
         )
         self.await_workflow_error(wf_ex.id)
         with db_api.transaction():
@@ -216,9 +213,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
     def test_run_adhoc_action_with_env(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf4',
-            wf_input={'str1': 'a'},
-            env={'foo': 'bar'}
+            'my_wb.wf4', wf_input={'str1': 'a'}, env={'foo': 'bar'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -226,12 +221,7 @@ class AdhocActionsTest(base.EngineTestCase):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            self.assertDictEqual(
-                {
-                    'workflow_result': 'bar'
-                },
-                wf_ex.output
-            )
+            self.assertDictEqual({'workflow_result': 'bar'}, wf_ex.output)
 
     def test_run_nested_adhoc_with_output(self):
         wf_ex = self.engine.start_workflow('my_wb.wf5')
@@ -242,10 +232,8 @@ class AdhocActionsTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self.assertDictEqual(
-                {
-                    'workflow_result': {'nested_concat': 'a+b and a+b'}
-                },
-                wf_ex.output
+                {'workflow_result': {'nested_concat': 'a+b and a+b'}},
+                wf_ex.output,
             )
 
     def test_missing_adhoc_action_definition(self):
@@ -275,8 +263,7 @@ class AdhocActionsTest(base.EngineTestCase):
             tasks = wf_ex.task_executions
 
             task1 = self._assert_single_item(
-                tasks,
-                name='nested_missing_action'
+                tasks, name='nested_missing_action'
             )
 
         self.assertEqual(states.ERROR, task1.state)
@@ -363,22 +350,18 @@ class AdhocActionsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(wb_text, namespace=namespace2)
 
         with db_api.transaction():
-            action_defs = db_api.get_action_definitions(
-                name='my_wb1.test_env'
-            )
+            action_defs = db_api.get_action_definitions(name='my_wb1.test_env')
 
             self.assertEqual(2, len(action_defs))
 
             action_defs = db_api.get_action_definitions(
-                name='my_wb1.test_env',
-                namespace=namespace1
+                name='my_wb1.test_env', namespace=namespace1
             )
 
             self.assertEqual(1, len(action_defs))
 
             action_defs = db_api.get_action_definitions(
-                name='my_wb1.test_env',
-                namespace=namespace2
+                name='my_wb1.test_env', namespace=namespace2
             )
 
             self.assertEqual(1, len(action_defs))
@@ -386,7 +369,7 @@ class AdhocActionsTest(base.EngineTestCase):
             self.assertRaises(
                 exc.DBEntityNotFoundError,
                 db_api.get_action_definition,
-                name='my_wb1.test_env'
+                name='my_wb1.test_env',
             )
 
     def test_adhoc_action_execution_with_namespace(self):
@@ -398,15 +381,14 @@ class AdhocActionsTest(base.EngineTestCase):
             'my_wb.wf4',
             wf_input={'str1': 'a'},
             env={'foo': 'bar'},
-            wf_namespace=namespace
+            wf_namespace=namespace,
         )
 
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
             action_execs = db_api.get_action_executions(
-                name='my_wb.test_env',
-                workflow_namespace=namespace
+                name='my_wb.test_env', workflow_namespace=namespace
             )
 
             self.assertEqual(1, len(action_execs))

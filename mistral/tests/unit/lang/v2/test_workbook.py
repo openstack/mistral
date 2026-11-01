@@ -24,7 +24,6 @@ from mistral.tests.unit.lang.v2 import base
 
 
 class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
-
     def test_build_valid_workbook_spec(self):
         wb_spec = self._parse_dsl_spec(dsl_file='my_workbook.yaml')
 
@@ -46,14 +45,12 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         self.assertEqual('2.0', action_spec.get_version())
         self.assertEqual('action1', action_spec.get_name())
         self.assertEqual(
-            'This is a test ad-hoc action',
-            action_spec.get_description()
+            'This is a test ad-hoc action', action_spec.get_description()
         )
         self.assertListEqual(['test', 'v2'], action_spec.get_tags())
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
-            {'output': 'Hello <% $.name %>!'},
-            action_spec.get_base_input()
+            {'output': 'Hello <% $.name %>!'}, action_spec.get_base_input()
         )
         self.assertDictEqual({}, action_spec.get_input())
         self.assertEqual('<% $ %>', action_spec.get_output())
@@ -66,10 +63,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
 
         self.assertEqual('2.0', wf1_spec.get_version())
         self.assertEqual('wf1', wf1_spec.get_name())
-        self.assertEqual(
-            'This is a test workflow',
-            wf1_spec.get_description()
-        )
+        self.assertEqual('This is a test workflow', wf1_spec.get_description())
         self.assertListEqual(['test', 'v2'], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertEqual(2, len(wf1_spec.get_tasks()))
@@ -105,8 +99,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         self.assertEqual('std.echo', task2_spec.get_action_name())
         self.assertIsNone(task2_spec.get_workflow_name())
         self.assertEqual(
-            {'output': 'Thanks <% $.name %>!'},
-            task2_spec.get_input()
+            {'output': 'Thanks <% $.name %>!'}, task2_spec.get_input()
         )
 
         wf2_spec = wf_specs.get('wf2')
@@ -121,15 +114,14 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
 
         self.assertListEqual(
             [('fail', '<% $.my_val = 0 %>', {})],
-            task_defaults_spec.get_on_error().get_next()
+            task_defaults_spec.get_on_error().get_next(),
         )
         self.assertListEqual(
-            [('pause', '', {})],
-            task_defaults_spec.get_on_success().get_next()
+            [('pause', '', {})], task_defaults_spec.get_on_success().get_next()
         )
         self.assertListEqual(
             [('succeed', '', {})],
-            task_defaults_spec.get_on_complete().get_next()
+            task_defaults_spec.get_on_complete().get_next(),
         )
 
         task3_spec = wf2_spec.get_tasks().get('task3')
@@ -140,25 +132,20 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         self.assertIsNone(task3_spec.get_action_name())
         self.assertEqual('wf1', task3_spec.get_workflow_name())
         self.assertEqual(
-            {
-                'name': 'John Doe',
-                'age': 32,
-                'param1': None,
-                'param2': False
-            },
-            task3_spec.get_input()
+            {'name': 'John Doe', 'age': 32, 'param1': None, 'param2': False},
+            task3_spec.get_input(),
         )
         self.assertListEqual(
             [('task4', '<% $.my_val = 1 %>', {})],
-            task3_spec.get_on_error().get_next()
+            task3_spec.get_on_error().get_next(),
         )
         self.assertListEqual(
             [('task5', '<% $.my_val = 2 %>', {})],
-            task3_spec.get_on_success().get_next()
+            task3_spec.get_on_success().get_next(),
         )
         self.assertListEqual(
             [('task6', '<% $.my_val = 3 %>', {})],
-            task3_spec.get_on_complete().get_next()
+            task3_spec.get_on_complete().get_next(),
         )
 
         task7_spec = wf2_spec.get_tasks().get('task7')
@@ -167,24 +154,20 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             {
                 'is_true': True,
                 'object_list': [1, None, 'str'],
-                'is_string': '50'
+                'is_string': '50',
             },
-            task7_spec.get_input()
+            task7_spec.get_input(),
         )
 
         self.assertEqual(
-            {'vm_info': '<% $.vms %>'},
-            task7_spec.get_with_items()
+            {'vm_info': '<% $.vms %>'}, task7_spec.get_with_items()
         )
 
         task8_spec = wf2_spec.get_tasks().get('task8')
 
         self.assertEqual(
-            {
-                'itemX': '<% $.arrayI %>',
-                "itemY": '<% $.arrayJ %>'
-            },
-            task8_spec.get_with_items()
+            {'itemX': '<% $.arrayI %>', "itemY": '<% $.arrayJ %>'},
+            task8_spec.get_with_items(),
         )
 
         self.assertEqual(
@@ -192,7 +175,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
                 'expr_list': ['<% $.v %>', '<% $.k %>'],
                 'expr': '<% $.value %>',
             },
-            task8_spec.get_input()
+            task8_spec.get_input(),
         )
 
         self.assertEqual('nova', task8_spec.get_target())
@@ -212,11 +195,8 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         task12_spec = wf2_spec.get_tasks().get('task12')
 
         self.assertDictEqual(
-            {
-                'url': 'http://site.com?q=<% $.query %>',
-                'params': ''
-            },
-            task12_spec.get_input()
+            {'url': 'http://site.com?q=<% $.query %>', 'params': ''},
+            task12_spec.get_input(),
         )
 
         task13_spec = wf2_spec.get_tasks().get('task13')
@@ -232,8 +212,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
 
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertEqual(
-            {'output': 'Echo output'},
-            action_spec.get_base_input()
+            {'output': 'Echo output'}, action_spec.get_base_input()
         )
 
     def test_spec_to_dict(self):
@@ -259,7 +238,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         self.assertRaises(
             exc.DSLParsingException,
             self._spec_parser,
-            yaml.safe_dump(dsl_dict)
+            yaml.safe_dump(dsl_dict),
         )
 
     def test_version(self):
@@ -269,7 +248,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'version': '1.0'}, True),
             ({'version': '2.0'}, False),
             ({'version': 2.0}, False),
-            ({'version': 2}, False)
+            ({'version': 2}, False),
         ]
 
         for version, expect_error in tests:
@@ -282,7 +261,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         exception = self.assertRaises(
             exc.DSLParsingException,
             self._spec_parser,
-            yaml.safe_dump(dsl_dict)
+            yaml.safe_dump(dsl_dict),
         )
 
         self.assertIn("'name' is a required property", str(exception))
@@ -292,7 +271,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'name': ''}, True),
             ({'name': None}, True),
             ({'name': 12345}, True),
-            ({'name': 'foobar'}, False)
+            ({'name': 'foobar'}, False),
         ]
 
         for name, expect_error in tests:
@@ -303,13 +282,12 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'description': ''}, True),
             ({'description': None}, True),
             ({'description': 12345}, True),
-            ({'description': 'This is a test workflow.'}, False)
+            ({'description': 'This is a test workflow.'}, False),
         ]
 
         for description, expect_error in tests:
             self._parse_dsl_spec(
-                changes=description,
-                expect_error=expect_error
+                changes=description, expect_error=expect_error
             )
 
     def test_tags(self):
@@ -319,7 +297,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'tags': None}, True),
             ({'tags': 12345}, True),
             ({'tags': ['foo', 'bar']}, False),
-            ({'tags': ['foobar', 'foobar']}, True)
+            ({'tags': ['foobar', 'foobar']}, True),
         ]
 
         for tags, expect_error in tests:
@@ -328,12 +306,8 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
     def test_actions(self):
         actions = {
             'version': '2.0',
-            'noop': {
-                'base': 'std.noop'
-            },
-            'echo': {
-                'base': 'std.echo'
-            }
+            'noop': {'base': 'std.noop'},
+            'echo': {'base': 'std.echo'},
         }
 
         tests = [
@@ -348,37 +322,28 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'actions': {'version': 2}}, False),
             ({'actions': {'noop': actions['noop']}}, False),
             ({'actions': {'version': '2.0', 'noop': 'std.noop'}}, True),
-            ({'actions': actions}, False)
+            ({'actions': actions}, False),
         ]
 
         for adhoc_actions, expect_error in tests:
             self._parse_dsl_spec(
-                changes=adhoc_actions,
-                expect_error=expect_error
+                changes=adhoc_actions, expect_error=expect_error
             )
 
     def test_workflows(self):
         workflows = {
             'version': '2.0',
-            'wf1': {
-                'tasks': {
-                    'noop': {
-                        'action': 'std.noop'
-                    }
-                }
-            },
+            'wf1': {'tasks': {'noop': {'action': 'std.noop'}}},
             'wf2': {
                 'tasks': {
-                    'echo': {
-                        'action': 'std.echo output="This is a test."'
-                    }
+                    'echo': {'action': 'std.echo output="This is a test."'}
                 }
-            }
+            },
         }
 
         tests = [
             ({'workflows': {'version': '2.0', 'wf1': 'wf1'}}, True),
-            ({'workflows': workflows}, False)
+            ({'workflows': workflows}, False),
         ]
 
         for workflows, expect_error in tests:
@@ -392,11 +357,18 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         self.assertEqual('2.0', d['version'])
         self.assertEqual('2.0', d['workflows']['version'])
 
-        workflow_names = ['workflowversion', 'versionworkflow',
-                          'workflowversionworkflow', 'version_workflow']
+        workflow_names = [
+            'workflowversion',
+            'versionworkflow',
+            'workflowversionworkflow',
+            'version_workflow',
+        ]
 
-        action_names = ['actionversion', 'versionaction',
-                        'actionversionaction']
+        action_names = [
+            'actionversion',
+            'versionaction',
+            'actionversionaction',
+        ]
 
         for name in workflow_names:
             self.assertEqual('2.0', d['workflows'][name]['version'])
@@ -419,8 +391,7 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         for valid in valid_names:
             result = re.match(workbook.NON_VERSION_WORD_REGEX, valid)
             self.assertIsNotNone(
-                result,
-                "Expected match for: {}".format(valid)
+                result, "Expected match for: {}".format(valid)
             )
 
         # ... except, we don't want to match a string that isn't just one word
@@ -430,6 +401,5 @@ class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
         for invalid in invalid_names:
             result = re.match(workbook.NON_VERSION_WORD_REGEX, invalid)
             self.assertIsNone(
-                result,
-                "Didn't expected match for: {}".format(invalid)
+                result, "Didn't expected match for: {}".format(invalid)
             )

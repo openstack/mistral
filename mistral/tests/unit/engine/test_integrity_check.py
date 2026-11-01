@@ -24,9 +24,7 @@ class IntegrityCheckTest(base.EngineTestCase):
 
         self.override_config('auth_enable', False, group='pecan')
         self.override_config(
-            'execution_integrity_check_delay',
-            2,
-            group='engine'
+            'execution_integrity_check_delay', 2, group='engine'
         )
 
     def test_task_execution_integrity(self):
@@ -59,8 +57,7 @@ class IntegrityCheckTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         self.await_task_success(task1_ex.id)
@@ -69,18 +66,14 @@ class IntegrityCheckTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2',
-                state=states.RUNNING
+                wf_ex.task_executions, name='task2', state=states.RUNNING
             )
             action2_ex = self._assert_single_item(
-                task2_ex.executions,
-                state=states.RUNNING
+                task2_ex.executions, state=states.RUNNING
             )
 
         db_api.update_action_execution(
-            action2_ex.id,
-            {'state': states.SUCCESS}
+            action2_ex.id, {'state': states.SUCCESS}
         )
 
         self.await_task_success(task2_ex.id)

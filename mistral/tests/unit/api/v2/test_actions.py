@@ -121,7 +121,7 @@ class TestActionsController(base.APITest):
 
         self.assertIsNotNone(
             action_def,
-            'Ad-hoc action definition does not exist [name=%s]' % action_name
+            'Ad-hoc action definition does not exist [name=%s]' % action_name,
         )
 
         # Compare action JSON with the state of the corresponding
@@ -149,7 +149,7 @@ class TestActionsController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            action_def  # Successful run
+            action_def,  # Successful run
         ]
 
         resp = self.app.get('/v2/actions/my_action')
@@ -170,10 +170,7 @@ class TestActionsController(base.APITest):
 
         # We should not be able to change 'project_id' even with a
         # direct DB call.
-        db_api.update_action_definition(
-            'my_action',
-            {'project_id': 'foobar'}
-        )
+        db_api.update_action_definition('my_action', {'project_id': 'foobar'})
 
         resp = self.app.get('/v2/actions/my_action')
 
@@ -187,7 +184,7 @@ class TestActionsController(base.APITest):
         resp = self.app.put(
             '/v2/actions',
             UPDATED_ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -206,7 +203,7 @@ class TestActionsController(base.APITest):
         resp = self.app.put(
             '/v2/actions?scope=public',
             UPDATED_ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         action_json = resp.json['actions'][0]
@@ -221,7 +218,7 @@ class TestActionsController(base.APITest):
             '/v2/actions',
             UPDATED_ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -236,20 +233,19 @@ class TestActionsController(base.APITest):
             '/v2/actions',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
-            'Attempt to modify a system action: my_action',
-            resp.body.decode()
+            'Attempt to modify a system action: my_action', resp.body.decode()
         )
 
     def test_post(self):
         resp = self.app.post(
             '/v2/actions',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -265,7 +261,7 @@ class TestActionsController(base.APITest):
         resp = self.app.post(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -278,7 +274,7 @@ class TestActionsController(base.APITest):
             '/v2/actions?scope=unique',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -289,7 +285,7 @@ class TestActionsController(base.APITest):
             '/v2/actions',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(201, resp.status_int)
@@ -299,7 +295,7 @@ class TestActionsController(base.APITest):
             '/v2/actions',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(409, resp.status_int)
@@ -350,8 +346,7 @@ class TestActionsController(base.APITest):
 
         # Now let's check the ad-hoc action data.
         adhoc_action_json = self._assert_single_item(
-            actions_json,
-            name='my_action'
+            actions_json, name='my_action'
         )
 
         self.check_adhoc_action_json(adhoc_action_json)
@@ -366,7 +361,7 @@ class TestActionsController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [action_def]  # Successful run
+            [action_def],  # Successful run
         ]
 
         resp = self.app.get('/v2/actions')
@@ -385,8 +380,7 @@ class TestActionsController(base.APITest):
 
         # Now let's check the ad-hoc action data.
         adhoc_action_json = self._assert_single_item(
-            actions_json,
-            name='my_action'
+            actions_json, name='my_action'
         )
 
         self.check_adhoc_action_json(adhoc_action_json)
@@ -394,7 +388,7 @@ class TestActionsController(base.APITest):
     @mock.patch.object(
         composite.CompositeActionProvider,
         'find_all',
-        mock.MagicMock(return_value=[])
+        mock.MagicMock(return_value=[]),
     )
     def test_get_all_empty(self):
         resp = self.app.get('/v2/actions')
@@ -422,7 +416,8 @@ class TestActionsController(base.APITest):
         adhoc_actions.create_actions(ADHOC_ACTION_YAML)
 
         resp = self.app.get(
-            '/v2/actions?limit=1&sort_keys=created_at&sort_dirs=desc')
+            '/v2/actions?limit=1&sort_keys=created_at&sort_dirs=desc'
+        )
 
         self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
@@ -431,8 +426,7 @@ class TestActionsController(base.APITest):
         self.check_adhoc_action_json(resp.json['actions'][0])
 
         param_dict = utils.get_dict_from_string(
-            resp.json['next'].split('?')[1],
-            delimiter='&'
+            resp.json['next'].split('?')[1], delimiter='&'
         )
 
         action_def = db_api.get_action_definition('my_action')
@@ -443,7 +437,7 @@ class TestActionsController(base.APITest):
             'marker': action_def.id,
             'limit': 1,
             'sort_keys': 'created_at,id',
-            'sort_dirs': 'desc,asc'
+            'sort_dirs': 'desc,asc',
         }
 
         self.assertTrue(
@@ -482,7 +476,7 @@ class TestActionsController(base.APITest):
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(
             '/v2/actions?limit=-1&sort_keys=id,name&sort_dirs=asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -492,7 +486,7 @@ class TestActionsController(base.APITest):
     def test_get_all_pagination_limit_not_integer(self):
         resp = self.app.get(
             '/v2/actions?limit=1.1&sort_keys=id,name&sort_dirs=asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -502,20 +496,20 @@ class TestActionsController(base.APITest):
     def test_get_all_pagination_invalid_sort_dirs_length(self):
         resp = self.app.get(
             '/v2/actions?limit=1&sort_keys=id,name&sort_dirs=asc,asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     def test_get_all_pagination_unknown_direction(self):
         resp = self.app.get(
             '/v2/actions?limit=1&sort_keys=id&sort_dirs=nonexist',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -526,7 +520,7 @@ class TestActionsController(base.APITest):
         resp = self.app.post(
             '/v2/actions/validate',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -537,7 +531,7 @@ class TestActionsController(base.APITest):
             '/v2/actions/validate',
             ACTION_DEFINITION_INVALID_NO_BASE,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -549,7 +543,7 @@ class TestActionsController(base.APITest):
             '/v2/actions/validate',
             ACTION_DSL_PARSE_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -561,20 +555,19 @@ class TestActionsController(base.APITest):
             '/v2/actions/validate',
             ACTION_DEFINITION_INVALID_YAQL,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
-        self.assertIn("unexpected end of statement",
-                      resp.json['error'])
+        self.assertIn("unexpected end of statement", resp.json['error'])
 
     def test_validate_empty(self):
         resp = self.app.post(
             '/v2/actions/validate',
             '',
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)

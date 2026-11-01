@@ -47,8 +47,7 @@ ROOT_YAQL_CONTEXT = None
 # TODO(rakhmerov): it's work around the bug in YAQL.
 # YAQL shouldn't expose internal types to custom functions.
 representer.SafeRepresenter.add_representer(
-    yaql_utils.FrozenDict,
-    representer.SafeRepresenter.represent_dict
+    yaql_utils.FrozenDict, representer.SafeRepresenter.represent_dict
 )
 
 
@@ -63,7 +62,8 @@ def get_yaql_context(data_context):
     new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
 
     new_ctx['$'] = (
-        data_context if not cfg.CONF.yaql.convert_input_data
+        data_context
+        if not cfg.CONF.yaql.convert_input_data
         else yaql_utils.convert_input_data(data_context)
     )
 
@@ -139,9 +139,13 @@ def _bounded_shift_bits_left(value, bits_number):
 
 
 def _register_yaql_functions(yaql_ctx):
-    for func in (_bounded_int_multiplication, _bounded_list_by_int,
-                 _bounded_int_by_list, _bounded_int_pow,
-                 _bounded_shift_bits_left):
+    for func in (
+        _bounded_int_multiplication,
+        _bounded_list_by_int,
+        _bounded_int_by_list,
+        _bounded_int_pow,
+        _bounded_shift_bits_left,
+    ):
         yaql_ctx.register_function(func)
 
     functions = base.get_custom_functions()
@@ -157,15 +161,15 @@ def get_yaql_engine_options():
         "yaql.convertTuplesToLists": _YAQL_CONF.convert_tuples_to_lists,
         "yaql.convertSetsToLists": _YAQL_CONF.convert_sets_to_lists,
         "yaql.iterableDicts": _YAQL_CONF.iterable_dicts,
-        "yaql.convertOutputData": _YAQL_CONF.convert_output_data
+        "yaql.convertOutputData": _YAQL_CONF.convert_output_data,
     }
 
 
-def create_yaql_engine_class(keyword_operator, allow_delegates,
-                             engine_options):
+def create_yaql_engine_class(
+    keyword_operator, allow_delegates, engine_options
+):
     return factory.YaqlFactory(
-        keyword_operator=keyword_operator,
-        allow_delegates=allow_delegates
+        keyword_operator=keyword_operator, allow_delegates=allow_delegates
     ).create(options=engine_options)
 
 
@@ -178,7 +182,7 @@ def get_yaql_engine_class():
     YAQL_ENGINE = create_yaql_engine_class(
         _YAQL_CONF.keyword_operator,
         _YAQL_CONF.allow_delegates,
-        get_yaql_engine_options()
+        get_yaql_engine_options(),
     )
 
     LOG.info(
@@ -187,9 +191,9 @@ def get_yaql_engine_class():
             get_yaql_engine_options(),
             {
                 "keyword_operator": _YAQL_CONF.keyword_operator,
-                "allow_delegates": _YAQL_CONF.allow_delegates
-            }
-        )
+                "allow_delegates": _YAQL_CONF.allow_delegates,
+            },
+        ),
     )
 
     return YAQL_ENGINE
@@ -205,8 +209,9 @@ def _sanitize_yaql_result(result):
     if isinstance(result, yaql_utils.FrozenDict):
         return result._d
 
-    if (inspect.isgenerator(result) or
-            isinstance(result, collections_abc.Iterator)):
+    if inspect.isgenerator(result) or isinstance(
+        result, collections_abc.Iterator
+    ):
         return list(result)
 
     return result
@@ -241,7 +246,7 @@ class YAQLEvaluator(base.Evaluator):
                     " error, re-raising initial exception [expression=%s,"
                     " error=%s]",
                     expression,
-                    str(e)
+                    str(e),
                 )
 
                 raise e
@@ -282,14 +287,16 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         found_expressions = cls.find_inline_expressions(expression)
 
         if found_expressions:
-            [super(InlineYAQLEvaluator, cls).validate(expr.strip("<%>"))
-             for expr in found_expressions]
+            [
+                super(InlineYAQLEvaluator, cls).validate(expr.strip("<%>"))
+                for expr in found_expressions
+            ]
 
     @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug(
-            "Starting to evaluate YAQL expression. "
-            "[expression='%s']", expression
+            "Starting to evaluate YAQL expression. [expression='%s']",
+            expression,
         )
 
         result = expression
@@ -300,8 +307,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
                 trim_expr = expr.strip("<%>")
 
                 evaluated = super(InlineYAQLEvaluator, cls).evaluate(
-                    trim_expr,
-                    data_context
+                    trim_expr, data_context
                 )
 
                 if len(expression) == len(expr):

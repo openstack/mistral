@@ -134,22 +134,16 @@ class RunActionEngineTest(base.EngineTestCase):
             exc.InvalidActionException,
             self.engine.start_action,
             'concat1',
-            {
-                'left': 'Hello, ',
-                'right': 'John Doe!'
-            },
+            {'left': 'Hello, ', 'right': 'John Doe!'},
             save_result=True,
-            namespace=''
+            namespace='',
         )
 
         action_ex = self.engine.start_action(
             'concat1',
-            {
-                'left': 'Hello, ',
-                'right': 'John Doe!'
-            },
+            {'left': 'Hello, ', 'right': 'John Doe!'},
             save_result=True,
-            namespace=namespace
+            namespace=namespace,
         )
 
         self.assertEqual(namespace, action_ex.workflow_namespace)
@@ -164,13 +158,9 @@ class RunActionEngineTest(base.EngineTestCase):
 
         action_ex = self.engine.start_action(
             'concat2',
-            {
-                'left': 'Hello, ',
-                'center': 'John',
-                'right': ' Doe!'
-            },
+            {'left': 'Hello, ', 'center': 'John', 'right': ' Doe!'},
             save_result=True,
-            namespace=namespace
+            namespace=namespace,
         )
 
         self.assertEqual(namespace, action_ex.workflow_namespace)
@@ -192,7 +182,7 @@ class RunActionEngineTest(base.EngineTestCase):
             'concat',
             {'left': 'Hello, ', 'right': 'John Doe!'},
             save_result=True,
-            namespace='namespace'
+            namespace='namespace',
         )
 
         self.assertIsNotNone(action_ex)
@@ -200,7 +190,7 @@ class RunActionEngineTest(base.EngineTestCase):
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
-        mock.Mock(side_effect=exc.ActionException("some error"))
+        mock.Mock(side_effect=exc.ActionException("some error")),
     )
     def test_run_action_error(self):
         # Start action and see the result.
@@ -213,9 +203,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_save_result(self):
         # Start action.
         action_ex = self.engine.start_action(
-            'std.echo',
-            {'output': 'Hello!'},
-            save_result=True
+            'std.echo', {'output': 'Hello!'}, save_result=True
         )
 
         self.await_action_success(action_ex.id)
@@ -229,10 +217,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_save_result_and_run_sync(self):
         # Start action.
         action_ex = self.engine.start_action(
-            'std.echo',
-            {'output': 'Hello!'},
-            save_result=True,
-            run_sync=True
+            'std.echo', {'output': 'Hello!'}, save_result=True, run_sync=True
         )
 
         self.assertEqual('Hello!', action_ex.output['result'])
@@ -251,7 +236,7 @@ class RunActionEngineTest(base.EngineTestCase):
             self.engine.start_action,
             'std.async_noop',
             {},
-            run_sync=True
+            run_sync=True,
         )
 
     def test_run_action_async(self):
@@ -264,8 +249,10 @@ class RunActionEngineTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, action_ex.state)
 
     @mock.patch.object(
-        std_actions.AsyncNoOpAction, 'run',
-        mock.MagicMock(side_effect=exc.ActionException('Invoke failed.')))
+        std_actions.AsyncNoOpAction,
+        'run',
+        mock.MagicMock(side_effect=exc.ActionException('Invoke failed.')),
+    )
     def test_run_action_async_invoke_failure(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
@@ -278,8 +265,10 @@ class RunActionEngineTest(base.EngineTestCase):
             self.assertIn('Invoke failed.', action_ex.output.get('result', ''))
 
     @mock.patch.object(
-        std_actions.AsyncNoOpAction, 'run',
-        mock.MagicMock(return_value=ml_actions.Result(error='Invoke erred.')))
+        std_actions.AsyncNoOpAction,
+        'run',
+        mock.MagicMock(return_value=ml_actions.Result(error='Invoke erred.')),
+    )
     def test_run_action_async_invoke_with_error(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
@@ -294,8 +283,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_adhoc(self):
         # Start action and see the result.
         action_ex = self.engine.start_action(
-            'concat',
-            {'left': 'Hello, ', 'right': 'John Doe!'}
+            'concat', {'left': 'Hello, ', 'right': 'John Doe!'}
         )
 
         self.assertEqual('Hello, John Doe!', action_ex.output['result'])
@@ -308,8 +296,8 @@ class RunActionEngineTest(base.EngineTestCase):
                 'left': 'Hello, ',
                 'center_left': 'John',
                 'center_right': ' Doe',
-                'right': '!'
-            }
+                'right': '!',
+            },
         )
 
         self.assertEqual('Hello, John Doe!', action_ex.output['result'])
@@ -320,7 +308,7 @@ class RunActionEngineTest(base.EngineTestCase):
             exc.InvalidActionException,
             self.engine.start_action,
             'missing_base',
-            {'some_input': 'Hi'}
+            {'some_input': 'Hi'},
         )
 
     def test_run_action_with_missing_nested_base(self):
@@ -329,7 +317,7 @@ class RunActionEngineTest(base.EngineTestCase):
             exc.InvalidActionException,
             self.engine.start_action,
             'nested_missing_base',
-            {'some_input': 'Hi'}
+            {'some_input': 'Hi'},
         )
 
     def test_run_loop_action(self):
@@ -338,7 +326,7 @@ class RunActionEngineTest(base.EngineTestCase):
             ValueError,
             self.engine.start_action,
             'loop_action',
-            {'output': 'Hello'}
+            {'output': 'Hello'},
         )
 
     def test_run_level_two_loop_action(self):
@@ -347,7 +335,7 @@ class RunActionEngineTest(base.EngineTestCase):
             ValueError,
             self.engine.start_action,
             'level2_loop_action',
-            {'output': 'Hello'}
+            {'output': 'Hello'},
         )
 
     def test_run_action_wrong_input(self):
@@ -356,7 +344,7 @@ class RunActionEngineTest(base.EngineTestCase):
             ml_exc.ActionException,
             self.engine.start_action,
             'std.http',
-            {'url': 'Hello, ', 'metod': 'John Doe!'}
+            {'url': 'Hello, ', 'metod': 'John Doe!'},
         )
 
         self.assertIn('std.http', str(exception))
@@ -367,7 +355,7 @@ class RunActionEngineTest(base.EngineTestCase):
             ml_exc.ActionException,
             self.engine.start_action,
             'concat',
-            {'left': 'Hello, ', 'ri': 'John Doe!'}
+            {'left': 'Hello, ', 'ri': 'John Doe!'},
         )
 
         self.assertIn('concat', str(exception))
@@ -385,8 +373,7 @@ class RunActionEngineTest(base.EngineTestCase):
         self.register_action_class('fake_action', FakeAction)
 
         action_ex = self.engine.start_action(
-            'fake_action',
-            {'param1': 'Hello'}
+            'fake_action', {'param1': 'Hello'}
         )
 
         self.assertDictEqual({'param1': 'Hello'}, action_ex.input)

@@ -56,16 +56,16 @@ class TestWSGIService(base.BaseTest):
             self.assertEqual(1, test_service.workers)
 
     @mock.patch.object(service.wsgi, 'Server')
-    @mock.patch('mistral.api.service.cheroot_ssl.BuiltinSSLAdapter',
-                autospec=True)
-    @mock.patch('mistral.api.service.validate_cert_paths',
-                autospec=True)
-    @mock.patch('oslo_service.sslutils.is_enabled', return_value=True,
-                autospec=True)
-    def test_wsgi_service_with_ssl_enabled(self, mock_is_enabled,
-                                           mock_validate_tls,
-                                           mock_ssl_adapter,
-                                           wsgi_server):
+    @mock.patch(
+        'mistral.api.service.cheroot_ssl.BuiltinSSLAdapter', autospec=True
+    )
+    @mock.patch('mistral.api.service.validate_cert_paths', autospec=True)
+    @mock.patch(
+        'oslo_service.sslutils.is_enabled', return_value=True, autospec=True
+    )
+    def test_wsgi_service_with_ssl_enabled(
+        self, mock_is_enabled, mock_validate_tls, mock_ssl_adapter, wsgi_server
+    ):
         wsgi_server.return_value = self.server
         self.override_config('enable_ssl_api', True, group='api')
         self.override_config('cert_file', '/path/to/cert', group='ssl')
@@ -79,11 +79,10 @@ class TestWSGIService(base.BaseTest):
             wsgi_server.assert_called_once_with(
                 server_name=service_name,
                 wsgi_app=test_service.app,
-                bind_addr=('0.0.0.0', 8989)
+                bind_addr=('0.0.0.0', 8989),
             )
 
             mock_ssl_adapter.assert_called_once_with(
-                certificate='/path/to/cert',
-                private_key='/path/to/key'
+                certificate='/path/to/cert', private_key='/path/to/key'
             )
             self.assertIsNotNone(self.server.ssl_adapter)

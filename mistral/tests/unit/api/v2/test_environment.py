@@ -38,7 +38,7 @@ VARIABLES = {
         'std.sql': {
             'conn': 'mysql://admin:secret@<% env().host %>/<% env().db %>'
         }
-    }
+    },
 }
 
 ENVIRONMENT_FOR_CREATE = {
@@ -51,13 +51,13 @@ ENVIRONMENT_FOR_UPDATE = {
     'name': 'test',
     'description': 'my test settings',
     'variables': VARIABLES,
-    'scope': 'private'
+    'scope': 'private',
 }
 
 ENVIRONMENT_FOR_UPDATE_NO_SCOPE = {
     'name': 'test',
     'description': 'my test settings',
-    'variables': VARIABLES
+    'variables': VARIABLES,
 }
 
 
@@ -69,7 +69,7 @@ ENVIRONMENT = {
     'scope': 'private',
     'project_id': '<default-project>',
     'created_at': str(timeutils.utcnow()),
-    'updated_at': str(timeutils.utcnow())
+    'updated_at': str(timeutils.utcnow()),
 }
 
 ENVIRONMENT_WITH_ILLEGAL_FIELD = {
@@ -88,10 +88,12 @@ ENVIRONMENT_DB = db.Environment(
     variables=copy.deepcopy(VARIABLES),
     scope=ENVIRONMENT['scope'],
     project_id=ENVIRONMENT['project_id'],
-    created_at=datetime.datetime.strptime(ENVIRONMENT['created_at'],
-                                          DATETIME_FORMAT),
-    updated_at=datetime.datetime.strptime(ENVIRONMENT['updated_at'],
-                                          DATETIME_FORMAT)
+    created_at=datetime.datetime.strptime(
+        ENVIRONMENT['created_at'], DATETIME_FORMAT
+    ),
+    updated_at=datetime.datetime.strptime(
+        ENVIRONMENT['updated_at'], DATETIME_FORMAT
+    ),
 )
 
 ENVIRONMENT_DB_WITH_PROJECT_ID = ENVIRONMENT_DB.get_clone()
@@ -119,8 +121,7 @@ MOCK_DELETE = mock.MagicMock(return_value=None)
 
 def _convert_vars_to_dict(env_dict):
     """Converts 'variables' in the given environment dict into dictionary."""
-    if ('variables' in env_dict and
-            isinstance(env_dict.get('variables'), str)):
+    if 'variables' in env_dict and isinstance(env_dict.get('variables'), str):
         env_dict['variables'] = json.loads(env_dict['variables'])
 
     return env_dict
@@ -128,15 +129,13 @@ def _convert_vars_to_dict(env_dict):
 
 def _convert_vars_to_json(env_dict):
     """Converts 'variables' in the given environment dict into string."""
-    if ('variables' in env_dict and
-            isinstance(env_dict.get('variables'), dict)):
+    if 'variables' in env_dict and isinstance(env_dict.get('variables'), dict):
         env_dict['variables'] = json.dumps(env_dict['variables'])
 
     return env_dict
 
 
 class TestEnvironmentController(base.APITest):
-
     def _assert_dict_equal(self, expected, actual):
         self.assertIsInstance(expected, dict)
         self.assertIsInstance(actual, dict)
@@ -149,10 +148,7 @@ class TestEnvironmentController(base.APITest):
     def test_resource(self):
         resource = resources.Environment(**copy.deepcopy(ENVIRONMENT))
 
-        self._assert_dict_equal(
-            copy.deepcopy(ENVIRONMENT),
-            resource.to_dict()
-        )
+        self._assert_dict_equal(copy.deepcopy(ENVIRONMENT), resource.to_dict())
 
     @mock.patch.object(db_api, 'get_environments', MOCK_ENVIRONMENTS)
     def test_get_all(self):
@@ -166,7 +162,7 @@ class TestEnvironmentController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [ENVIRONMENT_DB]  # Successful run
+            [ENVIRONMENT_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/environments')
@@ -192,7 +188,8 @@ class TestEnvironmentController(base.APITest):
     @mock.patch('mistral.db.v2.api.get_environment')
     def test_get_with_fields_filter(self, mocked_get):
         mocked_get.return_value = (
-            ENVIRONMENT['id'], ENVIRONMENT['name'],
+            ENVIRONMENT['id'],
+            ENVIRONMENT['name'],
         )
         resp = self.app.get('/v2/environments/123?fields=name')
         expected = {
@@ -208,7 +205,7 @@ class TestEnvironmentController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            ENVIRONMENT_DB  # Successful run
+            ENVIRONMENT_DB,  # Successful run
         ]
 
         resp = self.app.get('/v2/environments/123')
@@ -216,8 +213,9 @@ class TestEnvironmentController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self._assert_dict_equal(ENVIRONMENT, resp.json)
 
-    @mock.patch.object(db_api, 'get_environment',
-                       return_value=ENVIRONMENT_DB_WITH_PROJECT_ID)
+    @mock.patch.object(
+        db_api, 'get_environment', return_value=ENVIRONMENT_DB_WITH_PROJECT_ID
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/environments/123')
 
@@ -234,7 +232,7 @@ class TestEnvironmentController(base.APITest):
     def test_post(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
+            _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE)),
         )
 
         self.assertEqual(201, resp.status_int)
@@ -246,8 +244,9 @@ class TestEnvironmentController(base.APITest):
         resp = self.app.post_json(
             '/v2/environments',
             _convert_vars_to_json(
-                copy.deepcopy(ENVIRONMENT_WITH_ILLEGAL_FIELD)),
-            expect_errors=True
+                copy.deepcopy(ENVIRONMENT_WITH_ILLEGAL_FIELD)
+            ),
+            expect_errors=True,
         )
         self.assertEqual(400, resp.status_int)
 
@@ -256,7 +255,7 @@ class TestEnvironmentController(base.APITest):
         resp = self.app.post_json(
             '/v2/environments',
             _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE)),
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(409, resp.status_int)
@@ -264,8 +263,7 @@ class TestEnvironmentController(base.APITest):
     @mock.patch.object(db_api, 'update_environment', MOCK_UPDATED_ENVIRONMENT)
     def test_put(self):
         resp = self.app.put_json(
-            '/v2/environments',
-            copy.deepcopy(FOR_UPDATED_ENVIRONMENT)
+            '/v2/environments', copy.deepcopy(FOR_UPDATED_ENVIRONMENT)
         )
 
         self.assertEqual(200, resp.status_int)
@@ -287,11 +285,7 @@ class TestEnvironmentController(base.APITest):
     def test_put_not_found(self):
         env = copy.deepcopy(FOR_UPDATED_ENVIRONMENT)
 
-        resp = self.app.put_json(
-            '/v2/environments',
-            env,
-            expect_errors=True
-        )
+        resp = self.app.put_json('/v2/environments', env, expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
 

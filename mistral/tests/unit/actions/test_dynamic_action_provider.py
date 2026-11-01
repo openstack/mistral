@@ -40,7 +40,7 @@ class DynamicActionProviderTest(base.DbTestCase):
                 'name': 'code_source',
                 'content': DUMMY_CODE_SOURCE,
                 'namespace': namespace,
-                'version': 0
+                'version': 0,
             }
         )
 
@@ -54,7 +54,7 @@ class DynamicActionProviderTest(base.DbTestCase):
                 "namespace": namespace,
                 "class_name": "DummyAction",
                 "code_source_id": code_source.id,
-                "code_source_name": code_source.name
+                "code_source_name": code_source.name,
             }
         )
         db_api.create_dynamic_action_definition(
@@ -63,7 +63,7 @@ class DynamicActionProviderTest(base.DbTestCase):
                 "namespace": namespace,
                 "class_name": "DummyAction2",
                 "code_source_id": code_source.id,
-                "code_source_name": code_source.name
+                "code_source_name": code_source.name,
             }
         )
 
@@ -98,8 +98,7 @@ class DynamicActionProviderTest(base.DbTestCase):
         code_source = self._create_code_source()
 
         self._create_dynamic_actions(
-            code_source=code_source,
-            namespace=NAMESPACE
+            code_source=code_source, namespace=NAMESPACE
         )
 
         action_descs = provider.find_all(namespace=NAMESPACE)

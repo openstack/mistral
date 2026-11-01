@@ -55,7 +55,7 @@ class WorkflowControllerTest(base.BaseTest):
 
         self.assertIsInstance(
             wf_base.get_controller(wf_ex, wf_spec),
-            direct_wf.DirectWorkflowController
+            direct_wf.DirectWorkflowController,
         )
 
     def test_get_controller_reverse(self):
@@ -64,7 +64,7 @@ class WorkflowControllerTest(base.BaseTest):
 
         self.assertIsInstance(
             wf_base.get_controller(wf_ex, wf_spec),
-            reverse_wf.ReverseWorkflowController
+            reverse_wf.ReverseWorkflowController,
         )
 
     def test_all_engine_commands_have_implementation(self):

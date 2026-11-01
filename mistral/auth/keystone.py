@@ -22,7 +22,6 @@ CONF = cfg.CONF
 
 
 class KeystoneAuthHandler(auth.AuthHandler):
-
     def authenticate(self, req):
         # Note(nmakhotkin): Since we have deferred authentication,
         # need to check for auth manually (check for corresponding
@@ -30,8 +29,10 @@ class KeystoneAuthHandler(auth.AuthHandler):
         identity_status = req.headers.get('X-Identity-Status')
         service_identity_status = req.headers.get('X-Service-Identity-Status')
 
-        if (identity_status == 'Confirmed' or
-                service_identity_status == 'Confirmed'):
+        if (
+            identity_status == 'Confirmed'
+            or service_identity_status == 'Confirmed'
+        ):
             return
 
         if req.headers.get('X-Auth-Token'):

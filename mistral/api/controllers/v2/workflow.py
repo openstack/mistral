@@ -44,8 +44,11 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     # TODO(nmakhotkin): Have a discussion with pecan/WSME folks in order
     # to have requests and response of different content types. Then
     # delete ContentTypeHook.
-    __hooks__ = [ct_hook.ContentTypeHook("application/json;charset=utf-8",
-                                         ['POST', 'PUT'])]
+    __hooks__ = [
+        ct_hook.ContentTypeHook(
+            "application/json;charset=utf-8", ['POST', 'PUT']
+        )
+    ]
 
     validate = validation.SpecValidationController(
         spec_parser.get_workflow_list_spec_from_yaml
@@ -57,7 +60,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             "Lookup subcontrollers of WorkflowsController, "
             "sub_resource: %s, remainder: %s.",
             sub_resource,
-            remainder
+            remainder,
         )
 
         if sub_resource == 'members':
@@ -72,14 +75,13 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             return member.MembersController('workflow', identifier), remainder
 
         return super(WorkflowsController, self)._lookup(
-            identifier,
-            sub_resource,
-            *remainder
+            identifier, sub_resource, *remainder
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workflow, wtypes.text, wtypes.text,
-                         types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.Workflow, wtypes.text, wtypes.text, types.uniquelist
+    )
     def get(self, identifier, namespace='', fields=''):
         """Return the named workflow.
 
@@ -154,15 +156,18 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             scope=scope,
             identifier=identifier,
             namespace=namespace,
-            validate=not skip_validation
+            validate=not skip_validation,
         )
 
         workflow_list = [
             resources.Workflow.from_db_model(db_wf) for db_wf in db_wfs
         ]
 
-        return (workflow_list[0].to_json() if identifier
-                else resources.Workflows(workflows=workflow_list).to_json())
+        return (
+            workflow_list[0].to_json()
+            if identifier
+            else resources.Workflows(workflows=workflow_list).to_json()
+        )
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -203,7 +208,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             definition,
             scope=scope,
             namespace=namespace,
-            validate=not skip_validation
+            validate=not skip_validation,
         )
 
         workflow_list = [
@@ -222,8 +227,11 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:delete', context.ctx())
 
-        LOG.debug("Delete workflow [identifier=%s, namespace=%s]",
-                  identifier, namespace)
+        LOG.debug(
+            "Delete workflow [identifier=%s, namespace=%s]",
+            identifier,
+            namespace,
+        )
 
         @rest_utils.rest_retry_on_db_error
         def _delete_workflow_definition():
@@ -233,16 +241,42 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         _delete_workflow_definition()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workflows, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, wtypes.text, wtypes.text,
-                         resources.SCOPE_TYPES, types.uuid, wtypes.text,
-                         wtypes.text, bool, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None, input=None,
-                definition=None, tags=None, scope=None,
-                project_id=None, created_at=None, updated_at=None,
-                all_projects=False, namespace=None):
+    @wsme_pecan.wsexpose(
+        resources.Workflows,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        resources.SCOPE_TYPES,
+        types.uuid,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        input=None,
+        definition=None,
+        tags=None,
+        scope=None,
+        project_id=None,
+        created_at=None,
+        updated_at=None,
+        all_projects=False,
+        namespace=None,
+    ):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -288,13 +322,20 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             input=input,
             definition=definition,
             project_id=project_id,
-            namespace=namespace
+            namespace=namespace,
         )
 
-        LOG.debug("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                  "sort_dirs=%s, fields=%s, filters=%s, all_projects=%s",
-                  marker, limit, sort_keys, sort_dirs, fields, filters,
-                  all_projects)
+        LOG.debug(
+            "Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, fields=%s, filters=%s, all_projects=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            fields,
+            filters,
+            all_projects,
+        )
 
         return rest_utils.get_all(
             resources.Workflows,
@@ -307,5 +348,5 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             sort_dirs=sort_dirs,
             fields=fields,
             all_projects=all_projects,
-            **filters
+            **filters,
         )

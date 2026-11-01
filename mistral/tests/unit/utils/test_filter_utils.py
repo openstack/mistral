@@ -19,10 +19,7 @@ from mistral.utils import filter_utils
 
 class FilterUtilsTest(base.BaseTest):
     def test_create_filters_with_nones(self):
-        expected_filters = {
-            'key2': {'eq': 'value2'},
-            'key1': {'eq': None}
-        }
+        expected_filters = {'key2': {'eq': 'value2'}, 'key1': {'eq': None}}
 
         filters = filter_utils.create_filters_from_request_params(
             none_values=['key1'],

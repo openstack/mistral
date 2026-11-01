@@ -30,9 +30,7 @@ def get_auth_handler():
 
     if not _IMPL_AUTH_HANDLER:
         mgr = driver.DriverManager(
-            'mistral.auth',
-            auth_type,
-            invoke_on_load=True
+            'mistral.auth', auth_type, invoke_on_load=True
         )
 
         _IMPL_AUTH_HANDLER = mgr.driver

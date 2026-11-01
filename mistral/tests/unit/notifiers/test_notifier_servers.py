@@ -56,9 +56,7 @@ class ServerPluginTest(base.NotifierTestCase):
 
 
 @mock.patch.object(
-    r_notif.RemoteNotifier,
-    'notify',
-    mock.MagicMock(return_value=None)
+    r_notif.RemoteNotifier, 'notify', mock.MagicMock(return_value=None)
 )
 class LocalNotifServerTest(base.NotifierTestCase):
     @classmethod
@@ -111,10 +109,7 @@ class LocalNotifServerTest(base.NotifierTestCase):
         notif_options = [{'type': 'webhook'}]
 
         wf_ex = self.engine.start_workflow(
-            'wf',
-            '',
-            wf_input={},
-            notify=notif_options
+            'wf', '', wf_input={}, notify=notif_options
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -141,7 +136,7 @@ class LocalNotifServerTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertFalse(r_notif.RemoteNotifier.notify.called)
@@ -151,7 +146,7 @@ class LocalNotifServerTest(base.NotifierTestCase):
 @mock.patch.object(
     r_notif.RemoteNotifier,
     'notify',
-    mock.MagicMock(side_effect=notifier_process)
+    mock.MagicMock(side_effect=notifier_process),
 )
 class RemoteNotifServerTest(base.NotifierTestCase):
     @classmethod
@@ -194,10 +189,7 @@ class RemoteNotifServerTest(base.NotifierTestCase):
         notif_options = [{'type': 'foobar'}]
 
         wf_ex = self.engine.start_workflow(
-            'wf',
-            '',
-            wf_input={},
-            notify=notif_options
+            'wf', '', wf_input={}, notify=notif_options
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -224,7 +216,7 @@ class RemoteNotifServerTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(r_notif.RemoteNotifier.notify.called)

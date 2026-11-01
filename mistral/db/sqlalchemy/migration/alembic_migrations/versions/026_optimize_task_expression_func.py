@@ -29,9 +29,13 @@ from alembic import op
 
 
 def upgrade():
-    op.create_index('action_executions_v2_task_execution_id',
-                    'action_executions_v2',
-                    ['task_execution_id'])
-    op.create_index('workflow_executions_v2_task_execution_id',
-                    'workflow_executions_v2',
-                    ['task_execution_id'])
+    op.create_index(
+        'action_executions_v2_task_execution_id',
+        'action_executions_v2',
+        ['task_execution_id'],
+    )
+    op.create_index(
+        'workflow_executions_v2_task_execution_id',
+        'workflow_executions_v2',
+        ['task_execution_id'],
+    )

@@ -56,10 +56,10 @@ class YaqlJsonSerializationTest(base.BaseTest):
                             1,
                             yaql_utils.FrozenDict(
                                 a=iter([4, yaql_utils.FrozenDict(a=99)])
-                            )
+                            ),
                         ]
-                    )
-                )
+                    ),
+                ),
             ]
         )
 

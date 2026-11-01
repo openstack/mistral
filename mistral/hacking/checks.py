@@ -38,10 +38,13 @@ def no_assert_equal_true_false(logical_line):
     _end_re = re.compile(r'assert(Not)?Equal\(.*,\s+(True|False)\)$')
 
     if _start_re.search(logical_line) or _end_re.search(logical_line):
-        yield (0, "M319: assertEqual(A, True|False), "
-               "assertEqual(True|False, A), assertNotEqual(A, True|False), "
-               "or assertEqual(True|False, A) sentences must not be used. "
-               "Use assertTrue(A) or assertFalse(A) instead")
+        yield (
+            0,
+            "M319: assertEqual(A, True|False), "
+            "assertEqual(True|False, A), assertNotEqual(A, True|False), "
+            "or assertEqual(True|False, A) sentences must not be used. "
+            "Use assertTrue(A) or assertFalse(A) instead",
+        )
 
 
 @core.flake8ext
@@ -53,9 +56,12 @@ def no_assert_true_false_is_not(logical_line):
     _re = re.compile(r'assert(True|False)\(.+\s+is\s+(not\s+)?.+\)$')
 
     if _re.search(logical_line):
-        yield (0, "M320: assertTrue(A is|is not B) or "
-               "assertFalse(A is|is not B) sentences must not be used. "
-               "Use assertIs(A, B) or assertIsNot(A, B) instead")
+        yield (
+            0,
+            "M320: assertTrue(A is|is not B) or "
+            "assertFalse(A is|is not B) sentences must not be used. "
+            "Use assertIs(A, B) or assertIsNot(A, B) instead",
+        )
 
 
 class BaseASTChecker(ast.NodeVisitor):
@@ -97,10 +103,9 @@ class BaseASTChecker(ast.NodeVisitor):
 
 
 class CheckForLoggingIssues(BaseASTChecker):
-
     name = "check_for_logging_issues"
     version = "1.0"
-    CHECK_DESC = ('M001 Using the deprecated Logger.warn')
+    CHECK_DESC = 'M001 Using the deprecated Logger.warn'
     LOG_MODULES = ('logging', 'oslo_log.log')
 
     def __init__(self, tree, filename):
@@ -135,9 +140,9 @@ class CheckForLoggingIssues(BaseASTChecker):
         """Return the fully qualified name or a Name or a Attribute."""
         if isinstance(node, ast.Name):
             return node.id
-        elif (isinstance(node, ast.Attribute)
-                and isinstance(node.value, (ast.Name, ast.Attribute))):
-
+        elif isinstance(node, ast.Attribute) and isinstance(
+            node.value, (ast.Name, ast.Attribute)
+        ):
             obj_name = self._find_name(node.value)
 
             if obj_name is None:
@@ -160,32 +165,33 @@ class CheckForLoggingIssues(BaseASTChecker):
         """
         attr_node_types = (ast.Name, ast.Attribute)
 
-        if (len(node.targets) != 1
-                or not isinstance(node.targets[0], attr_node_types)):
+        if len(node.targets) != 1 or not isinstance(
+            node.targets[0], attr_node_types
+        ):
             # Say no to: "x, y = ..."
             return super(CheckForLoggingIssues, self).generic_visit(node)
 
         target_name = self._find_name(node.targets[0])
 
-        if (isinstance(node.value, ast.BinOp) and
-                isinstance(node.value.op, ast.Mod)):
-            if (isinstance(node.value.left, ast.Call) and
-                    isinstance(node.value.left.func, ast.Name)):
-
+        if isinstance(node.value, ast.BinOp) and isinstance(
+            node.value.op, ast.Mod
+        ):
+            if isinstance(node.value.left, ast.Call) and isinstance(
+                node.value.left.func, ast.Name
+            ):
                 # NOTE(dstanek): This is done to match cases like:
                 # `msg = _('something %s') % x`
                 node = ast.Assign(value=node.value.left)
 
         if not isinstance(node.value, ast.Call):
-
             # node.value must be a call to getLogger
             self.assignments.pop(target_name, None)
 
             return super(CheckForLoggingIssues, self).generic_visit(node)
 
-        if (not isinstance(node.value.func, ast.Attribute)
-                or not isinstance(node.value.func.value, attr_node_types)):
-
+        if not isinstance(node.value.func, ast.Attribute) or not isinstance(
+            node.value.func.value, attr_node_types
+        ):
             # Function must be an attribute on an object like
             # logging.getLogger
             return super(CheckForLoggingIssues, self).generic_visit(node)
@@ -193,8 +199,10 @@ class CheckForLoggingIssues(BaseASTChecker):
         object_name = self._find_name(node.value.func.value)
         func_name = node.value.func.attr
 
-        if (object_name in self.logger_module_names
-                and func_name == 'getLogger'):
+        if (
+            object_name in self.logger_module_names
+            and func_name == 'getLogger'
+        ):
             self.logger_names.append(target_name)
 
         return super(CheckForLoggingIssues, self).generic_visit(node)

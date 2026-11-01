@@ -56,7 +56,7 @@ def get_policy_factories():
         build_fail_on_policy,
         build_retry_policy,
         build_timeout_policy,
-        build_concurrency_policy
+        build_concurrency_policy,
     ]
 
 
@@ -112,7 +112,7 @@ def build_retry_policy(policies_spec):
         retry.get_count(),
         retry.get_delay(),
         retry.get_break_on(),
-        retry.get_continue_on()
+        retry.get_continue_on(),
     )
 
 
@@ -134,8 +134,9 @@ def build_pause_before_policy(policies_spec):
 
     pause_before_policy = policies_spec.get_pause_before()
 
-    return (PauseBeforePolicy(pause_before_policy)
-            if pause_before_policy else None)
+    return (
+        PauseBeforePolicy(pause_before_policy) if pause_before_policy else None
+    )
 
 
 def build_concurrency_policy(policies_spec):
@@ -144,8 +145,9 @@ def build_concurrency_policy(policies_spec):
 
     concurrency_policy = policies_spec.get_concurrency()
 
-    return (ConcurrencyPolicy(concurrency_policy)
-            if concurrency_policy else None)
+    return (
+        ConcurrencyPolicy(concurrency_policy) if concurrency_policy else None
+    )
 
 
 def build_fail_on_policy(policies_spec):
@@ -154,19 +156,11 @@ def build_fail_on_policy(policies_spec):
 
     fail_on_policy = policies_spec.get_fail_on()
 
-    return (FailOnPolicy(fail_on_policy)
-            if fail_on_policy else None)
+    return FailOnPolicy(fail_on_policy) if fail_on_policy else None
 
 
 class WaitBeforePolicy(base.TaskPolicy):
-    _schema = {
-        "properties": {
-            "delay": {
-                "type": "integer",
-                "minimum": 0
-            }
-        }
-    }
+    _schema = {"properties": {"delay": {"type": "integer", "minimum": 0}}}
 
     def __init__(self, delay):
         self.delay = delay
@@ -193,7 +187,7 @@ class WaitBeforePolicy(base.TaskPolicy):
 
             task.set_state(
                 states.RUNNING_DELAYED,
-                "Delayed by 'wait-before' policy [delay=%s]" % self.delay
+                "Delayed by 'wait-before' policy [delay=%s]" % self.delay,
             )
 
             sched = sched_base.get_system_scheduler()
@@ -201,21 +195,14 @@ class WaitBeforePolicy(base.TaskPolicy):
             job = sched_base.SchedulerJob(
                 run_after=self.delay,
                 func_name=_CONTINUE_TASK_PATH,
-                func_args={'task_ex_id': task.get_id()}
+                func_args={'task_ex_id': task.get_id()},
             )
 
             sched.schedule(job)
 
 
 class WaitAfterPolicy(base.TaskPolicy):
-    _schema = {
-        "properties": {
-            "delay": {
-                "type": "integer",
-                "minimum": 0
-            }
-        }
-    }
+    _schema = {"properties": {"delay": {"type": "integer", "minimum": 0}}}
 
     def __init__(self, delay):
         self.delay = delay
@@ -243,7 +230,7 @@ class WaitAfterPolicy(base.TaskPolicy):
         # Set task state to 'RUNNING_DELAYED'.
         task.set_state(
             states.RUNNING_DELAYED,
-            "Delayed by 'wait-after' policy [delay=%s]" % self.delay
+            "Delayed by 'wait-after' policy [delay=%s]" % self.delay,
         )
 
         # Schedule to change task state to RUNNING again.
@@ -255,8 +242,8 @@ class WaitAfterPolicy(base.TaskPolicy):
             func_args={
                 'task_ex_id': task.get_id(),
                 'state': end_state,
-                'state_info': end_state_info
-            }
+                'state_info': end_state_info,
+            },
         )
 
         sched.schedule(job)
@@ -265,14 +252,8 @@ class WaitAfterPolicy(base.TaskPolicy):
 class RetryPolicy(base.TaskPolicy):
     _schema = {
         "properties": {
-            "delay": {
-                "type": "integer",
-                "minimum": 0
-            },
-            "count": {
-                "type": "integer",
-                "minimum": 0
-            },
+            "delay": {"type": "integer", "minimum": 0},
+            "count": {"type": "integer", "minimum": 0},
         }
     }
 
@@ -318,13 +299,11 @@ class RetryPolicy(base.TaskPolicy):
         )
 
         continue_on_evaluation = expressions.evaluate(
-            self._continue_on_clause,
-            expr_ctx
+            self._continue_on_clause, expr_ctx
         )
 
         break_on_evaluation = expressions.evaluate(
-            self._break_on_clause,
-            expr_ctx
+            self._break_on_clause, expr_ctx
         )
 
         state = task.get_state()
@@ -350,18 +329,15 @@ class RetryPolicy(base.TaskPolicy):
         retries_remain = retry_no < self.count
 
         stop_continue_flag = (
-            task.get_state() == states.SUCCESS and
-            not self._continue_on_clause
+            task.get_state() == states.SUCCESS and not self._continue_on_clause
         )
 
-        stop_continue_flag = (
-            stop_continue_flag or
-            (self._continue_on_clause and not continue_on_evaluation)
+        stop_continue_flag = stop_continue_flag or (
+            self._continue_on_clause and not continue_on_evaluation
         )
 
         break_triggered = (
-            task.get_state() == states.ERROR and
-            break_on_evaluation
+            task.get_state() == states.ERROR and break_on_evaluation
         )
 
         if not retries_remain or break_triggered or stop_continue_flag:
@@ -394,7 +370,7 @@ class RetryPolicy(base.TaskPolicy):
 
             task.set_state(
                 states.WAITING,
-                "Delayed by 'retry' policy [delay=%s]" % self.delay
+                "Delayed by 'retry' policy [delay=%s]" % self.delay,
             )
 
             t_h._schedule_refresh_task_state(task.get_id(), self.delay)
@@ -403,7 +379,7 @@ class RetryPolicy(base.TaskPolicy):
 
         task.set_state(
             states.RUNNING_DELAYED,
-            "Delayed by 'retry' policy [delay=%s]" % self.delay
+            "Delayed by 'retry' policy [delay=%s]" % self.delay,
         )
 
         sched = sched_base.get_system_scheduler()
@@ -411,21 +387,14 @@ class RetryPolicy(base.TaskPolicy):
         job = sched_base.SchedulerJob(
             run_after=self.delay,
             func_name=_CONTINUE_TASK_PATH,
-            func_args={'task_ex_id': task.get_id()}
+            func_args={'task_ex_id': task.get_id()},
         )
 
         sched.schedule(job)
 
 
 class TimeoutPolicy(base.TaskPolicy):
-    _schema = {
-        "properties": {
-            "delay": {
-                "type": "integer",
-                "minimum": 0
-            }
-        }
-    }
+    _schema = {"properties": {"delay": {"type": "integer", "minimum": 0}}}
 
     def __init__(self, timeout_sec):
         self.delay = timeout_sec
@@ -441,7 +410,7 @@ class TimeoutPolicy(base.TaskPolicy):
 
         task.set_runtime_context_value(
             'timeout_policy',
-            {'id': timeout_id, 'deadline': time.time() + self.delay}
+            {'id': timeout_id, 'deadline': time.time() + self.delay},
         )
 
         sched = sched_base.get_system_scheduler()
@@ -452,25 +421,21 @@ class TimeoutPolicy(base.TaskPolicy):
             func_args={
                 'task_ex_id': task.get_id(),
                 'timeout': self.delay,
-                'timeout_id': timeout_id
-            }
+                'timeout_id': timeout_id,
+            },
         )
 
         sched.schedule(job)
 
         wf_trace.info(
             task.task_ex,
-            "Timeout check scheduled [task=%s, timeout(s)=%s]." %
-            (task.get_id(), self.delay)
+            "Timeout check scheduled [task=%s, timeout(s)=%s]."
+            % (task.get_id(), self.delay),
         )
 
 
 class PauseBeforePolicy(base.TaskPolicy):
-    _schema = {
-        "properties": {
-            "expr": {"type": "boolean"}
-        }
-    }
+    _schema = {"properties": {"expr": {"type": "boolean"}}}
 
     def __init__(self, expression):
         self.expr = expression
@@ -483,12 +448,8 @@ class PauseBeforePolicy(base.TaskPolicy):
 
         wf_trace.info(
             task.task_ex,
-            "Workflow paused before task '%s' [%s -> %s]" %
-            (
-                task.get_name(),
-                task.wf_ex.state,
-                states.PAUSED
-            )
+            "Workflow paused before task '%s' [%s -> %s]"
+            % (task.get_name(), task.wf_ex.state, states.PAUSED),
         )
 
         task.set_state(states.IDLE, "Set by 'pause-before' policy")
@@ -498,12 +459,7 @@ class PauseBeforePolicy(base.TaskPolicy):
 
 class ConcurrencyPolicy(base.TaskPolicy):
     _schema = {
-        "properties": {
-            "concurrency": {
-                "type": "integer",
-                "minimum": 0
-            }
-        }
+        "properties": {"concurrency": {"type": "integer", "minimum": 0}}
     }
 
     def __init__(self, concurrency):

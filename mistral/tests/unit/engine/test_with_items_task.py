@@ -23,29 +23,21 @@ from mistral.workflow import states
 # implementation when most of its logic was in with_items.py module.
 # It makes sense to add more test for various methods of WithItemsTask.
 
+
 class WithItemsTaskTest(base.BaseTest):
     @staticmethod
     def get_action_ex(accepted, state, index):
         return models.ActionExecution(
-            accepted=accepted,
-            state=state,
-            runtime_context={'index': index}
+            accepted=accepted, state=state, runtime_context={'index': index}
         )
 
     def test_get_next_indices(self):
         # Task execution for running 6 items with concurrency=3.
         task_ex = models.TaskExecution(
-            spec={
-                'action': 'myaction'
-            },
-            runtime_context={
-                'with_items': {
-                    'capacity': 3,
-                    'count': 6
-                }
-            },
+            spec={'action': 'myaction'},
+            runtime_context={'with_items': {'capacity': 3, 'count': 6}},
             action_executions=[],
-            workflow_executions=[]
+            workflow_executions=[],
         )
 
         task = tasks.WithItemsTask(None, None, None, {}, task_ex)
@@ -54,7 +46,7 @@ class WithItemsTaskTest(base.BaseTest):
         task_ex.action_executions += [
             self.get_action_ex(True, states.SUCCESS, 0),
             self.get_action_ex(True, states.SUCCESS, 1),
-            self.get_action_ex(False, states.ERROR, 2)
+            self.get_action_ex(False, states.ERROR, 2),
         ]
 
         # Then call get_indices and expect [2, 3, 4].

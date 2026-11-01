@@ -22,68 +22,40 @@ rules = [
         name=CRON_TRIGGERS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Creates a new cron trigger.',
-        operations=[
-            {
-                'path': '/v2/cron_triggers',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/cron_triggers', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete cron trigger.',
-        operations=[
-            {
-                'path': '/v2/cron_triggers',
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': '/v2/cron_triggers', 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Returns the named cron trigger.',
         operations=[
-            {
-                'path': '/v2/cron_triggers/{cron_trigger_id}',
-                'method': 'GET'
-            }
-        ]
+            {'path': '/v2/cron_triggers/{cron_trigger_id}', 'method': 'GET'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all cron triggers.',
-        operations=[
-            {
-                'path': '/v2/cron_triggers',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/cron_triggers', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a cron trigger publicly available.',
-        operations=[
-            {
-                'path': '/v2/cron_triggers',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/cron_triggers', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=CRON_TRIGGERS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all cron triggers of all projects.',
-        operations=[
-            {
-                'path': '/v2/cron_triggers',
-                'method': 'GET'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/cron_triggers', 'method': 'GET'}],
+    ),
 ]
 
 

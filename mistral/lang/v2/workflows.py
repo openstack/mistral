@@ -27,12 +27,7 @@ NOOP_COMMAND = 'noop'
 FAIL_COMMAND = 'fail'
 SUCCEED_COMMAND = 'succeed'
 PAUSE_COMMAND = 'pause'
-ENGINE_COMMANDS = [
-    NOOP_COMMAND,
-    FAIL_COMMAND,
-    SUCCEED_COMMAND,
-    PAUSE_COMMAND
-]
+ENGINE_COMMANDS = [NOOP_COMMAND, FAIL_COMMAND, SUCCEED_COMMAND, PAUSE_COMMAND]
 
 
 class WorkflowSpec(base.BaseSpec):
@@ -50,11 +45,11 @@ class WorkflowSpec(base.BaseSpec):
                 "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
                 "output": types.NONEMPTY_DICT,
                 "output-on-error": types.NONEMPTY_DICT,
-                "vars": types.NONEMPTY_DICT
-            }
+                "vars": types.NONEMPTY_DICT,
+            },
         ),
         "required": ["tasks"],
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     def __init__(self, data, validate):
@@ -70,8 +65,7 @@ class WorkflowSpec(base.BaseSpec):
         self._vars = data.get('vars', {})
 
         self._task_defaults = self._spec_property(
-            'task-defaults',
-            task_defaults.TaskDefaultsSpec
+            'task-defaults', task_defaults.TaskDefaultsSpec
         )
 
         # Inject 'type' here, so instantiate_spec function can recognize the
@@ -109,9 +103,7 @@ class WorkflowSpec(base.BaseSpec):
             valid_task |= task_name in ENGINE_COMMANDS
 
         if not valid_task:
-            raise exc.InvalidModelException(
-                "Task '%s' not found." % task_name
-            )
+            raise exc.InvalidModelException("Task '%s' not found." % task_name)
 
     def _task_exists(self, task_name):
         return self.get_tasks()[task_name] is not None
@@ -158,9 +150,7 @@ class DirectWorkflowSpec(WorkflowSpec):
             "tasks": {
                 "type": "object",
                 "minProperties": 1,
-                "patternProperties": {
-                    r"^\w+$": types.NONEMPTY_DICT
-                }
+                "patternProperties": {r"^\w+$": types.NONEMPTY_DICT},
             },
         }
     }
@@ -224,8 +214,8 @@ class DirectWorkflowSpec(WorkflowSpec):
             if len(in_tasks) < join_val:
                 err_msgs.append(
                     "Not enough inbound tasks for task with 'join'"
-                    " [task_name=%s, join=%s, inbound_tasks=%s]" %
-                    (t_name, join_val, len(in_tasks))
+                    " [task_name=%s, join=%s, inbound_tasks=%s]"
+                    % (t_name, join_val, len(in_tasks))
                 )
 
         if len(err_msgs) > 0:
@@ -233,7 +223,8 @@ class DirectWorkflowSpec(WorkflowSpec):
 
     def find_start_tasks(self):
         return [
-            t_s for t_s in self.get_tasks()
+            t_s
+            for t_s in self.get_tasks()
             if not self.has_inbound_transitions(t_s)
         ]
 
@@ -246,7 +237,8 @@ class DirectWorkflowSpec(WorkflowSpec):
             return specs
 
         specs = [
-            t_s for t_s in self.get_tasks()
+            t_s
+            for t_s in self.get_tasks()
             if self.transition_exists(t_s.get_name(), task_name)
         ]
 
@@ -263,7 +255,8 @@ class DirectWorkflowSpec(WorkflowSpec):
             return specs
 
         specs = [
-            t_s for t_s in self.get_tasks()
+            t_s
+            for t_s in self.get_tasks()
             if self.transition_exists(task_name, t_s.get_name())
         ]
 
@@ -273,6 +266,9 @@ class DirectWorkflowSpec(WorkflowSpec):
 
     def has_inbound_transitions(self, task_spec):
         return len(self.find_inbound_task_specs(task_spec)) > 0
+
+    def has_outbound_transitions(self, task_spec):
+        return len(self.find_outbound_task_specs(task_spec)) > 0
 
     def find_outbound_task_names(self, task_name):
         t_names = set()
@@ -309,8 +305,7 @@ class DirectWorkflowSpec(WorkflowSpec):
 
             if t_defaults and t_defaults.get_on_error():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_error().get_next(),
-                    t_name
+                    t_defaults.get_on_error().get_next(), t_name
                 )
 
         return result
@@ -328,8 +323,7 @@ class DirectWorkflowSpec(WorkflowSpec):
 
             if t_defaults and t_defaults.get_on_skip():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_skip().get_next(),
-                    t_name
+                    t_defaults.get_on_skip().get_next(), t_name
                 )
 
         return result
@@ -347,8 +341,7 @@ class DirectWorkflowSpec(WorkflowSpec):
 
             if t_defaults and t_defaults.get_on_success():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_success().get_next(),
-                    t_name
+                    t_defaults.get_on_success().get_next(), t_name
                 )
 
         return result
@@ -366,8 +359,7 @@ class DirectWorkflowSpec(WorkflowSpec):
 
             if t_defaults and t_defaults.get_on_complete():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_complete().get_next(),
-                    t_name
+                    t_defaults.get_on_complete().get_next(), t_name
                 )
 
         return result
@@ -385,9 +377,7 @@ class ReverseWorkflowSpec(WorkflowSpec):
             "tasks": {
                 "type": "object",
                 "minProperties": 1,
-                "patternProperties": {
-                    r"^\w+$": types.NONEMPTY_DICT
-                }
+                "patternProperties": {r"^\w+$": types.NONEMPTY_DICT},
             },
         }
     }

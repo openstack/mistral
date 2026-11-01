@@ -34,10 +34,14 @@ def upgrade():
     inspect = reflection.Inspector.from_engine(op.get_bind())
 
     unique_constraints = [
-        unique_constraint['name'] for unique_constraint in
-        inspect.get_unique_constraints('workflow_definitions_v2')
+        unique_constraint['name']
+        for unique_constraint in inspect.get_unique_constraints(
+            'workflow_definitions_v2'
+        )
     ]
 
     if 'workflow_definitions_v2_name_project_id_key' in unique_constraints:
-        op.drop_constraint('workflow_definitions_v2_name_project_id_key',
-                           table_name='workflow_definitions_v2')
+        op.drop_constraint(
+            'workflow_definitions_v2_name_project_id_key',
+            table_name='workflow_definitions_v2',
+        )

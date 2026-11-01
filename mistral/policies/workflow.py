@@ -22,83 +22,47 @@ rules = [
         name=WORKFLOWS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create a new workflow.',
-        operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/workflows', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete a workflow.',
-        operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': '/v2/workflows', 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return the named workflow.',
-        operations=[
-            {
-                'path': '/v2/workflows/{workflow_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/workflows/{workflow_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return a list of workflows.',
-        operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/workflows', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return a list of workflows from all projects.',
-        operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/workflows', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a workflow publicly available',
         operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'POST'
-            },
-            {
-                'path': '/v2/workflows',
-                'method': 'PUT'
-            }
-        ]
+            {'path': '/v2/workflows', 'method': 'POST'},
+            {'path': '/v2/workflows', 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update one or more workflows.',
-        operations=[
-            {
-                'path': '/v2/workflows',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/workflows', 'method': 'PUT'}],
+    ),
 ]
 
 

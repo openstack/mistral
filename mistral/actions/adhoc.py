@@ -74,9 +74,7 @@ class AdHocActionSerializer(serialization.DictBasedSerializer):
     def serialize_to_dict(self, entity):
         p_serializer = serialization.get_polymorphic_serializer()
 
-        return {
-            'base_action': p_serializer.serialize(entity.base_action)
-        }
+        return {'base_action': p_serializer.serialize(entity.base_action)}
 
     def deserialize_from_dict(self, entity_dict):
         p_serializer = serialization.get_polymorphic_serializer()
@@ -97,7 +95,7 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
             action_def.input or '',
             action_def.namespace,
             action_def.project_id,
-            action_def.scope
+            action_def.scope,
         )
 
         self._definition = action_def.definition
@@ -135,7 +133,7 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
     def __repr__(self):
         return 'AdHoc action [name=%s, definition=%s]' % (
             self.name,
-            self._definition
+            self._definition,
         )
 
     def _visit_hierarchy(self, callback):
@@ -159,10 +157,7 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
 
             system_provider = action_service.get_system_action_provider()
 
-            base_action_desc = system_provider.find(
-                base_name,
-                self.namespace
-            )
+            base_action_desc = system_provider.find(base_name, self.namespace)
 
             if base_action_desc is None:
                 raise exc.InvalidActionException(
@@ -193,15 +188,16 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
                 return base_action_desc, base_input_dict
 
             for k, v in action_desc.spec.get_input().items():
-                if (k not in base_input_dict or
-                        base_input_dict[k] is utils.NotDefined):
+                if (
+                    k not in base_input_dict
+                    or base_input_dict[k] is utils.NotDefined
+                ):
                     base_input_dict[k] = v
 
             ctx = data_flow.ContextView(base_input_dict, wf_ctx)
 
             base_input_dict = expr.evaluate_recursively(
-                action_desc.spec.get_base_input(),
-                ctx
+                action_desc.spec.get_base_input(), ctx
             )
 
             return base_action_desc, base_input_dict
@@ -225,10 +221,9 @@ class AdHocActionDescriptor(action_providers_base.ActionDescriptorBase):
             if transformer_expr is not None:
                 result = ml_actions.Result(
                     data=expr.evaluate_recursively(
-                        transformer_expr,
-                        result.data
+                        transformer_expr, result.data
                     ),
-                    error=result.error
+                    error=result.error,
                 )
 
         return result
@@ -242,8 +237,7 @@ class AdHocActionProvider(ml_actions.ActionProvider):
 
     def find(self, action_name, namespace=None):
         action_def = db_api.load_action_definition(
-            action_name,
-            namespace=namespace
+            action_name, namespace=namespace
         )
 
         if action_def is None:
@@ -251,8 +245,14 @@ class AdHocActionProvider(ml_actions.ActionProvider):
 
         return AdHocActionDescriptor(action_def)
 
-    def find_all(self, namespace=None, limit=None, sort_fields=None,
-                 sort_dirs=None, **filters):
+    def find_all(
+        self,
+        namespace=None,
+        limit=None,
+        sort_fields=None,
+        sort_dirs=None,
+        **filters,
+    ):
         # TODO(rakhmerov): Apply sort_keys, sort_dirs and filters.
         return [
             AdHocActionDescriptor(a_d)

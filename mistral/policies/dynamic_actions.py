@@ -25,83 +25,47 @@ rules = [
         name=ACTIONS % 'create',
         check_str=base.RULE_ADMIN_ONLY,
         description='Create a new dynamic action.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'delete',
         check_str=base.RULE_ADMIN_ONLY,
         description='Delete the named dynamic action.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'get',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return the named dynamic action.',
-        operations=[
-            {
-                'path': BASE_PATH + '/{action_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH + '/{action_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'list',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all dynamic actions.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all dynamic actions from all projects.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a dynamic action publicly available.',
         operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'POST'
-            },
-            {
-                'path': BASE_PATH,
-                'method': 'PUT'
-            }
-        ]
+            {'path': BASE_PATH, 'method': 'POST'},
+            {'path': BASE_PATH, 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'update',
         check_str=base.RULE_ADMIN_ONLY,
         description='Update one or more dynamic actions.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': BASE_PATH, 'method': 'PUT'}],
+    ),
 ]
 
 

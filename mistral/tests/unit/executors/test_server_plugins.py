@@ -26,7 +26,6 @@ LOG = logging.getLogger(__name__)
 
 
 class PluginTest(base.ExecutorTestCase):
-
     def tearDown(self):
         exe.cleanup()
         super(PluginTest, self).tearDown()

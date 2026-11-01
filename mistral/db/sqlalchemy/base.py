@@ -83,9 +83,7 @@ def _get_facade():
         engine = _facade.get_engine()
 
         if engine.url.get_backend_name() != 'sqlite':
-            engine.update_execution_options(
-                isolation_level='READ COMMITTED'
-            )
+            engine.update_execution_options(isolation_level='READ COMMITTED')
 
             LOG.info(
                 "Set the database transaction isolation level to "
@@ -94,11 +92,7 @@ def _get_facade():
 
         if cfg.CONF.profiler.enabled:
             if cfg.CONF.profiler.trace_sqlalchemy:
-                osprofiler.sqlalchemy.add_tracing(
-                    sa,
-                    engine,
-                    'db'
-                )
+                osprofiler.sqlalchemy.add_tracing(sa, engine, 'db')
 
     return _facade
 
@@ -138,7 +132,7 @@ def _set_thread_local_session(session):
     if session is not None:
         utils.set_thread_local(
             _TX_SCOPED_CACHE_THREAD_LOCAL_NAME,
-            cachetools.LRUCache(maxsize=1000)
+            cachetools.LRUCache(maxsize=1000),
         )
     else:
         utils.set_thread_local(_TX_SCOPED_CACHE_THREAD_LOCAL_NAME, None)

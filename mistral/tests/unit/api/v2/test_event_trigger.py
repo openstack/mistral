@@ -31,11 +31,7 @@ WF = models.WorkflowDefinition(
     spec={
         'version': '2.0',
         'name': 'my_wf',
-        'tasks': {
-            'task1': {
-                'action': 'std.noop'
-            }
-        }
+        'tasks': {'task1': {'action': 'std.noop'}},
     }
 )
 WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
@@ -49,14 +45,14 @@ TRIGGER = {
     'scope': 'private',
     'exchange': 'openstack',
     'topic': 'notification',
-    'event': 'compute.instance.create.start'
+    'event': 'compute.instance.create.start',
 }
 
 trigger_values = copy.deepcopy(TRIGGER)
-trigger_values['workflow_input'] = json.loads(
-    trigger_values['workflow_input'])
+trigger_values['workflow_input'] = json.loads(trigger_values['workflow_input'])
 trigger_values['workflow_params'] = json.loads(
-    trigger_values['workflow_params'])
+    trigger_values['workflow_params']
+)
 
 TRIGGER_DB = models.EventTrigger()
 TRIGGER_DB.update(trigger_values)
@@ -80,7 +76,10 @@ class TestEventTriggerController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_event_trigger')
     def test_get_with_fields_filter(self, mocked_get):
-        mocked_get.return_value = (TRIGGER['id'], TRIGGER['name'],)
+        mocked_get.return_value = (
+            TRIGGER['id'],
+            TRIGGER['name'],
+        )
         resp = self.app.get(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
             '?fields=name'
@@ -98,7 +97,7 @@ class TestEventTriggerController(base.APITest):
         resp = self.app.get(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
             '?fields=bogus,name,trust_id',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -110,7 +109,7 @@ class TestEventTriggerController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            TRIGGER_DB  # Successful run
+            TRIGGER_DB,  # Successful run
         ]
 
         resp = self.app.get(
@@ -124,7 +123,7 @@ class TestEventTriggerController(base.APITest):
     def test_get_not_found(self):
         resp = self.app.get(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -136,8 +135,9 @@ class TestEventTriggerController(base.APITest):
     @mock.patch('mistral.auth.get_auth_handler', mock.Mock())
     def test_post_trust_forbidden(self, keystone, create_mtd):
         self.override_config('auth_enable', True, group='pecan')
-        keystone.client.return_value.trusts.create.side_effect = \
+        keystone.client.return_value.trusts.create.side_effect = (
             ks_exc.Forbidden()
+        )
 
         trigger = copy.deepcopy(TRIGGER)
         trigger.pop('id')
@@ -171,12 +171,11 @@ class TestEventTriggerController(base.APITest):
         trigger_db['workflow_namespace'] = None
 
         self.assertDictEqual(
-            trigger_db,
-            client.create_event_trigger.call_args[0][0]
+            trigger_db, client.create_event_trigger.call_args[0][0]
         )
         self.assertListEqual(
             ['compute.instance.create.start'],
-            client.create_event_trigger.call_args[0][1]
+            client.create_event_trigger.call_args[0][1],
         )
 
     @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
@@ -202,9 +201,7 @@ class TestEventTriggerController(base.APITest):
         CREATE_TRIGGER.pop('workflow_id')
 
         resp = self.app.post_json(
-            '/v2/event_triggers',
-            CREATE_TRIGGER,
-            expect_errors=True
+            '/v2/event_triggers', CREATE_TRIGGER, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -215,9 +212,7 @@ class TestEventTriggerController(base.APITest):
         CREATE_TRIGGER.pop('id')
 
         resp = self.app.post_json(
-            '/v2/event_triggers',
-            CREATE_TRIGGER,
-            expect_errors=True
+            '/v2/event_triggers', CREATE_TRIGGER, expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
@@ -231,9 +226,7 @@ class TestEventTriggerController(base.APITest):
         CREATE_TRIGGER['event'] = '('
 
         resp = self.app.post_json(
-            '/v2/event_triggers',
-            CREATE_TRIGGER,
-            expect_errors=True
+            '/v2/event_triggers', CREATE_TRIGGER, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -256,7 +249,7 @@ class TestEventTriggerController(base.APITest):
 
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            {'name': 'new_name'}
+            {'name': 'new_name'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -266,8 +259,7 @@ class TestEventTriggerController(base.APITest):
         trigger_db['workflow_namespace'] = None
 
         self.assertDictEqual(
-            trigger_db,
-            client.update_event_trigger.call_args[0][0]
+            trigger_db, client.update_event_trigger.call_args[0][0]
         )
 
     @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
@@ -279,7 +271,7 @@ class TestEventTriggerController(base.APITest):
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'workflow_input': '{"unexpected": "value"}'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -295,7 +287,7 @@ class TestEventTriggerController(base.APITest):
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'workflow_id': '123e4567-e89b-12d3-a456-426655440001'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -308,13 +300,13 @@ class TestEventTriggerController(base.APITest):
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch(
         'mistral.db.v2.api.update_event_trigger',
-        mock.MagicMock(side_effect=exc.NotAllowedException())
+        mock.MagicMock(side_effect=exc.NotAllowedException()),
     )
     def test_put_not_allowed(self, mock_rpc_client):
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'name': 'new_name'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -324,15 +316,16 @@ class TestEventTriggerController(base.APITest):
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'exchange': 'new_exchange'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
 
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.get_event_trigger')
-    @mock.patch.object(db_api, "get_event_triggers",
-                       mock.MagicMock(return_value=[]))
+    @mock.patch.object(
+        db_api, "get_event_triggers", mock.MagicMock(return_value=[])
+    )
     @mock.patch.object(db_api, "delete_event_trigger", MOCK_NONE)
     @mock.patch.object(security, "delete_trust", MOCK_NONE)
     def test_delete(self, mock_delete, mock_rpc_client):
@@ -355,12 +348,9 @@ class TestEventTriggerController(base.APITest):
 
         self.assertDictEqual(
             DELETE_TRIGGER.to_dict(),
-            client.delete_event_trigger.call_args[0][0]
+            client.delete_event_trigger.call_args[0][0],
         )
-        self.assertListEqual(
-            [],
-            client.delete_event_trigger.call_args[0][1]
-        )
+        self.assertListEqual([], client.delete_event_trigger.call_args[0][1])
 
     @mock.patch.object(db_api, "get_event_trigger", MOCK_TRIGGER)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
@@ -368,12 +358,12 @@ class TestEventTriggerController(base.APITest):
     @mock.patch.object(
         db_api,
         "delete_event_trigger",
-        mock.MagicMock(side_effect=exc.NotAllowedException())
+        mock.MagicMock(side_effect=exc.NotAllowedException()),
     )
     def test_delete_not_allowed(self, mock_delete_trust, mock_rpc_client):
         resp = self.app.delete(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -384,7 +374,7 @@ class TestEventTriggerController(base.APITest):
     def test_delete_not_found(self):
         resp = self.app.delete(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -403,7 +393,7 @@ class TestEventTriggerController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [TRIGGER_DB]  # Successful run
+            [TRIGGER_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/event_triggers')

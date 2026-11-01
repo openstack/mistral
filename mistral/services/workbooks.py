@@ -19,19 +19,14 @@ from mistral import services
 from mistral.services import adhoc_actions
 
 
-def create_workbook_v2(definition, namespace='', scope='private',
-                       validate=True):
+def create_workbook_v2(
+    definition, namespace='', scope='private', validate=True
+):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(
-        definition,
-        validate=services.is_validation_enabled(validate)
+        definition, validate=services.is_validation_enabled(validate)
     )
 
-    wb_values = _get_workbook_values(
-        wb_spec,
-        definition,
-        scope,
-        namespace
-    )
+    wb_values = _get_workbook_values(wb_spec, definition, scope, namespace)
 
     with db_api_v2.transaction():
         wb_db = db_api_v2.create_workbook(wb_values)
@@ -41,11 +36,11 @@ def create_workbook_v2(definition, namespace='', scope='private',
     return wb_db
 
 
-def update_workbook_v2(definition, namespace='', scope='private',
-                       validate=True):
+def update_workbook_v2(
+    definition, namespace='', scope='private', validate=True
+):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(
-        definition,
-        validate=services.is_validation_enabled(validate)
+        definition, validate=services.is_validation_enabled(validate)
     )
 
     values = _get_workbook_values(wb_spec, definition, scope, namespace)
@@ -60,15 +55,11 @@ def update_workbook_v2(definition, namespace='', scope='private',
 
 def _on_workbook_update(wb_db, wb_spec, namespace=''):
     db_actions = _create_or_update_actions(
-        wb_db,
-        wb_spec.get_actions(),
-        namespace=namespace
+        wb_db, wb_spec.get_actions(), namespace=namespace
     )
 
     db_wfs = _create_or_update_workflows(
-        wb_db,
-        wb_spec.get_workflows(),
-        namespace
+        wb_db, wb_spec.get_workflows(), namespace
     )
 
     return db_actions, db_wfs
@@ -96,13 +87,12 @@ def _create_or_update_actions(wb_db, actions_spec, namespace):
                 'input': ', '.join(input_list) if input_list else None,
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id,
-                'namespace': namespace
+                'namespace': namespace,
             }
 
             db_actions.append(
                 db_api_v2.create_or_update_action_definition(
-                    action_name,
-                    values
+                    action_name, values
                 )
             )
 
@@ -125,7 +115,7 @@ def _create_or_update_workflows(wb_db, workflows_spec, namespace):
                 'project_id': wb_db.project_id,
                 'namespace': namespace,
                 'tags': wf_spec.get_tags(),
-                'is_system': False
+                'is_system': False,
             }
 
             db_wfs.append(
@@ -143,7 +133,7 @@ def _get_workbook_values(wb_spec, definition, scope, namespace=None):
         'spec': wb_spec.to_dict(),
         'scope': scope,
         'namespace': namespace,
-        'is_system': False
+        'is_system': False,
     }
 
     return values
@@ -151,8 +141,7 @@ def _get_workbook_values(wb_spec, definition, scope, namespace=None):
 
 def _get_wf_definition(wb_db, wf_spec):
     wf_definition = spec_parser.get_workflow_definition(
-        wb_db.definition,
-        wf_spec.get_name()
+        wb_db.definition, wf_spec.get_name()
     )
 
     return wf_definition
@@ -160,8 +149,7 @@ def _get_wf_definition(wb_db, wf_spec):
 
 def _get_action_definition(wb_db, action_spec):
     action_definition = spec_parser.get_action_definition(
-        wb_db.definition,
-        action_spec.get_name()
+        wb_db.definition, action_spec.get_name()
     )
 
     return action_definition

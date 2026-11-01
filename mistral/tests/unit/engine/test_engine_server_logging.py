@@ -50,12 +50,7 @@ class EngineServerLoggingTest(base.BaseTest):
         }
 
         srv.start_action(
-            mock.Mock(),
-            'std.ssh_proxied',
-            action_input,
-            '',
-            '',
-            {}
+            mock.Mock(), 'std.ssh_proxied', action_input, '', '', {}
         )
 
         logged = self._logged(mock_log)
@@ -71,7 +66,7 @@ class EngineServerLoggingTest(base.BaseTest):
         srv.engine.start_action.assert_called_once()
         self.assertEqual(
             SECRET_KEY,
-            srv.engine.start_action.call_args.args[1]['private_key']
+            srv.engine.start_action.call_args.args[1]['private_key'],
         )
 
     @mock.patch('mistral.engine.engine_server.LOG')
@@ -85,7 +80,7 @@ class EngineServerLoggingTest(base.BaseTest):
             None,
             {'private_key': SECRET_KEY},
             'a human description',
-            {'env': {'password': SECRET_PWD}}
+            {'env': {'password': SECRET_PWD}},
         )
 
         logged = self._logged(mock_log)
@@ -102,7 +97,7 @@ class EngineServerLoggingTest(base.BaseTest):
         srv.engine.start_workflow.assert_called_once()
         self.assertEqual(
             SECRET_KEY,
-            srv.engine.start_workflow.call_args.args[3]['private_key']
+            srv.engine.start_workflow.call_args.args[3]['private_key'],
         )
 
     @mock.patch('mistral.engine.engine_server.LOG')
@@ -125,7 +120,4 @@ class EngineServerLoggingTest(base.BaseTest):
 
         # The engine still receives the real result.
         srv.engine.on_action_complete.assert_called_once()
-        self.assertIs(
-            result,
-            srv.engine.on_action_complete.call_args.args[1]
-        )
+        self.assertIs(result, srv.engine.on_action_complete.call_args.args[1])

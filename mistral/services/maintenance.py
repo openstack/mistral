@@ -28,14 +28,10 @@ RUNNING = 'RUNNING'
 _VALID_TRANSITIONS = {
     PAUSING: [PAUSED],
     PAUSED: [PAUSED, RUNNING],
-    RUNNING: [PAUSED, RUNNING]
+    RUNNING: [PAUSED, RUNNING],
 }
 
-_ALL_STATES = [
-    PAUSING,
-    PAUSED,
-    RUNNING
-]
+_ALL_STATES = [PAUSING, PAUSED, RUNNING]
 
 LOG = logging.getLogger(__name__)
 
@@ -48,9 +44,12 @@ def is_valid_transition(old_state, new_state):
 
 
 def pause_running_executions():
-    execution_ids = [(ex.id, ex.project_id) for ex in
-                     db_api.get_workflow_executions(state=states.RUNNING,
-                     insecure=True)]
+    execution_ids = [
+        (ex.id, ex.project_id)
+        for ex in db_api.get_workflow_executions(
+            state=states.RUNNING, insecure=True
+        )
+    ]
 
     LOG.info("Number of find workflow executions is %s", len(execution_ids))
 
@@ -67,10 +66,7 @@ def pause_running_executions():
 def _pause_execution(wf_ex_id, project_id):
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user_id=None,
-            auth_token=None,
-            project_id=project_id,
-            is_admin=True
+            user_id=None, auth_token=None, project_id=project_id, is_admin=True
         )
     )
 
@@ -88,11 +84,7 @@ def _pause_execution(wf_ex_id, project_id):
 
 def await_pause_executions():
     auth_ctx.set_ctx(
-        auth_ctx.MistralContext(
-            user_id=None,
-            auth_token=None,
-            is_admin=True
-        )
+        auth_ctx.MistralContext(user_id=None, auth_token=None, is_admin=True)
     )
 
     while True:
@@ -109,8 +101,10 @@ def await_pause_executions():
             if not tasks:
                 return True
 
-            LOG.info('The following tasks have RUNNING state: %s',
-                     [task.id for task in tasks])
+            LOG.info(
+                'The following tasks have RUNNING state: %s',
+                [task.id for task in tasks],
+            )
             time.sleep(1)
 
 
@@ -125,7 +119,8 @@ def change_maintenance_mode(new_state):
     if new_state == PAUSING:
         raise exceptions.MaintenanceException(
             'PAUSING is intermediate state. Consider PAUSED, RUNNING as new '
-            'state')
+            'state'
+        )
 
     with db_api.transaction():
         current_state = db_api.get_maintenance_status()
@@ -153,11 +148,7 @@ def change_maintenance_mode(new_state):
 @post_tx_queue.run
 def _pause_executions():
     auth_ctx.set_ctx(
-        auth_ctx.MistralContext(
-            user_id=None,
-            auth_token=None,
-            is_admin=True
-        )
+        auth_ctx.MistralContext(user_id=None, auth_token=None, is_admin=True)
     )
 
     if pause_running_executions() and await_pause_executions():
@@ -169,11 +160,7 @@ def _pause_executions():
 @post_tx_queue.run
 def _resume_executions():
     auth_ctx.set_ctx(
-        auth_ctx.MistralContext(
-            user_id=None,
-            auth_token=None,
-            is_admin=True
-        )
+        auth_ctx.MistralContext(user_id=None, auth_token=None, is_admin=True)
     )
 
     with db_api.transaction():
@@ -196,11 +183,7 @@ def _resume_executions():
 def _resume_execution(wf_ex_id):
     wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
-    auth_ctx.set_ctx(
-        auth_ctx.MistralContext(
-            project_id=wf_ex.project_id
-        )
-    )
+    auth_ctx.set_ctx(auth_ctx.MistralContext(project_id=wf_ex.project_id))
 
     workflow_handler.resume_workflow(wf_ex)
 

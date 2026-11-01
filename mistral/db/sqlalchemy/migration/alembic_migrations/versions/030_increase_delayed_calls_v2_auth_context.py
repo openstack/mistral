@@ -32,5 +32,6 @@ from mistral.db.sqlalchemy import types as st
 
 def upgrade():
     # Changing column type from JsonDictType to JsonLongDictType
-    op.alter_column('delayed_calls_v2', 'auth_context',
-                    type_=st.JsonMediumDictType())
+    op.alter_column(
+        'delayed_calls_v2', 'auth_context', type_=st.JsonMediumDictType()
+    )

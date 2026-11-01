@@ -87,7 +87,7 @@ def _create_workflow_executions():
             'updated_at': time_now - datetime.timedelta(minutes=6),
             'workflow_name': 'test_exec',
             'state': "CANCELLED",
-        }
+        },
     ]
 
     for wf_exec in wf_execs:
@@ -99,7 +99,7 @@ def _create_workflow_executions():
         {
             'id': 'running_not_expired',
             'workflow_execution_id': 'success_not_expired',
-            'name': 'my_task'
+            'name': 'my_task',
         }
     )
 
@@ -111,7 +111,7 @@ def _create_workflow_executions():
             'updated_at': time_now - datetime.timedelta(days=10),
             'workflow_name': 'test_exec',
             'state': "SUCCESS",
-            'task_execution_id': 'running_not_expired'
+            'task_execution_id': 'running_not_expired',
         }
     )
 
@@ -158,11 +158,8 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         self.assertEqual(2, len(execs))
         self.assertListEqual(
-            [
-                'cancelled_not_expired',
-                'success_not_expired'
-            ],
-            sorted([ex.id for ex in execs])
+            ['cancelled_not_expired', 'success_not_expired'],
+            sorted([ex.id for ex in execs]),
         )
 
         _set_expiration_policy_config(evaluation_interval=1, older_than=5)
@@ -176,9 +173,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         now = timeutils.utcnow()
 
         _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=30,
-            ignored_states=['SUCCESS']
+            evaluation_interval=1, older_than=30, ignored_states=['SUCCESS']
         )
 
         expiration_policy.run_execution_expiration_policy(self, ctx)
@@ -190,7 +185,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         _set_expiration_policy_config(
             evaluation_interval=1,
             older_than=30,
-            ignored_states=['SUCCESS', 'CANCELLED']
+            ignored_states=['SUCCESS', 'CANCELLED'],
         )
 
         expiration_policy.run_execution_expiration_policy(self, ctx)
@@ -200,9 +195,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
     def test_expiration_policy_invalid_ignored_states(self):
         _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=30,
-            ignored_states=['RUNNING']
+            evaluation_interval=1, older_than=30, ignored_states=['RUNNING']
         )
 
         self.assertRaises(ValueError, expiration_policy.setup)
@@ -220,9 +213,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         now = timeutils.utcnow()
 
         _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=30,
-            batch_size=3
+            evaluation_interval=1, older_than=30, batch_size=3
         )
         expiration_policy.run_execution_expiration_policy(self, ctx)
         execs = db_api.get_expired_executions(now)
@@ -243,9 +234,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         _create_workflow_executions()
         _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=30,
-            mfe=1
+            evaluation_interval=1, older_than=30, mfe=1
         )
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
@@ -260,9 +249,9 @@ class ExpirationPolicyTest(base.DbTestCase):
                 'expired_but_not_a_parent',
                 'running_not_expired',
                 'running_not_expired2',
-                'success_not_expired'
+                'success_not_expired',
             ],
-            sorted([ex.id for ex in execs])
+            sorted([ex.id for ex in execs]),
         )
 
     def test_expiration_policy_for_executions_with_max_executions_scen2(self):
@@ -274,9 +263,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         _create_workflow_executions()
         _set_expiration_policy_config(
-            evaluation_interval=1,
-            older_than=30,
-            mfe=100
+            evaluation_interval=1, older_than=30, mfe=100
         )
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
@@ -292,22 +279,19 @@ class ExpirationPolicyTest(base.DbTestCase):
                 'expired_but_not_a_parent',
                 'running_not_expired',
                 'running_not_expired2',
-                'success_not_expired'
+                'success_not_expired',
             ],
-            sorted([ex.id for ex in execs])
+            sorted([ex.id for ex in execs]),
         )
 
     def test_periodic_task_parameters(self):
-        _set_expiration_policy_config(
-            evaluation_interval=17,
-            older_than=13
-        )
+        _set_expiration_policy_config(evaluation_interval=17, older_than=13)
 
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
 
         self.assertEqual(
             17 * 60,
-            e_policy._periodic_spacing['run_execution_expiration_policy']
+            e_policy._periodic_spacing['run_execution_expiration_policy'],
         )
 
     def test_periodic_task_scheduling(self):
@@ -319,12 +303,12 @@ class ExpirationPolicyTest(base.DbTestCase):
             if should_schedule:
                 self.assertTrue(
                     e_policy._periodic_tasks,
-                    "Periodic task should have been created."
+                    "Periodic task should have been created.",
                 )
             else:
                 self.assertFalse(
                     e_policy._periodic_tasks,
-                    "Periodic task shouldn't have been created."
+                    "Periodic task shouldn't have been created.",
                 )
 
         _assert_scheduling([1, 1, None, None], True)
@@ -346,30 +330,23 @@ class ExpirationPolicyTest(base.DbTestCase):
         _set_expiration_policy_config(None, None, None, None)
 
 
-def _set_expiration_policy_config(evaluation_interval, older_than, mfe=0,
-                                  batch_size=0, ignored_states=[]):
+def _set_expiration_policy_config(
+    evaluation_interval, older_than, mfe=0, batch_size=0, ignored_states=[]
+):
     cfg.CONF.set_default(
         'evaluation_interval',
         evaluation_interval,
-        group='execution_expiration_policy'
+        group='execution_expiration_policy',
     )
     cfg.CONF.set_default(
-        'older_than',
-        older_than,
-        group='execution_expiration_policy'
+        'older_than', older_than, group='execution_expiration_policy'
     )
     cfg.CONF.set_default(
-        'max_finished_executions',
-        mfe,
-        group='execution_expiration_policy'
+        'max_finished_executions', mfe, group='execution_expiration_policy'
     )
     cfg.CONF.set_default(
-        'batch_size',
-        batch_size,
-        group='execution_expiration_policy'
+        'batch_size', batch_size, group='execution_expiration_policy'
     )
     cfg.CONF.set_default(
-        'ignored_states',
-        ignored_states,
-        group='execution_expiration_policy'
+        'ignored_states', ignored_states, group='execution_expiration_policy'
     )

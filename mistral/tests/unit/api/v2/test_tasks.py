@@ -34,12 +34,7 @@ from mistral.workflow import states
 RESULT = {"some": "result"}
 PUBLISHED = {"var": "val"}
 RUNTIME_CONTEXT = {
-    'triggered_by': [
-        {
-            'task_id': '123-123-123',
-            'event': 'on-success'
-        }
-    ]
+    'triggered_by': [{'task_id': '123-123-123', 'event': 'on-success'}]
 }
 
 WF_EX = models.WorkflowExecution(
@@ -53,7 +48,7 @@ WF_EX = models.WorkflowExecution(
     output={},
     params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 TASK_EX = models.TaskExecution(
@@ -61,11 +56,7 @@ TASK_EX = models.TaskExecution(
     name='task',
     workflow_name='flow',
     workflow_id='123e4567-e89b-12d3-a456-426655441111',
-    spec={
-        'type': 'direct',
-        'version': '2.0',
-        'name': 'task'
-    },
+    spec={'type': 'direct', 'version': '2.0', 'name': 'task'},
     action_spec={},
     state=states.RUNNING,
     tags=['a', 'b'],
@@ -77,7 +68,7 @@ TASK_EX = models.TaskExecution(
     started_at=datetime.datetime(1970, 1, 1),
     finished_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
-    processed=True
+    processed=True,
 )
 
 WITH_ITEMS_TASK_EX = models.TaskExecution(
@@ -89,7 +80,7 @@ WITH_ITEMS_TASK_EX = models.TaskExecution(
         'type': 'direct',
         'version': '2.0',
         'name': 'task',
-        'with-items': 'var in [1, 2, 3]'
+        'with-items': 'var in [1, 2, 3]',
     },
     action_spec={},
     state=states.RUNNING,
@@ -102,7 +93,7 @@ WITH_ITEMS_TASK_EX = models.TaskExecution(
     started_at=datetime.datetime(1970, 1, 1),
     finished_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
-    processed=True
+    processed=True,
 )
 
 TASK = {
@@ -120,7 +111,7 @@ TASK = {
     'result': json.dumps(RESULT),
     'published': json.dumps(PUBLISHED),
     'runtime_context': json.dumps(RUNTIME_CONTEXT),
-    'processed': True
+    'processed': True,
 }
 
 TASK_WITHOUT_RESULT = copy.deepcopy(TASK)
@@ -131,15 +122,9 @@ ERROR_TASK_EX['state'] = 'ERROR'
 ERROR_ITEMS_TASK_EX = copy.deepcopy(WITH_ITEMS_TASK_EX)
 ERROR_ITEMS_TASK_EX['state'] = 'ERROR'
 
-RERUN_TASK = {
-    'id': '123',
-    'state': 'RUNNING'
-}
+RERUN_TASK = {'id': '123', 'state': 'RUNNING'}
 
-SKIP_TASK = {
-    'id': '123',
-    'state': 'SKIPPED'
-}
+SKIP_TASK = {'id': '123', 'state': 'SKIPPED'}
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 TASK_EX.workflow_execution = WF_EX
@@ -156,8 +141,7 @@ TASK_EX_WITH_PROJECT_ID.workflow_execution = WF_EX
 
 
 @mock.patch.object(
-    data_flow,
-    'get_task_execution_result', mock.Mock(return_value=RESULT)
+    data_flow, 'get_task_execution_result', mock.Mock(return_value=RESULT)
 )
 class TestTasksController(base.APITest):
     @mock.patch.object(db_api, 'get_task_execution', MOCK_TASK)
@@ -184,7 +168,7 @@ class TestTasksController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            TASK_EX  # Successful run
+            TASK_EX,  # Successful run
         ]
 
         resp = self.app.get('/v2/tasks/123')
@@ -223,7 +207,7 @@ class TestTasksController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [TASK_EX]  # Successful run
+            [TASK_EX],  # Successful run
         ]
 
         resp = self.app.get('/v2/tasks')
@@ -233,8 +217,9 @@ class TestTasksController(base.APITest):
         self.assertEqual(1, len(resp.json['tasks']))
         self.assertDictEqual(TASK_WITHOUT_RESULT, resp.json['tasks'][0])
 
-    @mock.patch.object(db_api, 'get_task_execution',
-                       return_value=TASK_EX_WITH_PROJECT_ID)
+    @mock.patch.object(
+        db_api, 'get_task_execution', return_value=TASK_EX_WITH_PROJECT_ID
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/tasks/123')
 
@@ -253,7 +238,7 @@ class TestTasksController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_task_execution',
-        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX]),
     )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_rerun(self):
@@ -266,17 +251,14 @@ class TestTasksController(base.APITest):
         self.assertDictEqual(TASK, resp.json)
 
         rpc.EngineClient.rerun_workflow.assert_called_with(
-            TASK_EX.id,
-            reset=params['reset'],
-            skip=False,
-            env=None
+            TASK_EX.id, reset=params['reset'], skip=False, env=None
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(
         db_api,
         'get_task_execution',
-        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX]),
     )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_skip(self):
@@ -288,39 +270,34 @@ class TestTasksController(base.APITest):
         self.assertDictEqual(TASK, resp.json)
 
         rpc.EngineClient.rerun_workflow.assert_called_with(
-            TASK_EX.id,
-            reset=None,
-            skip=True,
-            env=None
+            TASK_EX.id, reset=None, skip=True, env=None
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(
         db_api,
         'get_task_execution',
-        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX]),
     )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_missing_reset_rerun(self):
         params = copy.deepcopy(RERUN_TASK)
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True)
+            '/v2/tasks/123', params=params, expect_errors=True
+        )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn(
-            'Reset field is mandatory to rerun task',
-            resp.json['faultstring']
+            'Reset field is mandatory to rerun task', resp.json['faultstring']
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(
         db_api,
         'get_task_execution',
-        mock.MagicMock(side_effect=[ERROR_ITEMS_TASK_EX, WITH_ITEMS_TASK_EX])
+        mock.MagicMock(side_effect=[ERROR_ITEMS_TASK_EX, WITH_ITEMS_TASK_EX]),
     )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_with_items_rerun(self):
@@ -336,7 +313,7 @@ class TestTasksController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_task_execution',
-        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX]),
     )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_env(self):
@@ -353,7 +330,7 @@ class TestTasksController(base.APITest):
             TASK_EX.id,
             reset=params['reset'],
             skip=False,
-            env=json.loads(params['env'])
+            env=json.loads(params['env']),
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
@@ -363,9 +340,7 @@ class TestTasksController(base.APITest):
         params['reset'] = True
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -380,9 +355,7 @@ class TestTasksController(base.APITest):
         params['reset'] = True
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -396,9 +369,7 @@ class TestTasksController(base.APITest):
         params['reset'] = False
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -413,9 +384,7 @@ class TestTasksController(base.APITest):
         params['reset'] = True
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -431,9 +400,7 @@ class TestTasksController(base.APITest):
         params['reset'] = True
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(200, resp.status_int)
@@ -446,9 +413,7 @@ class TestTasksController(base.APITest):
         params['reset'] = True
 
         resp = self.app.put_json(
-            '/v2/tasks/123',
-            params=params,
-            expect_errors=True
+            '/v2/tasks/123', params=params, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)

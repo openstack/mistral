@@ -23,7 +23,6 @@ CONF = cfg.CONF
 
 
 class StartListenerTest(base.BaseTest):
-
     @mock.patch.object(messaging.listener, 'get_notification_listener')
     @mock.patch('oslo_messaging.notify.get_notification_transport')
     def test_start_listener(self, get_transport, get_listener):
@@ -37,7 +36,7 @@ class StartListenerTest(base.BaseTest):
         self.assertEqual(get_transport.return_value, args[0])
         self.assertEqual(
             [('cinder', 'versioned_notifications')],
-            [(t.exchange, t.topic) for t in args[1]]
+            [(t.exchange, t.topic) for t in args[1]],
         )
         self.assertEqual(messaging.get_pool_name('cinder'), kwargs['pool'])
         self.assertEqual(get_listener.return_value, result)
@@ -45,12 +44,11 @@ class StartListenerTest(base.BaseTest):
 
 
 class NotificationEndpointTest(base.BaseTest):
-
     def _match(self, event_types, event_type):
         endpoint_cls = type(
             'Endpoint',
             (messaging.NotificationEndpoint,),
-            {'event_types': event_types}
+            {'event_types': event_types},
         )
         rule = endpoint_cls(mock.Mock()).filter_rule
 

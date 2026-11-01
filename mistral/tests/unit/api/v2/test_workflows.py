@@ -62,7 +62,7 @@ WF_DB = models.WorkflowDefinition(
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'input': ['param1']}
+    spec={'input': ['param1']},
 )
 
 WF_DB_SYSTEM = WF_DB.get_clone()
@@ -75,7 +75,7 @@ WF = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'input': 'param1',
-    'interface': {"output": [], "input": ["param1"]}
+    'interface': {"output": [], "input": ["param1"]},
 }
 
 WF_DB_WITHIN_ABC_NAMESPACE = models.WorkflowDefinition(
@@ -85,7 +85,7 @@ WF_DB_WITHIN_ABC_NAMESPACE = models.WorkflowDefinition(
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'input': ['param1']}
+    spec={'input': ['param1']},
 )
 
 WF_WITH_NAMESPACE = {
@@ -96,7 +96,7 @@ WF_WITH_NAMESPACE = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'input': 'param1',
-    'interface': {'input': ['param1'], 'output': []}
+    'interface': {'input': ['param1'], 'output': []},
 }
 
 WF_DEFINITION_WITH_INPUT = """
@@ -119,7 +119,7 @@ WF_DB_WITH_INPUT = models.WorkflowDefinition(
     definition=WF_DEFINITION_WITH_INPUT,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'input': ['param1', {'param2': 2}]}
+    spec={'input': ['param1', {'param2': 2}]},
 )
 
 WF_WITH_DEFAULT_INPUT = {
@@ -128,10 +128,7 @@ WF_WITH_DEFAULT_INPUT = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'input': 'param1, param2="2"',
-    'interface': {
-        "input": ["param1", {"param2": 2}],
-        "output": []
-    }
+    'interface': {"input": ["param1", {"param2": 2}], "output": []},
 }
 
 WF_DB_PROJECT_ID = WF_DB.get_clone()
@@ -202,14 +199,8 @@ wf2:
 """
 
 WFS_YAML = safe_yaml.safe_load(WFS_DEFINITION)
-FIRST_WF_DEF = yaml.dump({
-    'version': '2.0',
-    'wf1': WFS_YAML['wf1']
-})
-SECOND_WF_DEF = yaml.dump({
-    'version': '2.0',
-    'wf2': WFS_YAML['wf2']
-})
+FIRST_WF_DEF = yaml.dump({'version': '2.0', 'wf1': WFS_YAML['wf1']})
+SECOND_WF_DEF = yaml.dump({'version': '2.0', 'wf2': WFS_YAML['wf2']})
 
 FIRST_WF_DICT = {
     'name': 'wf1',
@@ -218,10 +209,10 @@ FIRST_WF_DICT = {
             'action': 'std.echo output="Hello"',
             'name': 'task1',
             'type': 'direct',
-            'version': '2.0'
+            'version': '2.0',
         }
     },
-    'version': '2.0'
+    'version': '2.0',
 }
 FIRST_WF = {
     'name': 'wf1',
@@ -231,7 +222,7 @@ FIRST_WF = {
     'scope': 'private',
     'namespace': '',
     'checksum': '1b786ecb96b9358f67718a407c274885',
-    'is_system': False
+    'is_system': False,
 }
 
 SECOND_WF_DICT = {
@@ -241,10 +232,10 @@ SECOND_WF_DICT = {
             'action': 'std.echo output="Mistral"',
             'name': 'task1',
             'type': 'direct',
-            'version': '2.0'
+            'version': '2.0',
         }
     },
-    'version': '2.0'
+    'version': '2.0',
 }
 SECOND_WF = {
     'name': 'wf2',
@@ -254,7 +245,7 @@ SECOND_WF = {
     'scope': 'private',
     'namespace': '',
     'checksum': '5803661ccfdf226c95254b2a8a295226',
-    'is_system': False
+    'is_system': False,
 }
 
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
@@ -281,7 +272,10 @@ class TestWorkflowsController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_workflow_definition')
     def test_get_with_fields_filter(self, mocked_get):
-        mocked_get.return_value = (WF['id'], WF['name'],)
+        mocked_get.return_value = (
+            WF['id'],
+            WF['name'],
+        )
         resp = self.app.get('/v2/workflows/123?fields=name')
         expected = {
             'id': WF['id'],
@@ -294,8 +288,7 @@ class TestWorkflowsController(base.APITest):
     @mock.patch('mistral.db.v2.api.get_workflow_definition')
     def test_get_with_invalid_fields(self, mocked_get):
         resp = self.app.get(
-            '/v2/workflows/123?fields=bogus,name',
-            expect_errors=True
+            '/v2/workflows/123?fields=bogus,name', expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -303,11 +296,13 @@ class TestWorkflowsController(base.APITest):
         mocked_get.assert_not_called()
 
     def test_get_with_derived_fields(self):
-        wf = db_api.create_workflow_definition({
-            'name': 'flow',
-            'definition': WF_DEFINITION_WITH_INPUT,
-            'spec': {'input': ['param1', {'param2': 2}]}
-        })
+        wf = db_api.create_workflow_definition(
+            {
+                'name': 'flow',
+                'definition': WF_DEFINITION_WITH_INPUT,
+                'spec': {'input': ['param1', {'param2': 2}]},
+            }
+        )
 
         resp = self.app.get(
             '/v2/workflows/%s?fields=input,interface,definition' % wf.id
@@ -318,7 +313,7 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual('param1, param2="2"', resp.json['input'])
         self.assertEqual(
             {'input': ['param1', {'param2': 2}], 'output': []},
-            json.loads(resp.json['interface'])
+            json.loads(resp.json['interface']),
         )
         self.assertEqual(WF_DEFINITION_WITH_INPUT, resp.json['definition'])
 
@@ -327,7 +322,7 @@ class TestWorkflowsController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            WF_DB  # Successful run
+            WF_DB,  # Successful run
         ]
 
         resp = self.app.get('/v2/workflows/123')
@@ -356,14 +351,12 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(
-        db_api, "update_workflow_definition", MOCK_UPDATED_WF
-    )
+    @mock.patch.object(db_api, "update_workflow_definition", MOCK_UPDATED_WF)
     def test_put(self):
         resp = self.app.put(
             '/v2/workflows',
             UPDATED_WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.maxDiff = None
@@ -378,7 +371,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.put(
             '/v2/workflows/123e4567-e89b-12d3-a456-426655440000',
             UPDATED_WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -387,27 +380,24 @@ class TestWorkflowsController(base.APITest):
             scope='private',
             identifier='123e4567-e89b-12d3-a456-426655440000',
             namespace='',
-            validate=True
+            validate=True,
         )
         self.assertDictEqual(UPDATED_WF, resp.json)
 
     @mock.patch(
         "mistral.db.v2.sqlalchemy.api.get_workflow_definition",
-        return_value=WF_DB_SYSTEM
+        return_value=WF_DB_SYSTEM,
     )
     def test_put_system(self, get_mock):
         resp = self.app.put(
             '/v2/workflows',
             UPDATED_WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn(
-            "Can not modify a system",
-            resp.body.decode()
-        )
+        self.assertIn("Can not modify a system", resp.body.decode())
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_put_public(self, mock_update):
@@ -421,7 +411,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.put(
             '/v2/workflows?scope=public',
             UPDATED_WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -434,7 +424,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows?scope=unique',
             UPDATED_WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -447,7 +437,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION_WITH_INPUT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.maxDiff = None
@@ -455,9 +445,7 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual({'workflows': [WF_WITH_DEFAULT_INPUT]}, resp.json)
 
-    @mock.patch.object(
-        db_api, "update_workflow_definition", MOCK_NOT_FOUND
-    )
+    @mock.patch.object(db_api, "update_workflow_definition", MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put(
             '/v2/workflows',
@@ -473,15 +461,13 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows',
             WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
 
-    @mock.patch.object(
-        db_api, "update_workflow_definition", MOCK_UPDATED_WF
-    )
+    @mock.patch.object(db_api, "update_workflow_definition", MOCK_UPDATED_WF)
     def test_put_invalid_skip_validation(self):
         self.override_config('validation_mode', 'enabled', 'api')
 
@@ -489,7 +475,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows?skip_validation',
             WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -502,7 +488,7 @@ class TestWorkflowsController(base.APITest):
         self.app.put(
             '/v2/workflows',
             WFS_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(2, mock_mtd.call_count)
@@ -514,13 +500,13 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows/123e4567-e89b-12d3-a456-426655440000',
             WFS_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
             "More than one workflows are not supported for update",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     @mock.patch.object(db_api, "create_workflow_definition")
@@ -530,7 +516,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.post(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -555,7 +541,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.post(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -568,7 +554,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows?scope=unique',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -580,7 +566,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(409, resp.status_int)
@@ -593,7 +579,7 @@ class TestWorkflowsController(base.APITest):
         self.app.post(
             '/v2/workflows',
             WFS_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(2, mock_mtd.call_count)
@@ -605,7 +591,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows',
             WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -618,7 +604,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows?skip_validation',
             WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(201, resp.status_int)
@@ -632,16 +618,13 @@ class TestWorkflowsController(base.APITest):
 
     @mock.patch(
         "mistral.db.v2.sqlalchemy.api.get_workflow_definition",
-        return_value=WF_DB_SYSTEM
+        return_value=WF_DB_SYSTEM,
     )
     def test_delete_system(self, get_mock):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn(
-            "Can not modify a system",
-            resp.body.decode()
-        )
+        self.assertIn("Can not modify a system", resp.body.decode())
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
@@ -666,14 +649,15 @@ class TestWorkflowsController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [WF_DB]  # Successful run
+            [WF_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/workflows')
 
         resp_workflow_json = resp.json['workflows'][0]
-        resp_workflow_json['interface'] = \
-            json.loads(resp_workflow_json['interface'])
+        resp_workflow_json['interface'] = json.loads(
+            resp_workflow_json['interface']
+        )
 
         self.assertEqual(200, resp.status_int)
         self.assertEqual(1, len(resp.json['workflows']))
@@ -701,31 +685,29 @@ class TestWorkflowsController(base.APITest):
 
     def test_get_all_projects_normal_user(self):
         resp = self.app.get(
-            '/v2/workflows?all_projects=true',
-            expect_errors=True
+            '/v2/workflows?all_projects=true', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
     def test_get_all_pagination(self):
-        resp = self.app.get(
-            '/v2/workflows?limit=1&sort_keys=id,name')
+        resp = self.app.get('/v2/workflows?limit=1&sort_keys=id,name')
 
         self.assertEqual(200, resp.status_int)
 
         self.assertIn('next', resp.json)
 
         resp_workflow_json = resp.json['workflows'][0]
-        resp_workflow_json['interface'] = \
-            json.loads(resp_workflow_json['interface'])
+        resp_workflow_json['interface'] = json.loads(
+            resp_workflow_json['interface']
+        )
 
         self.assertEqual(1, len(resp.json['workflows']))
         self.assertDictEqual(WF, resp_workflow_json)
 
         param_dict = utils.get_dict_from_string(
-            resp.json['next'].split('?')[1],
-            delimiter='&'
+            resp.json['next'].split('?')[1], delimiter='&'
         )
 
         expected_dict = {
@@ -740,7 +722,7 @@ class TestWorkflowsController(base.APITest):
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(
             '/v2/workflows?limit=-1&sort_keys=id,name&sort_dirs=asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -750,7 +732,7 @@ class TestWorkflowsController(base.APITest):
     def test_get_all_pagination_limit_not_integer(self):
         resp = self.app.get(
             '/v2/workflows?limit=1.1&sort_keys=id,name&sort_dirs=asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -760,20 +742,20 @@ class TestWorkflowsController(base.APITest):
     def test_get_all_pagination_invalid_sort_dirs_length(self):
         resp = self.app.get(
             '/v2/workflows?limit=1&sort_keys=id,name&sort_dirs=asc,asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     def test_get_all_pagination_unknown_direction(self):
         resp = self.app.get(
             '/v2/workflows?limit=1&sort_keys=id&sort_dirs=nonexist',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -793,7 +775,7 @@ class TestWorkflowsController(base.APITest):
 
         expected_dict = {
             'id': '123e4567-e89b-12d3-a456-426655440000',
-            'name': 'fake_name'
+            'name': 'fake_name',
         }
 
         self.assertDictEqual(expected_dict, resp.json['workflows'][0])
@@ -803,12 +785,7 @@ class TestWorkflowsController(base.APITest):
         expected_dict = {
             'id': '65df1f59-938f-4c17-bc2a-562524ef5e40',
             'input': 'param1, param2="2"',
-            'interface': {
-                "output": [],
-                "input": ["param1",
-                          {"param2": 2}
-                          ]
-            }
+            'interface': {"output": [], "input": ["param1", {"param2": 2}]},
         }
 
         def mock_get_defintions(fields=None, session=None, **kwargs):
@@ -817,8 +794,10 @@ class TestWorkflowsController(base.APITest):
                 fields.append('spec')
 
             return [
-                ('65df1f59-938f-4c17-bc2a-562524ef5e40',
-                 {'input': ['param1', {'param2': 2}]})
+                (
+                    '65df1f59-938f-4c17-bc2a-562524ef5e40',
+                    {'input': ['param1', {'param2': 2}]},
+                )
             ]
 
         mock_get_db_wfs.side_effect = mock_get_defintions
@@ -829,17 +808,20 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(1, len(resp.json['workflows']))
 
         resp_workflow_json = resp.json['workflows'][0]
-        resp_workflow_json['interface'] = \
-            json.loads(resp_workflow_json['interface'])
+        resp_workflow_json['interface'] = json.loads(
+            resp_workflow_json['interface']
+        )
 
         self.assertDictEqual(expected_dict, resp_workflow_json)
 
     def test_get_all_with_derived_fields(self):
-        wf = db_api.create_workflow_definition({
-            'name': 'flow',
-            'definition': WF_DEFINITION_WITH_INPUT,
-            'spec': {'input': ['param1', {'param2': 2}]}
-        })
+        wf = db_api.create_workflow_definition(
+            {
+                'name': 'flow',
+                'definition': WF_DEFINITION_WITH_INPUT,
+                'spec': {'input': ['param1', {'param2': 2}]},
+            }
+        )
 
         resp = self.app.get('/v2/workflows?fields=interface,definition')
 
@@ -850,14 +832,13 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(wf.id, resp_wf['id'])
         self.assertEqual(
             {'input': ['param1', {'param2': 2}], 'output': []},
-            json.loads(resp_wf['interface'])
+            json.loads(resp_wf['interface']),
         )
         self.assertEqual(WF_DEFINITION_WITH_INPUT, resp_wf['definition'])
 
     def test_get_all_with_invalid_field(self):
         resp = self.app.get(
-            '/v2/workflows?fields=name,nonexist',
-            expect_errors=True
+            '/v2/workflows?fields=name,nonexist', expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -870,7 +851,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.post(
             '/v2/workflows/validate',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -881,7 +862,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows/validate',
             WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -893,7 +874,7 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows/validate',
             WF_DEF_DSL_PARSE_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -905,20 +886,19 @@ class TestWorkflowsController(base.APITest):
             '/v2/workflows/validate',
             WF_DEF_YAQL_PARSE_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
-        self.assertIn("unexpected '*' at position 1",
-                      resp.json['error'])
+        self.assertIn("unexpected '*' at position 1", resp.json['error'])
 
     def test_validate_empty(self):
         resp = self.app.post(
             '/v2/workflows/validate',
             '',
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -934,7 +914,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.post(
             '/v2/workflows?namespace=%s' % namespace,
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -955,7 +935,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.put(
             '/v2/workflows/%s?namespace=%s' % (id_, namespace),
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -964,7 +944,7 @@ class TestWorkflowsController(base.APITest):
             scope='private',
             identifier=id_,
             namespace='abc',
-            validate=True
+            validate=True,
         )
         self.assertDictEqual(WF_WITH_NAMESPACE, resp.json)
 
@@ -972,7 +952,8 @@ class TestWorkflowsController(base.APITest):
     def test_workflow_within_project_id(self, mock_get):
         mock_get.return_value = WF_DB_PROJECT_ID
         resp = self.app.get(
-            '/v2/workflows/123e4567-e89b-12d3-a456-426655440000')
+            '/v2/workflows/123e4567-e89b-12d3-a456-426655440000'
+        )
         self.assertEqual(200, resp.status_int)
         self.assertIn('project_id', resp.json)
 
@@ -980,7 +961,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.post(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
         body = resp.json
         checksum_old = body['workflows'][0]['checksum']
@@ -988,7 +969,7 @@ class TestWorkflowsController(base.APITest):
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION_UPDATED,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
         body = resp.json
         checksum = body['workflows'][0]['checksum']

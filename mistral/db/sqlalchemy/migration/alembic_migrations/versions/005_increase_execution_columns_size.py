@@ -31,15 +31,13 @@ from mistral.db.sqlalchemy import types as st
 
 def upgrade():
     # Changing column types from JsonDictType to JsonLongDictType
-    op.alter_column('executions_v2', 'runtime_context',
-                    type_=st.JsonLongDictType())
-    op.alter_column('executions_v2', 'input',
-                    type_=st.JsonLongDictType())
-    op.alter_column('executions_v2', 'params',
-                    type_=st.JsonLongDictType())
-    op.alter_column('executions_v2', 'context',
-                    type_=st.JsonLongDictType())
-    op.alter_column('executions_v2', 'action_spec',
-                    type_=st.JsonLongDictType())
-    op.alter_column('executions_v2', 'published',
-                    type_=st.JsonLongDictType())
+    op.alter_column(
+        'executions_v2', 'runtime_context', type_=st.JsonLongDictType()
+    )
+    op.alter_column('executions_v2', 'input', type_=st.JsonLongDictType())
+    op.alter_column('executions_v2', 'params', type_=st.JsonLongDictType())
+    op.alter_column('executions_v2', 'context', type_=st.JsonLongDictType())
+    op.alter_column(
+        'executions_v2', 'action_spec', type_=st.JsonLongDictType()
+    )
+    op.alter_column('executions_v2', 'published', type_=st.JsonLongDictType())

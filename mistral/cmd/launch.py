@@ -97,11 +97,12 @@ LAUNCH_OPTIONS = {
     'executor': launch_executor,
     'event-engine': launch_event_engine,
     'notifier': launch_notifier,
-    'periodic': launch_periodic
+    'periodic': launch_periodic,
 }
 
 
-MISTRAL_TITLE = r"""
+MISTRAL_TITLE = (
+    r"""
 |\\\    //|           ||                       ||
 ||\\\  //||      __   ||      __      __       ||
 || \\\// || ||  //  ||||||  ||  \\  //  \\     ||
@@ -110,7 +111,9 @@ MISTRAL_TITLE = r"""
 ||       || || __//   ||_// ||      \\__// \\_ ||
 
 Mistral Workflow Service, version %s
-""" % version.version_string
+"""
+    % version.version_string
+)
 
 
 def _get_server():

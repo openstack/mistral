@@ -55,40 +55,54 @@ CONF.set_default('transport_url', 'fake:/')
 
 def get_resource(resource_name):
     filepath = importlib.resources.files(
-        version.version_info.package).joinpath(RESOURCES_PATH + resource_name)
+        version.version_info.package
+    ).joinpath(RESOURCES_PATH + resource_name)
     with open(filepath) as f:
         return f.read()
 
 
 def get_context(default=True, admin=False):
     if default:
-        return auth_context.MistralContext.from_dict({
-            'user_name': 'test-user',
-            'user': '1-2-3-4',
-            # TODO(tkajinam): Remove this once oslo.context >= 4.0.0 becomes
-            #                 avaialble
-            'tenant': security.DEFAULT_PROJECT_ID,
-            'project_id': security.DEFAULT_PROJECT_ID,
-            'project_name': 'test-project',
-            'is_admin': admin
-        })
+        return auth_context.MistralContext.from_dict(
+            {
+                'user_name': 'test-user',
+                'user': '1-2-3-4',
+                # TODO(tkajinam): Remove this once oslo.context >= 4.0.0
+                #                 becomes avaialble
+                'tenant': security.DEFAULT_PROJECT_ID,
+                'project_id': security.DEFAULT_PROJECT_ID,
+                'project_name': 'test-project',
+                'is_admin': admin,
+            }
+        )
     else:
-        return auth_context.MistralContext.from_dict({
-            'user_name': 'test-user',
-            'user': '9-0-44-5',
-            # TODO(tkajinam): Remove this once oslo.context >= 4.0.0 becomes
-            #                 avaialble
-            'tenant': '99-88-33',
-            'project_id': '99-88-33',
-            'project_name': 'test-another',
-            'is_admin': admin
-        })
+        return auth_context.MistralContext.from_dict(
+            {
+                'user_name': 'test-user',
+                'user': '9-0-44-5',
+                # TODO(tkajinam): Remove this once oslo.context >= 4.0.0
+                #                 becomes avaialble
+                'tenant': '99-88-33',
+                'project_id': '99-88-33',
+                'project_name': 'test-another',
+                'is_admin': admin,
+            }
+        )
 
 
 class FakeHTTPResponse(object):
-    def __init__(self, text, status_code, reason=None, headers=None,
-                 history=None, encoding='utf-8', url='', cookies=None,
-                 elapsed=None):
+    def __init__(
+        self,
+        text,
+        status_code,
+        reason=None,
+        headers=None,
+        history=None,
+        encoding='utf-8',
+        url='',
+        cookies=None,
+        elapsed=None,
+    ):
         self.text = text
         self.content = text
         self.status_code = status_code
@@ -116,14 +130,10 @@ class BaseTest(base.BaseTestCase):
         # don't see unexpected actions (i.e. provided by action generators
         # installed by other projects).
         self.override_config(
-            'only_builtin_actions',
-            True,
-            'legacy_action_provider'
+            'only_builtin_actions', True, 'legacy_action_provider'
         )
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
 
         self.addCleanup(spec_parser.clear_caches)
@@ -135,8 +145,7 @@ class BaseTest(base.BaseTestCase):
 
     def register_action_class(self, name, cls):
         action_service.get_test_action_provider().register_python_action(
-            name,
-            cls
+            name, cls
         )
 
     def _assert_single_item(self, items, **props):
@@ -148,8 +157,11 @@ class BaseTest(base.BaseTestCase):
     def _assert_multiple_items(self, items, count, **props):
         def _matches(item, **props):
             for prop_name, prop_val in props.items():
-                v = item[prop_name] if isinstance(
-                    item, dict) else getattr(item, prop_name)
+                v = (
+                    item[prop_name]
+                    if isinstance(item, dict)
+                    else getattr(item, prop_name)
+                )
 
                 if v != prop_val:
                     return False
@@ -163,10 +175,15 @@ class BaseTest(base.BaseTestCase):
         found = len(filtered_items)
 
         if found != count:
-            LOG.info("[failed test ctx] items=%s, expected_props=%s", str(
-                items), props)
-            self.fail("Wrong number of items found [props=%s, "
-                      "expected=%s, found=%s]" % (props, count, found))
+            LOG.info(
+                "[failed test ctx] items=%s, expected_props=%s",
+                str(items),
+                props,
+            )
+            self.fail(
+                "Wrong number of items found [props=%s, "
+                "expected=%s, found=%s]" % (props, count, found)
+            )
 
         return filtered_items
 
@@ -184,9 +201,9 @@ class BaseTest(base.BaseTestCase):
             if key not in actual:
                 missing.append(key)
             elif value != actual[key]:
-                mismatched.append('%s, expected: %s, actual: %s' %
-                                  (key, value,
-                                   actual[key]))
+                mismatched.append(
+                    '%s, expected: %s, actual: %s' % (key, value, actual[key])
+                )
 
         if not (missing or mismatched):
             return
@@ -202,8 +219,14 @@ class BaseTest(base.BaseTestCase):
 
         self.fail(self._formatMessage(msg, standardMsg))
 
-    def _await(self, predicate, delay=1, timeout=60, fail_message="no detail",
-               fail_message_formatter=lambda x: x):
+    def _await(
+        self,
+        predicate,
+        delay=1,
+        timeout=60,
+        fail_message="no detail",
+        fail_message_formatter=lambda x: x,
+    ):
         """Awaits for predicate function to evaluate to True.
 
         If within a configured timeout predicate function hasn't evaluated
@@ -224,8 +247,8 @@ class BaseTest(base.BaseTestCase):
 
             if time.time() + delay > end_time:
                 raise AssertionError(
-                    "Failed to wait for expected result: " +
-                    fail_message_formatter(fail_message)
+                    "Failed to wait for expected result: "
+                    + fail_message_formatter(fail_message)
                 )
 
             time.sleep(delay)
@@ -274,16 +297,15 @@ class DbTestCase(BaseTest):
         db_api.setup_db()
 
     def _clean_db(self):
-        contexts = [
-            get_context(default=False),
-            get_context(default=True)
-        ]
+        contexts = [get_context(default=False), get_context(default=True)]
 
         for ctx in contexts:
             auth_context.set_ctx(ctx)
 
-            with mock.patch('mistral.services.security.get_project_id',
-                            new=mock.MagicMock(return_value=ctx.project_id)):
+            with mock.patch(
+                'mistral.services.security.get_project_id',
+                new=mock.MagicMock(return_value=ctx.project_id),
+            ):
                 with db_api.transaction():
                     db_api.delete_event_triggers()
                     db_api.delete_cron_triggers()

@@ -69,7 +69,7 @@ WORKBOOK = {
     'tags': ['deployment', 'demo'],
     'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
-    'updated_at': '1970-01-01 00:00:00'
+    'updated_at': '1970-01-01 00:00:00',
 }
 
 WB_WITH_NAMESPACE = {
@@ -80,7 +80,7 @@ WB_WITH_NAMESPACE = {
     'tags': ['deployment', 'demo'],
     'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
-    'updated_at': '1970-01-01 00:00:00'
+    'updated_at': '1970-01-01 00:00:00',
 }
 
 ACTION = {
@@ -89,7 +89,7 @@ ACTION = {
     'is_system': False,
     'description': 'My super cool action.',
     'tags': ['test', 'v2'],
-    'definition': ''
+    'definition': '',
 }
 
 WF = {
@@ -171,7 +171,10 @@ class TestWorkbooksController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_workbook')
     def test_get_with_fields_filter(self, mocked_get):
-        mocked_get.return_value = (WORKBOOK['id'], WORKBOOK['name'],)
+        mocked_get.return_value = (
+            WORKBOOK['id'],
+            WORKBOOK['name'],
+        )
         resp = self.app.get('/v2/workbooks/123?fields=name')
         expected = {
             'id': WORKBOOK['id'],
@@ -193,7 +196,7 @@ class TestWorkbooksController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            WORKBOOK_DB  # Successful run
+            WORKBOOK_DB,  # Successful run
         ]
 
         resp = self.app.get('/v2/workbooks/123')
@@ -207,8 +210,9 @@ class TestWorkbooksController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_workbook",
-                       return_value=WORKBOOK_DB_PROJECT_ID)
+    @mock.patch.object(
+        db_api, "get_workbook", return_value=WORKBOOK_DB_PROJECT_ID
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/workbooks/123')
 
@@ -220,7 +224,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.put(
             '/v2/workbooks',
             UPDATED_WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -232,7 +236,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks',
             UPDATED_WORKBOOK_DEF,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -242,7 +246,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks',
             WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -256,7 +260,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks?skip_validation',
             WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -277,7 +281,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.put(
             '/v2/workbooks?scope=public',
             UPDATED_WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -292,7 +296,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks?scope=unique',
             UPDATED_WORKBOOK_DEF,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -303,7 +307,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.post(
             '/v2/workbooks',
             WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -316,7 +320,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.post(
             '/v2/workbooks?namespace=%s' % namespace,
             WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -328,7 +332,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks',
             WORKBOOK_DEF,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(409, resp.status_int)
@@ -338,7 +342,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks',
             WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -351,7 +355,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks?skip_validation',
             WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(201, resp.status_int)
@@ -372,7 +376,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.post(
             '/v2/workbooks?scope=public',
             WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -387,7 +391,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks?scope=unique',
             WORKBOOK_DEF,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -419,7 +423,7 @@ class TestWorkbooksController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [WORKBOOK_DB]  # Successful run
+            [WORKBOOK_DB],  # Successful run
         ]
 
         resp = self.app.get('/v2/workbooks')
@@ -441,7 +445,7 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.post(
             '/v2/workbooks/validate',
             WORKBOOK_DEF,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -452,7 +456,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks/validate',
             WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -464,7 +468,7 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks/validate',
             WB_DEF_DSL_PARSE_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
@@ -476,20 +480,19 @@ class TestWorkbooksController(base.APITest):
             '/v2/workbooks/validate',
             WB_DEF_YAQL_PARSE_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
-        self.assertIn("unexpected '*' at position 1",
-                      resp.json['error'])
+        self.assertIn("unexpected '*' at position 1", resp.json['error'])
 
     def test_validate_empty(self):
         resp = self.app.post(
             '/v2/workbooks/validate',
             '',
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(200, resp.status_int)

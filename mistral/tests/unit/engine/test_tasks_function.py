@@ -216,14 +216,18 @@ workflows:
 
 
 class TasksFunctionTest(base.EngineTestCase):
-    def _assert_published_tasks(self, task, published_key,
-                                expected_tasks_count=None,
-                                expected_tasks_names=None):
+    def _assert_published_tasks(
+        self,
+        task,
+        published_key,
+        expected_tasks_count=None,
+        expected_tasks_names=None,
+    ):
         published = task.published[published_key]
 
         self.assertIsNotNone(
             published,
-            "there is a problem with publishing '{}'".format(published_key)
+            "there is a problem with publishing '{}'".format(published_key),
         )
 
         published_names = [t['name'] for t in published]
@@ -262,8 +266,8 @@ class TasksFunctionTest(base.EngineTestCase):
                 'wf2_wx_id': wf2_ex.id,
                 'wf3_wx_id': wf3_ex.id,
                 'wf4_wx_id': wf4_ex.id,
-                'wf5_wx_id': wf5_ex.id
-            }
+                'wf5_wx_id': wf5_ex.id,
+            },
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -283,14 +287,14 @@ class TasksFunctionTest(base.EngineTestCase):
             main_task,
             'wf1_tasks_yaql',
             2,
-            ['top_lvl_wf1_task_1', 'top_lvl_wf1_task_2']
+            ['top_lvl_wf1_task_1', 'top_lvl_wf1_task_2'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf1_tasks_jinja',
             2,
-            ['top_lvl_wf1_task_1', 'top_lvl_wf1_task_2']
+            ['top_lvl_wf1_task_1', 'top_lvl_wf1_task_2'],
         )
 
         self._assert_published_tasks(
@@ -307,7 +311,7 @@ class TasksFunctionTest(base.EngineTestCase):
                 'third_lvl_wf1_task_1',
                 'third_lvl_wf1_task_2_fail',
                 'join_task',
-            ]
+            ],
         )
 
         self._assert_published_tasks(
@@ -324,33 +328,29 @@ class TasksFunctionTest(base.EngineTestCase):
                 'third_lvl_wf1_task_1',
                 'third_lvl_wf1_task_2_fail',
                 'join_task',
-            ]
+            ],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_error_tasks_yaql',
             2,
-            ['second_lvl_wf1_task_1', 'third_lvl_wf1_task_2_fail']
+            ['second_lvl_wf1_task_1', 'third_lvl_wf1_task_2_fail'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf1_recursive_error_tasks_jinja',
             2,
-            ['second_lvl_wf1_task_1', 'third_lvl_wf1_task_2_fail']
+            ['second_lvl_wf1_task_1', 'third_lvl_wf1_task_2_fail'],
         )
 
         self._assert_published_tasks(
-            main_task,
-            'wf1_not_recursive_error_tasks_yaql',
-            0
+            main_task, 'wf1_not_recursive_error_tasks_yaql', 0
         )
 
         self._assert_published_tasks(
-            main_task,
-            'wf1_not_recursive_error_tasks_jinja',
-            0
+            main_task, 'wf1_not_recursive_error_tasks_jinja', 0
         )
 
         self._assert_published_tasks(
@@ -364,7 +364,7 @@ class TasksFunctionTest(base.EngineTestCase):
                 'third_lvl_wf1_task_3',
                 'third_lvl_wf1_task_1',
                 'join_task',
-            ]
+            ],
         )
 
         self._assert_published_tasks(
@@ -378,21 +378,21 @@ class TasksFunctionTest(base.EngineTestCase):
                 'third_lvl_wf1_task_3',
                 'third_lvl_wf1_task_1',
                 'join_task',
-            ]
+            ],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf2_recursive_tasks_yaql',
             2,
-            ['top_lvl_wf2_task_2', 'top_lvl_wf2_task_1']
+            ['top_lvl_wf2_task_2', 'top_lvl_wf2_task_1'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf2_recursive_tasks_jinja',
             2,
-            ['top_lvl_wf2_task_2', 'top_lvl_wf2_task_1']
+            ['top_lvl_wf2_task_2', 'top_lvl_wf2_task_1'],
         )
 
         self._assert_published_tasks(
@@ -403,8 +403,8 @@ class TasksFunctionTest(base.EngineTestCase):
                 'top_lvl_wf3_task_1_fail',
                 'top_lvl_wf3_task_2_fail',
                 'second_lvl_wf3_task_1_fail',
-                'third_lvl_wf3_task_3_fail'
-            ]
+                'third_lvl_wf3_task_3_fail',
+            ],
         )
 
         self._assert_published_tasks(
@@ -415,48 +415,48 @@ class TasksFunctionTest(base.EngineTestCase):
                 'top_lvl_wf3_task_1_fail',
                 'top_lvl_wf3_task_2_fail',
                 'second_lvl_wf3_task_1_fail',
-                'third_lvl_wf3_task_3_fail'
-            ]
+                'third_lvl_wf3_task_3_fail',
+            ],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf3_recursive_error_flat_tasks_yaql',
             2,
-            ['top_lvl_wf3_task_2_fail', 'third_lvl_wf3_task_3_fail']
+            ['top_lvl_wf3_task_2_fail', 'third_lvl_wf3_task_3_fail'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf3_recursive_error_flat_tasks_jinja',
             2,
-            ['top_lvl_wf3_task_2_fail', 'third_lvl_wf3_task_3_fail']
+            ['top_lvl_wf3_task_2_fail', 'third_lvl_wf3_task_3_fail'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf4_recursive_error_flat_tasks_yaql',
             1,
-            ['top_lvl_wf4_task_1']
+            ['top_lvl_wf4_task_1'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf4_recursive_error_flat_tasks_jinja',
             1,
-            ['top_lvl_wf4_task_1']
+            ['top_lvl_wf4_task_1'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf5_recursive_error_flat_tasks_yaql',
             1,
-            ['top_lvl_wf5_task_1']
+            ['top_lvl_wf5_task_1'],
         )
 
         self._assert_published_tasks(
             main_task,
             'wf5_recursive_error_flat_tasks_jinja',
             1,
-            ['top_lvl_wf5_task_1']
+            ['top_lvl_wf5_task_1'],
         )

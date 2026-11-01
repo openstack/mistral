@@ -24,7 +24,6 @@ from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
 
 class APITest(base.DbTestCase):
-
     def setUp(self):
         super(APITest, self).setUp()
 

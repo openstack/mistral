@@ -70,13 +70,10 @@ ENVIRONMENT = {
     'id': uuidutils.generate_uuid(),
     'name': 'test',
     'description': 'my test settings',
-    'variables': {
-        'key1': 'abc',
-        'key2': 123
-    },
+    'variables': {'key1': 'abc', 'key2': 123},
     'scope': 'private',
     'created_at': str(timeutils.utcnow()),
-    'updated_at': str(timeutils.utcnow())
+    'updated_at': str(timeutils.utcnow()),
 }
 
 ENVIRONMENT_DB = models.Environment(
@@ -85,10 +82,12 @@ ENVIRONMENT_DB = models.Environment(
     description=ENVIRONMENT['description'],
     variables=ENVIRONMENT['variables'],
     scope=ENVIRONMENT['scope'],
-    created_at=datetime.datetime.strptime(ENVIRONMENT['created_at'],
-                                          DATETIME_FORMAT),
-    updated_at=datetime.datetime.strptime(ENVIRONMENT['updated_at'],
-                                          DATETIME_FORMAT)
+    created_at=datetime.datetime.strptime(
+        ENVIRONMENT['created_at'], DATETIME_FORMAT
+    ),
+    updated_at=datetime.datetime.strptime(
+        ENVIRONMENT['updated_at'], DATETIME_FORMAT
+    ),
 )
 
 MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
@@ -116,7 +115,7 @@ class DefaultEngineTest(base.DbTestCase):
             wf_input=wf_input,
             description='my execution',
             task_name='task2',
-            wf_ex_id=the_ex_id
+            wf_ex_id=the_ex_id,
         )
 
         self.assertEqual(the_ex_id, wf_ex.id)
@@ -124,7 +123,7 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex_2 = self.engine.start_workflow(
             'wb.wf',
             wf_input={'param1': 'Hey2', 'param2': 'Hi2'},
-            wf_ex_id=the_ex_id
+            wf_ex_id=the_ex_id,
         )
 
         self.assertDictEqual(dict(wf_ex), dict(wf_ex_2))
@@ -138,9 +137,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input=wf_input,
-            task_name='task1'
+            'wb.wf', wf_input=wf_input, task_name='task1'
         )
 
         self.assertIsNotNone(wf_ex)
@@ -177,18 +174,13 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({'output': 'value1'}, task_action_ex.input)
 
     def test_start_workflow_with_adhoc_env(self):
-        wf_input = {
-            'param1': '<% env().key1 %>',
-            'param2': '<% env().key2 %>'
-        }
+        wf_input = {'param1': '<% env().key1 %>', 'param2': '<% env().key2 %>'}
         env = ENVIRONMENT['variables']
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input=wf_input,
-            env=env,
-            task_name='task2')
+            'wb.wf', wf_input=wf_input, env=env, task_name='task2'
+        )
 
         self.assertIsNotNone(wf_ex)
 
@@ -199,18 +191,12 @@ class DefaultEngineTest(base.DbTestCase):
 
     @mock.patch.object(db_api, "load_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
-        wf_input = {
-            'param1': '<% env().key1 %>',
-            'param2': '<% env().key2 %>'
-        }
+        wf_input = {'param1': '<% env().key1 %>', 'param2': '<% env().key2 %>'}
         env = ENVIRONMENT['variables']
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf',
-            wf_input=wf_input,
-            env='test',
-            task_name='task2'
+            'wb.wf', wf_input=wf_input, env='test', task_name='task2'
         )
 
         self.assertIsNotNone(wf_ex)
@@ -226,12 +212,9 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
-            wf_input={
-                'param1': '<% env().key1 %>',
-                'param2': 'some value'
-            },
+            wf_input={'param1': '<% env().key1 %>', 'param2': 'some value'},
             env='foo',
-            task_name='task2'
+            task_name='task2',
         )
 
         self.assertEqual("Environment is not found: foo", str(e))
@@ -241,12 +224,9 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
-            wf_input={
-                'param1': '<% env().key1 %>',
-                'param2': 'some value'
-            },
+            wf_input={'param1': '<% env().key1 %>', 'param2': 'some value'},
             env=True,
-            task_name='task2'
+            task_name='task2',
         )
 
         self.assertIn('Unexpected value type for environment', str(e))
@@ -258,7 +238,7 @@ class DefaultEngineTest(base.DbTestCase):
             'wb.wf',
             '',
             None,
-            task_name='task2'
+            task_name='task2',
         )
 
         self.assertIn("Invalid input", str(e))
@@ -272,9 +252,9 @@ class DefaultEngineTest(base.DbTestCase):
             wf_input={
                 'param1': 'Hey',
                 'param2': 'Hi',
-                'unexpected_param': 'val'
+                'unexpected_param': 'val',
             },
-            task_name='task2'
+            task_name='task2',
         )
 
         self.assertIn("Invalid input", str(e))
@@ -326,8 +306,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Pause action execution of 'task1'.
         task1_action_ex = self.engine.on_action_update(
-            task1_action_ex.id,
-            states.PAUSED
+            task1_action_ex.id, states.PAUSED
         )
 
         self.assertIsInstance(task1_action_ex, models.ActionExecution)
@@ -404,7 +383,7 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InvalidStateTransitionException,
             self.engine.on_action_update,
             task1_action_ex.id,
-            states.PAUSED
+            states.PAUSED,
         )
 
     def test_on_action_complete(self):
@@ -415,7 +394,7 @@ class DefaultEngineTest(base.DbTestCase):
             'wb.wf',
             wf_input=wf_input,
             description='my execution',
-            task_name='task2'
+            task_name='task2',
         )
 
         self.assertIsNotNone(wf_ex)
@@ -435,8 +414,7 @@ class DefaultEngineTest(base.DbTestCase):
 
             self.assertEqual(states.IDLE, task1_ex.state)
 
-        self.engine.start_task(
-            task1_ex.id, True, False, None, False, False)
+        self.engine.start_task(task1_ex.id, True, False, None, False, False)
 
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
@@ -467,8 +445,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Finish action of 'task1'.
         task1_action_ex = self.engine.on_action_complete(
-            task1_action_ex.id,
-            ml_actions.Result(data='Hey')
+            task1_action_ex.id, ml_actions.Result(data='Hey')
         )
 
         self.assertIsInstance(task1_action_ex, models.ActionExecution)
@@ -511,13 +488,13 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Finish 'task2'.
         task2_action_ex = self.engine.on_action_complete(
-            task2_action_ex.id,
-            ml_actions.Result(data='Hi')
+            task2_action_ex.id, ml_actions.Result(data='Hi')
         )
 
         self._await(
-            lambda:
+            lambda: (
                 db_api.get_workflow_execution(wf_ex.id).state == states.SUCCESS
+            )
         )
 
         with db_api.transaction():
@@ -548,11 +525,8 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
-            wf_input={
-                'param1': 'Hey',
-                'param2': 'Hi'
-            },
-            task_name="task2"
+            wf_input={'param1': 'Hey', 'param2': 'Hi'},
+            task_name="task2",
         )
 
         # Re-read execution to access related tasks.
@@ -570,11 +544,8 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
-            wf_input={
-                'param1': 'Hey',
-                'param2': 'Hi'
-            },
-            task_name="task2"
+            wf_input={'param1': 'Hey', 'param2': 'Hi'},
+            task_name="task2",
         )
 
         # Re-read execution to access related tasks.
@@ -597,7 +568,7 @@ class DefaultEngineTest(base.DbTestCase):
             '',
             wf_input=wf_input,
             description='my execution',
-            task_name='task2'
+            task_name='task2',
         )
 
         with db_api.transaction():
@@ -629,8 +600,7 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
     def test_engine_client_remote_error(self):
         mocked = mock.Mock()
         mocked.sync_call.side_effect = rpc_client.RemoteError(
-            'InputException',
-            'Input is wrong'
+            'InputException', 'Input is wrong'
         )
         self.engine_client._client = mocked
 
@@ -639,7 +609,7 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
             self.engine_client.start_workflow,
             'some_wf',
             {},
-            'some_description'
+            'some_description',
         )
 
     def test_engine_client_remote_error_arbitrary(self):
@@ -652,7 +622,7 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
             self.engine_client.start_workflow,
             'some_wf',
             {},
-            'some_description'
+            'some_description',
         )
 
         self.assertIn('KeyError: wrong key', str(exception))

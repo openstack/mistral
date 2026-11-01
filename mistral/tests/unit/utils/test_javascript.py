@@ -33,25 +33,19 @@ class PyMiniRacerEvaluatorTest(base.BaseTest):
         javascript.PyMiniRacerEvaluator.evaluate('1 + 1', {})
 
         self.js_eval.assert_called_once_with(
-            '$ = {}; 1 + 1',
-            timeout=30000,
-            max_memory=256 * 1024 * 1024
+            '$ = {}; 1 + 1', timeout=30000, max_memory=256 * 1024 * 1024
         )
 
     def test_custom_limits(self):
         self.override_config('timeout', 2, group='action_std_javascript')
         self.override_config(
-            'max_memory_mb',
-            16,
-            group='action_std_javascript'
+            'max_memory_mb', 16, group='action_std_javascript'
         )
 
         javascript.PyMiniRacerEvaluator.evaluate('1 + 1', {})
 
         self.js_eval.assert_called_once_with(
-            '$ = {}; 1 + 1',
-            timeout=2000,
-            max_memory=16 * 1024 * 1024
+            '$ = {}; 1 + 1', timeout=2000, max_memory=16 * 1024 * 1024
         )
 
     def test_limits_disabled(self):

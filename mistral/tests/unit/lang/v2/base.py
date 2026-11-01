@@ -23,7 +23,6 @@ from mistral_lib import utils
 
 
 class WorkflowSpecValidationTestCase(base.BaseTest):
-
     def __init__(self, *args, **kwargs):
         super(WorkflowSpecValidationTestCase, self).__init__(*args, **kwargs)
 
@@ -32,25 +31,16 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
 
         self._spec_parser = spec_parser.get_workflow_list_spec_from_yaml
 
-        self._dsl_blank = {
-            'version': '2.0',
-            'test': {
-                'type': 'direct'
-            }
-        }
+        self._dsl_blank = {'version': '2.0', 'test': {'type': 'direct'}}
 
         self._dsl_tasks = {
             'get': {
                 'action': 'std.http',
-                'input': {
-                    'url': 'https://www.openstack.org'
-                }
+                'input': {'url': 'https://www.openstack.org'},
             },
             'echo': {
                 'action': 'std.echo',
-                'input': {
-                    'output': 'This is a test.'
-                }
+                'input': {'output': 'This is a test.'},
             },
             'email': {
                 'action': 'std.email',
@@ -60,16 +50,19 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
                     'subject': 'Test',
                     'body': 'This is a test.',
                     'smtp_server': 'localhost',
-                    'smtp_password': 'password'
-                }
-            }
+                    'smtp_password': 'password',
+                },
+            },
         }
 
-    def _parse_dsl_spec(self, dsl_file=None, add_tasks=False,
-                        changes=None, expect_error=False):
+    def _parse_dsl_spec(
+        self, dsl_file=None, add_tasks=False, changes=None, expect_error=False
+    ):
         if dsl_file and add_tasks:
-            raise Exception('The add_tasks option is not a valid '
-                            'combination with the dsl_file option.')
+            raise Exception(
+                'The add_tasks option is not a valid '
+                'combination with the dsl_file option.'
+            )
 
         if dsl_file:
             dsl_yaml = base.get_resource(self._resource_path + '/' + dsl_file)
@@ -77,8 +70,9 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             if changes:
                 dsl_dict = safe_yaml.safe_load(dsl_yaml)
                 utils.merge_dicts(dsl_dict, changes)
-                dsl_yaml = safe_yaml.safe_dump(dsl_dict,
-                                               default_flow_style=False)
+                dsl_yaml = safe_yaml.safe_dump(
+                    dsl_dict, default_flow_style=False
+                )
         else:
             dsl_dict = copy.deepcopy(self._dsl_blank)
 
@@ -94,26 +88,24 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             return self._spec_parser(dsl_yaml)
         else:
             return self.assertRaises(
-                exc.DSLParsingException,
-                self._spec_parser,
-                dsl_yaml
+                exc.DSLParsingException, self._spec_parser, dsl_yaml
             )
 
 
 class WorkbookSpecValidationTestCase(WorkflowSpecValidationTestCase):
-
     def __init__(self, *args, **kwargs):
         super(WorkbookSpecValidationTestCase, self).__init__(*args, **kwargs)
 
         self._spec_parser = spec_parser.get_workbook_spec_from_yaml
 
-        self._dsl_blank = {
-            'version': '2.0',
-            'name': 'test_wb'
-        }
+        self._dsl_blank = {'version': '2.0', 'name': 'test_wb'}
 
-    def _parse_dsl_spec(self, dsl_file=None, add_tasks=False,
-                        changes=None, expect_error=False):
+    def _parse_dsl_spec(
+        self, dsl_file=None, add_tasks=False, changes=None, expect_error=False
+    ):
         return super(WorkbookSpecValidationTestCase, self)._parse_dsl_spec(
-            dsl_file=dsl_file, add_tasks=False, changes=changes,
-            expect_error=expect_error)
+            dsl_file=dsl_file,
+            add_tasks=False,
+            changes=changes,
+            expect_error=expect_error,
+        )

@@ -36,10 +36,7 @@ class OsloRPCServer(rpc.RPCServer):
         self.endpoints.append(endpoint)
 
     def run(self, executor='threading'):
-        target = messaging.Target(
-            topic=self.topic,
-            server=self.server_id
-        )
+        target = messaging.Target(topic=self.topic, server=self.server_id)
 
         # TODO(rakhmerov): rpc.get_transport() should be in oslo.messaging
         # related module.
@@ -51,7 +48,7 @@ class OsloRPCServer(rpc.RPCServer):
             self.endpoints,
             executor=executor,
             serializer=ctx.RpcContextSerializer(),
-            access_policy=access_policy
+            access_policy=access_policy,
         )
 
         self.oslo_server.start()

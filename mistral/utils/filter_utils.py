@@ -37,7 +37,7 @@ ALL = (
     LESS_THAN_EQUALS,
     HAS,
     IN,
-    NOT_IN
+    NOT_IN,
 )
 
 
@@ -170,7 +170,8 @@ def match_filters(obj, filters):
 
 
 def filtered_by_allow_deny_list(
-        allowlist: list[str], denylist: list[str], value: str):
+    allowlist: list[str], denylist: list[str], value: str
+):
     """Evaluate allow and deny lists.
 
     Return True if the value is filtered by the allow or
@@ -180,6 +181,7 @@ def filtered_by_allow_deny_list(
     :param denylist: List of strings to deny
     :param value: String to evaluate
     """
+
     def _match_value(list_to_check: list[str], value: str):
         for i in list_to_check:
             if fnmatch.fnmatchcase(value, i):

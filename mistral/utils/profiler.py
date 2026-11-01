@@ -33,7 +33,7 @@ def log_to_file(info, context=None):
         info['base_id'],
         info['parent_id'],
         info['trace_id'],
-        info['name']
+        info['name'],
     ]
 
     th_local_name = '_profiler_trace_%s_start_time_' % info['trace_id']

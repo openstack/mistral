@@ -26,7 +26,6 @@ LOG = logging.getLogger(__name__)
 
 
 class WebhookPublisher(base.NotificationPublisher):
-
     def publish(self, ctx, ex_id, data, event, timestamp, **kwargs):
         url = kwargs.get('url')
         headers = kwargs.get('headers', {})
@@ -40,7 +39,7 @@ class WebhookPublisher(base.NotificationPublisher):
             data=json.dumps(data),
             headers=headers,
             timeout=(3, 10),
-            allow_redirects=False
+            allow_redirects=False,
         )
 
         LOG.info("Webook request url=%s code=%s", url, resp.status_code)

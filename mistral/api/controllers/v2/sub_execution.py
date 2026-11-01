@@ -41,11 +41,7 @@ def get_task_sub_executions_list(task_ex_id, filters, cur_depth):
 
     for c_ex in child_wf_executions:
         task_sub_execs.extend(
-            get_execution_sub_executions_list(
-                c_ex.id,
-                filters,
-                cur_depth
-            )
+            get_execution_sub_executions_list(c_ex.id, filters, cur_depth)
         )
 
     return task_sub_execs
@@ -62,9 +58,7 @@ def get_execution_sub_executions_list(wf_ex_id, filters, cur_depth):
     with db_api.transaction():
         wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
-        wf_resource = _get_wf_resource_from_db_model(
-            wf_ex,
-            include_output)
+        wf_resource = _get_wf_resource_from_db_model(wf_ex, include_output)
 
         ex_sub_execs.append(wf_resource)
 
@@ -72,9 +66,7 @@ def get_execution_sub_executions_list(wf_ex_id, filters, cur_depth):
 
     for t_ex in task_execs:
         task_sub_executions = get_task_sub_executions_list(
-            t_ex.id,
-            filters,
-            cur_depth + 1
+            t_ex.id, filters, cur_depth + 1
         )
         ex_sub_execs.extend(task_sub_executions)
 
@@ -115,19 +107,18 @@ class SubExecutionsController(rest.RestController):
         """
         acl.enforce('executions:get', context.ctx())
 
-        origin = 'execution' if request.path.startswith('/v2/executions') \
+        origin = (
+            'execution'
+            if request.path.startswith('/v2/executions')
             else 'task'
-
-        LOG.info(
-            "Fetching sub executions of %s [id=%s]",
-            origin,
-            id
         )
+
+        LOG.info("Fetching sub executions of %s [id=%s]", origin, id)
 
         filters = {
             'errors_only': errors_only,
             'max_depth': max_depth,
-            'include_output': include_output
+            'include_output': include_output,
         }
 
         sub_executions_resource = _get_sub_executions(origin, id, filters)

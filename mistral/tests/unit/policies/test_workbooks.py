@@ -43,7 +43,7 @@ WB_DB = models.Workbook(
     definition=WB_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'name': 'test'}
+    spec={'name': 'test'},
 )
 MOCK_WB = mock.MagicMock(return_value=WB_DB)
 
@@ -66,14 +66,12 @@ class TestWorkbookPolicy(base.APITest):
 
     @mock.patch.object(workbooks, "create_workbook_v2")
     def test_workbook_create_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"workbooks:create": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"workbooks:create": "role:FAKE"})
         resp = self.app.post(
             '/v2/workbooks',
             WB_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -88,7 +86,7 @@ class TestWorkbookPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workbooks',
             WB_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -102,7 +100,7 @@ class TestWorkbookPolicy(base.APITest):
             '/v2/workbooks?scope=public',
             WB_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -119,7 +117,7 @@ class TestWorkbookPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workbooks?scope=public',
             WB_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -127,13 +125,8 @@ class TestWorkbookPolicy(base.APITest):
     @mock.patch.object(db_api, "delete_workbook", MOCK_DELETE)
     @mock.patch.object(db_api, "get_workbook", MOCK_WB)
     def test_workbook_delete_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workbooks:delete": "role:FAKE"}
-        )
-        resp = self.app.delete(
-            '/v2/workbooks/test',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workbooks:delete": "role:FAKE"})
+        resp = self.app.delete('/v2/workbooks/test', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -143,21 +136,14 @@ class TestWorkbookPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workbooks:delete": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.delete(
-            '/v2/workbooks/test'
-        )
+        resp = self.app.delete('/v2/workbooks/test')
 
         self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "get_workbook", MOCK_WB)
     def test_workbook_get_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workbooks:get": "role:FAKE"}
-        )
-        resp = self.app.get(
-            '/v2/workbooks/test',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workbooks:get": "role:FAKE"})
+        resp = self.app.get('/v2/workbooks/test', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -166,20 +152,13 @@ class TestWorkbookPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workbooks:get": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/workbooks/test'
-        )
+        resp = self.app.get('/v2/workbooks/test')
 
         self.assertEqual(200, resp.status_int)
 
     def test_workbook_list_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workbooks:list": "role:FAKE"}
-        )
-        resp = self.app.get(
-            '/v2/workbooks',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workbooks:list": "role:FAKE"})
+        resp = self.app.get('/v2/workbooks', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -187,22 +166,18 @@ class TestWorkbookPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workbooks:list": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/workbooks'
-        )
+        resp = self.app.get('/v2/workbooks')
 
         self.assertEqual(200, resp.status_int)
 
     @mock.patch.object(workbooks, "update_workbook_v2")
     def test_workbook_update_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"workbooks:update": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"workbooks:update": "role:FAKE"})
         resp = self.app.put(
             '/v2/workbooks',
             WB_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -217,7 +192,7 @@ class TestWorkbookPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workbooks',
             WB_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -231,7 +206,7 @@ class TestWorkbookPolicy(base.APITest):
             '/v2/workbooks?scope=public',
             WB_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -248,7 +223,7 @@ class TestWorkbookPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workbooks?scope=public',
             WB_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)

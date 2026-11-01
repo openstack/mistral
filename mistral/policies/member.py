@@ -24,58 +24,33 @@ rules = [
         name=MEMBERS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Shares the resource to a new member.',
-        operations=[
-            {
-                'path': '/v2/members',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/members', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=MEMBERS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Deletes a member from the member list of a resource.',
-        operations=[
-            {
-                'path': '/v2/members',
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': '/v2/members', 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=MEMBERS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Shows resource member details.',
-        operations=[
-            {
-                'path': '/v2/members/{member_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/members/{member_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=MEMBERS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all members with whom the resource has been '
-                    'shared.',
-        operations=[
-            {
-                'path': '/v2/members',
-                'method': 'GET'
-            }
-        ]
+        'shared.',
+        operations=[{'path': '/v2/members', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=MEMBERS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Sets the status for a resource member.',
-        operations=[
-            {
-                'path': '/v2/members',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/members', 'method': 'PUT'}],
+    ),
 ]
 
 

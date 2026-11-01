@@ -135,21 +135,23 @@ class EngineTestCase(base.DbTestCase):
 
             for w in wf_execs:
                 print(
-                    "\n%s (%s) [state=%s, state_info=%s, output=%s]" %
-                    (w.name, w.id, w.state, w.state_info, w.output)
+                    "\n%s (%s) [state=%s, state_info=%s, output=%s]"
+                    % (w.name, w.id, w.state, w.state_info, w.output)
                 )
 
                 for t in w.task_executions:
                     print(
                         "\t%s [id=%s, state=%s, state_info=%s, processed=%s,"
-                        " published=%s, runtime_context=%s]" %
-                        (t.name,
-                         t.id,
-                         t.state,
-                         t.state_info,
-                         t.processed,
-                         t.published,
-                         t.runtime_context)
+                        " published=%s, runtime_context=%s]"
+                        % (
+                            t.name,
+                            t.id,
+                            t.state,
+                            t.state_info,
+                            t.processed,
+                            t.published,
+                            t.runtime_context,
+                        )
                     )
 
                     child_execs = t.executions
@@ -157,13 +159,15 @@ class EngineTestCase(base.DbTestCase):
                     for a in child_execs:
                         print(
                             "\t\t%s [id=%s, state=%s, state_info=%s,"
-                            " accepted=%s, output=%s]" %
-                            (a.name,
-                             a.id,
-                             a.state,
-                             a.state_info,
-                             a.accepted,
-                             a.output)
+                            " accepted=%s, output=%s]"
+                            % (
+                                a.name,
+                                a.id,
+                                a.state,
+                                a.state_info,
+                                a.accepted,
+                                a.output,
+                            )
                         )
 
             print("\nPrinting standalone action executions...")
@@ -173,13 +177,15 @@ class EngineTestCase(base.DbTestCase):
             for a in child_execs:
                 print(
                     "\t\t%s [id=%s, state=%s, state_info=%s, accepted=%s,"
-                    " output=%s]" %
-                    (a.name,
-                     a.id,
-                     a.state,
-                     a.state_info,
-                     a.accepted,
-                     a.output)
+                    " output=%s]"
+                    % (
+                        a.name,
+                        a.id,
+                        a.state,
+                        a.state_info,
+                        a.accepted,
+                        a.output,
+                    )
                 )
 
     # Various methods for action execution objects.
@@ -188,16 +194,13 @@ class EngineTestCase(base.DbTestCase):
         return db_api.get_action_execution(ex_id).state == state
 
     def is_action_created(self, task_ex_id):
-        return bool(db_api.get_action_executions(
-            task_execution_id=task_ex_id
-        ))
+        return bool(db_api.get_action_executions(task_execution_id=task_ex_id))
 
-    def await_action_state(self, ex_id, state, delay=DEFAULT_DELAY,
-                           timeout=DEFAULT_TIMEOUT):
+    def await_action_state(
+        self, ex_id, state, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self._await(
-            lambda: self.is_action_in_state(ex_id, state),
-            delay,
-            timeout
+            lambda: self.is_action_in_state(ex_id, state), delay, timeout
         )
 
     def is_action_success(self, ex_id):
@@ -206,12 +209,14 @@ class EngineTestCase(base.DbTestCase):
     def is_action_error(self, ex_id):
         return self.is_action_in_state(ex_id, states.ERROR)
 
-    def await_action_success(self, ex_id, delay=DEFAULT_DELAY,
-                             timeout=DEFAULT_TIMEOUT):
+    def await_action_success(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_action_state(ex_id, states.SUCCESS, delay, timeout)
 
-    def await_action_error(self, ex_id, delay=DEFAULT_DELAY,
-                           timeout=DEFAULT_TIMEOUT):
+    def await_action_error(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_action_state(ex_id, states.ERROR, delay, timeout)
 
     # Various methods for task execution objects.
@@ -219,12 +224,11 @@ class EngineTestCase(base.DbTestCase):
     def is_task_in_state(self, ex_id, state):
         return db_api.get_task_execution(ex_id).state == state
 
-    def await_task_state(self, ex_id, state, delay=DEFAULT_DELAY,
-                         timeout=DEFAULT_TIMEOUT):
+    def await_task_state(
+        self, ex_id, state, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self._await(
-            lambda: self.is_task_in_state(ex_id, state),
-            delay,
-            timeout
+            lambda: self.is_task_in_state(ex_id, state), delay, timeout
         )
 
     def is_task_success(self, task_ex_id):
@@ -239,78 +243,88 @@ class EngineTestCase(base.DbTestCase):
     def is_task_processed(self, task_ex_id):
         return db_api.get_task_execution(task_ex_id).processed
 
-    def await_task_running(self, ex_id, delay=DEFAULT_DELAY,
-                           timeout=DEFAULT_TIMEOUT):
+    def await_task_running(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.RUNNING, delay, timeout)
 
-    def await_task_success(self, ex_id, delay=DEFAULT_DELAY,
-                           timeout=DEFAULT_TIMEOUT):
+    def await_task_success(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.SUCCESS, delay, timeout)
 
-    def await_task_error(self, ex_id, delay=DEFAULT_DELAY,
-                         timeout=DEFAULT_TIMEOUT):
+    def await_task_error(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.ERROR, delay, timeout)
 
-    def await_task_cancelled(self, ex_id, delay=DEFAULT_DELAY,
-                             timeout=DEFAULT_TIMEOUT):
+    def await_task_cancelled(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.CANCELLED, delay, timeout)
 
-    def await_task_paused(self, ex_id, delay=DEFAULT_DELAY,
-                          timeout=DEFAULT_TIMEOUT):
+    def await_task_paused(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.PAUSED, delay, timeout)
 
-    def await_task_delayed(self, ex_id, delay=DEFAULT_DELAY,
-                           timeout=DEFAULT_TIMEOUT):
+    def await_task_delayed(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_task_state(ex_id, states.RUNNING_DELAYED, delay, timeout)
 
-    def await_task_processed(self, ex_id, delay=DEFAULT_DELAY,
-                             timeout=DEFAULT_TIMEOUT):
+    def await_task_processed(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self._await(lambda: self.is_task_processed(ex_id), delay, timeout)
 
-    def await_task_creates_action(self, ex_id, delay=DEFAULT_DELAY,
-                                  timeout=DEFAULT_TIMEOUT):
-        self._await(
-            lambda: self.is_action_created(ex_id),
-            delay,
-            timeout
-        )
+    def await_task_creates_action(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
+        self._await(lambda: self.is_action_created(ex_id), delay, timeout)
 
     # Various methods for workflow execution objects.
 
     def is_workflow_in_state(self, ex_id, state):
         return db_api.get_workflow_execution(ex_id).state == state
 
-    def await_workflow_state(self, ex_id, state, delay=DEFAULT_DELAY,
-                             timeout=DEFAULT_TIMEOUT):
+    def await_workflow_state(
+        self, ex_id, state, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self._await(
             lambda: self.is_workflow_in_state(ex_id, state),
             delay,
             timeout,
             fail_message="Execution {ex_id} must have reached state {state} "
-                         "state but it is in {current}",
+            "state but it is in {current}",
             fail_message_formatter=lambda m: m.format(
                 ex_id=ex_id,
                 state=state,
-                current=db_api.get_workflow_execution(ex_id).state
-            )
+                current=db_api.get_workflow_execution(ex_id).state,
+            ),
         )
 
-    def await_workflow_running(self, ex_id, delay=DEFAULT_DELAY,
-                               timeout=DEFAULT_TIMEOUT):
+    def await_workflow_running(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_workflow_state(ex_id, states.RUNNING, delay, timeout)
 
-    def await_workflow_success(self, ex_id, delay=DEFAULT_DELAY,
-                               timeout=DEFAULT_TIMEOUT):
+    def await_workflow_success(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_workflow_state(ex_id, states.SUCCESS, delay, timeout)
 
-    def await_workflow_error(self, ex_id, delay=DEFAULT_DELAY,
-                             timeout=DEFAULT_TIMEOUT):
+    def await_workflow_error(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_workflow_state(ex_id, states.ERROR, delay, timeout)
 
-    def await_workflow_paused(self, ex_id, delay=DEFAULT_DELAY,
-                              timeout=DEFAULT_TIMEOUT):
+    def await_workflow_paused(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_workflow_state(ex_id, states.PAUSED, delay, timeout)
 
-    def await_workflow_cancelled(self, ex_id, delay=DEFAULT_DELAY,
-                                 timeout=DEFAULT_TIMEOUT):
+    def await_workflow_cancelled(
+        self, ex_id, delay=DEFAULT_DELAY, timeout=DEFAULT_TIMEOUT
+    ):
         self.await_workflow_state(ex_id, states.CANCELLED, delay, timeout)

@@ -32,14 +32,19 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'cron_triggers_v2',
-        sa.Column('first_execution_time', sa.DateTime(), nullable=True)
+        sa.Column('first_execution_time', sa.DateTime(), nullable=True),
     )
 
     op.create_unique_constraint(
         None,
-        'cron_triggers_v2', [
-            'workflow_input_hash', 'workflow_name', 'pattern',
-            'project_id', 'workflow_params_hash', 'remaining_executions',
-            'first_execution_time'
-        ]
+        'cron_triggers_v2',
+        [
+            'workflow_input_hash',
+            'workflow_name',
+            'pattern',
+            'project_id',
+            'workflow_params_hash',
+            'remaining_executions',
+            'first_execution_time',
+        ],
     )

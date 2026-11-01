@@ -69,8 +69,9 @@ class TaskLogicalState(object):
     to the logic of the workflow type and state of other tasks.
     """
 
-    def __init__(self, state, state_info=None, cardinality=0,
-                 triggered_by=None):
+    def __init__(
+        self, state, state_info=None, cardinality=0, triggered_by=None
+    ):
         self.state = state
         self.state_info = state_info
         self.cardinality = cardinality
@@ -139,11 +140,7 @@ class WorkflowController(object):
 
         cmds = [
             commands.RunExistingTask(
-                self.wf_ex,
-                self.wf_spec,
-                t_e,
-                reset,
-                rerun=True
+                self.wf_ex, self.wf_spec, t_e, reset, rerun=True
             )
             for t_e in task_execs
         ]
@@ -219,10 +216,12 @@ class WorkflowController(object):
 
         :return: True if there is one or more tasks in cancelled state.
         """
-        return db_api.get_task_executions_count(
-            workflow_execution_id=self.wf_ex.id,
-            state=states.CANCELLED
-        ) > 0
+        return (
+            db_api.get_task_executions_count(
+                workflow_execution_id=self.wf_ex.id, state=states.CANCELLED
+            )
+            > 0
+        )
 
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
@@ -236,8 +235,7 @@ class WorkflowController(object):
         # TODO(rakhmerov): This method should also be able to work with task_ex
         # to cover 'split' (aka 'merge') use case.
         upstream_task_execs = self._get_upstream_task_executions(
-            task_spec,
-            triggered_by=triggered_by
+            task_spec, triggered_by=triggered_by
         )
 
         return data_flow.evaluate_upstream_context(upstream_task_execs)
@@ -287,5 +285,5 @@ class WorkflowController(object):
         return db_api.get_task_executions(
             workflow_execution_id=self.wf_ex.id,
             sort_keys=[],  # disable sorting
-            **kwargs
+            **kwargs,
         )

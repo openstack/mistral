@@ -33,6 +33,7 @@ import sqlalchemy as sa
 def upgrade():
     op.alter_column(
         'workflow_executions_v2',
-        column_name='description', type_=sa.Text(),
-        existing_type=sa.String(length=255)
+        column_name='description',
+        type_=sa.Text(),
+        existing_type=sa.String(length=255),
     )

@@ -44,9 +44,9 @@ class TaskDefaultsSpec(base.BaseSpec):
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
-            }
+            },
         },
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     @classmethod
@@ -64,7 +64,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             'timeout',
             'pause-before',
             'concurrency',
-            'fail-on'
+            'fail-on',
         )
 
         on_spec_cls = on_clause.OnClauseSpec
@@ -98,8 +98,10 @@ class TaskDefaultsSpec(base.BaseSpec):
         if not val:
             return
 
-        [self.validate_expr(t)
-            for t in ([val] if isinstance(val, str) else val)]
+        [
+            self.validate_expr(t)
+            for t in ([val] if isinstance(val, str) else val)
+        ]
 
     def get_policies(self):
         return self._policies

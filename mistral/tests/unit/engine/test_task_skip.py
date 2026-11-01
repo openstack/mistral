@@ -20,7 +20,6 @@ from mistral.workflow import states
 
 
 class TaskSkipTest(base.EngineTestCase):
-
     def test_basic_task_skip(self):
         workflow = """
         version: '2.0'
@@ -47,9 +46,7 @@ class TaskSkipTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         t1_ex = self._assert_single_item(
-            task_execs,
-            name='t1',
-            state=states.ERROR
+            task_execs, name='t1', state=states.ERROR
         )
 
         # Skip t1 and wait for wf to complete
@@ -88,9 +85,7 @@ class TaskSkipTest(base.EngineTestCase):
 
         self.assertEqual(2, len(task_execs))
         t1_ex = self._assert_single_item(
-            task_execs,
-            name='t1',
-            state=states.ERROR
+            task_execs, name='t1', state=states.ERROR
         )
 
         # Skip t1 and wait for wf to complete
@@ -133,9 +128,7 @@ class TaskSkipTest(base.EngineTestCase):
 
         self.assertEqual(2, len(task_execs))
         t1_ex = self._assert_single_item(
-            task_execs,
-            name='t1',
-            state=states.ERROR
+            task_execs, name='t1', state=states.ERROR
         )
 
         # Skip t1 and wait for wf to complete
@@ -181,9 +174,7 @@ class TaskSkipTest(base.EngineTestCase):
             self.assertEqual(2, len(task_execs))
 
             t1_ex = self._assert_single_item(
-                task_execs,
-                name='t1',
-                state=states.ERROR
+                task_execs, name='t1', state=states.ERROR
             )
 
             publish_before_skip = {"error": 1}
@@ -198,9 +189,7 @@ class TaskSkipTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             t1_ex = self._assert_single_item(
-                task_execs,
-                name='t1',
-                state=states.SKIPPED
+                task_execs, name='t1', state=states.SKIPPED
             )
 
             publish_after_skip = {"skip": 1}
@@ -233,9 +222,7 @@ class TaskSkipTest(base.EngineTestCase):
         self.assertEqual(1, len(task_execs))
 
         t1_ex = self._assert_single_item(
-            task_execs,
-            name='t1',
-            state=states.ERROR
+            task_execs, name='t1', state=states.ERROR
         )
 
         self.engine.rerun_workflow(t1_ex.id, skip=True)

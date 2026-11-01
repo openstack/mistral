@@ -61,17 +61,9 @@ class TaskSpec(base.BaseSpec):
             "type": types.WORKFLOW_TYPE,
             "action": types.NONEMPTY_STRING,
             "workflow": types.NONEMPTY_STRING,
-            "input": {
-                "oneOf": [
-                    types.NONEMPTY_DICT,
-                    types.NONEMPTY_STRING
-                ]
-            },
+            "input": {"oneOf": [types.NONEMPTY_DICT, types.NONEMPTY_STRING]},
             "with-items": {
-                "oneOf": [
-                    types.NONEMPTY_STRING,
-                    types.UNIQUE_STRING_LIST
-                ]
+                "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
             },
             "publish": types.NONEMPTY_DICT,
             "publish-on-error": types.NONEMPTY_DICT,
@@ -85,29 +77,20 @@ class TaskSpec(base.BaseSpec):
             "fail-on": types.EXPRESSION_OR_BOOLEAN,
             "target": types.NONEMPTY_STRING,
             "keep-result": types.EXPRESSION_OR_BOOLEAN,
-            "safe-rerun": types.EXPRESSION_OR_BOOLEAN
+            "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
         },
         "additionalProperties": False,
         "anyOf": [
             {
-                "not": {
-                    "type": "object",
-                    "required": ["action", "workflow"]
-                },
+                "not": {"type": "object", "required": ["action", "workflow"]},
             },
             {
                 "oneOf": [
-                    {
-                        "type": "object",
-                        "required": ["action"]
-                    },
-                    {
-                        "type": "object",
-                        "required": ["workflow"]
-                    }
+                    {"type": "object", "required": ["action"]},
+                    {"type": "object", "required": ["workflow"]},
                 ]
-            }
-        ]
+            },
+        ],
     }
 
     def __init__(self, data, validate):
@@ -131,7 +114,7 @@ class TaskSpec(base.BaseSpec):
             'timeout',
             'pause-before',
             'concurrency',
-            'fail-on'
+            'fail-on',
         )
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)
@@ -165,7 +148,8 @@ class TaskSpec(base.BaseSpec):
         if len(task_name) > MAX_LENGTH_TASK_NAME:
             raise exc.InvalidModelException(
                 "The length of a '{0}' task name must not exceed {1}"
-                " symbols".format(task_name, MAX_LENGTH_TASK_NAME))
+                " symbols".format(task_name, MAX_LENGTH_TASK_NAME)
+            )
 
     def _get_with_items_as_dict(self):
         raw = self._data.get('with-items', [])
@@ -202,8 +186,10 @@ class TaskSpec(base.BaseSpec):
                 try:
                     array = json.loads(array)
                 except Exception as e:
-                    msg = ("Invalid array in 'with-items' clause: "
-                           "%s, error: %s" % (array, str(e)))
+                    msg = (
+                        "Invalid array in 'with-items' clause: "
+                        "%s, error: %s" % (array, str(e))
+                    )
                     raise exc.InvalidModelException(msg)
 
             with_items[var_name] = array
@@ -216,8 +202,7 @@ class TaskSpec(base.BaseSpec):
         if self._action:
             self._action, params = self._parse_cmd_and_input(self._action)
         elif self._workflow:
-            self._workflow, params = self._parse_cmd_and_input(
-                self._workflow)
+            self._workflow, params = self._parse_cmd_and_input(self._workflow)
         else:
             self._action = 'std.noop'
 
@@ -255,18 +240,15 @@ class TaskSpec(base.BaseSpec):
 
         if state == states.SUCCESS and self._publish:
             spec = publish.PublishSpec(
-                {'branch': self._publish},
-                validate=self._validate
+                {'branch': self._publish}, validate=self._validate
             )
         elif state == states.ERROR and self._publish_on_error:
             spec = publish.PublishSpec(
-                {'branch': self._publish_on_error},
-                validate=self._validate
+                {'branch': self._publish_on_error}, validate=self._validate
             )
         elif state == states.SKIPPED and self._publish_on_skip:
             spec = publish.PublishSpec(
-                {'branch': self._publish_on_skip},
-                validate=self._validate
+                {'branch': self._publish_on_skip}, validate=self._validate
             )
         return spec
 
@@ -277,8 +259,7 @@ class TaskSpec(base.BaseSpec):
         return self._safe_rerun
 
     def get_type(self):
-        return (WORKFLOW_TASK_TYPE if self._workflow
-                else ACTION_TASK_TYPE)
+        return WORKFLOW_TASK_TYPE if self._workflow else ACTION_TASK_TYPE
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
@@ -289,21 +270,17 @@ class DirectWorkflowTaskSpec(TaskSpec):
         "properties": {
             "type": {"enum": [_polymorphic_value]},
             "join": {
-                "oneOf": [
-                    {"enum": ["all", "one"]},
-                    types.POSITIVE_INTEGER
-                ]
+                "oneOf": [{"enum": ["all", "one"]}, types.POSITIVE_INTEGER]
             },
             "on-complete": on_clause.OnClauseSpec.get_schema(),
             "on-success": on_clause.OnClauseSpec.get_schema(),
             "on-error": on_clause.OnClauseSpec.get_schema(),
-            "on-skip": on_clause.OnClauseSpec.get_schema()
-        }
+            "on-skip": on_clause.OnClauseSpec.get_schema(),
+        },
     }
 
     _schema = utils.merge_dicts(
-        copy.deepcopy(TaskSpec._schema),
-        _direct_workflow_schema
+        copy.deepcopy(TaskSpec._schema), _direct_workflow_schema
     )
 
     def __init__(self, data, validate):
@@ -340,8 +317,10 @@ class DirectWorkflowTaskSpec(TaskSpec):
         if not val:
             return
 
-        [self.validate_expr(t)
-            for t in ([val] if isinstance(val, str) else val)]
+        [
+            self.validate_expr(t)
+            for t in ([val] if isinstance(val, str) else val)
+        ]
 
     def get_publish(self, state):
         spec = super(DirectWorkflowTaskSpec, self).get_publish(state)
@@ -392,13 +371,12 @@ class ReverseWorkflowTaskSpec(TaskSpec):
             "type": {"enum": [_polymorphic_value]},
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
-            }
-        }
+            },
+        },
     }
 
     _schema = utils.merge_dicts(
-        copy.deepcopy(TaskSpec._schema),
-        _reverse_workflow_schema
+        copy.deepcopy(TaskSpec._schema), _reverse_workflow_schema
     )
 
     def __init__(self, data, validate):

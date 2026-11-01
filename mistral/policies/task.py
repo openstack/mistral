@@ -22,35 +22,20 @@ rules = [
         name=TASKS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return the specified task.',
-        operations=[
-            {
-                'path': '/v2/tasks/{task_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/tasks/{task_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=TASKS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all tasks.',
-        operations=[
-            {
-                'path': '/v2/tasks',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/tasks', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=TASKS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update the specified task execution.',
-        operations=[
-            {
-                'path': '/v2/tasks',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/tasks', 'method': 'PUT'}],
+    ),
 ]
 
 

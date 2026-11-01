@@ -32,20 +32,22 @@ class ApplyMemoryLimitTest(base.BaseTest):
     @mock.patch.object(resource, 'setrlimit')
     @mock.patch.object(resource, 'getrlimit')
     def test_sets_soft_limit_only(self, get_mock, set_mock):
-        get_mock.return_value = (resource.RLIM_INFINITY,
-                                 resource.RLIM_INFINITY)
+        get_mock.return_value = (
+            resource.RLIM_INFINITY,
+            resource.RLIM_INFINITY,
+        )
 
         resource_limits.apply_memory_limit(512)
 
         set_mock.assert_called_once_with(
-            resource.RLIMIT_AS,
-            (512 * 1024 * 1024, resource.RLIM_INFINITY)
+            resource.RLIMIT_AS, (512 * 1024 * 1024, resource.RLIM_INFINITY)
         )
 
     @mock.patch.object(resource, 'setrlimit')
     @mock.patch.object(resource, 'getrlimit')
-    def test_soft_limit_capped_by_existing_hard_limit(self, get_mock,
-                                                      set_mock):
+    def test_soft_limit_capped_by_existing_hard_limit(
+        self, get_mock, set_mock
+    ):
         hard = 256 * 1024 * 1024
         get_mock.return_value = (resource.RLIM_INFINITY, hard)
 
@@ -88,7 +90,7 @@ class MemoryBombTest(base.BaseTest):
             [sys.executable, '-c', script],
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
         self.assertIn('EVAL_ERROR', out.stdout)

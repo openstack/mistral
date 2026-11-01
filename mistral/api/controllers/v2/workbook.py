@@ -37,15 +37,19 @@ LOG = logging.getLogger(__name__)
 
 
 class WorkbooksController(rest.RestController, hooks.HookController):
-    __hooks__ = [ct_hook.ContentTypeHook("application/json;charset=utf-8",
-                                         ['POST', 'PUT'])]
+    __hooks__ = [
+        ct_hook.ContentTypeHook(
+            "application/json;charset=utf-8", ['POST', 'PUT']
+        )
+    ]
     validate = validation.SpecValidationController(
         spec_parser.get_workbook_spec_from_yaml
     )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workbook, wtypes.text, wtypes.text,
-                         types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.Workbook, wtypes.text, wtypes.text, types.uniquelist
+    )
     def get(self, name, namespace='', fields=''):
         """Return the named workbook.
 
@@ -68,10 +72,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         r = rest_utils.create_db_retry_object()
 
         db_model = r.call(
-            db_api.get_workbook,
-            name,
-            namespace=namespace,
-            fields=fields
+            db_api.get_workbook, name, namespace=namespace, fields=fields
         )
         if fields:
             return resources.Workbook.from_tuples(zip(fields, db_model))
@@ -102,11 +103,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         LOG.debug("Update workbook [definition=%s]", definition)
 
         wb_db = rest_utils.rest_retry_on_db_error(
-            workbooks.update_workbook_v2)(
+            workbooks.update_workbook_v2
+        )(
             definition,
             namespace=namespace,
             scope=scope,
-            validate=not skip_validation
+            validate=not skip_validation,
         )
 
         return resources.Workbook.from_db_model(wb_db).to_json()
@@ -137,11 +139,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         LOG.debug("Create workbook [definition=%s]", definition)
 
         wb_db = rest_utils.rest_retry_on_db_error(
-            workbooks.create_workbook_v2)(
+            workbooks.create_workbook_v2
+        )(
             definition,
             namespace=namespace,
             scope=scope,
-            validate=not skip_validation
+            validate=not skip_validation,
         )
 
         pecan.response.status = 201
@@ -161,20 +164,40 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         LOG.debug("Delete workbook [name=%s, namespace=%s]", name, namespace)
 
         rest_utils.rest_retry_on_db_error(db_api.delete_workbook)(
-            name,
-            namespace
+            name, namespace
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workbooks, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, wtypes.text,
-                         resources.SCOPE_TYPES, wtypes.text,
-                         wtypes.text, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', created_at=None,
-                definition=None, name=None, scope=None, tags=None,
-                updated_at=None, namespace=None):
+    @wsme_pecan.wsexpose(
+        resources.Workbooks,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        resources.SCOPE_TYPES,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        created_at=None,
+        definition=None,
+        name=None,
+        scope=None,
+        tags=None,
+        updated_at=None,
+        namespace=None,
+    ):
         """Return a list of workbooks.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -211,12 +234,19 @@ class WorkbooksController(rest.RestController, hooks.HookController):
             scope=scope,
             tags=tags,
             updated_at=updated_at,
-            namespace=namespace
+            namespace=namespace,
         )
 
-        LOG.debug("Fetch workbooks. marker=%s, limit=%s, sort_keys=%s, "
-                  "sort_dirs=%s, fields=%s, filters=%s", marker, limit,
-                  sort_keys, sort_dirs, fields, filters)
+        LOG.debug(
+            "Fetch workbooks. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, fields=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            fields,
+            filters,
+        )
 
         return rest_utils.get_all(
             resources.Workbooks,
@@ -228,5 +258,5 @@ class WorkbooksController(rest.RestController, hooks.HookController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
-            **filters
+            **filters,
         )

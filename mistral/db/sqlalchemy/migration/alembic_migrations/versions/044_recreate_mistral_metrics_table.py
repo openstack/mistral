@@ -46,14 +46,15 @@ def upgrade():
         sa.UniqueConstraint('name'),
     )
 
-    op.bulk_insert(mistral_metrics_table,
-                   [
-                       {
-                           'created_at': utils.utc_now_sec(),
-                           'updated_at': utils.utc_now_sec(),
-                           'id': 1,
-                           'name': 'maintenance_status',
-                           'value': maintenance.RUNNING
-                       }
-                   ]
-                   )
+    op.bulk_insert(
+        mistral_metrics_table,
+        [
+            {
+                'created_at': utils.utc_now_sec(),
+                'updated_at': utils.utc_now_sec(),
+                'id': 1,
+                'name': 'maintenance_status',
+                'value': maintenance.RUNNING,
+            }
+        ],
+    )

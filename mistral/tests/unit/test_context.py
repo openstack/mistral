@@ -16,12 +16,13 @@ from mistral.tests.unit.engine import base
 
 
 class ContextTest(base.EngineTestCase):
-
     def test_target_insecure(self):
         # Defaults to False if X-Target-Auth-Uri isn't passed.
-        headers = context._extract_mistral_auth_params({
-            'X-Target-Insecure': 'True',
-        })
+        headers = context._extract_mistral_auth_params(
+            {
+                'X-Target-Insecure': 'True',
+            }
+        )
         self.assertFalse(headers['insecure'])
 
         headers = {
@@ -43,4 +44,6 @@ class ContextTest(base.EngineTestCase):
         headers['X-Target-Insecure'] = 'S3cure'
         self.assertRaises(
             exceptions.MistralException,
-            context._extract_mistral_auth_params, headers)
+            context._extract_mistral_auth_params,
+            headers,
+        )

@@ -44,6 +44,7 @@ def wrap_wsme_controller_exception(func):
     This decorator wraps controllers method to manage wsme exceptions:
     In case of expected error it aborts the request with specific status code.
     """
+
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         try:
@@ -53,10 +54,7 @@ def wrap_wsme_controller_exception(func):
 
             LOG.error('Error during API call: %s', str(e))
 
-            raise wsme_exc.ClientSideError(
-                msg=str(e),
-                status_code=e.http_code
-            )
+            raise wsme_exc.ClientSideError(msg=str(e), status_code=e.http_code)
 
     return wrapped
 
@@ -67,6 +65,7 @@ def wrap_pecan_controller_exception(func):
     This decorator wraps controllers method to manage pecan exceptions:
     In case of expected error it aborts the request with specific status code.
     """
+
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         try:
@@ -78,7 +77,7 @@ def wrap_pecan_controller_exception(func):
                 status=e.http_code,
                 content_type='application/json',
                 body=json.dumps(dict(faultstring=str(e))),
-                charset='UTF-8'
+                charset='UTF-8',
             )
 
     return wrapped
@@ -133,8 +132,8 @@ def validate_fields(fields, object_fields):
 
     if invalid_fields:
         raise wsme_exc.ClientSideError(
-            'Some fields do not exist  [%s], please choose from [%s]' %
-            (', '.join(invalid_fields), ', '.join(object_fields))
+            'Some fields do not exist  [%s], please choose from [%s]'
+            % (', '.join(invalid_fields), ', '.join(object_fields))
         )
 
 
@@ -152,8 +151,7 @@ def fields_list_to_cls_fields_tuple(model, f):
         # surface as an unhandled HTTP 500 with a traceback.
         if not hasattr(model, field):
             raise wsme_exc.ClientSideError(
-                "Field '%s' does not exist." % field,
-                status_code=400
+                "Field '%s' does not exist." % field, status_code=400
             )
 
         cls_fields.append(getattr(model, field))
@@ -161,10 +159,20 @@ def fields_list_to_cls_fields_tuple(model, f):
     return tuple(cls_fields)
 
 
-def get_all(list_cls, cls, get_all_function, get_function,
-            resource_function=None, marker=None, limit=None,
-            sort_keys=None, sort_dirs=None, fields=None,
-            all_projects=False, **filters):
+def get_all(
+    list_cls,
+    cls,
+    get_all_function,
+    get_function,
+    resource_function=None,
+    marker=None,
+    limit=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    all_projects=False,
+    **filters,
+):
     """Return a list of cls.
 
     :param list_cls: REST Resource collection class (e.g.: Actions,
@@ -210,8 +218,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     # public.
     insecure = False
 
-    if (all_projects or
-            (auth_ctx.ctx().is_admin)):
+    if all_projects or (auth_ctx.ctx().is_admin):
         insecure = True
 
     marker_obj = None
@@ -227,7 +234,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
                 sort_keys=sort_keys,
                 sort_dirs=sort_dirs,
                 insecure=insecure,
-                **filters
+                **filters,
             )
 
             for db_model in db_models:
@@ -247,7 +254,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
                         ' with a list request [model_class=%s, id=%s]',
                         type(db_model),
                         db_model.id,
-                        exc_info=True
+                        exc_info=True,
                     )
 
     rest_resources = []
@@ -266,15 +273,13 @@ def get_all(list_cls, cls, get_all_function, get_function,
             sort_dirs=sort_dirs,
             fields=fields,
             insecure=insecure,
-            **filters
+            **filters,
         )
 
         for obj_values in db_list:
             # Note: in case if only certain fields have been requested
             # "db_list" contains tuples with values of db objects.
-            rest_resources.append(
-                cls.from_tuples(zip(fields, obj_values))
-            )
+            rest_resources.append(cls.from_tuples(zip(fields, obj_values)))
     else:
         r.call(_get_all_function)
 
@@ -285,7 +290,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
         sort_keys=','.join(sort_keys),
         sort_dirs=','.join(sort_dirs),
         fields=','.join(fields) if fields else '',
-        **filters
+        **filters,
     )
 
 
@@ -306,11 +311,11 @@ def create_db_retry_object():
             (
                 sa.exc.OperationalError,
                 db_exc.DBDeadlock,
-                db_exc.DBConnectionError
+                db_exc.DBConnectionError,
             )
         ),
         stop=tenacity.stop_after_attempt(10),
-        wait=tenacity.wait_incrementing(increment=0.5)  # 0.5 seconds
+        wait=tenacity.wait_incrementing(increment=0.5),  # 0.5 seconds
     )
 
 
@@ -333,9 +338,7 @@ def load_deferred_fields(ex, fields):
 def clear_sensitive_headers(dirty_data):
     if not dirty_data:
         return dirty_data
-    sensitive = {
-        h.lower() for h in cfg.CONF.action_logging.sensitive_headers
-    }
+    sensitive = {h.lower() for h in cfg.CONF.action_logging.sensitive_headers}
     clean_data = dirty_data.copy()
     for key in list(clean_data):
         if str(key).lower() in sensitive:

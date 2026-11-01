@@ -66,6 +66,7 @@ def _get_spec_version(spec_dict):
 
     def _raise(ver):
         raise exc.DSLParsingException('Unsupported DSL version: %s' % ver)
+
     try:
         str_ver = str(float(ver))
     except (ValueError, TypeError):
@@ -80,11 +81,10 @@ def _get_spec_version(spec_dict):
 # Factory methods to get specifications either from raw YAML formatted text or
 # from dictionaries parsed from YAML formatted text.
 
+
 def get_workbook_spec(spec_dict, validate):
     if _get_spec_version(spec_dict) == V2_0:
-        return base.instantiate_spec(
-            wb_v2.WorkbookSpec, spec_dict, validate
-        )
+        return base.instantiate_spec(wb_v2.WorkbookSpec, spec_dict, validate)
 
     return None
 
@@ -127,11 +127,7 @@ def get_workflow_spec(spec_dict):
 
 
 def get_workflow_list_spec(spec_dict, validate):
-    return base.instantiate_spec(
-        wf_v2.WorkflowListSpec,
-        spec_dict,
-        validate
-    )
+    return base.instantiate_spec(wf_v2.WorkflowListSpec, spec_dict, validate)
 
 
 def get_workflow_list_spec_from_yaml(text, validate=True):
@@ -158,7 +154,7 @@ def get_action_definition(wb_def, action_name):
 
 
 def _parse_def_from_wb(wb_def, section_name, item_name):
-    io = six_io.StringIO(wb_def[wb_def.index(section_name):])
+    io = six_io.StringIO(wb_def[wb_def.index(section_name) :])
     io.readline()
 
     definition = []
@@ -194,6 +190,7 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
 
 # Methods for obtaining specifications in a more efficient way using
 # caching techniques.
+
 
 @cachetools.cached(_WF_EX_CACHE, lock=_WF_EX_CACHE_LOCK)
 def get_workflow_spec_by_execution_id(wf_ex_id):

@@ -24,17 +24,20 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 
 
-def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
-                   target=None, async_=True, timeout=None):
+def _run_at_target(
+    action,
+    action_ex_id,
+    safe_rerun,
+    exec_ctx,
+    target=None,
+    async_=True,
+    timeout=None,
+):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
     executor.run_action(
-        action,
-        action_ex_id,
-        safe_rerun,
-        exec_ctx,
-        redelivered=True
+        action, action_ex_id, safe_rerun, exec_ctx, redelivered=True
     )
 
 

@@ -37,7 +37,7 @@ WF_EXEC = {
     'description': None,
     'output': None,
     'accepted': False,
-    'some_invalid_field': "foobar"
+    'some_invalid_field': "foobar",
 }
 
 
@@ -83,8 +83,7 @@ class DBModelTest(test_base.DbTestCase):
         # check them separately.
 
         self.assertEqual(
-            utils.datetime_to_str(expected['created_at']),
-            actual['created_at']
+            utils.datetime_to_str(expected['created_at']), actual['created_at']
         )
 
         # Now check the rest of the columns.
@@ -107,15 +106,14 @@ class DBModelTest(test_base.DbTestCase):
             setattr,
             wf_ex,
             'output',
-            {'r': 'A' * (max_len + 1)}
+            {'r': 'A' * (max_len + 1)},
         )
 
     def test_cut_to_size_limit(self):
         self.override_config('execution_field_size_limit_kb', 1, 'engine')
 
         msg = db_models.cut_to_size_limit(
-            'A\n' * 1024,
-            lambda m: {'result': m}
+            'A\n' * 1024, lambda m: {'result': m}
         )
 
         self.assertTrue(msg.endswith('...'))
@@ -130,6 +128,5 @@ class DBModelTest(test_base.DbTestCase):
         msg = 'A' * 4096
 
         self.assertEqual(
-            msg,
-            db_models.cut_to_size_limit(msg, lambda m: {'result': m})
+            msg, db_models.cut_to_size_limit(msg, lambda m: {'result': m})
         )

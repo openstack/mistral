@@ -35,9 +35,7 @@ def cleanup():
 def get_notifier(notifier_name):
     if not _NOTIFIERS.get(notifier_name):
         mgr = driver.DriverManager(
-            'mistral.notifiers',
-            notifier_name,
-            invoke_on_load=True
+            'mistral.notifiers', notifier_name, invoke_on_load=True
         )
 
         _NOTIFIERS[notifier_name] = mgr.driver
@@ -50,7 +48,7 @@ def get_notification_publisher(publisher_name):
         mgr = driver.DriverManager(
             'mistral.notification.publishers',
             publisher_name,
-            invoke_on_load=True
+            invoke_on_load=True,
         )
 
         _NOTIFICATION_PUBLISHERS[publisher_name] = mgr.driver

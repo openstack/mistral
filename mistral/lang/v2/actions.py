@@ -29,7 +29,7 @@ class ActionSpec(base.BaseSpec):
             "output": types.ANY_NULLABLE,
         },
         "required": ["base"],
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     def __init__(self, data, validate):

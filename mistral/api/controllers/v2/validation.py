@@ -20,7 +20,6 @@ from mistral import exceptions as exc
 
 
 class SpecValidationController(rest.RestController):
-
     def __init__(self, parser):
         super(SpecValidationController, self).__init__()
 

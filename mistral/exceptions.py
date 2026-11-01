@@ -27,7 +27,8 @@ class MistralFailuresBase(Exception):
             self.message = message
 
         super(MistralFailuresBase, self).__init__(
-            '%d: %s' % (self.http_code, self.message))
+            '%d: %s' % (self.http_code, self.message)
+        )
 
     @property
     def code(self):
@@ -70,10 +71,12 @@ class MistralException(MistralFailuresBase):
     To correctly use this class, inherit from it and define a 'message' and
     'http_code' properties.
     """
+
     message = "An unknown exception occurred"
 
 
 # Database errors.
+
 
 class DBError(MistralError):
     http_code = 400
@@ -90,6 +93,7 @@ class DBEntityNotFoundError(DBError):
 
 
 # DSL exceptions.
+
 
 class DSLParsingException(MistralException):
     http_code = 400
@@ -113,6 +117,7 @@ class InvalidModelException(DSLParsingException):
 
 
 # Various common exceptions and errors.
+
 
 class EvaluationException(MistralException):
     http_code = 400

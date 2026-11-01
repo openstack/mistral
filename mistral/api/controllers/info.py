@@ -22,7 +22,6 @@ from pecan import rest
 
 
 class InfoController(rest.RestController):
-
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose('json')
     def get(self):

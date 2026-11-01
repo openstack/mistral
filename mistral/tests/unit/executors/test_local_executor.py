@@ -34,9 +34,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 @mock.patch.object(
-    r_exe.RemoteExecutor,
-    'run_action',
-    mock.MagicMock(return_value=None)
+    r_exe.RemoteExecutor, 'run_action', mock.MagicMock(return_value=None)
 )
 class LocalExecutorTest(base.ExecutorTestCase):
     def setUp(self):
@@ -49,11 +47,11 @@ class LocalExecutorTest(base.ExecutorTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success.
-                'Task 2',               # Mock task2 success.
-                'Task 3'                # Mock task3 success.
+                'Task 1',  # Mock task1 success.
+                'Task 2',  # Mock task2 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_run(self):
         wb_def = """
@@ -108,12 +106,12 @@ class LocalExecutorTest(base.ExecutorTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1.0',             # Mock task1 success.
-                'Task 1.1',             # Mock task1 success.
-                'Task 1.2',             # Mock task1 success.
-                'Task 2'                # Mock task2 success.
+                'Task 1.0',  # Mock task1 success.
+                'Task 1.1',  # Mock task1 success.
+                'Task 1.2',  # Mock task1 success.
+                'Task 2',  # Mock task2 success.
             ]
-        )
+        ),
     )
     def test_run_with_items(self):
         wb_def = """

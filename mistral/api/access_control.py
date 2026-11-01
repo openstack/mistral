@@ -44,8 +44,9 @@ def setup(app):
         return app
 
 
-def enforce(action, context, target=None, do_raise=True,
-            exc=exc.NotAllowedException):
+def enforce(
+    action, context, target=None, do_raise=True, exc=exc.NotAllowedException
+):
     """Verifies that the action is valid on the target in this context.
 
     :param action: String, representing the action to be checked.
@@ -79,11 +80,7 @@ def enforce(action, context, target=None, do_raise=True,
     _ensure_enforcer_initialization()
 
     return _ENFORCER.authorize(
-        action,
-        target_obj,
-        policy_context,
-        do_raise=do_raise,
-        exc=exc
+        action, target_obj, policy_context, do_raise=do_raise, exc=exc
     )
 
 

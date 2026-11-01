@@ -56,8 +56,7 @@ def get_rpc_server_driver():
     global _IMPL_SERVER
     if not _IMPL_SERVER:
         _IMPL_SERVER = driver.DriverManager(
-            'mistral.rpc.backends',
-            'oslo_server'
+            'mistral.rpc.backends', 'oslo_server'
         ).driver
 
     return _IMPL_SERVER
@@ -68,8 +67,7 @@ def get_rpc_client_driver():
     global _IMPL_CLIENT
     if not _IMPL_CLIENT:
         _IMPL_CLIENT = driver.DriverManager(
-            'mistral.rpc.backends',
-            'oslo_client'
+            'mistral.rpc.backends', 'oslo_client'
         ).driver
 
     return _IMPL_CLIENT
@@ -101,9 +99,10 @@ def wrap_messaging_exception(method):
             raise
         except MessagingTimeout:
             timeout = cfg.CONF.rpc_response_timeout
-            raise exc.MistralException('This rpc call "%s" took longer than '
-                                       'configured %s seconds.' %
-                                       (method.__name__, timeout))
+            raise exc.MistralException(
+                'This rpc call "%s" took longer than '
+                'configured %s seconds.' % (method.__name__, timeout)
+            )
         except (client.RemoteError, exc.KombuException, Exception) as e:
             # Since we're going to transform the original exception
             # we need to log it as is.

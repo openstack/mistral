@@ -51,9 +51,18 @@ class Task(object, metaclass=abc.ABCMeta):
     Mistral engine or its components in order to manipulate with tasks.
     """
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False, triggered_by=None,
-                 rerun=False):
+    def __init__(
+        self,
+        wf_ex,
+        wf_spec,
+        task_spec,
+        ctx,
+        task_ex=None,
+        unique_key=None,
+        waiting=False,
+        triggered_by=None,
+        rerun=False,
+    ):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
@@ -105,7 +114,7 @@ class Task(object, metaclass=abc.ABCMeta):
             "created_at": utils.datetime_to_str(self.task_ex.created_at),
             "updated_at": utils.datetime_to_str(self.task_ex.updated_at),
             "started_at": utils.datetime_to_str(self.task_ex.started_at),
-            "finished_at": utils.datetime_to_str(self.task_ex.finished_at)
+            "finished_at": utils.datetime_to_str(self.task_ex.finished_at),
         }
 
         def _send_notification():
@@ -114,7 +123,7 @@ class Task(object, metaclass=abc.ABCMeta):
                 data,
                 event,
                 self.task_ex.updated_at,
-                filtered_publishers
+                filtered_publishers,
             )
 
         post_tx_queue.register_operation(_send_notification)
@@ -136,6 +145,12 @@ class Task(object, metaclass=abc.ABCMeta):
 
     def is_waiting(self):
         return self.waiting
+
+    def is_created(self):
+        return self.created
+
+    def is_state_changed(self):
+        return self.state_changed
 
     def get_expression_context(self, ctx=None):
         assert self.task_ex
@@ -164,8 +179,7 @@ class Task(object, metaclass=abc.ABCMeta):
         """
 
         return expr.evaluate_recursively(
-            data,
-            self.get_expression_context(ctx)
+            data, self.get_expression_context(ctx)
         )
 
     def set_runtime_context_value(self, key, value):
@@ -257,7 +271,7 @@ class Task(object, metaclass=abc.ABCMeta):
             t_execs = db_api.get_task_executions(
                 workflow_execution_id=self.wf_ex.id,
                 unique_key=self.unique_key,
-                state=states.WAITING
+                state=states.WAITING,
             )
 
             self.task_ex = t_execs[0] if t_execs else None
@@ -269,7 +283,7 @@ class Task(object, metaclass=abc.ABCMeta):
             if not self.task_ex:
                 t_execs = db_api.get_task_executions(
                     workflow_execution_id=self.wf_ex.id,
-                    unique_key=self.unique_key
+                    unique_key=self.unique_key,
                 )
 
                 self.task_ex = t_execs[0] if t_execs else None
@@ -278,11 +292,13 @@ class Task(object, metaclass=abc.ABCMeta):
 
             if not self.task_ex:
                 self._create_task_execution(
-                    state=states.WAITING,
-                    state_info=msg
+                    state=states.WAITING, state_info=msg
                 )
-            elif self.task_ex.state not in (states.WAITING, states.IDLE,
-                                            states.RUNNING_DELAYED):
+            elif self.task_ex.state not in (
+                states.WAITING,
+                states.IDLE,
+                states.RUNNING_DELAYED,
+            ):
                 new_pass = states.is_completed(self.task_ex.state)
 
                 if self.set_state(states.WAITING, msg) and new_pass:
@@ -291,9 +307,13 @@ class Task(object, metaclass=abc.ABCMeta):
                     self.task_ex.next_tasks = []
                     self.task_ex.processed = False
 
-                    for key in ('wait_before_policy', 'wait_after_policy',
-                                'retry_task_policy', 'timeout_policy',
-                                policies._TIMED_OUT_KEY):
+                    for key in (
+                        'wait_before_policy',
+                        'wait_after_policy',
+                        'retry_task_policy',
+                        'timeout_policy',
+                        policies._TIMED_OUT_KEY,
+                    ):
                         self.task_ex.runtime_context.pop(key, None)
 
                     self.task_ex.runtime_context['new_pass'] = True
@@ -318,9 +338,7 @@ class Task(object, metaclass=abc.ABCMeta):
 
         if cur_state != state or self.task_ex.state_info != state_info:
             task_ex = db_api.update_task_execution_state(
-                id=self.task_ex.id,
-                cur_state=cur_state,
-                state=state
+                id=self.task_ex.id, cur_state=cur_state, state=state
             )
 
             if task_ex is None:
@@ -328,16 +346,20 @@ class Task(object, metaclass=abc.ABCMeta):
                 return False
 
             self.task_ex = task_ex
-            self.task_ex.state_info = json.dumps(state_info) \
-                if isinstance(state_info, dict) else state_info
+            self.task_ex.state_info = (
+                json.dumps(state_info)
+                if isinstance(state_info, dict)
+                else state_info
+            )
             self.state_changed = True
 
             # Recalculating "started_at" timestamp only if the state
             # was WAITING (all preconditions are satisfied and it's
             # ready to start) or IDLE, or the task is being rerun. So
             # we treat all iterations of "retry" policy as one run.
-            if state == states.RUNNING and (cur_state in (
-                    None, states.WAITING, states.IDLE) or self.rerun):
+            if state == states.RUNNING and (
+                cur_state in (None, states.WAITING, states.IDLE) or self.rerun
+            ):
                 self.task_ex.started_at = utils.utc_now_sec()
 
             if states.is_completed(state):
@@ -356,12 +378,14 @@ class Task(object, metaclass=abc.ABCMeta):
 
             wf_trace.info(
                 self.task_ex.workflow_execution,
-                "Task '%s' (%s) [%s -> %s, msg=%s]" %
-                (self.task_ex.name,
-                 self.task_ex.id,
-                 cur_state,
-                 state,
-                 self.task_ex.state_info)
+                "Task '%s' (%s) [%s -> %s, msg=%s]"
+                % (
+                    self.task_ex.name,
+                    self.task_ex.id,
+                    cur_state,
+                    state,
+                    self.task_ex.state_info,
+                ),
             )
 
         return True
@@ -542,8 +566,12 @@ class Task(object, metaclass=abc.ABCMeta):
         if self.triggered_by:
             values['runtime_context']['triggered_by'] = self.triggered_by
 
-        LOG.info("Create task execution [task_name=%s, task_ex_id=%s, "
-                 "wf_ex_id=%s]", task_name, task_id, self.wf_ex.id)
+        LOG.info(
+            "Create task execution [task_name=%s, task_ex_id=%s, wf_ex_id=%s]",
+            task_name,
+            task_id,
+            self.wf_ex.id,
+        )
 
         self.task_ex = db_api.create_task_execution(values)
 
@@ -556,8 +584,9 @@ class Task(object, metaclass=abc.ABCMeta):
 
         triggered_by = self._get_triggered_by_ids()
 
-        self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec,
-                                                    triggered_by=triggered_by)
+        self.ctx = wf_ctrl.get_task_inbound_context(
+            self.task_spec, triggered_by=triggered_by
+        )
 
         utils.update_dict(self.task_ex.in_context, self.ctx)
 
@@ -644,7 +673,8 @@ class RegularTask(Task):
             # Set the RUNNING state and trigger all operations
             # related to the state change.
             self.set_state(
-                states.RUNNING, self.task_ex.state_info, first_run=True)
+                states.RUNNING, self.task_ex.state_info, first_run=True
+            )
 
             LOG.debug(
                 'Starting task [name=%s, init_state=%s, workflow_name=%s,'
@@ -652,7 +682,7 @@ class RegularTask(Task):
                 self.task_spec.get_name(),
                 self.task_ex.state,
                 self.wf_ex.name,
-                self.wf_ex.id
+                self.wf_ex.id,
             )
 
             self._before_task_start()
@@ -670,8 +700,7 @@ class RegularTask(Task):
             return True
 
         count = db_api.get_task_executions_count(
-            workflow_execution_id=self.wf_ex.id,
-            name=self.task_ex.name
+            workflow_execution_id=self.wf_ex.id, name=self.task_ex.name
         )
 
         if count <= limit:
@@ -745,9 +774,11 @@ class RegularTask(Task):
         if self.reset_flag:
             execs = self.task_ex.executions
         else:
-            execs = [e for e in self.task_ex.executions if
-                     (e.accepted and
-                      e.state in [states.ERROR, states.CANCELLED])]
+            execs = [
+                e
+                for e in self.task_ex.executions
+                if (e.accepted and e.state in [states.ERROR, states.CANCELLED])
+            ]
 
         for ex in execs:
             ex.accepted = False
@@ -764,7 +795,7 @@ class RegularTask(Task):
                 input_dict,
                 target,
                 safe_rerun=self._get_safe_rerun(),
-                timeout=self._get_timeout()
+                timeout=self._get_timeout(),
             )
         except exc.MistralException as e:
             self.complete(states.ERROR, e.message)
@@ -780,33 +811,30 @@ class RegularTask(Task):
             self.ctx,
             data_flow.get_workflow_environment_dict(self.wf_ex),
             self.wf_ex.context,
-            self.wf_ex.input
+            self.wf_ex.input,
         )
 
-        return expr.evaluate_recursively(
-            self.task_spec.get_target(),
-            ctx_view
-        )
+        return expr.evaluate_recursively(self.task_spec.get_target(), ctx_view)
 
     @profiler.trace('regular-task-get-action-input', hide_args=True)
     def _get_action_input(self, ctx=None):
         input_spec = self.task_spec.get_input()
 
-        input_dict = (
-            self.evaluate(input_spec, ctx) if input_spec else {}
-        )
+        input_dict = self.evaluate(input_spec, ctx) if input_spec else {}
 
         if not isinstance(input_dict, dict):
             raise exc.InputException(
                 "Wrong dynamic input for task: %s. Dict type is expected. "
-                "Actual type: %s. Actual value: %s" %
-                (self.task_spec.get_name(), type(input_dict), str(input_dict))
+                "Actual type: %s. Actual value: %s"
+                % (
+                    self.task_spec.get_name(),
+                    type(input_dict),
+                    str(input_dict),
+                )
             )
 
         return utils.merge_dicts(
-            input_dict,
-            self._get_action_defaults(),
-            overwrite=False
+            input_dict, self._get_action_defaults(), overwrite=False
         )
 
     def _get_action_name(self):
@@ -827,16 +855,13 @@ class RegularTask(Task):
         # A workflow name can be an expression so we reevaluate it.
         if wf_name:
             return actions.WorkflowAction(
-                wf_name=self.evaluate(wf_name),
-                task_ex=self.task_ex
+                wf_name=self.evaluate(wf_name), task_ex=self.task_ex
             )
 
         action_desc = self._get_action_descriptor()
 
         return actions.RegularAction(
-            action_desc=action_desc,
-            task_ex=self.task_ex,
-            task_ctx=self.ctx
+            action_desc=action_desc, task_ex=self.task_ex, task_ctx=self.ctx
         )
 
     def _get_action_descriptor(self):
@@ -853,8 +878,7 @@ class RegularTask(Task):
             # First try to find the action within the same workbook
             # that the workflow belongs to.
             res = provider.find(
-                '%s.%s' % (wb_name, action_name),
-                namespace=namespace
+                '%s.%s' % (wb_name, action_name), namespace=namespace
             )
 
         if res is None:
@@ -877,9 +901,7 @@ class RegularTask(Task):
             wf_ex = self.task_ex.workflow_execution
 
             ctx_view = data_flow.ContextView(
-                self.task_ex.in_context,
-                wf_ex.context,
-                wf_ex.input
+                self.task_ex.in_context, wf_ex.context, wf_ex.input
             )
 
             timeout = expr.evaluate_recursively(data=timeout, context=ctx_view)
@@ -898,11 +920,7 @@ class WithItemsTask(RegularTask):
     _COUNT = 'count'
     _WITH_ITEMS = 'with_items'
 
-    _DEFAULT_WITH_ITEMS = {
-        _COUNT: 0,
-        _CONCURRENCY: 0,
-        _CAPACITY: 0
-    }
+    _DEFAULT_WITH_ITEMS = {_COUNT: 0, _CONCURRENCY: 0, _CAPACITY: 0}
 
     @profiler.trace('with-items-task-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex):
@@ -934,7 +952,7 @@ class WithItemsTask(RegularTask):
                 state_info = {
                     states.SUCCESS: None,
                     states.ERROR: 'One or more actions had failed.',
-                    states.CANCELLED: 'One or more actions was cancelled.'
+                    states.CANCELLED: 'One or more actions was cancelled.',
                 }
 
                 self.complete(state, state_info[state])
@@ -955,8 +973,8 @@ class WithItemsTask(RegularTask):
             if max_length and action_count > max_length:
                 self.complete(
                     states.ERROR,
-                    "Too many with-items values [count=%s, limit=%s]" %
-                    (action_count, max_length)
+                    "Too many with-items values [count=%s, limit=%s]"
+                    % (action_count, max_length),
                 )
 
                 return
@@ -981,7 +999,7 @@ class WithItemsTask(RegularTask):
                     target,
                     index=i,
                     safe_rerun=self._get_safe_rerun(),
-                    timeout=self._get_timeout()
+                    timeout=self._get_timeout(),
                 )
 
                 self._decrease_capacity(1)
@@ -1062,8 +1080,7 @@ class WithItemsTask(RegularTask):
 
     def _get_with_items_context(self):
         return self.task_ex.runtime_context.get(
-            self._WITH_ITEMS,
-            self._DEFAULT_WITH_ITEMS
+            self._WITH_ITEMS, self._DEFAULT_WITH_ITEMS
         )
 
     def _get_with_items_count(self):
@@ -1092,8 +1109,8 @@ class WithItemsTask(RegularTask):
         # perspective. So we can simply check if capacity is fully reset
         # to its initial state.
         full_capacity = (
-            not self._get_concurrency() or
-            self._get_with_items_capacity() == self._get_concurrency()
+            not self._get_concurrency()
+            or self._get_with_items_capacity() == self._get_concurrency()
         )
 
         return count == len(execs) and full_capacity
@@ -1112,8 +1129,11 @@ class WithItemsTask(RegularTask):
     def _get_accepted_executions(self):
         # Choose only if not accepted but completed.
         return list(
-            [x for x in self.task_ex.executions
-             if x.accepted and states.is_completed(x.state)]
+            [
+                x
+                for x in self.task_ex.executions
+                if x.accepted and states.is_completed(x.state)
+            ]
         )
 
     def _get_unaccepted_executions(self):
@@ -1121,15 +1141,13 @@ class WithItemsTask(RegularTask):
         return list(
             filter(
                 lambda x: not x.accepted and states.is_completed(x.state),
-                self.task_ex.executions
+                self.task_ex.executions,
             )
         )
 
     def _get_next_start_index(self):
         f = lambda x: (
-            x.accepted or
-            states.is_running(x.state) or
-            states.is_idle(x.state)
+            x.accepted or states.is_running(x.state) or states.is_idle(x.state)
         )
 
         return len(list(filter(f, self.task_ex.executions)))
@@ -1144,22 +1162,24 @@ class WithItemsTask(RegularTask):
         accepted = _get_indexes(self._get_accepted_executions())
         unaccepted = _get_indexes(self._get_unaccepted_executions())
         running = _get_indexes(
-            [x for x in self.task_ex.executions
-             if not states.is_completed(x.state)]
+            [
+                x
+                for x in self.task_ex.executions
+                if not states.is_completed(x.state)
+            ]
         )
 
         busy = set(accepted) | set(running)
 
-        candidates = sorted(
-            i for i in set(unaccepted) - busy if i < count
-        )
+        candidates = sorted(i for i in set(unaccepted) - busy if i < count)
 
         if candidates:
             indices = copy.copy(candidates)
 
             if max(candidates) < count - 1:
                 indices += [
-                    i for i in range(max(candidates) + 1, count)
+                    i
+                    for i in range(max(candidates) + 1, count)
                     if i not in busy
                 ]
         else:
@@ -1205,22 +1225,25 @@ class WithItemsTask(RegularTask):
             max_concurrency = cfg.CONF.engine.max_with_items_concurrency
 
             if max_concurrency and (
-                    not concurrency or concurrency > max_concurrency):
+                not concurrency or concurrency > max_concurrency
+            ):
                 concurrency = max_concurrency
                 runtime_ctx[self._CONCURRENCY] = concurrency
 
             # Prepare current indexes and parallel limitation.
             runtime_ctx[self._WITH_ITEMS] = {
                 self._CAPACITY: concurrency,
-                self._COUNT: action_count
+                self._COUNT: action_count,
             }
 
     def _has_more_iterations(self):
         # See action executions which have been already
         # accepted or are still running.
-        action_exs = list(filter(
-            lambda x: x.accepted or x.state == states.RUNNING,
-            self.task_ex.executions
-        ))
+        action_exs = list(
+            filter(
+                lambda x: x.accepted or x.state == states.RUNNING,
+                self.task_ex.executions,
+            )
+        )
 
         return self._get_with_items_count() > len(action_exs)

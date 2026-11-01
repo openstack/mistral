@@ -37,13 +37,14 @@ WF_EXEC = {
     'updated_at': None,
     'context': None,
     'task_id': None,
-    'trust_id': None
+    'trust_id': None,
 }
 
 
 @testtools.skipIf(
     'sqlite' not in cfg.CONF.database.connection,
-    'Not using SQLite for DB backend.')
+    'Not using SQLite for DB backend.',
+)
 class SQLiteLocksTest(test_base.DbTestCase):
     def setUp(self):
         super(SQLiteLocksTest, self).setUp()
@@ -51,10 +52,7 @@ class SQLiteLocksTest(test_base.DbTestCase):
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 
         self.addCleanup(
-            cfg.CONF.set_default,
-            'auth_enable',
-            False,
-            group='pecan'
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
         )
 
     def _random_sleep(self):
@@ -76,8 +74,9 @@ class SQLiteLocksTest(test_base.DbTestCase):
         number = 500
 
         for i in range(1, number):
-            t = threading.Thread(target=self._run_acquire_release_sqlite_lock,
-                                 args=[id, i])
+            t = threading.Thread(
+                target=self._run_acquire_release_sqlite_lock, args=[id, i]
+            )
             t.start()
             threads.append(t)
         [t.join(timeout=10) for t in threads]
@@ -112,8 +111,9 @@ class SQLiteLocksTest(test_base.DbTestCase):
         number = 500
 
         for i in range(1, number):
-            t = threading.Thread(target=self._run_correct_locking,
-                                 args=[wf_ex])
+            t = threading.Thread(
+                target=self._run_correct_locking, args=[wf_ex]
+            )
             t.start()
             threads.append(t)
         [t.join(timeout=10) for t in threads]

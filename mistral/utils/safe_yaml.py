@@ -21,22 +21,22 @@ yaml.SafeDumper.ignore_aliases = lambda *args: True
 class SafeLoader(yaml.SafeLoader):
     """Treat '@', '&', '*' as plain string.
 
-       Anchors are not used in mistral workflow. It's better to
-       disable them completely. Anchors can be used as an exploit to a
-       Denial of service attack through expansion (Billion Laughs)
-       see https://en.wikipedia.org/wiki/Billion_laughs_attack.
-       Also this module uses the safe loader by default which is always
-       a better loader.
+    Anchors are not used in mistral workflow. It's better to
+    disable them completely. Anchors can be used as an exploit to a
+    Denial of service attack through expansion (Billion Laughs)
+    see https://en.wikipedia.org/wiki/Billion_laughs_attack.
+    Also this module uses the safe loader by default which is always
+    a better loader.
 
-       When using yaml module to load a yaml file or a string use this
-       module instead of yaml.
+    When using yaml module to load a yaml file or a string use this
+    module instead of yaml.
 
-       Example:
-         import mistral.utils.safe_yaml as safe_yaml
-         ...
-         ...
+    Example:
+      import mistral.utils.safe_yaml as safe_yaml
+      ...
+      ...
 
-         safe_yaml.load(...)
+      safe_yaml.load(...)
 
     """
 

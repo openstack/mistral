@@ -33,9 +33,7 @@ class TestCORSMiddleware(base.APITest):
 
         # Load up our valid domain values before the application is created.
         self.override_config(
-            "allowed_origin",
-            ["http://valid.example.com"],
-            group='cors'
+            "allowed_origin", ["http://valid.example.com"], group='cors'
         )
 
         # Create the application.
@@ -46,15 +44,15 @@ class TestCORSMiddleware(base.APITest):
             '/',
             headers={
                 'Origin': 'http://valid.example.com',
-                'Access-Control-Request-Method': 'GET'
-            }
+                'Access-Control-Request-Method': 'GET',
+            },
         )
 
         self.assertEqual(200, response.status_code)
         self.assertIn('access-control-allow-origin', response.headers)
         self.assertEqual(
             'http://valid.example.com',
-            response.headers['access-control-allow-origin']
+            response.headers['access-control-allow-origin'],
         )
 
     def test_invalid_cors_options_request(self):
@@ -62,8 +60,8 @@ class TestCORSMiddleware(base.APITest):
             '/',
             headers={
                 'Origin': 'http://invalid.example.com',
-                'Access-Control-Request-Method': 'GET'
-            }
+                'Access-Control-Request-Method': 'GET',
+            },
         )
 
         self.assertEqual(200, response.status_code)
@@ -71,25 +69,19 @@ class TestCORSMiddleware(base.APITest):
 
     def test_valid_cors_get_request(self):
         response = self.app.get(
-            '/',
-            headers={
-                'Origin': 'http://valid.example.com'
-            }
+            '/', headers={'Origin': 'http://valid.example.com'}
         )
 
         self.assertEqual(200, response.status_code)
         self.assertIn('access-control-allow-origin', response.headers)
         self.assertEqual(
             'http://valid.example.com',
-            response.headers['access-control-allow-origin']
+            response.headers['access-control-allow-origin'],
         )
 
     def test_invalid_cors_get_request(self):
         response = self.app.get(
-            '/',
-            headers={
-                'Origin': 'http://invalid.example.com'
-            }
+            '/', headers={'Origin': 'http://invalid.example.com'}
         )
 
         self.assertEqual(200, response.status_code)

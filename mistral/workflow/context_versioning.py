@@ -32,7 +32,7 @@ def get_in_context_with_versions(task_ex):
     if not cfg.CONF.context_versioning.enabled:
         return in_context
 
-    in_context = (copy.deepcopy(dict(in_context)))
+    in_context = copy.deepcopy(dict(in_context))
 
     task_published = task_ex.published or []
 
@@ -60,16 +60,13 @@ def _get_published_keys_recursively(updated_keys, published, prefix=None):
         if not isinstance(published[key], dict):
             if cfg.CONF.context_versioning.hash_version_keys:
                 new_prefix = hashlib.md5(
-                    new_prefix.encode("utf-8"),
-                    usedforsecurity=False
+                    new_prefix.encode("utf-8"), usedforsecurity=False
                 ).hexdigest()
 
             updated_keys.append(new_prefix)
         else:
             _get_published_keys_recursively(
-                updated_keys,
-                published[key],
-                new_prefix
+                updated_keys, published[key], new_prefix
             )
 
 

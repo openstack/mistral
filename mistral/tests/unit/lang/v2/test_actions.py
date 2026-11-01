@@ -20,7 +20,6 @@ from mistral_lib import utils
 
 
 class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):
-
     def test_base_required(self):
         actions = {'actions': {'a1': {}}}
 
@@ -35,12 +34,16 @@ class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'actions': {'a1': {'base': 12345}}}, True),
             ({'actions': {'a1': {'base': 'std.noop'}}}, False),
             ({'actions': {'a1': {'base': 'std.echo output="foo"'}}}, False),
-            ({'actions': {'a1': {'base': 'std.echo output="<% $.x %>"'}}},
-             False),
+            (
+                {'actions': {'a1': {'base': 'std.echo output="<% $.x %>"'}}},
+                False,
+            ),
             ({'actions': {'a1': {'base': 'std.echo output="<% * %>"'}}}, True),
-            ({'actions': {'a1': {'base': 'std.echo output="{{ _.x }}"'}}},
-             False),
-            ({'actions': {'a1': {'base': 'std.echo output="{{ * }}"'}}}, True)
+            (
+                {'actions': {'a1': {'base': 'std.echo output="{{ _.x }}"'}}},
+                False,
+            ),
+            ({'actions': {'a1': {'base': 'std.echo output="{{ * }}"'}}}, True),
         ]
 
         for actions, expect_error in tests:
@@ -53,14 +56,10 @@ class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'base-input': {'k1': 'v1', 'k2': '<% $.v2 %>'}}, False),
             ({'base-input': {'k1': 'v1', 'k2': '<% * %>'}}, True),
             ({'base-input': {'k1': 'v1', 'k2': '{{ _.v2 }}'}}, False),
-            ({'base-input': {'k1': 'v1', 'k2': '{{ * }}'}}, True)
+            ({'base-input': {'k1': 'v1', 'k2': '{{ * }}'}}, True),
         ]
 
-        actions = {
-            'a1': {
-                'base': 'foobar'
-            }
-        }
+        actions = {'a1': {'base': 'foobar'}}
 
         for base_inputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}
@@ -81,14 +80,10 @@ class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'input': [{'k1': 1}, {'k2': 2}]}, False),
             ({'input': [{'k1': None}]}, False),
             ({'input': [{'k1': 1}, {'k1': 1}]}, True),
-            ({'input': [{'k1': 1, 'k2': 2}]}, True)
+            ({'input': [{'k1': 1, 'k2': 2}]}, True),
         ]
 
-        actions = {
-            'a1': {
-                'base': 'foobar'
-            }
-        }
+        actions = {'a1': {'base': 'foobar'}}
 
         for inputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}
@@ -109,14 +104,10 @@ class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):
             ({'output': '{{ _.x }}'}, False),
             ({'output': '{{ * }}'}, True),
             ({'output': ['v1']}, False),
-            ({'output': {'k1': 'v1'}}, False)
+            ({'output': {'k1': 'v1'}}, False),
         ]
 
-        actions = {
-            'a1': {
-                'base': 'foobar'
-            }
-        }
+        actions = {'a1': {'base': 'foobar'}}
 
         for outputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}

@@ -59,10 +59,7 @@ def _loop():
     # security context.
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user_id=None,
-            project_id=None,
-            auth_token=None,
-            is_admin=True
+            user_id=None, project_id=None, auth_token=None, is_admin=True
         )
     )
 

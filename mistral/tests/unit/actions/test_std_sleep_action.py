@@ -32,26 +32,24 @@ class SleepActionTest(base.BaseTest):
         self.override_config('max_seconds', 10, group='action_std_sleep')
 
         self.assertRaises(
-            exc.ActionException,
-            std.SleepAction(seconds=11).run,
-            mock.Mock()
+            exc.ActionException, std.SleepAction(seconds=11).run, mock.Mock()
         )
         time_mock.sleep.assert_not_called()
 
     def test_sleep_default_limit(self, time_mock):
         self.assertRaises(
             exc.ActionException,
-            std.SleepAction(seconds=10 ** 9).run,
-            mock.Mock()
+            std.SleepAction(seconds=10**9).run,
+            mock.Mock(),
         )
         time_mock.sleep.assert_not_called()
 
     def test_sleep_limit_disabled(self, time_mock):
         self.override_config('max_seconds', 0, group='action_std_sleep')
 
-        std.SleepAction(seconds=10 ** 9).run(mock.Mock())
+        std.SleepAction(seconds=10**9).run(mock.Mock())
 
-        time_mock.sleep.assert_called_once_with(10 ** 9)
+        time_mock.sleep.assert_called_once_with(10**9)
 
     def test_echo_delay_over_limit(self, time_mock):
         self.override_config('max_seconds', 10, group='action_std_sleep')
@@ -59,7 +57,7 @@ class SleepActionTest(base.BaseTest):
         self.assertRaises(
             exc.ActionException,
             std.EchoAction('out', delay=10.5).run,
-            mock.Mock()
+            mock.Mock(),
         )
         time_mock.sleep.assert_not_called()
 
@@ -67,7 +65,6 @@ class SleepActionTest(base.BaseTest):
         self.override_config('max_seconds', 10, group='action_std_sleep')
 
         self.assertEqual(
-            'out',
-            std.EchoAction('out', delay=2).run(mock.Mock())
+            'out', std.EchoAction('out', delay=2).run(mock.Mock())
         )
         time_mock.sleep.assert_called_once_with(2.0)

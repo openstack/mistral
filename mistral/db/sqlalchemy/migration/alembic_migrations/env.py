@@ -59,15 +59,11 @@ def run_migrations_online():
 
     """
     engine = create_engine(
-        mistral_config.database.connection,
-        poolclass=pool.NullPool
+        mistral_config.database.connection, poolclass=pool.NullPool
     )
 
     connection = engine.connect()
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata
-    )
+    context.configure(connection=connection, target_metadata=target_metadata)
 
     try:
         with context.begin_transaction():

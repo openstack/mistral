@@ -39,8 +39,14 @@ def env_(context):
 
 
 @db_utils.tx_cached(ignore_args='context')
-def executions_(context, id=None, root_execution_id=None, state=None,
-                from_time=None, to_time=None):
+def executions_(
+    context,
+    id=None,
+    root_execution_id=None,
+    state=None,
+    from_time=None,
+    to_time=None,
+):
     filter_ = {}
 
     if id is not None:
@@ -48,38 +54,27 @@ def executions_(context, id=None, root_execution_id=None, state=None,
 
     if root_execution_id is not None:
         filter_ = filter_utils.create_or_update_filter(
-            'root_execution_id',
-            root_execution_id,
-            'eq',
-            filter_
+            'root_execution_id', root_execution_id, 'eq', filter_
         )
 
     if state is not None:
         filter_ = filter_utils.create_or_update_filter(
-            'state',
-            state,
-            'eq',
-            filter_
+            'state', state, 'eq', filter_
         )
 
     if from_time is not None:
         filter_ = filter_utils.create_or_update_filter(
-            'created_at',
-            from_time,
-            'gte',
-            filter_
+            'created_at', from_time, 'gte', filter_
         )
 
     if to_time is not None:
         filter_ = filter_utils.create_or_update_filter(
-            'created_at',
-            to_time,
-            'lt',
-            filter_
+            'created_at', to_time, 'lt', filter_
         )
 
     fields = [
-        f for f in db_models.WorkflowExecution.__table__.columns.keys()
+        f
+        for f in db_models.WorkflowExecution.__table__.columns.keys()
         if f != 'runtime_context'
     ]
 
@@ -102,16 +97,18 @@ def _convert_wf_ex_row_to_user_model(row):
 def execution_(context):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
-    return copy.deepcopy({
-        'id': wf_ex.id,
-        'name': wf_ex.name,
-        'spec': wf_ex.spec,
-        'input': wf_ex.input,
-        'params': wf_ex.params,
-        'created_at': wf_ex.created_at.isoformat(' '),
-        'updated_at': wf_ex.updated_at.isoformat(' '),
-        'root_execution_id': wf_ex.root_execution_id
-    })
+    return copy.deepcopy(
+        {
+            'id': wf_ex.id,
+            'name': wf_ex.name,
+            'spec': wf_ex.spec,
+            'input': wf_ex.input,
+            'params': wf_ex.params,
+            'created_at': wf_ex.created_at.isoformat(' '),
+            'updated_at': wf_ex.updated_at.isoformat(' '),
+            'root_execution_id': wf_ex.root_execution_id,
+        }
+    )
 
 
 def json_dump_(context, data):
@@ -138,8 +135,7 @@ def task_(context, task_name=None):
         task_ex = db_api.get_task_execution(cur_task['id'])
     else:
         task_execs = db_api.get_task_executions(
-            workflow_execution_id=context['__execution']['id'],
-            name=task_name
+            workflow_execution_id=context['__execution']['id'], name=task_name
         )
 
         # TODO(rakhmerov): Account for multiple executions (i.e. in case of
@@ -148,8 +144,7 @@ def task_(context, task_name=None):
 
     if not task_ex:
         LOG.warning(
-            "Task '%s' not found by the task() expression function",
-            task_name
+            "Task '%s' not found by the task() expression function", task_name
         )
         return None
 
@@ -183,8 +178,9 @@ def _should_pass_filter(t, state, flat):
     return state_match and flat_match
 
 
-def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
-                       flat=False):
+def _get_tasks_from_db(
+    workflow_execution_id=None, recursive=False, state=None, flat=False
+):
     task_execs = []
     nested_task_exs = []
 
@@ -224,7 +220,7 @@ def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
                             nested_workflow_execution.id,
                             recursive,
                             state,
-                            flat
+                            flat,
                         )
                     )
 
@@ -241,13 +237,15 @@ def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
 
 
 @db_utils.tx_cached(ignore_args='context')
-def tasks_(context, workflow_execution_id=None, recursive=False, state=None,
-           flat=False):
+def tasks_(
+    context,
+    workflow_execution_id=None,
+    recursive=False,
+    state=None,
+    flat=False,
+):
     task_execs = _get_tasks_from_db(
-        workflow_execution_id,
-        recursive,
-        state,
-        flat
+        workflow_execution_id, recursive, state, flat
     )
 
     # Convert task_execs to user model and return.
@@ -260,20 +258,23 @@ def _convert_to_user_model(task_ex):
 
     # We don't use to_dict() db model method because not all fields
     # make sense for user.
-    return copy.deepcopy({
-        'id': task_ex.id,
-        'name': task_ex.name,
-        'spec': task_ex.spec,
-        'state': task_ex.state,
-        'state_info': task_ex.state_info,
-        'result': data_flow.get_task_execution_result(task_ex),
-        'published': task_ex.published,
-        'type': task_ex.type,
-        'workflow_execution_id': task_ex.workflow_execution_id,
-        'created_at': task_ex.created_at.isoformat(' '),
-        'updated_at': task_ex.updated_at.isoformat(' ')
-        if task_ex.updated_at is not None else None
-    })
+    return copy.deepcopy(
+        {
+            'id': task_ex.id,
+            'name': task_ex.name,
+            'spec': task_ex.spec,
+            'state': task_ex.state,
+            'state_info': task_ex.state_info,
+            'result': data_flow.get_task_execution_result(task_ex),
+            'published': task_ex.published,
+            'type': task_ex.type,
+            'workflow_execution_id': task_ex.workflow_execution_id,
+            'created_at': task_ex.created_at.isoformat(' '),
+            'updated_at': task_ex.updated_at.isoformat(' ')
+            if task_ex.updated_at is not None
+            else None,
+        }
+    )
 
 
 def uuid_(context=None):

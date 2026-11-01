@@ -35,9 +35,13 @@ def validate_cert_paths(cert_file, key_file):
     if key_file and not os.path.exists(key_file):
         raise RuntimeError(_("Unable to find key_file: %s") % key_file)
     if not cert_file or not key_file:
-        raise RuntimeError(_("When running server in SSL mode, you must "
-                             "specify a valid cert_file and key_file "
-                             "paths in your configuration file"))
+        raise RuntimeError(
+            _(
+                "When running server in SSL mode, you must "
+                "specify a valid cert_file and key_file "
+                "paths in your configuration file"
+            )
+        )
 
 
 class WSGIService(service.ServiceBase):
@@ -54,9 +58,8 @@ class WSGIService(service.ServiceBase):
 
         bind_addr = (cfg.CONF.api.host, cfg.CONF.api.port)
         self.server = wsgi.Server(
-            bind_addr=bind_addr,
-            wsgi_app=self.app,
-            server_name=name)
+            bind_addr=bind_addr, wsgi_app=self.app, server_name=name
+        )
 
         if cfg.CONF.api.enable_ssl_api:
             # NOTE(amorin) I copy pasted this from ironic code and they
@@ -91,14 +94,13 @@ class WSGIService(service.ServiceBase):
         rpc_clients.cleanup()
 
         self.server.prepare()
-        self._thread = threading.Thread(
-            target=self.server.serve,
-            daemon=True
-        )
+        self._thread = threading.Thread(target=self.server.serve, daemon=True)
         self._thread.start()
-        LOG.info('API server started with one process. If you want more '
-                 'workers, consider running the WSGI application '
-                 '(mistral.wsgi:application) with a WSGI server instead')
+        LOG.info(
+            'API server started with one process. If you want more '
+            'workers, consider running the WSGI application '
+            '(mistral.wsgi:application) with a WSGI server instead'
+        )
 
     def stop(self):
         if self.server:

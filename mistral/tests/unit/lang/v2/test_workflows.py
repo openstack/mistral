@@ -24,14 +24,14 @@ from mistral_lib import utils
 
 def generate_test_function(default, expect_error):
     """Function used to dynamically generate tests"""
+
     def test(self):
         overlay = {'test': {'task-defaults': {}}}
         utils.merge_dicts(overlay['test']['task-defaults'], default)
         self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=expect_error
+            add_tasks=True, changes=overlay, expect_error=expect_error
         )
+
     return test
 
 
@@ -120,7 +120,7 @@ tests = [
     ({'safe-rerun': '<% false %>'}, False),
     ({'safe-rerun': '<% true %>'}, False),
     ({'safe-rerun': '<% * %>'}, True),
-    ({'safe-rerun': None}, True)
+    ({'safe-rerun': None}, True),
 ]
 
 for index, test in enumerate(tests):
@@ -135,16 +135,14 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'type': 'direct'}, False),
             ({'type': 'reverse'}, False),
             ({'type': 'circular'}, True),
-            ({'type': None}, True)
+            ({'type': None}, True),
         ]
 
         for wf_type, expect_error in tests:
             overlay = {'test': wf_type}
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_direct_workflow(self):
@@ -157,9 +155,7 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         utils.merge_dicts(overlay['test']['tasks'], {'email': join})
 
         wfs_spec = self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=False
+            add_tasks=True, changes=overlay, expect_error=False
         )
 
         self.assertEqual(1, len(wfs_spec.get_workflows()))
@@ -167,20 +163,13 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         self.assertEqual('direct', wfs_spec.get_workflows()[0].get_type())
 
     def test_direct_workflow_invalid_task(self):
-        overlay = {
-            'test': {
-                'type': 'direct',
-                'tasks': {}
-            }
-        }
+        overlay = {'test': {'type': 'direct', 'tasks': {}}}
         requires = {'requires': ['echo', 'get']}
 
         utils.merge_dicts(overlay['test']['tasks'], {'email': requires})
 
         self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=True
+            add_tasks=True, changes=overlay, expect_error=True
         )
 
     def test_direct_workflow_no_start_tasks(self):
@@ -189,15 +178,13 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
                 'type': 'direct',
                 'tasks': {
                     'task1': {'on-complete': 'task2'},
-                    'task2': {'on-complete': 'task1'}
-                }
+                    'task2': {'on-complete': 'task1'},
+                },
             }
         }
 
         self._parse_dsl_spec(
-            add_tasks=False,
-            changes=overlay,
-            expect_error=True
+            add_tasks=False, changes=overlay, expect_error=True
         )
 
     def test_direct_workflow_invalid_join(self):
@@ -209,7 +196,7 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'task3': {'join': 'all'}}, False),
             ({'task4': {'join': 'all'}}, True),
             ({'task4': {'join': 1}}, True),
-            ({'task4': {'join': 'one'}}, True)
+            ({'task4': {'join': 'one'}}, True),
         ]
 
         for test in tests:
@@ -218,17 +205,15 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
                     'type': 'direct',
                     'tasks': {
                         'task1': {'on-complete': 'task3'},
-                        'task2': {'on-complete': 'task3'}
-                    }
+                        'task2': {'on-complete': 'task3'},
+                    },
                 }
             }
 
             utils.merge_dicts(overlay['test']['tasks'], test[0])
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=test[1]
+                add_tasks=False, changes=overlay, expect_error=test[1]
             )
 
     def test_reverse_workflow(self):
@@ -238,9 +223,7 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         utils.merge_dicts(overlay['test']['tasks'], {'email': require})
 
         wfs_spec = self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=False
+            add_tasks=True, changes=overlay, expect_error=False
         )
 
         self.assertEqual(1, len(wfs_spec.get_workflows()))
@@ -257,9 +240,7 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         utils.merge_dicts(overlay['test']['tasks'], {'email': join})
 
         self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=True
+            add_tasks=True, changes=overlay, expect_error=True
         )
 
     def test_version_required(self):
@@ -269,7 +250,7 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         exception = self.assertRaises(
             exc.DSLParsingException,
             self._spec_parser,
-            yaml.safe_dump(dsl_dict)
+            yaml.safe_dump(dsl_dict),
         )
 
         self.assertIn("'version' is a required property", str(exception))
@@ -280,14 +261,12 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'version': ''}, True),
             ({'version': '2.0'}, False),
             ({'version': 2.0}, False),
-            ({'version': 2}, False)
+            ({'version': 2}, False),
         ]
 
         for version, expect_error in tests:
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=version,
-                expect_error=expect_error
+                add_tasks=True, changes=version, expect_error=expect_error
             )
 
     def test_inputs(self):
@@ -303,16 +282,14 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'input': [{'var1': 1}, {'var2': 2}]}, False),
             ({'input': [{'var1': None}]}, False),
             ({'input': [{'var1': 1}, {'var1': 1}]}, True),
-            ({'input': [{'var1': 1, 'var2': 2}]}, True)
+            ({'input': [{'var1': 1, 'var2': 2}]}, True),
         ]
 
         for wf_input, expect_error in tests:
             overlay = {'test': wf_input}
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_outputs(self):
@@ -324,16 +301,14 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'output': []}, True),
             ({'output': 'whatever'}, True),
             ({'output': None}, True),
-            ({'output': {}}, True)
+            ({'output': {}}, True),
         ]
 
         for wf_output, expect_error in tests:
             overlay = {'test': wf_output}
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_vars(self):
@@ -348,23 +323,18 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'vars': []}, True),
             ({'vars': 'whatever'}, True),
             ({'vars': None}, True),
-            ({'vars': {}}, True)
+            ({'vars': {}}, True),
         ]
 
         for wf_vars, expect_error in tests:
             overlay = {'test': wf_vars}
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_tasks_required(self):
-        exception = self._parse_dsl_spec(
-            add_tasks=False,
-            expect_error=True
-        )
+        exception = self._parse_dsl_spec(add_tasks=False, expect_error=True)
 
         self.assertIn("'tasks' is a required property", str(exception))
 
@@ -372,16 +342,14 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         tests = [
             ({'tasks': {}}, True),
             ({'tasks': None}, True),
-            ({'tasks': self._dsl_tasks}, False)
+            ({'tasks': self._dsl_tasks}, False),
         ]
 
         for wf_tasks, expect_error in tests:
             overlay = {'test': wf_tasks}
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=False, changes=overlay, expect_error=expect_error
             )
 
     def test_invalid_item(self):
@@ -396,21 +364,18 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             'version': '2.0',
             'b98180ba-48a0-4e26-ab2e-50dc224f6fd1': {
                 'type': 'direct',
-                'tasks': {'t1': {'action': 'std.noop'}}
-            }
+                'tasks': {'t1': {'action': 'std.noop'}},
+            },
         }
 
         dsl_yaml = yaml.safe_dump(invalid_wf, default_flow_style=False)
 
         exception = self.assertRaises(
-            exc.InvalidModelException,
-            self._spec_parser,
-            dsl_yaml
+            exc.InvalidModelException, self._spec_parser, dsl_yaml
         )
 
         self.assertIn(
-            "Workflow name cannot be in the format of UUID",
-            str(exception)
+            "Workflow name cannot be in the format of UUID", str(exception)
         )
 
     def test_task_name(self):
@@ -418,22 +383,38 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             'version': '2.0',
             'workflowname': {
                 'type': 'direct',
-                'tasks': {'task1': {'action': 'std.noop',
-                                    'on-success': ['t2-task']},
-                          't2-task': {'action': 'std.noop',
-                                      'on-success': ['t3.task']},
-                          't3.task': {'action': 'std.noop',
-                                      'on-success': ['t4,task']},
-                          't4,task': {'action': 'std.noop',
-                                      'on-success': ['t5+task']},
-                          't5+task': {'action': 'std.noop',
-                                      'on-success': ['t6$task']},
-                          't6$task': {'action': 'std.noop',
-                                      'on-success': ['t7%task']},
-                          't7%task': {'action': 'std.noop',
-                                      'on-success': ['t8^task']},
-                          't8^task': {'action': 'std.noop',
-                                      }}}}
+                'tasks': {
+                    'task1': {'action': 'std.noop', 'on-success': ['t2-task']},
+                    't2-task': {
+                        'action': 'std.noop',
+                        'on-success': ['t3.task'],
+                    },
+                    't3.task': {
+                        'action': 'std.noop',
+                        'on-success': ['t4,task'],
+                    },
+                    't4,task': {
+                        'action': 'std.noop',
+                        'on-success': ['t5+task'],
+                    },
+                    't5+task': {
+                        'action': 'std.noop',
+                        'on-success': ['t6$task'],
+                    },
+                    't6$task': {
+                        'action': 'std.noop',
+                        'on-success': ['t7%task'],
+                    },
+                    't7%task': {
+                        'action': 'std.noop',
+                        'on-success': ['t8^task'],
+                    },
+                    't8^task': {
+                        'action': 'std.noop',
+                    },
+                },
+            },
+        }
 
         dsl_yaml = yaml.safe_dump(wf, default_flow_style=False)
 
@@ -446,42 +427,40 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
             ({'tags': ['']}, True),
             ({'tags': ['tag']}, False),
             ({'tags': ['tag', 'tag']}, True),
-            ({'tags': None}, True)
+            ({'tags': None}, True),
         ]
 
         for wf_tags, expect_error in tests:
             overlay = {'test': wf_tags}
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_unknown_workflow_key(self):
         exception = self._parse_dsl_spec(
             add_tasks=True,
             changes={'test': {'ttags': ['tag']}},
-            expect_error=True
+            expect_error=True,
         )
 
         self.assertEqual(
             "Invalid DSL in workflow 'test': Additional properties are not "
             "allowed ('ttags' was unexpected)",
-            str(exception)
+            str(exception),
         )
 
     def test_invalid_task_error_message(self):
         exception = self._parse_dsl_spec(
             add_tasks=True,
             changes={'test': {'tasks': {'echo': {'on-sucess': 'get'}}}},
-            expect_error=True
+            expect_error=True,
         )
 
         self.assertEqual(
             "Invalid DSL in task 'echo': Additional properties are not "
             "allowed ('on-sucess' was unexpected)",
-            str(exception)
+            str(exception),
         )
 
     def test_invalid_nested_value_error_message(self):
@@ -490,11 +469,11 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
         exception = self._parse_dsl_spec(
             add_tasks=True,
             changes={'test': {'tasks': {'echo': {'retry': retry}}}},
-            expect_error=True
+            expect_error=True,
         )
 
         self.assertEqual(
             "Invalid DSL in task 'echo' at retry.count: 'abc' is not valid "
             "under any of the given schemas",
-            str(exception)
+            str(exception),
         )

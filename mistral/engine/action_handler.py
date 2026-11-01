@@ -67,9 +67,11 @@ def on_action_update(action_ex, state):
         # If the update of the action execution fails, do not fail
         # the action execution. Log the exception and re-raise the
         # exception.
-        msg = (
-            "Failed to update action [error=%s, action=%s, task=%s]:\n%s"
-            % (e, action_ex.name, task_ex.name, tb.format_exc())
+        msg = "Failed to update action [error=%s, action=%s, task=%s]:\n%s" % (
+            e,
+            action_ex.name,
+            task_ex.name,
+            tb.format_exc(),
         )
 
         LOG.error(msg)
@@ -84,19 +86,16 @@ def on_action_update(action_ex, state):
 def _build_action(action_ex):
     if isinstance(action_ex, models.WorkflowExecution):
         return actions.WorkflowAction(
-            wf_name=action_ex.name,
-            action_ex=action_ex
+            wf_name=action_ex.name, action_ex=action_ex
         )
 
     action_desc = action_service.get_system_action_provider().find(
-        action_ex.name,
-        action_ex.workflow_namespace
+        action_ex.name, action_ex.workflow_namespace
     )
 
     if action_desc is None:
         raise exc.InvalidActionException(
-            "Failed to find action [action_name=%s]" %
-            action_ex.name
+            "Failed to find action [action_name=%s]" % action_ex.name
         )
 
     return actions.RegularAction(action_desc, action_ex)
@@ -104,14 +103,12 @@ def _build_action(action_ex):
 
 def build_action_by_name(action_name, namespace=''):
     action_desc = action_service.get_system_action_provider().find(
-        action_name,
-        namespace=namespace
+        action_name, namespace=namespace
     )
 
     if action_desc is None:
         raise exc.InvalidActionException(
-            "Failed to find action [action_name=%s]" %
-            action_name
+            "Failed to find action [action_name=%s]" % action_name
         )
 
     return actions.RegularAction(action_desc)

@@ -74,9 +74,7 @@ class V8EvalEvaluator(JSEvaluator):
 
         ctx_str = utils.to_json_str(ctx)
 
-        return v8.eval(
-            '$ = %s; %s' % (ctx_str, script)
-        )
+        return v8.eval('$ = %s; %s' % (ctx_str, script))
 
 
 class PyMiniRacerEvaluator(JSEvaluator):
@@ -100,14 +98,12 @@ class PyMiniRacerEvaluator(JSEvaluator):
             eval_kwargs['max_memory'] = limits.max_memory_mb * 1024 * 1024
 
         return js_ctx.eval(
-            '$ = {}; {}'.format(utils.to_json_str(ctx), script),
-            **eval_kwargs
+            '$ = {}; {}'.format(utils.to_json_str(ctx), script), **eval_kwargs
         )
 
 
 _mgr = extension.ExtensionManager(
-    namespace='mistral.expression.evaluators',
-    invoke_on_load=False
+    namespace='mistral.expression.evaluators', invoke_on_load=False
 )
 
 
@@ -118,7 +114,7 @@ def get_js_evaluator():
         mgr = driver.DriverManager(
             'mistral.js.implementation',
             cfg.CONF.js_implementation,
-            invoke_on_load=True
+            invoke_on_load=True,
         )
 
         _EVALUATOR = mgr.driver

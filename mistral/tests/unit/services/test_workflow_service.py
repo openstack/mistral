@@ -191,13 +191,9 @@ class WorkflowServiceTest(base.DbTestCase):
         wf1_db = self._assert_single_item(db_wfs, name='wf1')
         wf1_def = wf1_db.definition
         published_values = wf1_def.splitlines()[-3:]
-        wf1_publish = [
-            item.strip()
-            for item in published_values
-        ]
+        wf1_publish = [item.strip() for item in published_values]
         self.assertEqual(
-            ['we: 1', 'dont_want: 2', 'to_be_sorted: 3'],
-            wf1_publish
+            ['we: 1', 'dont_want: 2', 'to_be_sorted: 3'], wf1_publish
         )
 
     def test_engine_commands_are_valid_task_names(self):
@@ -221,10 +217,7 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertIn('param1', wf1_spec.get_input())
-        self.assertIs(
-            wf1_spec.get_input().get('param1'),
-            utils.NotDefined
-        )
+        self.assertIs(wf1_spec.get_input().get('param1'), utils.NotDefined)
 
         db_wfs = wf_service.update_workflows(UPDATED_WORKFLOW_LIST)
 
@@ -238,20 +231,12 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertIn('param1', wf1_spec.get_input())
         self.assertIn('param2', wf1_spec.get_input())
-        self.assertIs(
-            wf1_spec.get_input().get('param1'),
-            utils.NotDefined
-        )
-        self.assertIs(
-            wf1_spec.get_input().get('param2'),
-            utils.NotDefined
-        )
+        self.assertIs(wf1_spec.get_input().get('param1'), utils.NotDefined)
+        self.assertIs(wf1_spec.get_input().get('param2'), utils.NotDefined)
 
     def test_update_non_existing_workflow_failed(self):
         exception = self.assertRaises(
-            exc.DBEntityNotFoundError,
-            wf_service.update_workflows,
-            WORKFLOW
+            exc.DBEntityNotFoundError, wf_service.update_workflows, WORKFLOW
         )
 
         self.assertIn("Workflow not found", str(exception))
@@ -260,7 +245,7 @@ class WorkflowServiceTest(base.DbTestCase):
         exception = self.assertRaises(
             exc.InvalidModelException,
             wf_service.create_workflows,
-            INVALID_WORKFLOW
+            INVALID_WORKFLOW,
         )
 
         self.assertIn("Invalid DSL", str(exception))
@@ -278,14 +263,10 @@ class WorkflowServiceTest(base.DbTestCase):
             'task_id': None,
             'trust_id': None,
             'description': None,
-            'output': None
+            'output': None,
         }
 
-        states_permitted = [
-            states.IDLE,
-            states.PAUSED,
-            states.ERROR
-        ]
+        states_permitted = [states.IDLE, states.PAUSED, states.ERROR]
 
         update_env = {'k1': 'foobar'}
 
@@ -299,8 +280,7 @@ class WorkflowServiceTest(base.DbTestCase):
                 self.assertIsNone(created.updated_at)
 
                 updated = wf_service.update_workflow_execution_env(
-                    created,
-                    update_env
+                    created, update_env
                 )
 
                 self.assertDictEqual(update_env, updated.params['env'])
@@ -323,14 +303,14 @@ class WorkflowServiceTest(base.DbTestCase):
             'task_id': None,
             'trust_id': None,
             'description': None,
-            'output': None
+            'output': None,
         }
 
         states_not_permitted = [
             states.RUNNING,
             states.RUNNING_DELAYED,
             states.SUCCESS,
-            states.WAITING
+            states.WAITING,
         ]
 
         update_env = {'k1': 'foobar'}
@@ -348,19 +328,17 @@ class WorkflowServiceTest(base.DbTestCase):
                     exc.NotAllowedException,
                     wf_service.update_workflow_execution_env,
                     created,
-                    update_env
+                    update_env,
                 )
 
                 fetched = db_api.get_workflow_execution(created.id)
 
                 self.assertDictEqual(
-                    wf_exec['params']['env'],
-                    fetched.params['env']
+                    wf_exec['params']['env'], fetched.params['env']
                 )
 
                 self.assertDictEqual(
-                    wf_exec['context']['__env'],
-                    fetched.context['__env']
+                    wf_exec['context']['__env'], fetched.context['__env']
                 )
 
     def test_with_long_task_name(self):
@@ -371,9 +349,7 @@ class WorkflowServiceTest(base.DbTestCase):
         )
 
         self.assertRaises(
-            exc.InvalidModelException,
-            wf_service.create_workflows,
-            workflow
+            exc.InvalidModelException, wf_service.create_workflows, workflow
         )
 
     def test_upper_bound_length_task_name(self):
@@ -398,9 +374,7 @@ class WorkflowServiceTest(base.DbTestCase):
         )
 
         self.assertRaises(
-            exc.InvalidModelException,
-            wf_service.create_workflows,
-            wf_text
+            exc.InvalidModelException, wf_service.create_workflows, wf_text
         )
 
     def test_upper_bound_length_join_task_name(self):
@@ -421,12 +395,11 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wf_service.create_workflows,
-            INVALID_WORKFLOW_1
+            INVALID_WORKFLOW_1,
         )
 
         wf_defs = wf_service.create_workflows(
-            INVALID_WORKFLOW_1,
-            validate=False
+            INVALID_WORKFLOW_1, validate=False
         )
 
         # The workflow is created but it will never succeed since it's broken.
@@ -439,14 +412,14 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wf_service.create_workflows,
-            INVALID_WORKFLOW_1
+            INVALID_WORKFLOW_1,
         )
 
         self.assertRaises(
             exc.InvalidModelException,
             wf_service.create_workflows,
             INVALID_WORKFLOW_1,
-            validate=False
+            validate=False,
         )
 
     def test_validation_mode_always_disabled(self):

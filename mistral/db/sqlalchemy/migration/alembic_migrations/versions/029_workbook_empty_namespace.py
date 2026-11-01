@@ -34,7 +34,9 @@ def upgrade():
     wb_def = table('workbooks_v2', column('namespace'))
     with sa.orm.Session(bind=op.get_bind()) as session:
         session.execute(
-            wb_def.update().values(namespace='').where(
-                wb_def.c.namespace == None))  # noqa
+            wb_def.update()
+            .values(namespace='')
+            .where(wb_def.c.namespace == None)  # noqa: E711
+        )
 
         session.commit()

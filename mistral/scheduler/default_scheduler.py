@@ -134,9 +134,9 @@ class DefaultScheduler(base.Scheduler):
             )
 
             time.sleep(
-                self._fixed_delay +
-                random.Random().randint(
-                    0, int(self._random_delay * 1000)) * 0.001
+                self._fixed_delay
+                + random.Random().randint(0, int(self._random_delay * 1000))
+                * 0.001
             )
 
             try:
@@ -151,12 +151,12 @@ class DefaultScheduler(base.Scheduler):
         # Select and capture eligible jobs.
         with db_api.transaction():
             candidate_jobs = db_api.get_scheduled_jobs_to_start(
-                utils.utc_now_sec(),
-                self._batch_size
+                utils.utc_now_sec(), self._batch_size
             )
 
             captured_jobs = [
-                job for job in candidate_jobs
+                job
+                for job in candidate_jobs
                 if self._capture_scheduled_job(job)
             ]
 
@@ -201,11 +201,13 @@ class DefaultScheduler(base.Scheduler):
 
         ctx = (
             ctx_serializer.serialize_context(context.ctx())
-            if context.has_ctx() else {}
+            if context.has_ctx()
+            else {}
         )
 
-        execute_at = (utils.utc_now_sec() +
-                      datetime.timedelta(seconds=job.run_after))
+        execute_at = utils.utc_now_sec() + datetime.timedelta(
+            seconds=job.run_after
+        )
 
         args = job.func_args
         arg_serializers = job.func_arg_serializers
@@ -215,8 +217,8 @@ class DefaultScheduler(base.Scheduler):
                 if arg_name not in args:
                     raise exc.MistralException(
                         "Serializable function argument %s"
-                        " not found in func_args=%s"
-                        % (arg_name, args))
+                        " not found in func_args=%s" % (arg_name, args)
+                    )
                 try:
                     serializer = importutils.import_class(serializer_path)()
                 except ImportError as e:
@@ -235,7 +237,7 @@ class DefaultScheduler(base.Scheduler):
             'auth_ctx': ctx,
             'execute_at': execute_at,
             'captured_at': None,
-            'key': job.key
+            'key': job.key,
         }
 
         return db_api.create_scheduled_job(values)
@@ -249,7 +251,7 @@ class DefaultScheduler(base.Scheduler):
 
             heapq.heappush(
                 self._heap,
-                (scheduled_job.execute_at, self._seq, scheduled_job)
+                (scheduled_job.execute_at, self._seq, scheduled_job),
             )
 
             self.in_memory_jobs[scheduled_job.id] = scheduled_job
@@ -262,7 +264,7 @@ class DefaultScheduler(base.Scheduler):
             if not self._capture_scheduled_job(scheduled_job):
                 LOG.warning(
                     "Unable to capture a scheduled job [id=%s]",
-                    scheduled_job.id
+                    scheduled_job.id,
                 )
 
                 return
@@ -303,7 +305,7 @@ class DefaultScheduler(base.Scheduler):
         _, updated_cnt = db_api.update_scheduled_job(
             id=scheduled_job.id,
             values={'captured_at': now_sec},
-            query_filter={'captured_at': scheduled_job.captured_at}
+            query_filter={'captured_at': scheduled_job.captured_at},
         )
 
         # We need to update "captured_at" of the initial object stored in
@@ -338,7 +340,7 @@ class DefaultScheduler(base.Scheduler):
             scheduled_job.id,
             scheduled_job.target_factory_func_name,
             scheduled_job.func_name,
-            scheduled_job.func_args
+            scheduled_job.func_args,
         )
 
         auth_ctx = copy.deepcopy(scheduled_job.auth_ctx)
@@ -385,9 +387,7 @@ class DefaultScheduler(base.Scheduler):
             func(**args)
         except Exception as e:
             LOG.exception(
-                "Scheduled job failed, method: %s, exception: %s",
-                func,
-                e
+                "Scheduled job failed, method: %s, exception: %s", func, e
             )
         finally:
             # Remove context.

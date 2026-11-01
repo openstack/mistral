@@ -44,7 +44,7 @@ DEFAULT_PROPERTIES = {
     'service': '<% $.publisher %>',
     'project_id': '<% $.context.project_id %>',
     'user_id': '<% $.context.user_id %>',
-    'timestamp': '<% $.timestamp %>'
+    'timestamp': '<% $.timestamp %>',
 }
 
 
@@ -91,25 +91,29 @@ class NotificationsConverter(object):
                     errmsg = (
                         "Invalid YAML syntax in Definitions file "
                         "%(file)s at line: %(line)s, column: %(column)s."
-                        % dict(file=config_file,
-                               line=mark.line + 1,
-                               column=mark.column + 1)
+                        % dict(
+                            file=config_file,
+                            line=mark.line + 1,
+                            column=mark.column + 1,
+                        )
                     )
                 else:
                     errmsg = (
-                        "YAML error reading Definitions file %s" %
-                        CONF.event_engine.event_definitions_cfg_file
+                        "YAML error reading Definitions file %s"
+                        % CONF.event_engine.event_definitions_cfg_file
                     )
 
                 LOG.error(errmsg)
 
                 raise exceptions.MistralError(
-                    'Invalid event definition configuration file. %s' %
-                    config_file
+                    'Invalid event definition configuration file. %s'
+                    % config_file
                 )
 
-        self.definitions = [EventDefinition(event_def)
-                            for event_def in reversed(definition_cfg)]
+        self.definitions = [
+            EventDefinition(event_def)
+            for event_def in reversed(definition_cfg)
+        ]
 
     def get_event_definition(self, event_type):
         for d in self.definitions:
@@ -122,8 +126,11 @@ class NotificationsConverter(object):
         edef = self.get_event_definition(event_type)
 
         if edef is None:
-            LOG.debug('No event definition found for type: %s, use default '
-                      'settings instead.', event_type)
+            LOG.debug(
+                'No event definition found for type: %s, use default '
+                'settings instead.',
+                event_type,
+            )
 
             return expressions.evaluate_recursively(DEFAULT_PROPERTIES, event)
 
@@ -136,6 +143,7 @@ class DefaultEventEngine(base.EventEngine):
     A separate service that is responsible for listening event notification
     and triggering workflows defined by end user.
     """
+
     def __init__(self):
         self.engine_client = rpc.get_engine_client()
         self.event_queue = queue.Queue()
@@ -173,10 +181,7 @@ class DefaultEventEngine(base.EventEngine):
         """
         # Handle each priority of notification messages.
         event_priorities = ['audit', 'critical', 'debug', 'error', 'info']
-        attrs = dict.fromkeys(
-            event_priorities,
-            mistral_messaging.handle_event
-        )
+        attrs = dict.fromkeys(event_priorities, mistral_messaging.handle_event)
         attrs['event_types'] = events
 
         endpoint_cls = type(
@@ -204,14 +209,14 @@ class DefaultEventEngine(base.EventEngine):
 
         endpoint = self._get_endpoint_cls(events)(self)
 
-        LOG.debug("Starting to listen to AMQP. exchange: %s, topic: %s",
-                  exchange, topic)
-
-        listener = mistral_messaging.start_listener(
-            CONF,
+        LOG.debug(
+            "Starting to listen to AMQP. exchange: %s, topic: %s",
             exchange,
             topic,
-            [endpoint]
+        )
+
+        listener = mistral_messaging.start_listener(
+            CONF, exchange, topic, [endpoint]
         )
 
         self.exchange_topic_listener_map[key] = listener
@@ -229,7 +234,7 @@ class DefaultEventEngine(base.EventEngine):
             trigger_info['workflow_namespace'] = trigger.workflow.namespace
             self.event_triggers_map[trigger.event].append(trigger_info)
 
-        for (ex_t, events) in self.exchange_topic_events_map.items():
+        for ex_t, events in self.exchange_topic_events_map.items():
             exchange, topic = ex_t
             self._add_event_listener(exchange, topic, events)
 
@@ -242,12 +247,14 @@ class DefaultEventEngine(base.EventEngine):
         # here.
         maintenance_status = db_api.get_maintenance_status()
 
-        if maintenance_status in (maintenance_service.PAUSING,
-                                  maintenance_service.PAUSED):
+        if maintenance_status in (
+            maintenance_service.PAUSING,
+            maintenance_service.PAUSED,
+        ):
             LOG.debug(
                 "Mistral is in maintenance mode (%s); skipping event "
                 "triggers.",
-                maintenance_status
+                maintenance_status,
             )
 
             return
@@ -258,23 +265,22 @@ class DefaultEventEngine(base.EventEngine):
             triggered_by = {
                 "type": "event_trigger",
                 "id": t['id'],
-                "name": t['name']
+                "name": t['name'],
             }
 
             workflow_params = wf_service.strip_internal_workflow_params(
                 t.get('workflow_params')
             )
-            workflow_params.update({
-                'event_params': event_params,
-                'triggered_by': triggered_by
-            })
+            workflow_params.update(
+                {'event_params': event_params, 'triggered_by': triggered_by}
+            )
 
             description = {
                 "description": (
                     "Workflow execution created by event"
                     " trigger '(%s)'." % t['id']
                 ),
-                "triggered_by": triggered_by
+                "triggered_by": triggered_by,
             }
 
             try:
@@ -288,11 +294,14 @@ class DefaultEventEngine(base.EventEngine):
                     None,
                     t['workflow_input'],
                     description=json.dumps(description),
-                    **workflow_params
+                    **workflow_params,
                 )
             except Exception as e:
-                LOG.exception("Failed to process event trigger %s, "
-                              "error: %s", t['id'], str(e))
+                LOG.exception(
+                    "Failed to process event trigger %s, error: %s",
+                    t['id'],
+                    str(e),
+                )
             finally:
                 auth_ctx.set_ctx(None)
 
@@ -330,34 +339,36 @@ class DefaultEventEngine(base.EventEngine):
                 # There may be more projects registered the same event.
                 project_ids = [t['project_id'] for t in triggers]
 
-                any_public = any(
-                    [t['scope'] == 'public' for t in triggers]
-                )
+                any_public = any([t['scope'] == 'public' for t in triggers])
 
                 # Skip the event doesn't belong to any event trigger
                 # owner.
-                if (not any_public and CONF.pecan.auth_enable and
-                        context.get('project_id', '')
-                        not in project_ids):
+                if (
+                    not any_public
+                    and CONF.pecan.auth_enable
+                    and context.get('project_id', '') not in project_ids
+                ):
                     return
 
                 # Need to choose what trigger(s) should be called
                 # exactly.
                 triggers_to_call = []
                 for t in triggers:
-                    project_trigger = (
-                        t['project_id'] == context.get('project_id')
+                    project_trigger = t['project_id'] == context.get(
+                        'project_id'
                     )
                     public_trigger = t['scope'] == 'public'
                     if project_trigger or public_trigger:
                         triggers_to_call.append(t)
 
-                LOG.debug('Start to handle event: %s, %d trigger(s) '
-                          'registered.', event_type, len(triggers))
+                LOG.debug(
+                    'Start to handle event: %s, %d trigger(s) registered.',
+                    event_type,
+                    len(triggers),
+                )
 
                 event_params = self.notification_converter.convert(
-                    event_type,
-                    event
+                    event_type, event
                 )
 
                 self._start_workflow(triggers_to_call, event_params)
@@ -438,7 +449,7 @@ class DefaultEventEngine(base.EventEngine):
             LOG.info(
                 'Deleted listener for exchange: %s, topic: %s',
                 trigger['exchange'],
-                trigger['topic']
+                trigger['topic'],
             )
 
             return

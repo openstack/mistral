@@ -37,15 +37,19 @@ class GeneratedPythonActionDescriptor(ml_actions.PythonActionDescriptor):
     and description.
     """
 
-    def __init__(self, name, action_cls, action_cls_attrs=None, namespace='',
-                 project_id=None, scope=None, desc=None, params_spec=None):
+    def __init__(
+        self,
+        name,
+        action_cls,
+        action_cls_attrs=None,
+        namespace='',
+        project_id=None,
+        scope=None,
+        desc=None,
+        params_spec=None,
+    ):
         super(GeneratedPythonActionDescriptor, self).__init__(
-            name,
-            action_cls,
-            action_cls_attrs,
-            namespace,
-            project_id,
-            scope
+            name, action_cls, action_cls_attrs, namespace, project_id, scope
         )
 
         if desc:
@@ -58,7 +62,7 @@ class GeneratedPythonActionDescriptor(ml_actions.PythonActionDescriptor):
         return 'Generated Python action [name=%s, cls=%s, params_spec=%s]' % (
             self.name,
             self.action_class,
-            self.params_spec
+            self.params_spec,
         )
 
 
@@ -96,8 +100,7 @@ class LegacyActionProvider(ml_actions.ActionProvider):
         )
 
         ext_mgr = extension.ExtensionManager(
-            namespace='mistral.actions',
-            invoke_on_load=False
+            namespace='mistral.actions', invoke_on_load=False
         )
 
         allowlist = CONF.legacy_action_provider.allowlist
@@ -114,9 +117,7 @@ class LegacyActionProvider(ml_actions.ActionProvider):
                     continue
 
             action_desc = ml_actions.PythonActionDescriptor(
-                action_name,
-                action_cls,
-                namespace=''
+                action_name, action_cls, namespace=''
             )
 
             self._action_descs[action_name] = action_desc
@@ -140,8 +141,7 @@ class LegacyActionProvider(ml_actions.ActionProvider):
         res = []
 
         ext_mgr = extension.ExtensionManager(
-            namespace='mistral.generators',
-            invoke_on_load=True
+            namespace='mistral.generators', invoke_on_load=True
         )
 
         # TODO(rakhmerov): this is all ugly. It turns out that the only
@@ -172,7 +172,7 @@ class LegacyActionProvider(ml_actions.ActionProvider):
                 generator.base_action_class,
                 i_utils.get_public_fields(action['class']),
                 desc=action['description'],
-                params_spec=action['arg_list']
+                params_spec=action['arg_list'],
             )
 
             LOG.debug('Registered action: %s', action_desc)
@@ -182,7 +182,13 @@ class LegacyActionProvider(ml_actions.ActionProvider):
     def find(self, action_name, namespace=None):
         return self._action_descs.get(action_name)
 
-    def find_all(self, namespace=None, limit=None, sort_fields=None,
-                 sort_dirs=None, **filters):
+    def find_all(
+        self,
+        namespace=None,
+        limit=None,
+        sort_fields=None,
+        sort_dirs=None,
+        **filters,
+    ):
         # TODO(rakhmerov): Apply sort_keys, sort_dirs, and filters.
         return self._action_descs.values()

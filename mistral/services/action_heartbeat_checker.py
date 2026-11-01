@@ -49,8 +49,7 @@ def handle_expired_actions():
 
     with db_api.transaction():
         action_exs = db_api.get_running_expired_sync_action_executions(
-            exp_date,
-            CONF.action_heartbeat.batch_size
+            exp_date, CONF.action_heartbeat.batch_size
         )
 
         LOG.debug("Found %d running and expired actions.", len(action_exs))
@@ -59,7 +58,8 @@ def handle_expired_actions():
             for action_ex in action_exs:
                 LOG.warning(
                     "Action execution to transit to error, because "
-                    "heartbeat wasn't received: %s", action_ex.id
+                    "heartbeat wasn't received: %s",
+                    action_ex.id,
                 )
 
                 try:
@@ -68,8 +68,10 @@ def handle_expired_actions():
                     )
                     wf_ex = db_api.get_workflow_execution(
                         task_ex.workflow_execution_id,
-                        fields=(db_models.WorkflowExecution.id,
-                                db_models.WorkflowExecution.root_execution_id)
+                        fields=(
+                            db_models.WorkflowExecution.id,
+                            db_models.WorkflowExecution.root_execution_id,
+                        ),
                     )
                 except exc.DBEntityNotFoundError as e:
                     # Don't let one broken action execution poison the
@@ -79,7 +81,8 @@ def handle_expired_actions():
                     LOG.warning(
                         "Skipping action execution %s: its task or "
                         "workflow execution doesn't exist anymore: %s",
-                        action_ex.id, e
+                        action_ex.id,
+                        e,
                     )
 
                     continue
@@ -89,9 +92,7 @@ def handle_expired_actions():
                 else:
                     root_execution_id = wf_ex.id
 
-                result = mistral_lib.Result(
-                    error="Heartbeat wasn't received."
-                )
+                result = mistral_lib.Result(error="Heartbeat wasn't received.")
 
                 # NOTE(amorin): keep the administrative context of the
                 # checker thread and only enrich it with the root
@@ -106,7 +107,7 @@ def handle_expired_actions():
                         project_id=None,
                         auth_token=None,
                         is_admin=True,
-                        root_execution_id=root_execution_id
+                        root_execution_id=root_execution_id,
                     )
                 )
 
@@ -118,10 +119,7 @@ def _loop():
     # security context.
     auth_ctx.set_ctx(
         auth_ctx.MistralContext(
-            user_id=None,
-            project_id=None,
-            auth_token=None,
-            is_admin=True
+            user_id=None, project_id=None, auth_token=None, is_admin=True
         )
     )
 
@@ -153,7 +151,8 @@ def start():
     LOG.debug(
         "First run of action heartbeat checker, wait before "
         "checking to make sure executors have time to send "
-        "heartbeats. (%s seconds)", wait_time
+        "heartbeats. (%s seconds)",
+        wait_time,
     )
 
     global _stopped

@@ -36,7 +36,8 @@ class NameValidationTest(base.EngineTestCase):
             t1:
               action: a1
         """
-        with ExpectedException(exc.InvalidModelException,
-                               "Name 'wf name with space' "
-                               "must not contain spaces"):
+        with ExpectedException(
+            exc.InvalidModelException,
+            "Name 'wf name with space' must not contain spaces",
+        ):
             wf_service.create_workflows(wf)

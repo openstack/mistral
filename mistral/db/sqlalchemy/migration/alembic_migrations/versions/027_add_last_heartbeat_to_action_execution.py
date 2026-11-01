@@ -40,12 +40,15 @@ def upgrade():
         Column(
             'last_heartbeat',
             DateTime,
-            default=lambda: utils.utc_now_sec() + datetime.timedelta(
-                seconds=CONF.action_heartbeat.first_heartbeat_timeout
-            )
-        )
+            default=lambda: (
+                utils.utc_now_sec()
+                + datetime.timedelta(
+                    seconds=CONF.action_heartbeat.first_heartbeat_timeout
+                )
+            ),
+        ),
     )
     op.add_column(
         'action_executions_v2',
-        Column('is_sync', Boolean, default=None, nullable=True)
+        Column('is_sync', Boolean, default=None, nullable=True),
     )

@@ -37,5 +37,5 @@ def upgrade():
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=250), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
+        sa.UniqueConstraint('name'),
     )

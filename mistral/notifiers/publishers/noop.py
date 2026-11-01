@@ -21,12 +21,11 @@ LOG = logging.getLogger(__name__)
 
 
 class NoopPublisher(base.NotificationPublisher):
-
     def publish(self, ctx, ex_id, data, event, timestamp, **kwargs):
         LOG.info(
             'The event %s for [name=%s, id=%s] is published by the '
             'noop notification publisher.',
             event,
             data.get('name'),
-            ex_id
+            ex_id,
         )

@@ -41,9 +41,5 @@ def upgrade():
         sa.Column('resource_type', sa.String(length=50), nullable=False),
         sa.Column('status', sa.String(length=20), nullable=False),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint(
-            'resource_id',
-            'resource_type',
-            'member_id'
-        )
+        sa.UniqueConstraint('resource_id', 'resource_type', 'member_id'),
     )

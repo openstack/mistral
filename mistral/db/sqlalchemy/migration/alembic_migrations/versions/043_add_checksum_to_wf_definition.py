@@ -34,5 +34,5 @@ def upgrade():
     if not column_exists('workflow_definitions_v2', 'checksum'):
         op.add_column(
             'workflow_definitions_v2',
-            sa.Column('checksum', sa.String(length=32), nullable=True)
+            sa.Column('checksum', sa.String(length=32), nullable=True),
         )

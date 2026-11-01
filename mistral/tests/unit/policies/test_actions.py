@@ -42,7 +42,7 @@ ADHOC_ACTION_DEF = models.ActionDefinition(
     is_system=False,
     description='My super cool action.',
     tags=['test', 'v2'],
-    definition=ADHOC_ACTION_YAML
+    definition=ADHOC_ACTION_YAML,
 )
 
 MOCK_ACTION = mock.MagicMock(return_value=ADHOC_ACTION_DEF)
@@ -67,15 +67,13 @@ class TestActionPolicy(base.APITest):
 
     @mock.patch.object(db_api, "create_action_definition")
     def test_action_create_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"actions:create": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"actions:create": "role:FAKE"})
 
         resp = self.app.post(
             '/v2/actions',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -89,7 +87,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.post(
             '/v2/actions',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -103,7 +101,7 @@ class TestActionPolicy(base.APITest):
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -118,7 +116,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.post(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -126,9 +124,7 @@ class TestActionPolicy(base.APITest):
     @mock.patch.object(db_api, "delete_action_definition", MOCK_DELETE)
     @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     def test_action_delete_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"actions:delete": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"actions:delete": "role:FAKE"})
 
         resp = self.app.delete('/v2/actions/123', expect_errors=True)
 
@@ -146,9 +142,7 @@ class TestActionPolicy(base.APITest):
         self.assertEqual(204, resp.status_int)
 
     def test_action_get_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"actions:get": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"actions:get": "role:FAKE"})
 
         resp = self.app.get('/v2/actions/123', expect_errors=True)
 
@@ -167,9 +161,7 @@ class TestActionPolicy(base.APITest):
         self.assertEqual(200, resp.status_int)
 
     def test_action_list_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"actions:list": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"actions:list": "role:FAKE"})
 
         resp = self.app.get('/v2/actions', expect_errors=True)
 
@@ -186,15 +178,13 @@ class TestActionPolicy(base.APITest):
 
     @mock.patch.object(db_api, "update_action_definition")
     def test_action_update_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"actions:update": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"actions:update": "role:FAKE"})
 
         resp = self.app.put(
             '/v2/actions',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -208,7 +198,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.put(
             '/v2/actions',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -222,7 +212,7 @@ class TestActionPolicy(base.APITest):
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -237,7 +227,7 @@ class TestActionPolicy(base.APITest):
         resp = self.app.put(
             '/v2/actions?scope=public',
             ADHOC_ACTION_YAML,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)

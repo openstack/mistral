@@ -36,11 +36,10 @@ def upgrade():
     # Due to this bug there may be redundant delayed calls in DB.
     # We need to delete all rows where the "key" column is None.
     with sa.orm.Session(bind=op.get_bind()) as session:
-
         delayed_calls = table('delayed_calls_v2', column('key'))
 
         session.execute(
-            delayed_calls.delete().where(delayed_calls.c.key==None)  # noqa
+            delayed_calls.delete().where(delayed_calls.c.key == None)  # noqa
         )
 
         session.commit()

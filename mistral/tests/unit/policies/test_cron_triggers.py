@@ -24,11 +24,7 @@ WF = models.WorkflowDefinition(
     spec={
         'version': '2.0',
         'name': 'my_wf',
-        'tasks': {
-            'task1': {
-                'action': 'std.noop'
-            }
-        }
+        'tasks': {'task1': {'action': 'std.noop'}},
     }
 )
 WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
@@ -41,21 +37,23 @@ TRIGGER = {
     'workflow_input': '{}',
     'workflow_params': '{}',
     'scope': 'private',
-    'remaining_executions': 42
+    'remaining_executions': 42,
 }
 
 TRIGGER_DB = models.CronTrigger()
-TRIGGER_DB.update({
-    'id': '02abb422-55ef-4bb2-8cb9-217a583a6a3f',
-    'name': 'my_cron_trigger',
-    'pattern': '* * * * *',
-    'workflow_name': 'my_wf',
-    'workflow_id': '123e4567-e89b-12d3-a456-426655440000',
-    'workflow_input': {},
-    'workflow_params': {},
-    'scope': 'private',
-    'remaining_executions': 42
-})
+TRIGGER_DB.update(
+    {
+        'id': '02abb422-55ef-4bb2-8cb9-217a583a6a3f',
+        'name': 'my_cron_trigger',
+        'pattern': '* * * * *',
+        'workflow_name': 'my_wf',
+        'workflow_id': '123e4567-e89b-12d3-a456-426655440000',
+        'workflow_input': {},
+        'workflow_params': {},
+        'scope': 'private',
+        'remaining_executions': 42,
+    }
+)
 
 MOCK_WF = mock.MagicMock(return_value=WF)
 MOCK_TRIGGER = mock.MagicMock(return_value=TRIGGER_DB)
@@ -86,9 +84,7 @@ class TestCronTriggerPolicy(base.APITest):
             {"cron_triggers:create": "role:FAKE"}
         )
         resp = self.app.post_json(
-            '/v2/cron_triggers',
-            TRIGGER,
-            expect_errors=True
+            '/v2/cron_triggers', TRIGGER, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -101,10 +97,7 @@ class TestCronTriggerPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"cron_triggers:create": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.post_json(
-            '/v2/cron_triggers',
-            TRIGGER
-        )
+        resp = self.app.post_json('/v2/cron_triggers', TRIGGER)
 
         self.assertEqual(201, resp.status_int)
 
@@ -117,9 +110,7 @@ class TestCronTriggerPolicy(base.APITest):
         trigger = dict(TRIGGER, scope='public')
 
         resp = self.app.post_json(
-            '/v2/cron_triggers',
-            trigger,
-            expect_errors=True
+            '/v2/cron_triggers', trigger, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -136,10 +127,7 @@ class TestCronTriggerPolicy(base.APITest):
 
         trigger = dict(TRIGGER, scope='public')
 
-        resp = self.app.post_json(
-            '/v2/cron_triggers',
-            trigger
-        )
+        resp = self.app.post_json('/v2/cron_triggers', trigger)
 
         self.assertEqual(201, resp.status_int)
 
@@ -150,8 +138,7 @@ class TestCronTriggerPolicy(base.APITest):
             {"cron_triggers:delete": "role:FAKE"}
         )
         resp = self.app.delete(
-            '/v2/cron_triggers/my_cron_trigger',
-            expect_errors=True
+            '/v2/cron_triggers/my_cron_trigger', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -162,9 +149,7 @@ class TestCronTriggerPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"cron_triggers:delete": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.delete(
-            '/v2/cron_triggers/my_cron_trigger'
-        )
+        resp = self.app.delete('/v2/cron_triggers/my_cron_trigger')
 
         self.assertEqual(204, resp.status_int)
 
@@ -174,8 +159,7 @@ class TestCronTriggerPolicy(base.APITest):
             {"cron_triggers:get": "role:FAKE"}
         )
         resp = self.app.get(
-            '/v2/cron_triggers/my_cron_trigger',
-            expect_errors=True
+            '/v2/cron_triggers/my_cron_trigger', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -185,9 +169,7 @@ class TestCronTriggerPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"cron_triggers:get": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/cron_triggers/my_cron_trigger'
-        )
+        resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
 
         self.assertEqual(200, resp.status_int)
 
@@ -195,10 +177,7 @@ class TestCronTriggerPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"cron_triggers:list": "role:FAKE"}
         )
-        resp = self.app.get(
-            '/v2/cron_triggers',
-            expect_errors=True
-        )
+        resp = self.app.get('/v2/cron_triggers', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -206,32 +185,32 @@ class TestCronTriggerPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"cron_triggers:list": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/cron_triggers'
-        )
+        resp = self.app.get('/v2/cron_triggers')
 
         self.assertEqual(200, resp.status_int)
 
     def test_cron_trigger_list_all_not_allowed(self):
-        self.policy.change_policy_definition({
-            "cron_triggers:list": "role:FAKE or rule:admin_or_owner",
-            "cron_triggers:list:all_projects": "role:FAKE"
-        })
+        self.policy.change_policy_definition(
+            {
+                "cron_triggers:list": "role:FAKE or rule:admin_or_owner",
+                "cron_triggers:list:all_projects": "role:FAKE",
+            }
+        )
         resp = self.app.get(
-            '/v2/cron_triggers?all_projects=1',
-            expect_errors=True
+            '/v2/cron_triggers?all_projects=1', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
 
     def test_cron_trigger_list_all_allowed(self):
-        self.policy.change_policy_definition({
-            "cron_triggers:list": "role:FAKE or rule:admin_or_owner",
-            "cron_triggers:list:all_projects":
-                "role:FAKE or rule:admin_or_owner"
-        })
-        resp = self.app.get(
-            '/v2/cron_triggers?all_projects=1'
+        self.policy.change_policy_definition(
+            {
+                "cron_triggers:list": "role:FAKE or rule:admin_or_owner",
+                "cron_triggers:list:all_projects": (
+                    "role:FAKE or rule:admin_or_owner"
+                ),
+            }
         )
+        resp = self.app.get('/v2/cron_triggers?all_projects=1')
 
         self.assertEqual(200, resp.status_int)

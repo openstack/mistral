@@ -29,9 +29,9 @@ class PoliciesSpec(base.BaseSpec):
             "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "pause-before": types.EXPRESSION_OR_BOOLEAN,
             "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
-            "fail-on": types.EXPRESSION_OR_BOOLEAN
+            "fail-on": types.EXPRESSION_OR_BOOLEAN,
         },
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     @classmethod

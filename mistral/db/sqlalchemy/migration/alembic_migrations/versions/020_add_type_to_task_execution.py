@@ -35,11 +35,8 @@ task_executions = sa.Table(
     'task_executions_v2',
     sa.MetaData(),
     sa.Column('id', sa.String(36), nullable=False),
-    sa.Column(
-        'spec',
-        st.JsonMediumDictType()
-    ),
-    sa.Column('type', sa.String(10), nullable=True)
+    sa.Column('spec', st.JsonMediumDictType()),
+    sa.Column('type', sa.String(10), nullable=True),
 )
 
 
@@ -47,15 +44,14 @@ def upgrade():
 
     op.add_column(
         'task_executions_v2',
-        sa.Column('type', sa.String(length=10), nullable=True)
+        sa.Column('type', sa.String(length=10), nullable=True),
     )
 
     with sa.orm.Session(bind=op.get_bind()) as session:
         values = []
 
         for row in session.query(task_executions):
-            values.append({'id': row[0],
-                           'spec': row[1]})
+            values.append({'id': row[0], 'spec': row[1]})
 
         for value in values:
             task_type = "ACTION"
@@ -63,9 +59,9 @@ def upgrade():
                 task_type = "WORKFLOW"
 
             session.execute(
-                task_executions.update().values(type=task_type).where(
-                    task_executions.c.id == value['id']
-                )
+                task_executions.update()
+                .values(type=task_type)
+                .where(task_executions.c.id == value['id'])
             )
 
         # this commit appears to be necessary

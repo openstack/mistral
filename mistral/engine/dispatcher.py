@@ -71,8 +71,9 @@ def _rearrange_commands(cmds):
         cmds.sort(key=functools.cmp_to_key(_compare_task_commands))
 
         return cmds
-    elif (state_cmd_idx == 0 and
-            not isinstance(state_cmd, commands.PauseWorkflow)):
+    elif state_cmd_idx == 0 and not isinstance(
+        state_cmd, commands.PauseWorkflow
+    ):
         return cmds[0:1]
 
     res = cmds[0:state_cmd_idx]
@@ -85,7 +86,7 @@ def _rearrange_commands(cmds):
     # to also add a tail of the initial command list to the result so that
     # we can save them to the command backlog.
     if isinstance(state_cmd, commands.PauseWorkflow):
-        res.extend(cmds[state_cmd_idx + 1:])
+        res.extend(cmds[state_cmd_idx + 1 :])
 
     return res
 
@@ -123,14 +124,18 @@ def _poll_commands_from_backlog(wf_ex):
 @profiler.trace('dispatcher-dispatch-commands', hide_args=True)
 def dispatch_workflow_commands(wf_ex, wf_cmds):
     task_ex_ids = {
-        c.task_ex.id for c in wf_cmds
+        c.task_ex.id
+        for c in wf_cmds
         if isinstance(c, commands.RunExistingTask)
     }
 
     backlog_cmds = [
-        c for c in _poll_commands_from_backlog(wf_ex)
-        if not (isinstance(c, commands.RunExistingTask) and
-                c.task_ex.id in task_ex_ids)
+        c
+        for c in _poll_commands_from_backlog(wf_ex)
+        if not (
+            isinstance(c, commands.RunExistingTask)
+            and c.task_ex.id in task_ex_ids
+        )
     ]
 
     # Run commands from the backlog.
@@ -176,7 +181,7 @@ def _process_commands(wf_ex, cmds):
                     waiting=_task.waiting,
                     triggered_by=_task.triggered_by,
                     rerun=_task.rerun,
-                    reset=_reset
+                    reset=_reset,
                 )
 
             post_tx_queue.register_operation(_start_task)

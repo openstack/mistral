@@ -18,7 +18,7 @@ import abc
 from stevedore import extension
 
 
-MAX_INT_BITS = 10 ** 5
+MAX_INT_BITS = 10**5
 
 
 class Evaluator(object):
@@ -69,8 +69,7 @@ def get_custom_functions():
     result = dict()
 
     mgr = extension.ExtensionManager(
-        namespace='mistral.expression.functions',
-        invoke_on_load=False
+        namespace='mistral.expression.functions', invoke_on_load=False
     )
 
     for name in mgr.names():

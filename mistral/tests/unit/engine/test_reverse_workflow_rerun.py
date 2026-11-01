@@ -71,18 +71,17 @@ workflows:
 
 
 class ReverseWorkflowRerunTest(base.EngineTestCase):
-
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success for initial run.
+                'Task 1',  # Mock task1 success for initial run.
                 exc.ActionException(),  # Mock task2 exception for initial run.
-                'Task 2',               # Mock task2 success for rerun.
-                'Task 3'                # Mock task3 success.
+                'Task 2',  # Mock task2 success for rerun.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun(self):
         wb_service.create_workbook_v2(SIMPLE_WORKBOOK)
@@ -156,14 +155,24 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         # Order doesn't matter.
         self.assertEqual(
             1,
-            len([act_ex for act_ex in task_2_action_exs
-                 if act_ex.state == states.SUCCESS])
+            len(
+                [
+                    act_ex
+                    for act_ex in task_2_action_exs
+                    if act_ex.state == states.SUCCESS
+                ]
+            ),
         )
 
         self.assertEqual(
             1,
-            len([act_ex for act_ex in task_2_action_exs
-                 if act_ex.state == states.ERROR])
+            len(
+                [
+                    act_ex
+                    for act_ex in task_2_action_exs
+                    if act_ex.state == states.ERROR
+                ]
+            ),
         )
 
         # Check action executions of task 3.
@@ -181,28 +190,21 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success for initial run.
+                'Task 1',  # Mock task1 success for initial run.
                 exc.ActionException(),  # Mock task2 exception for initial run.
-                'Task 2',               # Mock task2 success for rerun.
-                'Task 3'                # Mock task3 success.
+                'Task 2',  # Mock task2 success for rerun.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun_diff_env_vars(self):
         wb_service.create_workbook_v2(SIMPLE_WORKBOOK_DIFF_ENV_VAR)
 
         # Initial environment variables for the workflow execution.
-        env = {
-            'var1': 'fee fi fo fum',
-            'var2': 'foobar'
-        }
+        env = {'var1': 'fee fi fo fum', 'var2': 'foobar'}
 
         # Run workflow and fail task.
-        wf_ex = self.engine.start_workflow(
-            'wb1.wf1',
-            task_name='t3',
-            env=env
-        )
+        wf_ex = self.engine.start_workflow('wb1.wf1', task_name='t3', env=env)
 
         self.await_workflow_error(wf_ex.id)
 
@@ -224,10 +226,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Update env in workflow execution with the following.
-        updated_env = {
-            'var1': 'Task 2',
-            'var2': 'Task 3'
-        }
+        updated_env = {'var1': 'Task 2', 'var2': 'Task 3'}
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(task_2_ex.id, env=updated_env)
@@ -265,10 +264,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
 
-        self.assertDictEqual(
-            {'output': 'Task 1'},
-            task_1_action_exs[0].input
-        )
+        self.assertDictEqual({'output': 'Task 1'}, task_1_action_exs[0].input)
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, task_2_ex.state)
@@ -282,31 +278,27 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
 
         # Assert that one action ex is in error and one in success states.
         self.assertIn(
-            task_2_action_exs[0].state,
-            [states.ERROR, states.SUCCESS]
+            task_2_action_exs[0].state, [states.ERROR, states.SUCCESS]
         )
         self.assertIn(
-            task_2_action_exs[1].state,
-            [states.ERROR, states.SUCCESS]
+            task_2_action_exs[1].state, [states.ERROR, states.SUCCESS]
         )
         self.assertNotEqual(
-            task_2_action_exs[0].state,
-            task_2_action_exs[1].state
+            task_2_action_exs[0].state, task_2_action_exs[1].state
         )
 
         # Assert that one action ex got first env and one got second env
         self.assertIn(
             task_2_action_exs[0].input['output'],
-            [env['var1'], updated_env['var1']]
+            [env['var1'], updated_env['var1']],
         )
         self.assertIn(
             task_2_action_exs[1].input['output'],
-            [env['var1'], updated_env['var1']]
+            [env['var1'], updated_env['var1']],
         )
 
         self.assertNotEqual(
-            task_2_action_exs[0].input,
-            task_2_action_exs[1].input
+            task_2_action_exs[0].input, task_2_action_exs[1].input
         )
 
         # Check action executions of task 3.
@@ -320,6 +312,5 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_3_action_exs[0].state)
 
         self.assertDictEqual(
-            {'output': updated_env['var2']},
-            task_3_action_exs[0].input
+            {'output': updated_env['var2']}, task_3_action_exs[0].input
         )

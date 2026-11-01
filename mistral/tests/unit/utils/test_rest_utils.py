@@ -22,8 +22,9 @@ class RestUtilsTest(base.BaseTest):
     def test_validate_fields(self):
         rest_utils.validate_fields(["a", "b"], ["a", "b", "c"])
 
-        e = self.assertRaises(wsme_exc.ClientSideError,
-                              rest_utils.validate_fields, ["d"], ["a"])
+        e = self.assertRaises(
+            wsme_exc.ClientSideError, rest_utils.validate_fields, ["d"], ["a"]
+        )
         self.assertIn("[d]", str(e))
 
     def test_clear_sensitive_headers_defaults(self):
@@ -33,27 +34,25 @@ class RestUtilsTest(base.BaseTest):
             'X-Subject-Token': 'subject',
             'Cookie': 'session=1',
             'x-api-key': 'key',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         }
 
         self.assertEqual(
             {'Content-Type': 'application/json'},
-            rest_utils.clear_sensitive_headers(headers)
+            rest_utils.clear_sensitive_headers(headers),
         )
         self.assertEqual('Bearer secret', headers['authorization'])
 
     def test_clear_sensitive_headers_custom(self):
         self.override_config(
-            'sensitive_headers',
-            ['X-Custom'],
-            group='action_logging'
+            'sensitive_headers', ['X-Custom'], group='action_logging'
         )
 
         self.assertEqual(
             {'Authorization': 'Bearer secret'},
             rest_utils.clear_sensitive_headers(
                 {'Authorization': 'Bearer secret', 'x-custom': 'secret'}
-            )
+            ),
         )
 
     def test_clear_sensitive_headers_empty(self):
@@ -62,25 +61,20 @@ class RestUtilsTest(base.BaseTest):
 
     def test_prepare_response_body_log_truncates(self):
         self.override_config(
-            'response_body_log_limit',
-            5,
-            group='action_logging'
+            'response_body_log_limit', 5, group='action_logging'
         )
 
         self.assertEqual(
             'abcde... (truncated, total length 10)',
-            rest_utils.prepare_response_body_log('abcdefghij')
+            rest_utils.prepare_response_body_log('abcdefghij'),
         )
         self.assertEqual(
-            'abcde',
-            rest_utils.prepare_response_body_log('abcde')
+            'abcde', rest_utils.prepare_response_body_log('abcde')
         )
 
     def test_prepare_response_body_log_no_limit(self):
         self.override_config(
-            'response_body_log_limit',
-            0,
-            group='action_logging'
+            'response_body_log_limit', 0, group='action_logging'
         )
         body = 'a' * 5000
 
@@ -94,12 +88,10 @@ class RestUtilsTest(base.BaseTest):
 
     def test_prepare_response_body_log_hidden(self):
         self.override_config(
-            'hide_response_body',
-            True,
-            group='action_logging'
+            'hide_response_body', True, group='action_logging'
         )
 
         self.assertEqual(
             'Response body hidden due to action_logging configuration.',
-            rest_utils.prepare_response_body_log('secret')
+            rest_utils.prepare_response_body_log('secret'),
         )

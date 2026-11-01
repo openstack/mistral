@@ -35,10 +35,11 @@ def upgrade():
     inspect = reflection.Inspector.from_engine(op.get_bind())
 
     unique_constraints = [
-        unique_constraint['name'] for unique_constraint in
-        inspect.get_unique_constraints('workbooks_v2')
+        unique_constraint['name']
+        for unique_constraint in inspect.get_unique_constraints('workbooks_v2')
     ]
 
     if 'workbooks_v2_name_project_id_key' in unique_constraints:
-        op.drop_constraint('workbooks_v2_name_project_id_key',
-                           table_name='workbooks_v2')
+        op.drop_constraint(
+            'workbooks_v2_name_project_id_key', table_name='workbooks_v2'
+        )

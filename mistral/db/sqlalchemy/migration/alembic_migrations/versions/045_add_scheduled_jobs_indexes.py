@@ -20,6 +20,7 @@ Revises: 044
 Create Date: 2026-07-10 00:00:00.000000
 
 """
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -32,12 +33,9 @@ def upgrade():
         'scheduled_jobs_v2_execute_at_captured_at',
         'scheduled_jobs_v2',
         ['execute_at', 'captured_at'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'scheduled_jobs_v2_key',
-        'scheduled_jobs_v2',
-        ['key'],
-        unique=False
+        'scheduled_jobs_v2_key', 'scheduled_jobs_v2', ['key'], unique=False
     )

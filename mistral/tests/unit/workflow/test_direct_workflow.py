@@ -27,8 +27,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
     def _prepare_test(self, wf_text):
         wfs = wf_service.create_workflows(wf_text)
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wfs[0].id,
-            wfs[0].updated_at
+            wfs[0].id, wfs[0].updated_at
         )
 
         wf_ex = models.WorkflowExecution(
@@ -38,7 +37,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
             workflow_id=wfs[0].id,
             input={},
             params={},
-            context={}
+            context={},
         )
 
         self.wf_ex = wf_ex
@@ -53,7 +52,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
             id=self.getUniqueString('id'),
             name=name,
             spec=tasks_spec[name].to_dict(),
-            state=state
+            state=state,
         )
 
         self.wf_ex.task_executions.append(task_ex)
@@ -62,8 +61,9 @@ class DirectWorkflowControllerTest(base.DbTestCase):
 
     @mock.patch.object(db_api, 'get_workflow_execution')
     @mock.patch.object(db_api, 'get_task_execution')
-    def test_continue_workflow(self, get_task_execution,
-                               get_workflow_execution):
+    def test_continue_workflow(
+        self, get_task_execution, get_workflow_execution
+    ):
         wf_text = """---
         version: '2.0'
 
@@ -117,7 +117,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
                 state=states.SUCCESS,
                 output={'result': 'Hey'},
                 accepted=True,
-                runtime_context={'index': 0}
+                runtime_context={'index': 0},
             )
         )
 
@@ -139,7 +139,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
                 workflow_name='wf',
                 state=states.SUCCESS,
                 output={'result': 'Hi'},
-                accepted=True
+                accepted=True,
             )
         )
 

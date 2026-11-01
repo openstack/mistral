@@ -61,11 +61,12 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             'Creating code source [names=%s, scope=%s, namespace=%s]',
             name,
             scope,
-            namespace
+            namespace,
         )
 
         db_model = rest_utils.rest_retry_on_db_error(
-            db_api.create_code_source)(
+            db_api.create_code_source
+        )(
             {
                 'name': name,
                 'content': content,
@@ -98,7 +99,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             ' namespace=%s]',
             identifier,
             scope,
-            namespace
+            namespace,
         )
 
         content = pecan.request.text
@@ -108,23 +109,43 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         )(
             identifier=identifier,
             namespace=namespace,
-            values={
-                'scope': scope,
-                'content': content
-            }
+            values={'scope': scope, 'content': content},
         )
 
         return resources.CodeSource.from_db_model(db_model).to_json()
 
-    @wsme_pecan.wsexpose(resources.CodeSources, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text,
-                         resources.SCOPE_TYPES, types.uuid, wtypes.text,
-                         wtypes.text, bool, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None, tags=None, scope=None,
-                project_id=None, created_at=None, updated_at=None,
-                all_projects=False, namespace=None):
+    @wsme_pecan.wsexpose(
+        resources.CodeSources,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        resources.SCOPE_TYPES,
+        types.uuid,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        tags=None,
+        scope=None,
+        project_id=None,
+        created_at=None,
+        updated_at=None,
+        all_projects=False,
+        namespace=None,
+    ):
         """Return a list of Code Sources.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -166,7 +187,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             tags=tags,
             updated_at=updated_at,
             project_id=project_id,
-            namespace=namespace
+            namespace=namespace,
         )
 
         LOG.debug(
@@ -178,7 +199,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             sort_dirs,
             fields,
             filters,
-            all_projects
+            all_projects,
         )
 
         return rest_utils.get_all(
@@ -192,12 +213,13 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
             sort_dirs=sort_dirs,
             fields=fields,
             all_projects=all_projects,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.CodeSource, wtypes.text,
-                         wtypes.text, types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.CodeSource, wtypes.text, wtypes.text, types.uniquelist
+    )
     def get(self, identifier, namespace='', fields=''):
         """Return a code source.
 
@@ -210,7 +232,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         LOG.debug(
             'Fetch code source [identifier=%s, namespace=%s]',
             identifier,
-            namespace
+            namespace,
         )
 
         rest_utils.validate_fields(fields, resources.CodeSource.get_fields())
@@ -218,11 +240,8 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 
-        db_model = rest_utils.rest_retry_on_db_error(
-            db_api.get_code_source)(
-            identifier=identifier,
-            namespace=namespace,
-            fields=fields
+        db_model = rest_utils.rest_retry_on_db_error(db_api.get_code_source)(
+            identifier=identifier, namespace=namespace, fields=fields
         )
         if fields:
             return resources.CodeSource.from_tuples(zip(fields, db_model))
@@ -242,10 +261,9 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         LOG.debug(
             'Delete code source [identifier=%s, namespace=%s]',
             identifier,
-            namespace
+            namespace,
         )
 
         rest_utils.rest_retry_on_db_error(db_api.delete_code_source)(
-            identifier=identifier,
-            namespace=namespace
+            identifier=identifier, namespace=namespace
         )

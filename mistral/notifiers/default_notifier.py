@@ -45,5 +45,5 @@ class DefaultNotifier(base.Notifier):
             except Exception:
                 LOG.exception(
                     'Unable to process event for publisher "%s".',
-                    publisher_name
+                    publisher_name,
                 )

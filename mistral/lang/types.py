@@ -15,41 +15,30 @@
 from mistral import expressions
 
 
-NONEMPTY_STRING = {
-    "type": "string",
-    "minLength": 1
-}
+NONEMPTY_STRING = {"type": "string", "minLength": 1}
 
 UNIQUE_STRING_LIST = {
     "type": "array",
     "items": NONEMPTY_STRING,
     "uniqueItems": True,
-    "minItems": 1
+    "minItems": 1,
 }
 
-POSITIVE_INTEGER = {
-    "type": "integer",
-    "minimum": 0
-}
+POSITIVE_INTEGER = {"type": "integer", "minimum": 0}
 
-POSITIVE_NUMBER = {
-    "type": "number",
-    "minimum": 0.0
-}
+POSITIVE_NUMBER = {"type": "number", "minimum": 0.0}
 
 EXPRESSION = {
-    "oneOf": [{
-        "type": "string",
-        "pattern": "^%s\\s*$" % expressions.patterns[name]
-    } for name in expressions.patterns]
+    "oneOf": [
+        {"type": "string", "pattern": "^%s\\s*$" % expressions.patterns[name]}
+        for name in expressions.patterns
+    ]
 }
 
 EXPRESSION_CONDITION = {
     "type": "object",
     "minProperties": 1,
-    "patternProperties": {
-        r"^\w+$": EXPRESSION
-    }
+    "patternProperties": {r"^\w+$": EXPRESSION},
 }
 
 ANY = {
@@ -59,7 +48,7 @@ ANY = {
         {"type": "integer"},
         {"type": "number"},
         {"type": "object"},
-        {"type": "string"}
+        {"type": "string"},
     ]
 }
 
@@ -71,78 +60,48 @@ ANY_NULLABLE = {
         {"type": "integer"},
         {"type": "number"},
         {"type": "object"},
-        {"type": "string"}
+        {"type": "string"},
     ]
 }
 
 NONEMPTY_DICT = {
     "type": "object",
     "minProperties": 1,
-    "patternProperties": {
-        r"^\w+$": ANY_NULLABLE
-    }
+    "patternProperties": {r"^\w+$": ANY_NULLABLE},
 }
 
 ONE_KEY_DICT = {
     "type": "object",
     "minProperties": 1,
     "maxProperties": 1,
-    "patternProperties": {
-        r"^\w+$": ANY_NULLABLE
-    }
+    "patternProperties": {r"^\w+$": ANY_NULLABLE},
 }
 
 STRING_OR_EXPRESSION_CONDITION = {
-    "oneOf": [
-        NONEMPTY_STRING,
-        EXPRESSION_CONDITION
-    ]
+    "oneOf": [NONEMPTY_STRING, EXPRESSION_CONDITION]
 }
 
-EXPRESSION_OR_POSITIVE_INTEGER = {
-    "oneOf": [
-        EXPRESSION,
-        POSITIVE_INTEGER
-    ]
-}
+EXPRESSION_OR_POSITIVE_INTEGER = {"oneOf": [EXPRESSION, POSITIVE_INTEGER]}
 
-EXPRESSION_OR_BOOLEAN = {
-    "oneOf": [
-        EXPRESSION,
-        {"type": "boolean"}
-    ]
-}
+EXPRESSION_OR_BOOLEAN = {"oneOf": [EXPRESSION, {"type": "boolean"}]}
 
 
 UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST = {
     "type": "array",
     "items": STRING_OR_EXPRESSION_CONDITION,
     "uniqueItems": True,
-    "minItems": 1
+    "minItems": 1,
 }
 
-VERSION = {
-    "anyOf": [
-        NONEMPTY_STRING,
-        POSITIVE_INTEGER,
-        POSITIVE_NUMBER
-    ]
-}
+VERSION = {"anyOf": [NONEMPTY_STRING, POSITIVE_INTEGER, POSITIVE_NUMBER]}
 
-WORKFLOW_TYPE = {
-    "enum": ["reverse", "direct"]
-}
+WORKFLOW_TYPE = {"enum": ["reverse", "direct"]}
 
-STRING_OR_ONE_KEY_DICT = {
-    "oneOf": [
-        NONEMPTY_STRING,
-        ONE_KEY_DICT
-    ]
-}
+STRING_OR_ONE_KEY_DICT = {"oneOf": [NONEMPTY_STRING, ONE_KEY_DICT]}
 
 UNIQUE_STRING_OR_ONE_KEY_DICT_LIST = {
     "type": "array",
     "items": STRING_OR_ONE_KEY_DICT,
     "uniqueItems": True,
-    "minItems": 1
+    "minItems": 1,
 }

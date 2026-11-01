@@ -41,9 +41,7 @@ class TestActionGenerator(object):
         action_dicts = []
 
         hello_action_cls = type(
-            'HelloAction',
-            (BuildMessageAction,),
-            {'msg_pattern': 'Hello, %s!'}
+            'HelloAction', (BuildMessageAction,), {'msg_pattern': 'Hello, %s!'}
         )
 
         action_dicts.append(
@@ -53,14 +51,14 @@ class TestActionGenerator(object):
                 'description': 'The action builds a hello message',
                 'arg_list': inspect_utils.get_arg_list_as_str(
                     hello_action_cls.__init__
-                )
+                ),
             }
         )
 
         goodbye_action_cls = type(
             'GoodbyeAction',
             (BuildMessageAction,),
-            {'msg_pattern': 'Goodbye, %s!'}
+            {'msg_pattern': 'Goodbye, %s!'},
         )
 
         action_dicts.append(
@@ -70,7 +68,7 @@ class TestActionGenerator(object):
                 'description': 'The action builds a goodbye message',
                 'arg_list': inspect_utils.get_arg_list_as_str(
                     goodbye_action_cls.__init__
-                )
+                ),
             }
         )
 
@@ -80,14 +78,10 @@ class TestActionGenerator(object):
 class LegacyActionProviderTest(base.BaseTest):
     def test_only_builtin_actions(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
         self.override_config(
-            'only_builtin_actions',
-            True,
-            'legacy_action_provider'
+            'only_builtin_actions', True, 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()
@@ -116,20 +110,18 @@ class LegacyActionProviderTest(base.BaseTest):
         self.assertIn('Echo action.', action_desc.description)
         self.assertEqual(
             'mistral.actions.std_actions.EchoAction',
-            action_desc.action_class_name
+            action_desc.action_class_name,
         )
         self.assertEqual('output, delay=0', action_desc.params_spec)
 
     @mock.patch.object(
         legacy.LegacyActionProvider,
         '_get_action_generators',
-        mock.MagicMock(return_value=[TestActionGenerator])
+        mock.MagicMock(return_value=[TestActionGenerator]),
     )
     def test_only_action_plugins(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()
@@ -140,10 +132,7 @@ class LegacyActionProviderTest(base.BaseTest):
 
         self.assertTrue(
             all(
-                [
-                    a_d.action_class.__module__ == prefix
-                    for a_d in action_descs
-                ]
+                [a_d.action_class.__module__ == prefix for a_d in action_descs]
             )
         )
 
@@ -152,18 +141,14 @@ class LegacyActionProviderTest(base.BaseTest):
     @mock.patch.object(
         legacy.LegacyActionProvider,
         '_get_action_generators',
-        mock.MagicMock(return_value=[TestActionGenerator])
+        mock.MagicMock(return_value=[TestActionGenerator]),
     )
     def test_only_action_generators(self):
         self.override_config(
-            'load_action_generators',
-            True,
-            'legacy_action_provider'
+            'load_action_generators', True, 'legacy_action_provider'
         )
         self.override_config(
-            'load_action_plugins',
-            False,
-            'legacy_action_provider'
+            'load_action_plugins', False, 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()
@@ -178,8 +163,8 @@ class LegacyActionProviderTest(base.BaseTest):
             params_spec='name',
             description='The action builds a hello message',
             action_class_name='mistral.tests.unit.actions.'
-                              'test_legacy_action_provider.BuildMessageAction',
-            action_class_attributes={'msg_pattern': 'Hello, %s!'}
+            'test_legacy_action_provider.BuildMessageAction',
+            action_class_attributes={'msg_pattern': 'Hello, %s!'},
         )
 
         hello_action = hello_action_desc.instantiate({'name': 'Forest'}, {})
@@ -192,26 +177,22 @@ class LegacyActionProviderTest(base.BaseTest):
             params_spec='name',
             description='The action builds a goodbye message',
             action_class_name='mistral.tests.unit.actions.'
-                              'test_legacy_action_provider.BuildMessageAction',
-            action_class_attributes={'msg_pattern': 'Goodbye, %s!'}
+            'test_legacy_action_provider.BuildMessageAction',
+            action_class_attributes={'msg_pattern': 'Goodbye, %s!'},
         )
 
         goodbye_action = goodbye_action_desc.instantiate(
-            {'name': 'Lieutenant Dan'},
-            {}
+            {'name': 'Lieutenant Dan'}, {}
         )
 
         self.assertEqual('Goodbye, Lieutenant Dan!', goodbye_action.run(None))
 
     def test_allowlist(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
         self.override_config(
-            'allowlist', ['std.noop'],
-            'legacy_action_provider'
+            'allowlist', ['std.noop'], 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()
@@ -221,83 +202,49 @@ class LegacyActionProviderTest(base.BaseTest):
 
     def test_allowlist_fnmatch(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
-        self.override_config(
-            'allowlist', ['std.*'],
-            'legacy_action_provider'
-        )
+        self.override_config('allowlist', ['std.*'], 'legacy_action_provider')
 
         provider = legacy.LegacyActionProvider()
         action_descs = provider.find_all()
         self.assertTrue(
-            all(
-                [
-                    str(a_d.name).startswith('std.')
-                    for a_d in action_descs
-                ]
-            )
+            all([str(a_d.name).startswith('std.') for a_d in action_descs])
         )
 
     def test_denylist(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
         self.override_config(
-            'denylist', ['std.noop'],
-            'legacy_action_provider'
+            'denylist', ['std.noop'], 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()
         action_descs = provider.find_all()
-        self.assertTrue(
-            all(
-                [
-                    a_d.name != 'std.noop'
-                    for a_d in action_descs
-                ]
-            )
-        )
+        self.assertTrue(all([a_d.name != 'std.noop' for a_d in action_descs]))
 
     def test_denylist_fnmatch(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
-        self.override_config(
-            'denylist', ['std.*'],
-            'legacy_action_provider'
-        )
+        self.override_config('denylist', ['std.*'], 'legacy_action_provider')
 
         provider = legacy.LegacyActionProvider()
         action_descs = provider.find_all()
         self.assertTrue(
-            all(
-                [
-                    not str(a_d.name).startswith('std.')
-                    for a_d in action_descs
-                ]
-            )
+            all([not str(a_d.name).startswith('std.') for a_d in action_descs])
         )
 
     def test_allowlist_and_denylist(self):
         self.override_config(
-            'load_action_generators',
-            False,
-            'legacy_action_provider'
+            'load_action_generators', False, 'legacy_action_provider'
         )
         self.override_config(
-            'allowlist', ['std.noop'],
-            'legacy_action_provider'
+            'allowlist', ['std.noop'], 'legacy_action_provider'
         )
         self.override_config(
-            'denylist', ['std.fail'],
-            'legacy_action_provider'
+            'denylist', ['std.fail'], 'legacy_action_provider'
         )
 
         provider = legacy.LegacyActionProvider()

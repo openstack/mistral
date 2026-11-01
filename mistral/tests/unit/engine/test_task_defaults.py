@@ -30,11 +30,8 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
-
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_task_defaults_on_error(self):
         wf_text = """---
@@ -120,9 +117,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
 
         task1 = self._assert_single_item(
-            tasks,
-            name='task1',
-            state=states.ERROR
+            tasks, name='task1', state=states.ERROR
         )
 
         self.assertGreater(
@@ -195,8 +190,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         # Workflow must work at least 2 seconds (1+1).
         self.assertGreater(
-            (timeutils.utcnow() - time_before).total_seconds(),
-            2
+            (timeutils.utcnow() - time_before).total_seconds(), 2
         )
 
         with db_api.transaction():

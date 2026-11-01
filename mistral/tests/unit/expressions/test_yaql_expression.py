@@ -32,17 +32,13 @@ DATA = {
     "server": {
         "id": "03ea824a-aa24-4105-9131-66c48ae54acf",
         "name": "cloud-fedora",
-        "status": "ACTIVE"
+        "status": "ACTIVE",
     },
-    "status": "OK"
+    "status": "OK",
 }
 
 SERVERS = {
-    "servers": [
-        {'name': 'centos'},
-        {'name': 'ubuntu'},
-        {'name': 'fedora'}
-    ]
+    "servers": [{'name': 'centos'}, {'name': 'ubuntu'}, {'name': 'fedora'}]
 }
 
 
@@ -57,14 +53,14 @@ class YaqlEvaluatorTest(base.BaseTest):
             {
                 'id': "03ea824a-aa24-4105-9131-66c48ae54acf",
                 'name': 'cloud-fedora',
-                'status': 'ACTIVE'
+                'status': 'ACTIVE',
             },
-            self._evaluator.evaluate('$.server', DATA)
+            self._evaluator.evaluate('$.server', DATA),
         )
 
         self.assertEqual(
             '03ea824a-aa24-4105-9131-66c48ae54acf',
-            self._evaluator.evaluate('$.server.id', DATA)
+            self._evaluator.evaluate('$.server.id', DATA),
         )
 
         self.assertTrue(
@@ -80,20 +76,18 @@ class YaqlEvaluatorTest(base.BaseTest):
             exc.YaqlEvaluationException,
             self._evaluator.evaluate,
             '$.wrong_key',
-            DATA
+            DATA,
         )
 
         expression_str = 'invalid_expression_string'
 
         self.assertEqual(
-            expression_str,
-            self._evaluator.evaluate(expression_str, DATA)
+            expression_str, self._evaluator.evaluate(expression_str, DATA)
         )
 
     def test_select_result(self):
         res = self._evaluator.evaluate(
-            '$.servers.where($.name = ubuntu)',
-            SERVERS
+            '$.servers.where($.name = ubuntu)', SERVERS
         )
 
         item = list(res)[0]
@@ -110,8 +104,7 @@ class YaqlEvaluatorTest(base.BaseTest):
         data = [{'some': 'thing'}]
 
         self.assertEqual(
-            1,
-            self._evaluator.evaluate('$.where($.some = thing).len()', data)
+            1, self._evaluator.evaluate('$.where($.some = thing).len()', data)
         )
 
     def test_validate(self):
@@ -123,21 +116,15 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     def test_validate_failed(self):
         self.assertRaises(
-            exc.YaqlGrammarException,
-            self._evaluator.validate,
-            '*'
+            exc.YaqlGrammarException, self._evaluator.validate, '*'
         )
 
         self.assertRaises(
-            exc.YaqlGrammarException,
-            self._evaluator.validate,
-            [1, 2, 3]
+            exc.YaqlGrammarException, self._evaluator.validate, [1, 2, 3]
         )
 
         self.assertRaises(
-            exc.YaqlGrammarException,
-            self._evaluator.validate,
-            {'a': 1}
+            exc.YaqlGrammarException, self._evaluator.validate, {'a': 1}
         )
 
     def test_function_uuid(self):
@@ -147,35 +134,35 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_filter_tasks_without_task_execution(self, task_execution_result,
-                                                 task_executions):
+    def test_filter_tasks_without_task_execution(
+        self, task_execution_result, task_executions
+    ):
 
         task_execution_result.return_value = 'task_execution_result'
 
         time_now = utils.utc_now_sec()
 
-        task = type("obj", (object,), {
-            'id': 'id',
-            'name': 'name',
-            'published': 'published',
-            'result': task_execution_result(),
-            'spec': 'spec',
-            'state': 'state',
-            'state_info': 'state_info',
-            'type': 'type',
-            'workflow_execution_id': 'workflow_execution_id',
-            'created_at': time_now,
-            'updated_at': time_now + datetime.timedelta(seconds=1),
-        })()
+        task = type(
+            "obj",
+            (object,),
+            {
+                'id': 'id',
+                'name': 'name',
+                'published': 'published',
+                'result': task_execution_result(),
+                'spec': 'spec',
+                'state': 'state',
+                'state_info': 'state_info',
+                'type': 'type',
+                'workflow_execution_id': 'workflow_execution_id',
+                'created_at': time_now,
+                'updated_at': time_now + datetime.timedelta(seconds=1),
+            },
+        )()
 
         task_executions.return_value = [task]
 
-        ctx = {
-            '__task_execution': None,
-            '__execution': {
-                'id': 'some'
-            }
-        }
+        ctx = {'__task_execution': None, '__execution': {'id': 'some'}}
 
         result = self._evaluator.evaluate('tasks(some)', ctx)
 
@@ -192,9 +179,9 @@ class YaqlEvaluatorTest(base.BaseTest):
                 'type': task.type,
                 'workflow_execution_id': task.workflow_execution_id,
                 'created_at': task.created_at.isoformat(' '),
-                'updated_at': task.updated_at.isoformat(' ')
+                'updated_at': task.updated_at.isoformat(' '),
             },
-            result[0]
+            result[0],
         )
 
     def test_function_env(self):
@@ -210,13 +197,15 @@ class YaqlExecutionsFunctionTest(base.DbTestCase):
         self._evaluator = expr.YAQLEvaluator()
 
         with db_api.transaction():
-            db_api.create_workflow_execution({
-                'id': 'one',
-                'spec': {},
-                'state': 'RUNNING',
-                'context': {'image_id': '123123'},
-                'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
-            })
+            db_api.create_workflow_execution(
+                {
+                    'id': 'one',
+                    'spec': {},
+                    'state': 'RUNNING',
+                    'context': {'image_id': '123123'},
+                    'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+                }
+            )
 
         self.ctx = {'__execution': {'id': 'one'}}
 
@@ -231,7 +220,7 @@ class YaqlExecutionsFunctionTest(base.DbTestCase):
 
             self.assertEqual(
                 'RUNNING',
-                self._evaluator.evaluate('executions()[0].state', self.ctx)
+                self._evaluator.evaluate('executions()[0].state', self.ctx),
             )
 
     def test_executions_item_update_fails(self):
@@ -240,13 +229,12 @@ class YaqlExecutionsFunctionTest(base.DbTestCase):
                 exc.YaqlEvaluationException,
                 self._evaluator.evaluate,
                 'executions()[0].update({state => ERROR})',
-                self.ctx
+                self.ctx,
             )
 
         with db_api.transaction():
             self.assertEqual(
-                'RUNNING',
-                db_api.get_workflow_execution('one').state
+                'RUNNING', db_api.get_workflow_execution('one').state
             )
 
 
@@ -273,8 +261,8 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
                 'project_id': '1-2-3-4',
                 'vm_count': 28,
                 'active_vm_count': 0,
-                'net_count': 1
-            }
+                'net_count': 1,
+            },
         )
 
         expected_result = """
@@ -304,17 +292,19 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         self._evaluator.validate('The value is <% $.a1 %>.')
 
     def test_validate_failed(self):
-        self.assertRaises(exc.YaqlGrammarException,
-                          self._evaluator.validate,
-                          'The value is <% * %>.')
+        self.assertRaises(
+            exc.YaqlGrammarException,
+            self._evaluator.validate,
+            'The value is <% * %>.',
+        )
 
-        self.assertRaises(exc.YaqlEvaluationException,
-                          self._evaluator.validate,
-                          [1, 2, 3])
+        self.assertRaises(
+            exc.YaqlEvaluationException, self._evaluator.validate, [1, 2, 3]
+        )
 
-        self.assertRaises(exc.YaqlEvaluationException,
-                          self._evaluator.validate,
-                          {'a': 1})
+        self.assertRaises(
+            exc.YaqlEvaluationException, self._evaluator.validate, {'a': 1}
+        )
 
     def test_set_of_dicts(self):
         # This test makes sense only if YAQL expression output conversion
@@ -330,23 +320,13 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         expr.YAQL_ENGINE = expr.create_yaql_engine_class(
             CONF.yaql.keyword_operator,
             CONF.yaql.allow_delegates,
-            expr.get_yaql_engine_options()
+            expr.get_yaql_engine_options(),
         )
 
-        my_list = [
-            {
-                "k1": "v1",
-                "k2": "v2"
-            },
-            {
-                "k11": "v11",
-                "k12": "v12"
-            }
-        ]
+        my_list = [{"k1": "v1", "k2": "v2"}, {"k11": "v11", "k12": "v12"}]
 
         res = self._evaluator.evaluate(
-            '<% $.my_list.toSet() %>',
-            {"my_list": my_list}
+            '<% $.my_list.toSet() %>', {"my_list": my_list}
         )
 
         self.assertIsInstance(res, list)
@@ -364,15 +344,15 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
     def test_default_limit_iterators(self):
         self._use_default_engine()
 
-        self.assertEqual(4950, self._evaluator.evaluate(
-            '<% range(0, 100).sum() %>', {}
-        ))
+        self.assertEqual(
+            4950, self._evaluator.evaluate('<% range(0, 100).sum() %>', {})
+        )
 
         e = self.assertRaises(
             exc.YaqlEvaluationException,
             self._evaluator.evaluate,
             '<% range(0, 10000000000).toList() %>',
-            {}
+            {},
         )
 
         self.assertIn('Collection length exceeds 100000', str(e))
@@ -381,7 +361,7 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
             exc.YaqlEvaluationException,
             self._evaluator.evaluate,
             '<% $.select($) %>',
-            list(range(100001))
+            list(range(100001)),
         )
 
     def test_default_memory_quota(self):
@@ -393,7 +373,7 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
             exc.YaqlEvaluationException,
             self._evaluator.evaluate,
             "<% 'a' * 1000000000 %>",
-            {}
+            {},
         )
 
         self.assertIn('Expression consumed too much memory', str(e))
@@ -402,8 +382,7 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         self._use_default_engine()
 
         self.assertEqual(
-            [1, 2, 1, 2],
-            self._evaluator.evaluate('<% [1, 2] * 2 %>', {})
+            [1, 2, 1, 2], self._evaluator.evaluate('<% [1, 2] * 2 %>', {})
         )
         self.assertEqual([1, 1], self._evaluator.evaluate('<% 2 * [1] %>', {}))
 
@@ -412,7 +391,7 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
                 exc.YaqlEvaluationException,
                 self._evaluator.evaluate,
                 expression,
-                {}
+                {},
             )
 
             self.assertIn('Repetition result exceeds 100000 items', str(e))
@@ -425,24 +404,25 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
             ('<% pow(2, 10) %>', 1024),
             ('<% pow(10, 10000000000, 7) %>', 4),
             ('<% pow(1, 10000000000) %>', 1),
-            ('<% shiftBitsLeft(1, 10) %>', 1024)
+            ('<% shiftBitsLeft(1, 10) %>', 1024),
         ]
 
         for expression, expected in cases:
             self.assertEqual(
-                expected,
-                self._evaluator.evaluate(expression, {})
+                expected, self._evaluator.evaluate(expression, {})
             )
 
-        for expression in ('<% pow(2, 10000000000) %>',
-                           '<% pow(2, 10000000000, null) %>',
-                           '<% shiftBitsLeft(1, 10000000000) %>',
-                           '<% range(0, 30).reduce($1 * $1, 3) %>'):
+        for expression in (
+            '<% pow(2, 10000000000) %>',
+            '<% pow(2, 10000000000, null) %>',
+            '<% shiftBitsLeft(1, 10000000000) %>',
+            '<% range(0, 30).reduce($1 * $1, 3) %>',
+        ):
             e = self.assertRaises(
                 exc.YaqlEvaluationException,
                 self._evaluator.evaluate,
                 expression,
-                {}
+                {},
             )
 
             self.assertIn('Integer result exceeds', str(e))

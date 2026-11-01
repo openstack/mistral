@@ -34,8 +34,9 @@ from mistral_lib import utils
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group=config.PECAN_GROUP)
-cfg.CONF.set_default('max_missed_heartbeats', 0,
-                     group=config.ACTION_HEARTBEAT_GROUP)
+cfg.CONF.set_default(
+    'max_missed_heartbeats', 0, group=config.ACTION_HEARTBEAT_GROUP
+)
 
 WB = """
 ---
@@ -103,19 +104,11 @@ workflows:
 
 
 WF_INPUT = {
-    'names_info': [
-        {'name': 'John'},
-        {'name': 'Ivan'},
-        {'name': 'Mistral'}
-    ]
+    'names_info': [{'name': 'John'}, {'name': 'Ivan'}, {'name': 'Mistral'}]
 }
 
 
-WF_INPUT_ONE_ITEM = {
-    'names_info': [
-        {'name': 'Guy'}
-    ]
-}
+WF_INPUT_ONE_ITEM = {'names_info': [{'name': 'Guy'}]}
 
 
 class RandomSleepEchoAction(actions_base.Action):
@@ -422,8 +415,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         """
 
         exception = self.assertRaises(
-            exc.InvalidModelException,
-            wb_service.create_workbook_v2, wb_text
+            exc.InvalidModelException, wb_service.create_workbook_v2, wb_text
         )
 
         self.assertIn("Invalid array in 'with-items'", str(exception))
@@ -462,9 +454,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         task1_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
         published = task1_ex.published
@@ -489,9 +479,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task1_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.SUCCESS
+                task_execs, name='task1', state=states.SUCCESS
             )
 
             result = data_flow.get_task_execution_result(task1_ex)
@@ -538,14 +526,14 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("John")
+            action_ex_id, actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'John'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'John'}
+            )
         )
 
         self._await(lambda: self._get_running_actions_count(task_ex.id) == 1)
@@ -554,13 +542,13 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("Ivan")
+            action_ex_id, actions_base.Result("Ivan")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'Ivan'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'Ivan'}
+            )
         )
 
         self._await(lambda: self._get_running_actions_count(task_ex.id) == 1)
@@ -569,13 +557,13 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("Mistral")
+            action_ex_id, actions_base.Result("Mistral")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'Mistral'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'Mistral'}
+            )
         )
 
         task_ex = db_api.get_task_execution(task_ex.id)
@@ -670,8 +658,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = self._assert_single_item(wf_execs, name='wf')
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         self.await_task_error(task_ex.id)
@@ -681,8 +668,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wf')
         self.assertIn(
-            'Invalid data type in ConcurrencyPolicy',
-            wf_ex.state_info
+            'Invalid data type in ConcurrencyPolicy', wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)
 
@@ -725,14 +711,14 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("John")
+            action_ex_id, actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'John'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'John'}
+            )
         )
 
         self._await(lambda: self._get_running_actions_count(task_ex.id) == 2)
@@ -741,13 +727,13 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("Ivan")
+            action_ex_id, actions_base.Result("Ivan")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'Ivan'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'Ivan'}
+            )
         )
 
         self._await(lambda: self._get_running_actions_count(task_ex.id) == 2)
@@ -756,27 +742,25 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("Mistral")
+            action_ex_id, actions_base.Result("Mistral")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'Mistral'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'Mistral'}
+            )
         )
 
         incomplete_action = self._get_incomplete_action(task_ex.id)
 
         # 4th iteration complete.
         self.engine.on_action_complete(
-            incomplete_action.id,
-            actions_base.Result("Hello")
+            incomplete_action.id, actions_base.Result("Hello")
         )
 
         self._await(
             lambda: self._action_result_equals(
-                incomplete_action.id,
-                {'result': 'Hello'}
+                incomplete_action.id, {'result': 'Hello'}
             )
         )
 
@@ -870,7 +854,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             return db_api.get_task_executions(
                 workflow_execution_id=wf_ex.id,
                 name='join_task',
-                state=states.RUNNING
+                state=states.RUNNING,
             )
 
         self._await(lambda: _get_join_task_ex())
@@ -883,28 +867,24 @@ class WithItemsEngineTest(base.EngineTestCase):
             self._await(lambda: self._get_running_actions_count(task_ex.id))
 
             self.assertGreaterEqual(
-                2,
-                self._get_running_actions_count(task_ex.id)
+                2, self._get_running_actions_count(task_ex.id)
             )
 
             with db_api.transaction():
                 task_ex = db_api.get_task_execution(task_ex.id)
 
                 action_ex_id = [
-                    e.id for e in task_ex.executions
+                    e.id
+                    for e in task_ex.executions
                     if e.state == states.RUNNING
                 ][0]
 
             self.engine.on_action_complete(
-                action_ex_id,
-                actions_base.Result(i)
+                action_ex_id, actions_base.Result(i)
             )
 
             self._await(
-                lambda: self._action_result_equals(
-                    action_ex_id,
-                    {'result': i}
-                )
+                lambda: self._action_result_equals(action_ex_id, {'result': i})
             )
 
         self.await_workflow_success(wf_ex.id)
@@ -948,29 +928,26 @@ class WithItemsEngineTest(base.EngineTestCase):
         action_ex_id = self._get_incomplete_action(task_ex.id).id
 
         self.engine.on_action_complete(
-            action_ex_id,
-            actions_base.Result("John")
+            action_ex_id, actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
         self._await(
-            lambda:
-            self._action_result_equals(action_ex_id, {'result': 'John'})
+            lambda: self._action_result_equals(
+                action_ex_id, {'result': 'John'}
+            )
         )
 
         incomplete_action = self._get_incomplete_action(task_ex.id)
 
         # 2nd iteration complete.
         self.engine.on_action_complete(
-            incomplete_action.id,
-            actions_base.Result("Ivan")
+            incomplete_action.id, actions_base.Result("Ivan")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(
-                incomplete_action.id,
-                {'result': 'Ivan'}
+            lambda: self._action_result_equals(
+                incomplete_action.id, {'result': 'Ivan'}
             )
         )
 
@@ -978,15 +955,12 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # 3rd iteration complete.
         self.engine.on_action_complete(
-            incomplete_action.id,
-            actions_base.Result("Mistral")
+            incomplete_action.id, actions_base.Result("Mistral")
         )
 
         self._await(
-            lambda:
-            self._action_result_equals(
-                incomplete_action.id,
-                {'result': 'Mistral'}
+            lambda: self._action_result_equals(
+                incomplete_action.id, {'result': 'Mistral'}
             )
         )
 
@@ -1041,9 +1015,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.SUCCESS
+                task_execs, name='task1', state=states.SUCCESS
             )
 
             result = data_flow.get_task_execution_result(task_ex)
@@ -1090,8 +1062,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             task1_executions = task1_ex.executions
 
         self.assertEqual(
-            1,
-            task1_ex.runtime_context['retry_task_policy']['retry_no']
+            1, task1_ex.runtime_context['retry_task_policy']['retry_no']
         )
         self.assertEqual(4, len(task1_executions))
         self._assert_multiple_items(task1_executions, 2, accepted=True)
@@ -1167,8 +1138,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             published = task1_ex.published
@@ -1202,20 +1172,13 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1 = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             result = data_flow.get_task_execution_result(task1)
 
         self.assertEqual(
-            [
-                "1.Mistral",
-                "2.Mistral",
-                "3.Mistral",
-                "4.Mistral"
-            ],
-            result
+            ["1.Mistral", "2.Mistral", "3.Mistral", "4.Mistral"], result
         )
 
         self.assertEqual(states.SUCCESS, task1.state)
@@ -1235,8 +1198,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            env={'input_array': ['1', '2', '33']}
+            'wf', env={'input_array': ['1', '2', '33']}
         )
 
         self.await_workflow_success(wf_ex.id, timeout=10)
@@ -1246,8 +1208,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1 = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             result = data_flow.get_task_execution_result(task1)
@@ -1289,14 +1250,10 @@ class WithItemsEngineTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         task1_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         task2_ex = self._assert_single_item(
-            task_execs,
-            name='task2',
-            state=states.SUCCESS
+            task_execs, name='task2', state=states.SUCCESS
         )
 
         with db_api.transaction():
@@ -1350,8 +1307,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         names = ["Peter", "Susan", "Edmund", "Lucy", "Aslan", "Caspian"]
 
         wf_ex = self.engine.start_workflow(
-            'wb1.main',
-            wf_input={'names': names}
+            'wb1.main', wf_input={'names': names}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -1362,9 +1318,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
         with db_api.transaction():
@@ -1463,16 +1417,14 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             self.assertEqual(states.ERROR, task_ex.state)
             self.assertEqual(0, len(task_ex.executions))
 
         self.assertEqual(
-            'Too many with-items values [count=3, limit=2]',
-            task_ex.state_info
+            'Too many with-items values [count=3, limit=2]', task_ex.state_info
         )
         self.assertIn('Too many with-items values', wf_ex.state_info)
 
@@ -1503,19 +1455,15 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1',
-                state=states.ERROR
+                wf_ex.task_executions, name='task1', state=states.ERROR
             )
             self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2',
-                state=states.SUCCESS
+                wf_ex.task_executions, name='task2', state=states.SUCCESS
             )
 
         self.assertEqual(
             'Too many with-items values [count=3, limit=2]',
-            task1_ex.state_info
+            task1_ex.state_info,
         )
 
     def test_with_items_max_length_unlimited(self):
@@ -1528,7 +1476,8 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
     def _run_with_items_concurrency(self, concurrency, expected):
-        wf_text = """---
+        wf_text = (
+            """---
         version: "2.0"
 
         wf:
@@ -1537,7 +1486,9 @@ class WithItemsEngineTest(base.EngineTestCase):
               action: std.async_noop
               with-items: i in [1, 2, 3, 4]
               concurrency: %s
-        """ % concurrency
+        """
+            % concurrency
+        )
 
         wf_service.create_workflows(wf_text)
 
@@ -1554,22 +1505,20 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         for i in range(4):
             self._await(
-                lambda: self._get_running_actions_count(task_ex_id) ==
-                min(expected, 4 - i)
+                lambda: (
+                    self._get_running_actions_count(task_ex_id)
+                    == min(expected, 4 - i)
+                )
             )
 
             action_ex_id = self._get_incomplete_action(task_ex_id).id
 
             self.engine.on_action_complete(
-                action_ex_id,
-                actions_base.Result(i)
+                action_ex_id, actions_base.Result(i)
             )
 
             self._await(
-                lambda: self._action_result_equals(
-                    action_ex_id,
-                    {'result': i}
-                )
+                lambda: self._action_result_equals(action_ex_id, {'result': i})
             )
 
         self.await_workflow_success(wf_ex.id)

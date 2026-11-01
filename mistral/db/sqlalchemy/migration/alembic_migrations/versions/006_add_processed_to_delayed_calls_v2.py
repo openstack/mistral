@@ -32,5 +32,5 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'delayed_calls_v2',
-        sa.Column('processing', sa.Boolean, default=False, nullable=False)
+        sa.Column('processing', sa.Boolean, default=False, nullable=False),
     )

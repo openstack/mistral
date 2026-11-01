@@ -45,7 +45,6 @@ class ActionWithExceptionInInit(actions_base.Action):
 
 
 class JoinEngineTest(base.EngineTestCase):
-
     def test_full_join_without_errors(self):
         wf_text = """---
         version: '2.0'
@@ -525,12 +524,7 @@ class JoinEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self.assertDictEqual(
-                {
-                    'var1': True,
-                    'is_done': True,
-                    'var2': True
-                },
-                wf_ex.output
+                {'var1': True, 'is_done': True, 'var2': True}, wf_ex.output
             )
 
     def test_full_join_with_branch_errors(self):
@@ -784,11 +778,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
-        self._assert_single_item(
-            tasks,
-            name='join_task',
-            state=states.WAITING
-        )
+        self._assert_single_item(tasks, name='join_task', state=states.WAITING)
 
         # Stop the workflow.
         self.engine.stop_workflow(wf_ex.id, state=states.CANCELLED)
@@ -796,8 +786,9 @@ class JoinEngineTest(base.EngineTestCase):
         mtd_name = 'mistral.engine.task_handler._refresh_task_state'
 
         self._await(
-            lambda:
-            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+            lambda: (
+                len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+            )
         )
 
     def test_delete_join_completion_check_on_execution_delete(self):
@@ -835,11 +826,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
-        self._assert_single_item(
-            tasks,
-            name='join_task',
-            state=states.WAITING
-        )
+        self._assert_single_item(tasks, name='join_task', state=states.WAITING)
 
         # Stop the workflow.
         db_api.delete_workflow_execution(wf_ex.id)
@@ -847,8 +834,9 @@ class JoinEngineTest(base.EngineTestCase):
         mtd_name = 'mistral.engine.task_handler._refresh_task_state'
 
         self._await(
-            lambda:
-            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+            lambda: (
+                len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+            )
         )
 
     def test_join_with_deep_dependencies_tree(self):
@@ -891,19 +879,13 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertEqual(3, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task_a_1',
-            state=states.SUCCESS
+            task_execs, name='task_a_1', state=states.SUCCESS
         )
         self._assert_single_item(
-            task_execs,
-            name='task_b_1',
-            state=states.ERROR
+            task_execs, name='task_b_1', state=states.ERROR
         )
         self._assert_single_item(
-            task_execs,
-            name='task_with_join',
-            state=states.ERROR
+            task_execs, name='task_with_join', state=states.ERROR
         )
 
     def test_no_workflow_error_after_inbound_error(self):
@@ -985,18 +967,12 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertIsNone(task2.runtime_context.get(key))
 
         self.assertIn(
-            {
-                "task_id": task1.id,
-                "event": "on-success"
-            },
-            join_task.runtime_context.get(key)
+            {"task_id": task1.id, "event": "on-success"},
+            join_task.runtime_context.get(key),
         )
         self.assertIn(
-            {
-                "task_id": task2.id,
-                "event": "on-success"
-            },
-            join_task.runtime_context.get(key)
+            {"task_id": task2.id, "event": "on-success"},
+            join_task.runtime_context.get(key),
         )
 
     def test_triggered_by_error(self):
@@ -1034,24 +1010,16 @@ class JoinEngineTest(base.EngineTestCase):
             t_execs = wf_ex.task_executions
 
         task1 = self._assert_single_item(
-            t_execs,
-            name='task1',
-            state=states.SUCCESS
+            t_execs, name='task1', state=states.SUCCESS
         )
         task2 = self._assert_single_item(
-            t_execs,
-            name='task2',
-            state=states.ERROR
+            t_execs, name='task2', state=states.ERROR
         )
         task3 = self._assert_single_item(
-            t_execs,
-            name='task3',
-            state=states.SUCCESS
+            t_execs, name='task3', state=states.SUCCESS
         )
         join_task = self._assert_single_item(
-            t_execs,
-            name='join_task',
-            state=states.ERROR
+            t_execs, name='join_task', state=states.ERROR
         )
 
         key = 'triggered_by'
@@ -1061,11 +1029,8 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertIsNone(task3.runtime_context.get(key))
 
         self.assertIn(
-            {
-                "task_id": task3.id,
-                "event": "not triggered"
-            },
-            join_task.runtime_context.get(key)
+            {"task_id": task3.id, "event": "not triggered"},
+            join_task.runtime_context.get(key),
         )
 
     def test_triggered_by_impossible_route(self):
@@ -1103,19 +1068,13 @@ class JoinEngineTest(base.EngineTestCase):
             t_execs = wf_ex.task_executions
 
         task1 = self._assert_single_item(
-            t_execs,
-            name='task1',
-            state=states.SUCCESS
+            t_execs, name='task1', state=states.SUCCESS
         )
         task2 = self._assert_single_item(
-            t_execs,
-            name='task2',
-            state=states.ERROR
+            t_execs, name='task2', state=states.ERROR
         )
         join_task = self._assert_single_item(
-            t_execs,
-            name='join_task',
-            state=states.ERROR
+            t_execs, name='join_task', state=states.ERROR
         )
 
         self.assertEqual(3, len(t_execs))
@@ -1165,8 +1124,11 @@ class JoinEngineTest(base.EngineTestCase):
             for task in tasks:
                 task_result = task.published["result"]
 
-                self.assertEqual(task.name, task_result,
-                                 "The result of task must equal own name")
+                self.assertEqual(
+                    task.name,
+                    task_result,
+                    "The result of task must equal own name",
+                )
 
     def test_join_with_long_name(self):
         long_task_name = utils.generate_string(
@@ -1245,26 +1207,17 @@ class JoinEngineTest(base.EngineTestCase):
             self.assertEqual(3, len(task_execs))
 
             self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.SUCCESS
+                task_execs, name='task1', state=states.SUCCESS
             )
             self._assert_single_item(
-                task_execs,
-                name='task2',
-                state=states.ERROR
+                task_execs, name='task2', state=states.ERROR
             )
             self._assert_single_item(
-                task_execs,
-                name='join_task',
-                state=states.ERROR
+                task_execs, name='join_task', state=states.ERROR
             )
 
     def test_join_task_with_input_error(self):
-        self.register_action_class(
-            'my_action',
-            ActionWithExceptionInInit
-        )
+        self.register_action_class('my_action', ActionWithExceptionInInit)
 
         wf_text = """---
         version: '2.0'
@@ -1342,22 +1295,20 @@ class JoinEngineTest(base.EngineTestCase):
                     t_ex = db_api.get_task_executions(name='join_task')
 
                     return t_ex and [
-                        a.id for a in t_ex[0].action_executions
+                        a.id
+                        for a in t_ex[0].action_executions
                         if a.state == states.RUNNING
                     ]
 
             self._await(_running_action)
 
             self.engine.on_action_complete(
-                _running_action()[0],
-                actions_base.Result(data='ok')
+                _running_action()[0], actions_base.Result(data='ok')
             )
 
         _complete_join_action()
 
-        self._await(
-            lambda: len(db_api.get_task_executions(name='side')) == 1
-        )
+        self._await(lambda: len(db_api.get_task_executions(name='side')) == 1)
 
         def _join_running_pass_2():
             with db_api.transaction():
@@ -1374,9 +1325,10 @@ class JoinEngineTest(base.EngineTestCase):
         _complete_join_action()
 
         self._await(
-            lambda: db_api.get_task_executions(
-                name='join_task'
-            )[0].state == states.SUCCESS
+            lambda: (
+                db_api.get_task_executions(name='join_task')[0].state
+                == states.SUCCESS
+            )
         )
 
         self.engine.resume_workflow(wf_ex.id)
@@ -1415,20 +1367,17 @@ class JoinEngineTest(base.EngineTestCase):
             lambda: db_api.get_task_executions(
                 workflow_execution_id=wf_ex.id,
                 name='join_task',
-                state=states.WAITING
+                state=states.WAITING,
             )
         )
 
         with db_api.transaction():
             join_ex = db_api.get_task_executions(
-                workflow_execution_id=wf_ex.id,
-                name='join_task'
+                workflow_execution_id=wf_ex.id, name='join_task'
             )[0]
 
             db_api.update_task_execution_state(
-                id=join_ex.id,
-                cur_state=states.WAITING,
-                state=states.ERROR
+                id=join_ex.id, cur_state=states.WAITING, state=states.ERROR
             )
 
         self.engine.start_task(join_ex.id, False, True, None, True, True)
@@ -1440,8 +1389,7 @@ class JoinEngineTest(base.EngineTestCase):
             self.assertEqual(0, len(join_ex.executions))
 
             task2_ex = db_api.get_task_executions(
-                workflow_execution_id=wf_ex.id,
-                name='task2'
+                workflow_execution_id=wf_ex.id, name='task2'
             )[0]
 
         self.await_task_running(task2_ex.id)
@@ -1452,8 +1400,7 @@ class JoinEngineTest(base.EngineTestCase):
             task2_action_id = task2_ex.executions[0].id
 
         self.engine.on_action_complete(
-            task2_action_id,
-            actions_base.Result(data='ok')
+            task2_action_id, actions_base.Result(data='ok')
         )
 
         self.await_workflow_success(wf_ex.id)

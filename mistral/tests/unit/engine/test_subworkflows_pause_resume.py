@@ -74,12 +74,10 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
             # Grab tasks
             wf1_task1 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task1'
+                wf1_ex.task_executions, name='task1'
             )
             wf1_task2 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task2'
+                wf1_ex.task_executions, name='task2'
             )
 
         # Wait for tasks to be running
@@ -100,14 +98,12 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Grab wf2 first task (we cant yet be sure the second is executed)
             # The first task is noop
             wf2_task1 = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='task1'
+                wf2_ex.task_executions, name='task1'
             )
 
             # wf3 task1 is async_noop
             wf3_task1 = self._assert_single_item(
-                wf3_ex.task_executions,
-                name='task1'
+                wf3_ex.task_executions, name='task1'
             )
 
         # Make sure wf2 and wf3 are running
@@ -129,8 +125,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # We should be able now to grab the second task of wf2
             wf2_task2 = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='task2'
+                wf2_ex.task_executions, name='task2'
             )
 
             # Grab action so we can complete it after
@@ -173,12 +168,12 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         # Complete action executions of the subworkflows.
         self.engine.on_action_complete(
             wf2_task2_action[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         self.engine.on_action_complete(
             wf3_task1_action[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         self.await_workflow_success(wf2_ex.id)
@@ -238,12 +233,10 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
             # Grab tasks
             wf1_task1 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task1'
+                wf1_ex.task_executions, name='task1'
             )
             wf1_task2 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task2'
+                wf1_ex.task_executions, name='task2'
             )
 
         # Wait for tasks to be running
@@ -264,14 +257,12 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Grab wf2 first task (we cant yet be sure the second is executed)
             # The first task is noop
             wf2_task1 = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='task1'
+                wf2_ex.task_executions, name='task1'
             )
 
             # wf3 task1 is async_noop
             wf3_task1 = self._assert_single_item(
-                wf3_ex.task_executions,
-                name='task1'
+                wf3_ex.task_executions, name='task1'
             )
 
         # Make sure wf2 and wf3 are running
@@ -293,8 +284,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # We should be able now to grab the second task of wf2
             wf2_task2 = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='task2'
+                wf2_ex.task_executions, name='task2'
             )
 
             # Grab action so we can complete it after
@@ -332,7 +322,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.await_workflow_running(wf2_ex.id)
         self.engine.on_action_complete(
             wf2_task2_action[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         # This is not resuming wf1 and wf3
@@ -344,7 +334,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.await_workflow_running(wf3_ex.id)
         self.engine.on_action_complete(
             wf3_task1_action[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         # Resuming both subwf is resuming wf1
@@ -390,8 +380,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             wf1_task1 = wf1_ex.task_executions
             wf1_task1 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task1'
+                wf1_ex.task_executions, name='task1'
             )
 
         # Wait for the first task to be running
@@ -405,21 +394,16 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             wf1_task1 = wf1_ex.task_executions
             wf1_task1 = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='task1'
+                wf1_ex.task_executions, name='task1'
             )
             wf1_task1_actions = sorted(
                 wf1_task1.executions,
-                key=lambda x: x['runtime_context']['index']
+                key=lambda x: x['runtime_context']['index'],
             )
 
             # Get the two with-items subworkflow executions.
-            wf2_ex1 = db_api.get_workflow_execution(
-                wf1_task1_actions[0].id
-            )
-            wf2_ex2 = db_api.get_workflow_execution(
-                wf1_task1_actions[1].id
-            )
+            wf2_ex1 = db_api.get_workflow_execution(wf1_task1_actions[0].id)
+            wf2_ex2 = db_api.get_workflow_execution(wf1_task1_actions[1].id)
 
         # NOTE(amorin) we need to await the wf to make sure it's actually
         # running and avoid race condition with IDLE state
@@ -433,12 +417,10 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf2_ex2 = db_api.get_workflow_execution(wf2_ex2.id)
 
             wf2_ex1_task1 = self._assert_single_item(
-                wf2_ex1.task_executions,
-                name='task1'
+                wf2_ex1.task_executions, name='task1'
             )
             wf2_ex2_task1 = self._assert_single_item(
-                wf2_ex2.task_executions,
-                name='task1'
+                wf2_ex2.task_executions, name='task1'
             )
 
         # And wait for the tasks to be RUNNING
@@ -485,12 +467,12 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         # Complete action execution of subworkflows.
         self.engine.on_action_complete(
             wf2_ex1_task1_actions[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         self.engine.on_action_complete(
             wf2_ex2_task1_actions[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         self.await_workflow_success(wf2_ex1.id)
@@ -531,8 +513,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
             wf2_task1 = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='task1'
+                wf2_ex.task_executions, name='task1'
             )
 
         # Make sure the task and wf are paused
@@ -561,7 +542,7 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         # Complete action execution of subworkflows.
         self.engine.on_action_complete(
             wf2_task1_actions[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         self.await_workflow_success(wf2_ex.id)

@@ -38,8 +38,7 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(0, spec_parser.get_wf_definition_spec_cache_size())
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wfs[0].id,
-            wfs[0].updated_at
+            wfs[0].id, wfs[0].updated_at
         )
 
         self.assertEqual(1, len(wf_spec.get_tasks()))
@@ -65,8 +64,7 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wfs[0].id,
-            wfs[0].updated_at
+            wfs[0].id, wfs[0].updated_at
         )
 
         self.assertEqual(2, len(wf_spec.get_tasks()))
@@ -94,8 +92,7 @@ class SpecificationCachingTest(base.DbTestCase):
         wf = db_api.get_workflow_definition('wb.wf')
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf.id,
-            wf.updated_at
+            wf.id, wf.updated_at
         )
 
         self.assertEqual(1, len(wf_spec.get_tasks()))
@@ -127,8 +124,7 @@ class SpecificationCachingTest(base.DbTestCase):
         wf = db_api.get_workflow_definition(wf.id)
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf.id,
-            wf.updated_at
+            wf.id, wf.updated_at
         )
 
         self.assertEqual(2, len(wf_spec.get_tasks()))
@@ -153,8 +149,7 @@ class SpecificationCachingTest(base.DbTestCase):
         wf_def = wfs[0]
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf_def.id,
-            wf_def.updated_at
+            wf_def.id, wf_def.updated_at
         )
 
         self.assertEqual(1, len(wf_spec.get_tasks()))
@@ -162,13 +157,15 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
         with db_api.transaction():
-            wf_ex = db_api.create_workflow_execution({
-                'id': '1-2-3-4',
-                'name': 'wf',
-                'workflow_id': wf_def.id,
-                'spec': wf_spec.to_dict(),
-                'state': states.RUNNING
-            })
+            wf_ex = db_api.create_workflow_execution(
+                {
+                    'id': '1-2-3-4',
+                    'name': 'wf',
+                    'workflow_id': wf_def.id,
+                    'spec': wf_spec.to_dict(),
+                    'state': states.RUNNING,
+                }
+            )
 
             # Check that we can get a valid spec by execution id.
             wf_spec_by_exec_id = spec_parser.get_workflow_spec_by_execution_id(
@@ -196,8 +193,7 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wfs[0].id,
-            wfs[0].updated_at
+            wfs[0].id, wfs[0].updated_at
         )
 
         self.assertEqual(2, len(wf_spec.get_tasks()))

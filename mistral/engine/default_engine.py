@@ -46,8 +46,16 @@ class DefaultEngine(base.Engine):
     @db_utils.retry_on_db_error
     @post_tx_queue.run
     @profiler.trace('engine-start-workflow', hide_args=True)
-    def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
-                       wf_input=None, description='', async_=False, **params):
+    def start_workflow(
+        self,
+        wf_identifier,
+        wf_namespace='',
+        wf_ex_id=None,
+        wf_input=None,
+        description='',
+        async_=False,
+        **params,
+    ):
         if wf_namespace:
             params['namespace'] = wf_namespace
 
@@ -65,7 +73,7 @@ class DefaultEngine(base.Engine):
                     wf_ex_id,
                     wf_input or {},
                     description,
-                    params
+                    params,
                 )
 
                 # Checking a case when all tasks are completed immediately.
@@ -83,20 +91,34 @@ class DefaultEngine(base.Engine):
                 return wf_ex.get_clone()
 
     @post_tx_queue.run
-    def start_task(self, task_ex_id, first_run, waiting,
-                   triggered_by, rerun, reset, **params):
+    def start_task(
+        self,
+        task_ex_id,
+        first_run,
+        waiting,
+        triggered_by,
+        rerun,
+        reset,
+        **params,
+    ):
         with db_api.transaction():
-            task_handler.run_task(task_ex_id, waiting,
-                                  triggered_by, rerun, reset, first_run)
+            task_handler.run_task(
+                task_ex_id, waiting, triggered_by, rerun, reset, first_run
+            )
 
     @db_utils.retry_on_db_error
     @post_tx_queue.run
-    def start_action(self, action_name, action_input,
-                     description=None, namespace='', **params):
+    def start_action(
+        self,
+        action_name,
+        action_input,
+        description=None,
+        namespace='',
+        **params,
+    ):
         with db_api.transaction():
             engine_action = action_handler.build_action_by_name(
-                action_name,
-                namespace=namespace
+                action_name, namespace=namespace
             )
 
             action_desc = engine_action.action_desc
@@ -116,7 +138,8 @@ class DefaultEngine(base.Engine):
 
             if sync and not is_action_sync:
                 raise exceptions.InputException(
-                    "Action does not support synchronous execution.")
+                    "Action does not support synchronous execution."
+                )
 
             if not sync and (save or not is_action_sync):
                 engine_action.schedule(action_input, target, timeout=timeout)
@@ -124,10 +147,7 @@ class DefaultEngine(base.Engine):
                 return engine_action.action_ex.get_clone()
 
             output = engine_action.run(
-                action_input,
-                target,
-                save=False,
-                timeout=timeout
+                action_input, target, save=False, timeout=timeout
             )
 
             state = states.SUCCESS if output.is_success() else states.ERROR
@@ -141,7 +161,7 @@ class DefaultEngine(base.Engine):
                     input=action_input,
                     output=output.to_dict(),
                     state=state,
-                    workflow_namespace=namespace
+                    workflow_namespace=namespace,
                 )
 
             action_ex_id = u.generate_unicode_uuid()
@@ -154,7 +174,7 @@ class DefaultEngine(base.Engine):
                 'output': output.to_dict(),
                 'state': state,
                 'is_sync': is_action_sync,
-                'workflow_namespace': namespace
+                'workflow_namespace': namespace,
             }
 
             return db_api.create_action_execution(values)
@@ -162,8 +182,9 @@ class DefaultEngine(base.Engine):
     @db_utils.retry_on_db_error
     @post_tx_queue.run
     @profiler.trace('engine-on-action-complete', hide_args=True)
-    def on_action_complete(self, action_ex_id, result, wf_action=False,
-                           async_=False):
+    def on_action_complete(
+        self, action_ex_id, result, wf_action=False, async_=False
+    ):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)
@@ -182,8 +203,9 @@ class DefaultEngine(base.Engine):
     @db_utils.retry_on_db_error
     @post_tx_queue.run
     @profiler.trace('engine-on-action-update', hide_args=True)
-    def on_action_update(self, action_ex_id, state, wf_action=False,
-                         async_=False):
+    def on_action_update(
+        self, action_ex_id, state, wf_action=False, async_=False
+    ):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)
@@ -212,11 +234,7 @@ class DefaultEngine(base.Engine):
             wf_ex = task_ex.workflow_execution
 
             wf_handler.rerun_workflow(
-                wf_ex,
-                task_ex,
-                reset=reset,
-                skip=skip,
-                env=env
+                wf_ex, task_ex, reset=reset, skip=skip, env=env
             )
 
             return wf_ex.get_clone()
@@ -256,7 +274,7 @@ class DefaultEngine(base.Engine):
                     LOG.debug(
                         "Action execution heartbeat update failed. {}",
                         exec_id,
-                        exc_info=True
+                        exc_info=True,
                     )
                     # Ignore this error and continue with the
                     # remaining ids.

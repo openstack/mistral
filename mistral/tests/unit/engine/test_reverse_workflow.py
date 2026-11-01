@@ -68,27 +68,17 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
     def test_start_task2(self):
-        wf_input = {
-            'param1': 'a',
-            'param2': 'b'
-        }
+        wf_input = {'param1': 'a', 'param2': 'b'}
 
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf1',
-            wf_input=wf_input,
-            task_name='task2'
+            'my_wb.wf1', wf_input=wf_input, task_name='task2'
         )
 
         # Execution 1.
         self.assertIsNotNone(wf_ex)
         self.assertDictEqual(wf_input, wf_ex.input)
         self.assertDictEqual(
-            {
-                'task_name': 'task2',
-                'namespace': '',
-                'env': {}
-            },
-            wf_ex.params
+            {'task_name': 'task2', 'namespace': '', 'env': {}}, wf_ex.params
         )
 
         # Wait till workflow 'wf1' is completed.
@@ -103,17 +93,13 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(2, len(db_api.get_task_executions()))
 
         task1_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
         self.assertDictEqual({'result1': 'a'}, task1_ex.published)
 
         task2_ex = self._assert_single_item(
-            task_execs,
-            name='task2',
-            state=states.SUCCESS
+            task_execs, name='task2', state=states.SUCCESS
         )
 
         self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
@@ -122,9 +108,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         wf_input = {'param1': 'a', 'param2': 'b'}
 
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf1',
-            wf_input=wf_input,
-            task_name='task4'
+            'my_wb.wf1', wf_input=wf_input, task_name='task4'
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -153,9 +137,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         """
 
         exception = self.assertRaises(
-            exc.InvalidModelException,
-            wf_service.create_workflows,
-            wf_text
+            exc.InvalidModelException, wf_service.create_workflows, wf_text
         )
 
         self.assertIn("Task 'task1' not found", str(exception))

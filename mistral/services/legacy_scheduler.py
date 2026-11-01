@@ -37,8 +37,14 @@ from mistral_lib import utils
 LOG = logging.getLogger(__name__)
 
 
-def _schedule_call(factory_method_path, target_method_name,
-                   run_after, serializers=None, key=None, **method_args):
+def _schedule_call(
+    factory_method_path,
+    target_method_name,
+    run_after,
+    serializers=None,
+    key=None,
+    **method_args,
+):
     """Schedules call and lately invokes target_method.
 
     Add this call specification to DB, and then after run_after
@@ -63,19 +69,21 @@ def _schedule_call(factory_method_path, target_method_name,
 
     ctx = (
         ctx_serializer.serialize_context(context.ctx())
-        if context.has_ctx() else {}
+        if context.has_ctx()
+        else {}
     )
 
-    execution_time = (utils.utc_now_sec() +
-                      datetime.timedelta(seconds=run_after))
+    execution_time = utils.utc_now_sec() + datetime.timedelta(
+        seconds=run_after
+    )
 
     if serializers:
         for arg_name, serializer_path in serializers.items():
             if arg_name not in method_args:
                 raise exc.MistralException(
                     "Serializable method argument %s"
-                    " not found in method_args=%s"
-                    % (arg_name, method_args))
+                    " not found in method_args=%s" % (arg_name, method_args)
+                )
             try:
                 serializer = importutils.import_class(serializer_path)()
             except ImportError as e:
@@ -93,7 +101,7 @@ def _schedule_call(factory_method_path, target_method_name,
         'serializers': serializers,
         'key': key,
         'method_arguments': method_args,
-        'processing': False
+        'processing': False,
     }
 
     db_api.create_delayed_call(values)
@@ -104,7 +112,7 @@ class LegacyScheduler(sched_base.Scheduler):
         versionutils.report_deprecated_feature(
             LOG,
             'The legacy scheduler is deprecated and will be removed in a '
-            'future release. Set scheduler_type to "default" instead.'
+            'future release. Set scheduler_type to "default" instead.',
         )
 
         self._stopped = False
@@ -121,7 +129,7 @@ class LegacyScheduler(sched_base.Scheduler):
             job.run_after,
             serializers=job.func_arg_serializers,
             key=job.key,
-            **job.func_args
+            **job.func_args,
         )
 
     def has_scheduled_jobs(self, **filters):
@@ -155,9 +163,9 @@ class LegacyScheduler(sched_base.Scheduler):
                 )
 
             time.sleep(
-                self._fixed_delay +
-                random.Random().randint(0,
-                                        int(self._random_delay * 1000)) * 0.001
+                self._fixed_delay
+                + random.Random().randint(0, int(self._random_delay * 1000))
+                * 0.001
             )
 
     def _process_delayed_calls(self, ctx=None):
@@ -201,8 +209,7 @@ class LegacyScheduler(sched_base.Scheduler):
 
         with db_api.transaction():
             candidates = db_api.get_delayed_calls_to_start(
-                time_filter,
-                batch_size
+                time_filter, batch_size
             )
 
             for call in candidates:
@@ -211,7 +218,7 @@ class LegacyScheduler(sched_base.Scheduler):
                 db_call, updated_cnt = db_api.update_delayed_call(
                     id=call.id,
                     values={'processing': True},
-                    query_filter={'processing': False}
+                    query_filter={'processing': False},
                 )
 
                 # If updated_cnt != 1 then another scheduler
@@ -242,8 +249,11 @@ class LegacyScheduler(sched_base.Scheduler):
             LOG.debug(
                 'Preparing next delayed call. '
                 '[ID=%s, factory_method_path=%s, target_method_name=%s, '
-                'method_arguments=%s]', call.id, call.factory_method_path,
-                call.target_method_name, call.method_arguments
+                'method_arguments=%s]',
+                call.id,
+                call.factory_method_path,
+                call.target_method_name,
+                call.method_arguments,
             )
 
             target_auth_context = copy.deepcopy(call.auth_context)
@@ -284,7 +294,7 @@ class LegacyScheduler(sched_base.Scheduler):
 
         ctx_serializer = context.RpcContextSerializer()
 
-        for (target_auth_context, target_method, method_args) in delayed_calls:
+        for target_auth_context, target_method, method_args in delayed_calls:
             try:
                 # Set the correct context for the method.
                 ctx_serializer.deserialize_context(target_auth_context)
@@ -295,7 +305,7 @@ class LegacyScheduler(sched_base.Scheduler):
                 LOG.exception(
                     "Delayed call failed, method: %s, exception: %s",
                     target_method,
-                    e
+                    e,
                 )
             finally:
                 # Remove context.
@@ -311,9 +321,7 @@ class LegacyScheduler(sched_base.Scheduler):
         try:
             db_api.delete_delayed_calls(id={'in': [c.id for c in db_calls]})
         except Exception as e:
-            LOG.error(
-                "Failed to delete all delayed calls [exception=%s]", e
-            )
+            LOG.error("Failed to delete all delayed calls [exception=%s]", e)
 
             # We have to re-raise any exception because the transaction
             # would be already invalid anyway. If it's a deadlock then

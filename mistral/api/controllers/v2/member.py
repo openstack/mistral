@@ -37,8 +37,10 @@ def auth_enable_check(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         if not CONF.pecan.auth_enable:
-            msg = ("Resource sharing feature can only be supported with "
-                   "authentication enabled.")
+            msg = (
+                "Resource sharing feature can only be supported with "
+                "authentication enabled."
+            )
             raise exc.WorkflowException(msg)
 
         return func(*args, **kwargs)
@@ -65,17 +67,14 @@ class MembersController(rest.RestController):
             "member_id=%s].",
             self.resource_id,
             self.type,
-            member_id
+            member_id,
         )
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
 
         member_db = r.call(
-            db_api.get_resource_member,
-            self.resource_id,
-            self.type,
-            member_id
+            db_api.get_resource_member, self.resource_id, self.type, member_id
         )
 
         return resources.Member.from_db_model(member_db)
@@ -90,13 +89,10 @@ class MembersController(rest.RestController):
         LOG.debug(
             "Fetch resource members [resource_id=%s, resource_type=%s].",
             self.resource_id,
-            self.type
+            self.type,
         )
 
-        db_members = db_api.get_resource_members(
-            self.resource_id,
-            self.type
-        )
+        db_members = db_api.get_resource_members(self.resource_id, self.type)
 
         members = [
             resources.Member.from_db_model(db_member)
@@ -108,9 +104,7 @@ class MembersController(rest.RestController):
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
     @wsme_pecan.wsexpose(
-        resources.Member,
-        body=resources.Member,
-        status_code=201
+        resources.Member, body=resources.Member, status_code=201
     )
     def post(self, member_info):
         """Shares the resource to a new member."""
@@ -121,7 +115,7 @@ class MembersController(rest.RestController):
             "resource_type=%s, member_info=%s].",
             self.resource_id,
             self.type,
-            member_info
+            member_info,
         )
 
         if not member_info.member_id:
@@ -153,7 +147,7 @@ class MembersController(rest.RestController):
                     'resource_id': self.resource_id,
                     'resource_type': self.type,
                     'member_id': member_info.member_id,
-                    'status': 'pending'
+                    'status': 'pending',
                 }
 
                 return db_api.create_resource_member(resource_member)
@@ -174,7 +168,7 @@ class MembersController(rest.RestController):
             "member_id=%s, member_info=%s].",
             self.resource_id,
             member_id,
-            member_info
+            member_info,
         )
 
         if not member_info.status:
@@ -187,7 +181,7 @@ class MembersController(rest.RestController):
             self.resource_id,
             self.type,
             member_id,
-            {'status': member_info.status}
+            {'status': member_info.status},
         )
 
         return resources.Member.from_db_model(db_member)
@@ -204,11 +198,9 @@ class MembersController(rest.RestController):
             "resource_type=%s, member_id=%s].",
             self.resource_id,
             self.type,
-            member_id
+            member_id,
         )
 
         rest_utils.rest_retry_on_db_error(db_api.delete_resource_member)(
-            self.resource_id,
-            self.type,
-            member_id
+            self.resource_id, self.type, member_id
         )

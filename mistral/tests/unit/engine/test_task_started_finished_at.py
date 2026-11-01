@@ -19,7 +19,6 @@ from mistral.services import workflows as wf_service
 
 
 class TaskStartedFinishedAtTest(base.EngineTestCase):
-
     def test_started_finished_fields_updated_after_rerun(self):
         wf_text = """
         version: '2.0'
@@ -177,11 +176,12 @@ class TaskStartedFinishedAtTest(base.EngineTestCase):
         self.assertTrue(
             delta >= 0,
             "Expected {} was started after {} was finished".format(
-                task_ex1.name, task_ex2.name)
+                task_ex1.name, task_ex2.name
+            ),
         )
 
     def _check_duration_more_than(self, duration, time):
         self.assertTrue(
             time < duration,
-            "Expected duration {} was more than {}".format(duration, time)
+            "Expected duration {} was more than {}".format(duration, time),
         )

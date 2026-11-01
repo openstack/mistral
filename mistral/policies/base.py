@@ -20,12 +20,10 @@ RULE_ADMIN_OR_OWNER = 'rule:admin_or_owner'
 RULE_ADMIN_ONLY = 'rule:admin_only'
 
 rules = [
+    policy.RuleDefault("admin_only", "is_admin:True"),
     policy.RuleDefault(
-        "admin_only",
-        "is_admin:True"),
-    policy.RuleDefault(
-        "admin_or_owner",
-        "is_admin:True or project_id:%(project_id)s")
+        "admin_or_owner", "is_admin:True or project_id:%(project_id)s"
+    ),
 ]
 
 

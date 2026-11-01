@@ -59,7 +59,7 @@ def _action_descriptor_to_resource(action_desc):
         ),
         updated_at=utils.datetime_to_str(
             getattr(action_desc, 'updated_at', '')
-        )
+        ),
     )
 
 
@@ -67,11 +67,15 @@ class ActionsController(rest.RestController, hooks.HookController):
     # TODO(nmakhotkin): Have a discussion with pecan/WSME folks in order
     # to have requests and response of different content types. Then
     # delete ContentTypeHook.
-    __hooks__ = [ct_hook.ContentTypeHook("application/json;charset=utf-8",
-                                         ['POST', 'PUT'])]
+    __hooks__ = [
+        ct_hook.ContentTypeHook(
+            "application/json;charset=utf-8", ['POST', 'PUT']
+        )
+    ]
 
     validate = validation.SpecValidationController(
-        spec_parser.get_action_list_spec_from_yaml)
+        spec_parser.get_action_list_spec_from_yaml
+    )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Action, wtypes.text, wtypes.text)
@@ -93,9 +97,9 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         # Here we assume that the action search might involve DB operations
         # so we need to apply the regular retrying logic as everywhere else.
-        action_desc = rest_utils.rest_retry_on_db_error(
-            action_provider.find
-        )(identifier, namespace=namespace)
+        action_desc = rest_utils.rest_retry_on_db_error(action_provider.find)(
+            identifier, namespace=namespace
+        )
 
         if action_desc is None:
             # TODO(rakhmerov): We need to change exception class so that
@@ -143,7 +147,7 @@ class ActionsController(rest.RestController, hooks.HookController):
                     definition,
                     scope=scope,
                     identifier=identifier,
-                    namespace=namespace
+                    namespace=namespace,
                 )
 
         db_acts = _update_actions()
@@ -186,9 +190,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         def _create_action_definitions():
             with db_api.transaction():
                 return adhoc_actions.create_actions(
-                    definition,
-                    scope=scope,
-                    namespace=namespace
+                    definition, scope=scope, namespace=namespace
                 )
 
         db_acts = _create_action_definitions()
@@ -215,8 +217,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         def _delete_action_definition():
             with db_api.transaction():
                 db_model = db_api.get_action_definition(
-                    identifier,
-                    namespace=namespace
+                    identifier, namespace=namespace
                 )
 
                 if db_model.is_system:
@@ -225,23 +226,48 @@ class ActionsController(rest.RestController, hooks.HookController):
                     )
 
                 db_api.delete_action_definition(
-                    identifier,
-                    namespace=namespace
+                    identifier, namespace=namespace
                 )
 
         _delete_action_definition()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Actions, wtypes.text, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, resources.SCOPE_TYPES, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='name',
-                sort_dirs='asc', fields='', created_at=None,
-                name=None, scope=None, tags=None,
-                updated_at=None, description=None, definition=None,
-                is_system=None, input=None, namespace=''):
+    @wsme_pecan.wsexpose(
+        resources.Actions,
+        wtypes.text,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        resources.SCOPE_TYPES,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='name',
+        sort_dirs='asc',
+        fields='',
+        created_at=None,
+        name=None,
+        scope=None,
+        tags=None,
+        updated_at=None,
+        description=None,
+        definition=None,
+        is_system=None,
+        input=None,
+        namespace='',
+    ):
         """Return all actions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -285,7 +311,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             definition=definition,
             is_system=is_system,
             input=input,
-            namespace=namespace
+            namespace=namespace,
         )
 
         LOG.debug(
@@ -295,7 +321,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             limit,
             sort_keys,
             sort_dirs,
-            filters
+            filters,
         )
 
         sort_keys = ['name'] if sort_keys is None else sort_keys
@@ -318,7 +344,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             limit=limit,
             sort_fields=sort_keys,
             sort_dirs=sort_dirs,
-            filters=filters
+            filters=filters,
         )
 
         # We can't guarantee that at this point the collection of action
@@ -327,7 +353,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         # Apply filters.
         action_descriptors = filter(
             lambda a_d: filter_utils.match_filters(a_d, filters),
-            action_descriptors
+            action_descriptors,
         )
 
         # Apply sorting.
@@ -351,10 +377,12 @@ class ActionsController(rest.RestController, hooks.HookController):
                     if ret:
                         return ret * (1 if dir == 'asc' else -1)
                 return 0
+
             return sorted(a_ds, key=functools.cmp_to_key(compare_))
 
-        action_descriptors = action_descriptor_sort(action_descriptors,
-                                                    sort_keys, sort_dirs)
+        action_descriptors = action_descriptor_sort(
+            action_descriptors, sort_keys, sort_dirs
+        )
         start = 0
         for i, a_d in enumerate(action_descriptors):
             if a_d.name == marker:
@@ -366,8 +394,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             action_descriptors = action_descriptors[start:end]
 
         action_resources = [
-            _action_descriptor_to_resource(a_d)
-            for a_d in action_descriptors
+            _action_descriptor_to_resource(a_d) for a_d in action_descriptors
         ]
 
         # TODO(rakhmerov): Fix pagination so that it doesn't work with
@@ -379,5 +406,5 @@ class ActionsController(rest.RestController, hooks.HookController):
             pecan.request.application_url,
             sort_keys=','.join(sort_keys),
             sort_dirs=','.join(sort_dirs),
-            **filters
+            **filters,
         )

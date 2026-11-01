@@ -32,20 +32,14 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'delayed_calls_v2',
-        sa.Column('unique_key', sa.String(length=80), nullable=True)
+        sa.Column('unique_key', sa.String(length=80), nullable=True),
     )
     op.create_unique_constraint(
-        None,
-        'delayed_calls_v2',
-        ['unique_key', 'processing']
+        None, 'delayed_calls_v2', ['unique_key', 'processing']
     )
 
     op.add_column(
         'task_executions_v2',
-        sa.Column('unique_key', sa.String(length=80), nullable=True)
+        sa.Column('unique_key', sa.String(length=80), nullable=True),
     )
-    op.create_unique_constraint(
-        None,
-        'task_executions_v2',
-        ['unique_key']
-    )
+    op.create_unique_constraint(None, 'task_executions_v2', ['unique_key'])

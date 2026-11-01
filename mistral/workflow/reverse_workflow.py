@@ -42,8 +42,8 @@ class ReverseWorkflowController(base.WorkflowController):
     def _find_next_commands(self, task_ex):
         """Finds all tasks with resolved dependencies.
 
-         This method finds all tasks with resolved dependencies and
-         returns them in the form of workflow commands.
+        This method finds all tasks with resolved dependencies and
+        returns them in the form of workflow commands.
         """
         cmds = super(ReverseWorkflowController, self)._find_next_commands(
             task_ex
@@ -63,7 +63,7 @@ class ReverseWorkflowController(base.WorkflowController):
                 self.wf_ex,
                 self.wf_spec,
                 t_s,
-                self.get_task_inbound_context(t_s)
+                self.get_task_inbound_context(t_s),
             )
             for t_s in task_specs
         ]
@@ -75,8 +75,8 @@ class ReverseWorkflowController(base.WorkflowController):
 
         if not task_spec:
             raise exc.WorkflowException(
-                'Invalid task name [wf_spec=%s, task_name=%s]' %
-                (self.wf_spec, task_name)
+                'Invalid task name [wf_spec=%s, task_name=%s]'
+                % (self.wf_spec, task_name)
             )
 
         return task_spec
@@ -125,10 +125,9 @@ class ReverseWorkflowController(base.WorkflowController):
         # Unwind tasks from the target task
         # and filter out tasks with dependencies.
         return [
-            t_s for t_s in
-            traversal.dfs_postorder_nodes(
-                graph.reverse(),
-                self._get_target_task_specification()
+            t_s
+            for t_s in traversal.dfs_postorder_nodes(
+                graph.reverse(), self._get_target_task_specification()
             )
             if self._is_satisfied_task(t_s)
         ]

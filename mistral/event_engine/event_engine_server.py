@@ -44,8 +44,7 @@ class EventEngineServer(service_base.MistralService):
         self._event_engine.start()
 
         profiler_utils.setup(
-            'mistral-event-engine',
-            cfg.CONF.event_engine.host
+            'mistral-event-engine', cfg.CONF.event_engine.host
         )
 
         # Initialize and start RPC server.
@@ -68,7 +67,10 @@ class EventEngineServer(service_base.MistralService):
     def create_event_trigger(self, rpc_ctx, trigger, events):
         LOG.info(
             "Received RPC request 'create_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s, events=%s", rpc_ctx, trigger, events
+            " trigger=%s, events=%s",
+            rpc_ctx,
+            trigger,
+            events,
         )
 
         return self._event_engine.create_event_trigger(trigger, events)
@@ -76,7 +78,10 @@ class EventEngineServer(service_base.MistralService):
     def delete_event_trigger(self, rpc_ctx, trigger, events):
         LOG.info(
             "Received RPC request 'delete_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s, events=%s", rpc_ctx, trigger, events
+            " trigger=%s, events=%s",
+            rpc_ctx,
+            trigger,
+            events,
         )
 
         return self._event_engine.delete_event_trigger(trigger, events)
@@ -84,7 +89,9 @@ class EventEngineServer(service_base.MistralService):
     def update_event_trigger(self, rpc_ctx, trigger):
         LOG.info(
             "Received RPC request 'update_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s", rpc_ctx, trigger
+            " trigger=%s",
+            rpc_ctx,
+            trigger,
         )
 
         return self._event_engine.update_event_trigger(trigger)

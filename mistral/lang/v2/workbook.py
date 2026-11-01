@@ -34,21 +34,21 @@ class WorkbookSpec(base.BaseSpec):
                 "minProperties": 1,
                 "patternProperties": {
                     "^version$": {"enum": ["2.0", 2.0]},
-                    NON_VERSION_WORD_REGEX: types.ANY
+                    NON_VERSION_WORD_REGEX: types.ANY,
                 },
-                "additionalProperties": False
+                "additionalProperties": False,
             },
             "workflows": {
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
                     "^version$": {"enum": ["2.0", 2.0]},
-                    NON_VERSION_WORD_REGEX: types.ANY
+                    NON_VERSION_WORD_REGEX: types.ANY,
                 },
-                "additionalProperties": False
-            }
+                "additionalProperties": False,
+            },
         },
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     def __init__(self, data, validate):

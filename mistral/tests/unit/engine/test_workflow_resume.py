@@ -228,14 +228,12 @@ workflows:
 
 
 class WorkflowResumeTest(base.EngineTestCase):
-
     def test_resume_reverse(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_REVERSE)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'resume_reverse.wf',
-            task_name='task2'
+            'resume_reverse.wf', task_name='task2'
         )
 
         self.engine.pause_workflow(wf_ex.id)
@@ -430,24 +428,17 @@ class WorkflowResumeTest(base.EngineTestCase):
         err = exc.MistralError('foo')
 
         with mock.patch.object(
-                db_api,
-                'get_workflow_execution',
-                side_effect=err):
-
+            db_api, 'get_workflow_execution', side_effect=err
+        ):
             self.assertRaises(
-                exc.MistralError,
-                self.engine.resume_workflow,
-                wf_ex.id
+                exc.MistralError, self.engine.resume_workflow, wf_ex.id
             )
 
     def test_resume_diff_env_vars(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_DIFF_ENV_VAR)
 
         # Initial environment variables for the workflow execution.
-        env = {
-            'var1': 'fee fi fo fum',
-            'var2': 'foobar'
-        }
+        env = {'var1': 'fee fi fo fum', 'var2': 'foobar'}
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', env=env)
@@ -469,10 +460,7 @@ class WorkflowResumeTest(base.EngineTestCase):
             self.assertEqual(states.IDLE, task_2_ex.state)
 
         # Update env in workflow execution with the following.
-        updated_env = {
-            'var1': 'Task 2',
-            'var2': 'Task 3'
-        }
+        updated_env = {'var1': 'Task 2', 'var2': 'Task 3'}
 
         # Update the env variables and resume workflow.
         self.engine.resume_workflow(wf_ex.id, env=updated_env)
@@ -502,10 +490,7 @@ class WorkflowResumeTest(base.EngineTestCase):
             self.assertEqual(updated_env['var1'], task_2_result)
 
             # Check result of task3.
-            task_3_ex = self._assert_single_item(
-                task_execs,
-                name='task3'
-            )
+            task_3_ex = self._assert_single_item(task_execs, name='task3')
 
             self.assertEqual(states.SUCCESS, task_3_ex.state)
 
@@ -544,8 +529,7 @@ class WorkflowResumeTest(base.EngineTestCase):
             backlog = wf_ex.runtime_context['backlog_commands']
 
         self.assertEqual(
-            ['run_existing_task'],
-            [c['cmd_name'] for c in backlog]
+            ['run_existing_task'], [c['cmd_name'] for c in backlog]
         )
 
         self.engine.resume_workflow(wf_ex.id)

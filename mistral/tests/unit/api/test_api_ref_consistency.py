@@ -43,26 +43,31 @@ from mistral.api.controllers.v2 import root as v2_root
 # api-ref/source lives at the repository root, four levels above this file
 # (mistral/tests/unit/api/).
 _REPO_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir,
-                 os.pardir)
+    os.path.join(
+        os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir
+    )
 )
 _API_REF_SOURCE = os.path.join(_REPO_ROOT, 'api-ref', 'source')
 _PARAMETERS_YAML = os.path.join(_API_REF_SOURCE, 'parameters.yaml')
 
 # A documented parameter row looks like "  - <field>: <parameters.yaml key>".
-_PARAM_ROW_RE = re.compile(r'^\s+-\s+(?P<field>[A-Za-z0-9_]+):'
-                           r'\s*(?P<key>[A-Za-z0-9_]+)\s*$')
+_PARAM_ROW_RE = re.compile(
+    r'^\s+-\s+(?P<field>[A-Za-z0-9_]+):'
+    r'\s*(?P<key>[A-Za-z0-9_]+)\s*$'
+)
 
 # Resource classes that intentionally have no public api-ref entry.
-_IGNORED_RESOURCES = frozenset([
-    # Base/utility classes, not concrete API resources.
-    'Resource',
-    'ResourceList',
-    # The /v2/services maintenance endpoint is an internal/operator API and is
-    # deliberately not part of the public reference.
-    'Service',
-    'Services',
-])
+_IGNORED_RESOURCES = frozenset(
+    [
+        # Base/utility classes, not concrete API resources.
+        'Resource',
+        'ResourceList',
+        # The /v2/services maintenance endpoint is an internal/operator API
+        # and is deliberately not part of the public reference.
+        'Service',
+        'Services',
+    ]
+)
 
 # Fields that are accepted as undocumented on *any* resource. Tracked debt --
 # shrink this set, don't grow it.
@@ -155,8 +160,10 @@ class APIRefConsistencyTest(base.BaseTestCase):
         super(APIRefConsistencyTest, self).setUp()
 
         if not os.path.isdir(_API_REF_SOURCE):
-            self.skipTest('api-ref source tree not available (running from an '
-                          'installed package rather than the repo checkout)')
+            self.skipTest(
+                'api-ref source tree not available (running from an '
+                'installed package rather than the repo checkout)'
+            )
 
     def test_every_resource_field_is_documented(self):
         documented, _ = _documented_fields_and_param_keys()
@@ -167,7 +174,8 @@ class APIRefConsistencyTest(base.BaseTestCase):
             allowed = _KNOWN_UNDOCUMENTED.get(name, set())
 
             undocumented = {
-                field for field in cls.get_fields()
+                field
+                for field in cls.get_fields()
                 if field not in documented
                 and field not in allowed
                 and field not in _GLOBAL_UNDOCUMENTED_FIELDS
@@ -177,12 +185,13 @@ class APIRefConsistencyTest(base.BaseTestCase):
                 missing[name] = sorted(undocumented)
 
         self.assertEqual(
-            {}, missing,
+            {},
+            missing,
             'These WSME resource attributes are not documented anywhere in '
             'api-ref/source/*.inc. Document them (add a rest_parameters row '
             'and a parameters.yaml entry) in the same change, or -- if the '
             'omission is deliberate -- extend the allow-lists in this test '
-            'with a justification:\n%s' % missing
+            'with a justification:\n%s' % missing,
         )
 
     def test_every_top_level_controller_is_documented(self):
@@ -207,10 +216,11 @@ class APIRefConsistencyTest(base.BaseTestCase):
                 missing.append(path)
 
         self.assertEqual(
-            [], sorted(missing),
+            [],
+            sorted(missing),
             'These top-level v2 endpoints have no `.. rest_method:: ... '
             '%s ...` entry in api-ref. Add an .inc section for them.'
-            % sorted(missing)
+            % sorted(missing),
         )
 
     def test_parameters_yaml_has_no_dangling_references(self):
@@ -224,9 +234,10 @@ class APIRefConsistencyTest(base.BaseTestCase):
         dangling = referenced - defined
 
         self.assertEqual(
-            set(), dangling,
+            set(),
+            dangling,
             'These parameters.yaml keys are referenced from .inc files '
-            'but are not defined in parameters.yaml: %s' % sorted(dangling)
+            'but are not defined in parameters.yaml: %s' % sorted(dangling),
         )
 
     def test_parameters_yaml_has_no_unused_entries(self):
@@ -240,8 +251,9 @@ class APIRefConsistencyTest(base.BaseTestCase):
         unused = defined - referenced
 
         self.assertEqual(
-            set(), unused,
+            set(),
+            unused,
             'These parameters.yaml entries are defined but never referenced '
             'from any .inc file. Remove them or wire them up: %s'
-            % sorted(unused)
+            % sorted(unused),
         )

@@ -69,17 +69,16 @@ wf:
 
 
 class TaskPublishTest(base.EngineTestCase):
-
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success.
-                'Task 2',               # Mock task2 success.
-                'Task 3'                # Mock task3 success.
+                'Task 1',  # Mock task1 success.
+                'Task 2',  # Mock task2 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_publish_failure(self):
         wb_service.create_workbook_v2(SIMPLE_WORKBOOK)
@@ -122,8 +121,7 @@ class TaskPublishTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='t1'
+                wf_ex.task_executions, name='t1'
             )
 
             self.assertEqual(states.ERROR, task_ex.state)

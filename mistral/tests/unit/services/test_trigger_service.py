@@ -63,17 +63,15 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             None,
             None,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         self.assertEqual(
-            datetime.datetime(2010, 8, 25, 0, 5),
-            trigger.next_execution_time
+            datetime.datetime(2010, 8, 25, 0, 5), trigger.next_execution_time
         )
 
         next_time = t_s.get_next_execution_time(
-            trigger['pattern'],
-            trigger.next_execution_time
+            trigger['pattern'], trigger.next_execution_time
         )
 
         self.assertEqual(datetime.datetime(2010, 8, 25, 0, 10), next_time)
@@ -88,7 +86,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             None,
             None,
             datetime.datetime(2010, 8, 25),
-            workflow_id=self.wf.id
+            workflow_id=self.wf.id,
         )
 
         self.assertEqual(self.wf.name, trigger.workflow_name)
@@ -102,7 +100,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             "4242-12-25 13:37",
             2,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         t_s.create_cron_trigger(
@@ -113,7 +111,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             "4242-12-25 13:37",
             4,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         t_s.create_cron_trigger(
@@ -124,7 +122,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             "5353-12-25 13:37",
             2,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         # Creations above should be ok.
@@ -141,7 +139,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             "4242-12-25 13:37",
             2,
-            None
+            None,
         )
 
     def test_trigger_create_wrong_workflow_input(self):
@@ -166,7 +164,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             None,
             None,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         self.assertIn('Invalid input', str(exception))
@@ -183,7 +181,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/5 * * * *',
             None,
             None,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         self.assertIn('task_execution_id', str(exception))
@@ -197,14 +195,14 @@ class TriggerServiceV2Test(base.DbTestCase):
             'notification',
             'compute.instance.create.start',
             self.wf.id,
-            workflow_params={'root_execution_id': 'foo'}
+            workflow_params={'root_execution_id': 'foo'},
         )
 
         self.assertRaises(
             exc.InputException,
             t_s.update_event_trigger,
             utils.generate_unicode_uuid(),
-            {'workflow_params': {'index': 1}}
+            {'workflow_params': {'index': 1}},
         )
 
     def test_oneshot_trigger_create(self):
@@ -216,21 +214,23 @@ class TriggerServiceV2Test(base.DbTestCase):
             None,
             "4242-12-25 13:37",
             None,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         self.assertEqual(
             datetime.datetime(4242, 12, 25, 13, 37),
-            trigger.next_execution_time
+            trigger.next_execution_time,
         )
 
-    @mock.patch.object(security, 'create_trust',
-                       type('trust', (object,), {'id': 'my_trust_id'}))
+    @mock.patch.object(
+        security,
+        'create_trust',
+        type('trust', (object,), {'id': 'my_trust_id'}),
+    )
     def test_create_trust_in_trigger(self):
         cfg.CONF.set_default('auth_enable', True, group='pecan')
         self.addCleanup(
-            cfg.CONF.set_default, 'auth_enable',
-            False, group='pecan'
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
         )
 
         trigger = t_s.create_cron_trigger(
@@ -241,18 +241,21 @@ class TriggerServiceV2Test(base.DbTestCase):
             '*/2 * * * *',
             None,
             None,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         self.assertEqual('my_trust_id', trigger.trust_id)
 
-    @mock.patch.object(security, 'create_trust',
-                       type('trust', (object,), {'id': 'my_trust_id'}))
+    @mock.patch.object(
+        security,
+        'create_trust',
+        type('trust', (object,), {'id': 'my_trust_id'}),
+    )
     @mock.patch.object(security, 'create_context')
     @mock.patch.object(rpc.EngineClient, 'start_workflow', mock.Mock())
     @mock.patch(
         'mistral.services.periodic.advance_cron_trigger',
-        mock.MagicMock(side_effect=periodic.advance_cron_trigger)
+        mock.MagicMock(side_effect=periodic.advance_cron_trigger),
     )
     @mock.patch.object(security, 'delete_trust')
     def test_create_delete_trust_in_trigger(self, delete_trust, create_ctx):
@@ -261,8 +264,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         trigger_thread = periodic.setup()
         self.addCleanup(trigger_thread.stop)
         self.addCleanup(
-            cfg.CONF.set_default, 'auth_enable',
-            False, group='pecan'
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
         )
 
         t_s.create_cron_trigger(
@@ -273,7 +275,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             '* * * * * *',
             None,
             1,
-            datetime.datetime(2010, 8, 25)
+            datetime.datetime(2010, 8, 25),
         )
 
         time.sleep(1)
@@ -287,7 +289,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             self.wf.name,
             {},
             pattern='*/5 * * * *',
-            start_time=datetime.datetime(2010, 8, 25)
+            start_time=datetime.datetime(2010, 8, 25),
         )
 
         t2_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -297,7 +299,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             self.wf.name,
             {},
             pattern='*/1 * * * *',
-            start_time=datetime.datetime(2010, 8, 22)
+            start_time=datetime.datetime(2010, 8, 22),
         )
 
         t3_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -307,7 +309,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             self.wf.name,
             {},
             pattern='*/2 * * * *',
-            start_time=datetime.datetime(2010, 9, 21)
+            start_time=datetime.datetime(2010, 9, 21),
         )
 
         t4_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -317,7 +319,7 @@ class TriggerServiceV2Test(base.DbTestCase):
             self.wf.name,
             {},
             pattern='*/3 * * * *',
-            start_time=timeutils.utcnow() + datetime.timedelta(0, 50)
+            start_time=timeutils.utcnow() + datetime.timedelta(0, 50),
         )
 
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
@@ -326,24 +328,36 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     @mock.patch.object(rpc, 'get_event_engine_client')
     def test_event_trigger_create_valid_event(self, mock_client):
-        for i, event in enumerate(['compute.instance.create.end',
-                                   'identity.project.created',
-                                   'compute_task.build_instances',
-                                   'dns.zone-create:v2']):
+        for i, event in enumerate(
+            [
+                'compute.instance.create.end',
+                'identity.project.created',
+                'compute_task.build_instances',
+                'dns.zone-create:v2',
+            ]
+        ):
             trig = t_s.create_event_trigger(
                 'trigger-%s' % i,
                 'openstack',
                 'notification',
                 event,
-                self.wf.id
+                self.wf.id,
             )
 
             self.assertEqual(event, trig.event)
 
     @mock.patch.object(rpc, 'get_event_engine_client')
     def test_event_trigger_create_invalid_event(self, mock_client):
-        for event in ['(', 'a|b', 'compute.*', '(a+)+$', '^x', 'a b',
-                      '', None]:
+        for event in [
+            '(',
+            'a|b',
+            'compute.*',
+            '(a+)+$',
+            '^x',
+            'a b',
+            '',
+            None,
+        ]:
             self.assertRaises(
                 exc.EventTriggerException,
                 t_s.create_event_trigger,
@@ -351,7 +365,7 @@ class TriggerServiceV2Test(base.DbTestCase):
                 'openstack',
                 'notification',
                 event,
-                self.wf.id
+                self.wf.id,
             )
 
         mock_client.assert_not_called()
@@ -363,14 +377,14 @@ class TriggerServiceV2Test(base.DbTestCase):
             'openstack',
             'notification',
             'compute.instance.create.end',
-            self.wf.id
+            self.wf.id,
         )
 
         self.assertRaises(
             exc.EventTriggerException,
             t_s.update_event_trigger,
             trig.id,
-            {'event': '('}
+            {'event': '('},
         )
 
 
@@ -402,7 +416,7 @@ class EventTriggerServiceTest(base.DbTestCase):
             'openstack',
             'notification',
             'compute.instance.create.start',
-            self.wf.id
+            self.wf.id,
         )
 
     def test_event_trigger_update(self):
@@ -410,7 +424,7 @@ class EventTriggerServiceTest(base.DbTestCase):
 
         updated = t_s.update_event_trigger(
             self.trigger.id,
-            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}}
+            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}},
         )
 
         self.assertEqual(wf.id, updated.workflow_id)
@@ -421,7 +435,7 @@ class EventTriggerServiceTest(base.DbTestCase):
             exc.InputException,
             t_s.update_event_trigger,
             self.trigger.id,
-            {'workflow_input': {'wrong_param': 'value'}}
+            {'workflow_input': {'wrong_param': 'value'}},
         )
 
         wf = workflows.create_workflows(WORKFLOW_WITH_INPUT)[0]
@@ -430,7 +444,7 @@ class EventTriggerServiceTest(base.DbTestCase):
             exc.InputException,
             t_s.update_event_trigger,
             self.trigger.id,
-            {'workflow_id': wf.id}
+            {'workflow_id': wf.id},
         )
 
         fetched = db_api.get_event_trigger(self.trigger.id)
@@ -454,7 +468,7 @@ class EventTriggerServiceTest(base.DbTestCase):
             exc.DBEntityNotFoundError,
             t_s.update_event_trigger,
             self.trigger.id,
-            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}}
+            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}},
         )
 
         fetched = db_api.get_event_trigger(self.trigger.id)

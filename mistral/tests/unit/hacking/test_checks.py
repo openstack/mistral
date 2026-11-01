@@ -21,7 +21,6 @@ from mistral.tests.unit.mstrlfixtures import hacking as hacking_fixtures
 
 
 class BaseLoggingCheckTest(base.BaseTest):
-
     def setUp(self):
         super(BaseLoggingCheckTest, self).setUp()
         self.code_ex = self.useFixture(self.get_fixture())
@@ -36,8 +35,10 @@ class BaseLoggingCheckTest(base.BaseTest):
 
     # We are patching pep8 so that only the check under test is actually
     # installed.
-    @mock.patch('pycodestyle._checks',
-                {'physical_line': {}, 'logical_line': {}, 'tree': {}})
+    @mock.patch(
+        'pycodestyle._checks',
+        {'physical_line': {}, 'logical_line': {}, 'tree': {}},
+    )
     def run_check(self, code, checker, filename=None):
         pycodestyle.register_check(checker)
         lines = textwrap.dedent(code).strip().splitlines(True)
@@ -48,12 +49,14 @@ class BaseLoggingCheckTest(base.BaseTest):
 
         return checker.report._deferred_print
 
-    def _assert_has_errors(self, code, checker, expected_errors=None,
-                           filename=None):
+    def _assert_has_errors(
+        self, code, checker, expected_errors=None, filename=None
+    ):
 
         # Pull out the parts of the error that we'll match against.
-        actual_errors = [e[:3] for e in
-                         self.run_check(code, checker, filename)]
+        actual_errors = [
+            e[:3] for e in self.run_check(code, checker, filename)
+        ]
         self.assertEqual(expected_errors or [], actual_errors)
 
     def _assert_has_no_errors(self, code, checker, filename=None):
@@ -70,11 +73,19 @@ class BaseLoggingCheckTest(base.BaseTest):
                   self.assertNotEqual(True, context_is_admin)
                   self.assertNotEqual(False, context_is_admin)
                """
-        errors = [(1, 0, 'M319'), (2, 0, 'M319'), (3, 0, 'M319'),
-                  (4, 0, 'M319'), (5, 0, 'M319'), (6, 0, 'M319'),
-                  (7, 0, 'M319'), (8, 0, 'M319')]
-        self._assert_has_errors(code, checks.no_assert_equal_true_false,
-                                expected_errors=errors)
+        errors = [
+            (1, 0, 'M319'),
+            (2, 0, 'M319'),
+            (3, 0, 'M319'),
+            (4, 0, 'M319'),
+            (5, 0, 'M319'),
+            (6, 0, 'M319'),
+            (7, 0, 'M319'),
+            (8, 0, 'M319'),
+        ]
+        self._assert_has_errors(
+            code, checks.no_assert_equal_true_false, expected_errors=errors
+        )
         code = """
                   self.assertEqual(context_is_admin, stuff)
                   self.assertNotEqual(context_is_admin, stuff)
@@ -88,18 +99,23 @@ class BaseLoggingCheckTest(base.BaseTest):
                   self.assertFalse(None is test)
                   self.assertFalse(my_variable is False)
                """
-        errors = [(1, 0, 'M320'), (2, 0, 'M320'), (3, 0, 'M320'),
-                  (4, 0, 'M320')]
-        self._assert_has_errors(code, checks.no_assert_true_false_is_not,
-                                expected_errors=errors)
+        errors = [
+            (1, 0, 'M320'),
+            (2, 0, 'M320'),
+            (3, 0, 'M320'),
+            (4, 0, 'M320'),
+        ]
+        self._assert_has_errors(
+            code, checks.no_assert_true_false_is_not, expected_errors=errors
+        )
 
 
 class TestLoggingWithWarn(BaseLoggingCheckTest):
-
     def test_using_deprecated_warn(self):
         data = self.code_ex.assert_not_using_deprecated_warn
         code = self.code_ex.shared_imports + data['code']
         errors = data['expected_errors']
 
-        self._assert_has_errors(code, checks.CheckForLoggingIssues,
-                                expected_errors=errors)
+        self._assert_has_errors(
+            code, checks.CheckForLoggingIssues, expected_errors=errors
+        )

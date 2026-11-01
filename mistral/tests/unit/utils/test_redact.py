@@ -37,8 +37,14 @@ class RedactSensitiveTest(base.BaseTest):
 
     def test_masks_auth_headers_in_list(self):
         publishers = [
-            {'type': 'webhook', 'url': 'http://x',
-             'headers': {'X-Auth-Token': 'abc', 'Accept': 'application/json'}},
+            {
+                'type': 'webhook',
+                'url': 'http://x',
+                'headers': {
+                    'X-Auth-Token': 'abc',
+                    'Accept': 'application/json',
+                },
+            },
         ]
 
         out = redact.redact_sensitive(publishers)

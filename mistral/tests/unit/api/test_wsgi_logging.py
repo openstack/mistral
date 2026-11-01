@@ -29,8 +29,9 @@ class WsgiLoggingSetupTest(base.BaseTest):
     @mock.patch.object(app, 'setup_app')
     @mock.patch.object(app.logging, 'setup')
     @mock.patch.object(app.m_config, 'parse_args')
-    def test_init_wsgi_sets_up_logging(self, parse_args_mock, log_setup_mock,
-                                       setup_app_mock):
+    def test_init_wsgi_sets_up_logging(
+        self, parse_args_mock, log_setup_mock, setup_app_mock
+    ):
         app.init_wsgi()
 
         log_setup_mock.assert_called_once_with(mock.ANY, 'Mistral')

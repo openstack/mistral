@@ -32,14 +32,11 @@ class TestHTTPProxyToWSGIMiddleware(base.APITest):
 
     def setUp(self):
         # Make sure the HTTPProxyToWSGI options are registered
-        cfg.CONF.register_opts(http_proxy_to_wsgi.OPTS,
-                               'oslo_middleware')
+        cfg.CONF.register_opts(http_proxy_to_wsgi.OPTS, 'oslo_middleware')
 
         # Enable proxy headers parsing in HTTPProxyToWSGI middleware.
         self.override_config(
-            "enable_proxy_headers_parsing",
-            True,
-            group='oslo_middleware'
+            "enable_proxy_headers_parsing", True, group='oslo_middleware'
         )
 
         # Create the application.

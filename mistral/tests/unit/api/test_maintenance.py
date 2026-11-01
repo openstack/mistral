@@ -64,9 +64,7 @@ class TestMaintenanceController(base.APITest):
     def test_put_status_non_admin_forbidden(self, mock_change):
         # The default request context is a non-admin user.
         resp = self.app.put_json(
-            '/maintenance',
-            {'status': 'PAUSED'},
-            expect_errors=True
+            '/maintenance', {'status': 'PAUSED'}, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)

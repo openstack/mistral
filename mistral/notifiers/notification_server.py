@@ -26,7 +26,6 @@ LOG = logging.getLogger(__name__)
 
 
 class NotificationServer(service_base.MistralService):
-
     def __init__(self, notifier, setup_profiler=True):
         super(NotificationServer, self).__init__(setup_profiler)
 
@@ -72,20 +71,13 @@ class NotificationServer(service_base.MistralService):
             event,
             timestamp,
             data,
-            utils.cut(redact.redact_sensitive(publishers))
+            utils.cut(redact.redact_sensitive(publishers)),
         )
 
-        self.notifier.notify(
-            ex_id,
-            data,
-            event,
-            timestamp,
-            publishers
-        )
+        self.notifier.notify(ex_id, data, event, timestamp, publishers)
 
 
 def get_oslo_service(setup_profiler=True):
     return NotificationServer(
-        notif.DefaultNotifier(),
-        setup_profiler=setup_profiler
+        notif.DefaultNotifier(), setup_profiler=setup_profiler
     )

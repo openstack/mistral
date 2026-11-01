@@ -32,9 +32,9 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'task_executions_v2',
-        sa.Column('has_next_tasks', sa.Boolean(), nullable=True)
+        sa.Column('has_next_tasks', sa.Boolean(), nullable=True),
     )
     op.add_column(
         'task_executions_v2',
-        sa.Column('error_handled', sa.Boolean(), nullable=True)
+        sa.Column('error_handled', sa.Boolean(), nullable=True),
     )

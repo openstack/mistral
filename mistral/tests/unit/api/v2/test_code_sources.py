@@ -25,13 +25,18 @@ NAMESPACE = "NS"
 
 
 class TestCodeSourcesController(base.APITest):
-    def _create_code_source(self, module_name, file_content,
-                            namespace=NAMESPACE, expect_errors=False):
+    def _create_code_source(
+        self,
+        module_name,
+        file_content,
+        namespace=NAMESPACE,
+        expect_errors=False,
+    ):
         return self.app.post(
             '/v2/code_sources?name=%s&namespace=%s' % (module_name, namespace),
             file_content,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=expect_errors
+            expect_errors=expect_errors,
         )
 
     def _delete_code_source(self, id, namespace=NAMESPACE):
@@ -68,10 +73,10 @@ class TestCodeSourcesController(base.APITest):
         self._create_code_source(mod_name, FILE_CONTENT)
 
         resp = self.app.put(
-            '/v2/code_sources?identifier=%s&namespace=%s' %
-            (mod_name, NAMESPACE),
+            '/v2/code_sources?identifier=%s&namespace=%s'
+            % (mod_name, NAMESPACE),
             UPDATED_FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -109,8 +114,7 @@ class TestCodeSourcesController(base.APITest):
         self._create_code_source(mod_name, FILE_CONTENT)
 
         resp = self._create_code_source(
-            mod_name,
-            FILE_CONTENT, expect_errors=True
+            mod_name, FILE_CONTENT, expect_errors=True
         )
 
         self.assertEqual(409, resp.status_int)
@@ -139,10 +143,9 @@ class TestCodeSourcesController(base.APITest):
     def test_get_with_non_column_field(self):
         mod_name = MODULE_NAME % 'getfields'
 
-        code_src_id = self._create_code_source(
-            mod_name,
-            FILE_CONTENT
-        ).json['id']
+        code_src_id = self._create_code_source(mod_name, FILE_CONTENT).json[
+            'id'
+        ]
 
         resp = self.app.get(
             '/v2/code_sources/%s?fields=actions,content' % code_src_id
@@ -161,8 +164,7 @@ class TestCodeSourcesController(base.APITest):
         self._create_code_source(mod2_name, FILE_CONTENT)
 
         resp = self.app.get(
-            '/v2/code_sources',
-            params='namespace=%s' % NAMESPACE
+            '/v2/code_sources', params='namespace=%s' % NAMESPACE
         )
 
         resp_json = resp.json

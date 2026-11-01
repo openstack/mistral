@@ -64,24 +64,18 @@ class ActionHeartbeatSenderBaseTest(base.EngineTestCase):
             t_execs = wf_ex.task_executions
 
             t_ex = self._assert_single_item(
-                t_execs,
-                name='task1',
-                state=states.SUCCESS
+                t_execs, name='task1', state=states.SUCCESS
             )
 
             a_execs = db_api.get_action_executions(task_execution_id=t_ex.id)
 
             self._assert_single_item(
-                a_execs,
-                name='std.sleep',
-                state=states.SUCCESS
+                a_execs, name='std.sleep', state=states.SUCCESS
             )
 
     # Disable the ability to send action heartbeats.
     @mock.patch.object(
-        rpc_clients.EngineClient,
-        'process_action_heartbeats',
-        mock.MagicMock()
+        rpc_clients.EngineClient, 'process_action_heartbeats', mock.MagicMock()
     )
     def _do_long_action_failure_test_with_disabled_sender(self):
         wf_text = """---
@@ -105,17 +99,13 @@ class ActionHeartbeatSenderBaseTest(base.EngineTestCase):
             t_execs = wf_ex.task_executions
 
             t_ex = self._assert_single_item(
-                t_execs,
-                name='task1',
-                state=states.ERROR
+                t_execs, name='task1', state=states.ERROR
             )
 
             a_execs = db_api.get_action_executions(task_execution_id=t_ex.id)
 
             self._assert_single_item(
-                a_execs,
-                name='std.sleep',
-                state=states.ERROR
+                a_execs, name='std.sleep', state=states.ERROR
             )
 
 
@@ -135,8 +125,7 @@ class ActionHeartbeatSenderLocalExecutorTest(ActionHeartbeatSenderBaseTest):
 class ActionHeartbeatSenderRemoteExecutorTest(ActionHeartbeatSenderBaseTest):
     def get_configuration(self):
         super(
-            ActionHeartbeatSenderRemoteExecutorTest,
-            self
+            ActionHeartbeatSenderRemoteExecutorTest, self
         ).get_configuration()
 
         self.override_config('type', 'remote', 'executor')

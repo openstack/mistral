@@ -43,9 +43,11 @@ my_wf:
 
 
 class ProcessCronTriggerTest(base.EngineTestCase):
-    @mock.patch.object(security,
-                       'create_trust',
-                       type('trust', (object,), {'id': 'my_trust_id'}))
+    @mock.patch.object(
+        security,
+        'create_trust',
+        type('trust', (object,), {'id': 'my_trust_id'}),
+    )
     @mock.patch('mistral.rpc.clients.get_engine_client')
     def test_start_workflow(self, get_engine_client_mock):
         self.override_config('auth_enable', True, group='pecan')
@@ -60,7 +62,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             '* * * * * */1',
             None,
             None,
-            None
+            None,
         )
 
         self.assertEqual('my_trust_id', t.trust_id)
@@ -80,21 +82,17 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         # Check actual parameters of the call.
         self.assertEqual(
-            ('my_wf', '', None, {}),
-            start_wf_mock.mock_calls[0][1]
+            ('my_wf', '', None, {}), start_wf_mock.mock_calls[0][1]
         )
-        self.assertIn(
-            t.id,
-            start_wf_mock.mock_calls[0][2]['description']
-        )
+        self.assertIn(t.id, start_wf_mock.mock_calls[0][2]['description'])
         self.assertEqual(
             {'type': 'cron_trigger', 'id': t.id},
-            start_wf_mock.mock_calls[0][2]['triggered_by']
+            start_wf_mock.mock_calls[0][2]['triggered_by'],
         )
 
         self._await(
             lambda: triggers.get_next_cron_triggers(),
-            fail_message="No triggers were found"
+            fail_message="No triggers were found",
         )
 
         next_triggers = triggers.get_next_cron_triggers()
@@ -106,8 +104,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         # Checking the workflow was executed, by
         # verifying that the next execution time changed.
         self.assertNotEqual(
-            next_execution_time_before,
-            next_execution_time_after
+            next_execution_time_before, next_execution_time_after
         )
 
     @mock.patch('mistral.rpc.clients.get_engine_client')
@@ -124,7 +121,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             '* * * * * */1',
             None,
             None,
-            None
+            None,
         )
 
         db_api.update_cron_trigger(
@@ -132,9 +129,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             {
                 'workflow_params': {
                     'env': {'k': 'v'},
-                    'task_execution_id': 'foreign-task-id'
+                    'task_execution_id': 'foreign-task-id',
                 }
-            }
+            },
         )
 
         periodic.process_cron_triggers_v2(None, None)
@@ -161,7 +158,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             '* * * * * */1',
             None,
             None,
-            None
+            None,
         )
 
         next_triggers = triggers.get_next_cron_triggers()
@@ -175,7 +172,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         periodic.process_cron_triggers_v2(None, None)
         self._await(
             lambda: triggers.get_next_cron_triggers(),
-            fail_message="No triggers were found"
+            fail_message="No triggers were found",
         )
 
         next_triggers = triggers.get_next_cron_triggers()
@@ -185,19 +182,16 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_trigger = next_triggers[0]
         next_execution_time_after = next_trigger.next_execution_time
 
-        self.assertGreater(
-            next_execution_time_after,
-            ts_before
-        )
+        self.assertGreater(next_execution_time_after, ts_before)
 
         self.assertNotEqual(
-            next_execution_time_before,
-            next_execution_time_after
+            next_execution_time_before, next_execution_time_after
         )
 
     @mock.patch('mistral.services.triggers.validate_cron_trigger_input')
-    def test_create_cron_trigger_with_pattern_and_first_time(self,
-                                                             validate_mock):
+    def test_create_cron_trigger_with_pattern_and_first_time(
+        self, validate_mock
+    ):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
 
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
@@ -219,10 +213,10 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             '*/1 * * * *',
             first_time,
             None,
-            None
+            None,
         )
 
-        interval = (cron_trigger.next_execution_time - first_time)
+        interval = cron_trigger.next_execution_time - first_time
 
         self.assertLessEqual(interval.total_seconds(), 3.0)
 
@@ -232,15 +226,14 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         auth_ctx.set_ctx(self.ctx)
 
         next_time = triggers.get_next_execution_time(
-            cron_trigger.pattern,
-            cron_trigger.next_execution_time
+            cron_trigger.pattern, cron_trigger.next_execution_time
         )
 
         cron_trigger_db = db_api.get_cron_trigger(trigger_name)
 
         self.assertIsNotNone(cron_trigger_db)
 
-        interval = (cron_trigger_db.next_execution_time - next_time)
+        interval = cron_trigger_db.next_execution_time - next_time
 
         self.assertLessEqual(interval.total_seconds(), 3.0)
 
@@ -254,7 +247,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             triggers.validate_cron_trigger_input,
             None,
             first_time,
-            None
+            None,
         )
 
     @mock.patch.object(security, 'delete_trust')
@@ -271,7 +264,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             '* * * * * */1',
             None,
             1,
-            None
+            None,
         )
 
         periodic.process_cron_triggers_v2(None, None)
@@ -289,7 +282,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
             self.assertEqual(
                 {'type': 'cron_trigger', 'id': t.id},
-                wf_ex.runtime_context['triggered_by']
+                wf_ex.runtime_context['triggered_by'],
             )
             self.assertNotIn('triggered_by', wf_ex.params)
 
@@ -341,7 +334,7 @@ class TriggeredByTrustCleanupTest(base.EngineTestCase):
             '0 0 1 1 *',
             None,
             None,
-            None
+            None,
         )
 
         self._run(triggered_by={'type': 'cron_trigger', 'id': t.id})

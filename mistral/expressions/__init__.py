@@ -27,8 +27,7 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 _mgr = extension.ExtensionManager(
-    namespace='mistral.expression.evaluators',
-    invoke_on_load=False
+    namespace='mistral.expression.evaluators', invoke_on_load=False
 )
 
 _evaluators = []
@@ -59,13 +58,15 @@ def validate(expression):
             if not _is_language_allowed(name):
                 raise exc.ExpressionGrammarException(
                     "The '%s' expression language is disabled by the "
-                    "operator." % name)
+                    "operator." % name
+                )
 
             if expression_found:
                 raise exc.ExpressionGrammarException(
                     "The line already contains an expression of type '%s'. "
                     "Mixing expression types in a single line is not allowed."
-                    % expression_found)
+                    % expression_found
+                )
 
             try:
                 evaluator.validate(expression)
@@ -79,12 +80,12 @@ def evaluate(expression, context):
     for name, evaluator in _evaluators:
         # Check if the passed value is expression so we don't need to do this
         # every time on a caller side.
-        if (isinstance(expression, str) and
-                evaluator.is_expression(expression)):
+        if isinstance(expression, str) and evaluator.is_expression(expression):
             if not _is_language_allowed(name):
                 raise exc.EvaluationException(
                     "The '%s' expression language is disabled by the "
-                    "operator." % name)
+                    "operator." % name
+                )
 
             return evaluator.evaluate(expression, context)
 
@@ -98,11 +99,7 @@ def _evaluate_item(item, context):
         except AttributeError as e:
             # NOTE: never log the context, it may contain sensitive data
             # such as the auth token.
-            LOG.debug(
-                "Expression %s is not evaluated: %s",
-                item,
-                e
-            )
+            LOG.debug("Expression %s is not evaluated: %s", item, e)
             return item
     else:
         return evaluate_recursively(item, context)

@@ -22,72 +22,41 @@ rules = [
         name=ACTIONS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create a new action.',
-        operations=[
-            {
-                'path': '/v2/actions',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/actions', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete the named action.',
-        operations=[
-            {
-                'path': '/v2/actions',
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': '/v2/actions', 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return the named action.',
-        operations=[
-            {
-                'path': '/v2/actions/{action_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/actions/{action_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all actions.',
-        operations=[
-            {
-                'path': '/v2/actions',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/actions', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make an action publicly available',
         operations=[
-            {
-                'path': '/v2/actions',
-                'method': 'POST'
-            },
-            {
-                'path': '/v2/actions',
-                'method': 'PUT'
-            }
-        ]
+            {'path': '/v2/actions', 'method': 'POST'},
+            {'path': '/v2/actions', 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ACTIONS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update one or more actions.',
-        operations=[
-            {
-                'path': '/v2/actions',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/actions', 'method': 'PUT'}],
+    ),
 ]
 
 

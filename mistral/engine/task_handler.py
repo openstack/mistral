@@ -42,9 +42,7 @@ from mistral_lib import exceptions as mistral_lib_exc
 
 LOG = logging.getLogger(__name__)
 
-_REFRESH_TASK_STATE_PATH = (
-    'mistral.engine.task_handler._refresh_task_state'
-)
+_REFRESH_TASK_STATE_PATH = 'mistral.engine.task_handler._refresh_task_state'
 
 _SCHEDULED_ON_ACTION_COMPLETE_PATH = (
     'mistral.engine.task_handler._scheduled_on_action_complete'
@@ -71,8 +69,9 @@ def run_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run=False):
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
         task_ex.workflow_execution_id
     )
-    task = _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by,
-                                 rerun, reset)
+    task = _build_task_after_rpc(
+        wf_spec, task_ex, waiting, triggered_by, rerun, reset
+    )
 
     try:
         if task.waiting and task.rerun:
@@ -84,9 +83,11 @@ def run_task(task_ex_id, waiting, triggered_by, rerun, reset, first_run=False):
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = (
-            "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex.name, task_ex.name, tb.format_exc())
+        msg = "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" % (
+            e,
+            wf_ex.name,
+            task_ex.name,
+            tb.format_exc(),
         )
 
         force_fail_task(task_ex, msg, task=task)
@@ -120,8 +121,11 @@ def create_task(wf_cmd, first_run):
         task.set_state(states.WAITING, 'Task is waiting.')
 
         _schedule_refresh_task_state(task.task_ex.id)
-    elif (task.rerun and wf_cmd.triggered_by and
-            states.is_completed(task.task_ex.state)):
+    elif (
+        task.rerun
+        and wf_cmd.triggered_by
+        and states.is_completed(task.task_ex.state)
+    ):
         # Leave ERROR now so a parallel branch can't fail the workflow
         # before the task is started.
         task.set_state(states.RUNNING, None, processed=False)
@@ -161,7 +165,7 @@ def _on_action_complete(action_ex):
         spec_parser.get_workflow_spec_by_execution_id(wf_ex.id),
         task_spec,
         task_ex.in_context,
-        task_ex
+        task_ex,
     )
 
     try:
@@ -169,9 +173,11 @@ def _on_action_complete(action_ex):
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = ("Failed to handle action completion [error=%s, wf=%s, task=%s,"
-               " action=%s]:\n%s" %
-               (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
+        msg = (
+            "Failed to handle action completion [error=%s, wf=%s, task=%s,"
+            " action=%s]:\n%s"
+            % (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc())
+        )
 
         force_fail_task(task_ex, msg, task=task)
 
@@ -201,7 +207,7 @@ def _on_action_update(action_ex):
         spec_parser.get_workflow_spec_by_execution_id(wf_ex.id),
         task_spec,
         task_ex.in_context,
-        task_ex
+        task_ex,
     )
 
     try:
@@ -224,9 +230,11 @@ def _on_action_update(action_ex):
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = ("Failed to handle action update [error=%s, wf=%s, task=%s,"
-               " action=%s]:\n%s" %
-               (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
+        msg = (
+            "Failed to handle action update [error=%s, wf=%s, task=%s,"
+            " action=%s]:\n%s"
+            % (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc())
+        )
 
         force_fail_task(task_ex, msg, task=task)
 
@@ -285,9 +293,11 @@ def continue_task(task_ex):
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = (
-            "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex.name, task_ex.name, tb.format_exc())
+        msg = "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" % (
+            e,
+            wf_ex.name,
+            task_ex.name,
+            tb.format_exc(),
         )
 
         force_fail_task(task_ex, msg, task=task)
@@ -312,9 +322,11 @@ def complete_task(task_ex, state, state_info):
     except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = (
-            "Failed to complete task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex.name, task_ex.name, tb.format_exc())
+        msg = "Failed to complete task [error=%s, wf=%s, task=%s]:\n%s" % (
+            e,
+            wf_ex.name,
+            task_ex.name,
+            tb.format_exc(),
         )
 
         force_fail_task(task_ex, msg, task=task)
@@ -351,9 +363,7 @@ def check_affected_tasks(task_ex):
 
     for t_ex in affected_task_execs:
         post_tx_queue.register_operation(
-            _schedule_refresh_task_state_if_needed,
-            args=[t_ex.id],
-            in_tx=True
+            _schedule_refresh_task_state_if_needed, args=[t_ex.id], in_tx=True
         )
 
 
@@ -368,8 +378,7 @@ def _schedule_refresh_task_state_if_needed(t_ex_id):
     sched = sched_base.get_system_scheduler()
 
     jobs_exist = sched.has_scheduled_jobs(
-        key=_get_refresh_state_job_key(t_ex_id),
-        processing=False
+        key=_get_refresh_state_job_key(t_ex_id), processing=False
     )
 
     if not jobs_exist:
@@ -382,12 +391,13 @@ def build_task_from_execution(wf_spec, task_ex):
         wf_spec,
         wf_spec.get_task(task_ex.name),
         task_ex.in_context,
-        task_ex
+        task_ex,
     )
 
 
-def _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by, rerun,
-                          reset):
+def _build_task_after_rpc(
+    wf_spec, task_ex, waiting, triggered_by, rerun, reset
+):
     task = _create_task(
         task_ex.workflow_execution,
         wf_spec,
@@ -396,7 +406,7 @@ def _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by, rerun,
         task_ex,
         waiting=waiting,
         triggered_by=triggered_by,
-        rerun=rerun
+        rerun=rerun,
     )
 
     if reset:
@@ -417,7 +427,7 @@ def _build_task_from_command(cmd):
             unique_key=cmd.task_ex.unique_key,
             waiting=cmd.task_ex.state == states.WAITING,
             triggered_by=cmd.triggered_by,
-            rerun=cmd.rerun
+            rerun=cmd.rerun,
         )
 
         if cmd.reset:
@@ -433,7 +443,7 @@ def _build_task_from_command(cmd):
             cmd.ctx,
             unique_key=cmd.unique_key,
             waiting=cmd.is_waiting(),
-            triggered_by=cmd.triggered_by
+            triggered_by=cmd.triggered_by,
         )
 
         return task
@@ -454,9 +464,17 @@ def _build_task_from_command(cmd):
     raise exc.MistralError('Unsupported workflow command: %s' % cmd)
 
 
-def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False, triggered_by=None,
-                 rerun=False):
+def _create_task(
+    wf_ex,
+    wf_spec,
+    task_spec,
+    ctx,
+    task_ex=None,
+    unique_key=None,
+    waiting=False,
+    triggered_by=None,
+    rerun=False,
+):
     if task_spec.get_with_items():
         cls = tasks.WithItemsTask
     else:
@@ -471,7 +489,7 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
         unique_key=unique_key,
         waiting=waiting,
         triggered_by=triggered_by,
-        rerun=rerun
+        rerun=rerun,
     )
 
 
@@ -527,28 +545,25 @@ def _refresh_task_state(task_ex_id):
                     "Task execution is still in WAITING state"
                     " [task_ex_id=%s, task_name=%s]",
                     task_ex_id,
-                    task_ex.name
+                    task_ex.name,
                 )
             else:
                 # Must never get here.
                 raise RuntimeError(
                     'Unexpected logical task state [task_ex_id=%s, '
-                    'task_name=%s, state=%s]' %
-                    (task_ex_id, task_ex.name, state)
+                    'task_name=%s, state=%s]'
+                    % (task_ex_id, task_ex.name, state)
                 )
 
 
 def schedule_refresh_waiting_tasks(wf_ex):
     waiting_task_execs = db_api.get_task_executions(
-        workflow_execution_id=wf_ex.id,
-        state=states.WAITING
+        workflow_execution_id=wf_ex.id, state=states.WAITING
     )
 
     for t_ex in waiting_task_execs:
         post_tx_queue.register_operation(
-            _schedule_refresh_task_state_if_needed,
-            args=[t_ex.id],
-            in_tx=True
+            _schedule_refresh_task_state_if_needed, args=[t_ex.id], in_tx=True
         )
 
 
@@ -575,7 +590,7 @@ def _schedule_refresh_task_state(task_ex_id, delay=0):
         run_after=delay,
         func_name=_REFRESH_TASK_STATE_PATH,
         func_args={'task_ex_id': task_ex_id},
-        key=_get_refresh_state_job_key(task_ex_id)
+        key=_get_refresh_state_job_key(task_ex_id),
     )
 
     sched.schedule(job)
@@ -627,9 +642,9 @@ def schedule_on_action_complete(action_ex, delay=0):
         func_name=_SCHEDULED_ON_ACTION_COMPLETE_PATH,
         func_args={
             'action_ex_id': action_ex.id,
-            'wf_action': isinstance(action_ex, models.WorkflowExecution)
+            'wf_action': isinstance(action_ex, models.WorkflowExecution),
         },
-        key='th_on_a_c-%s' % action_ex.task_execution_id
+        key='th_on_a_c-%s' % action_ex.task_execution_id,
     )
 
     sched.schedule(job)
@@ -677,9 +692,9 @@ def schedule_on_action_update(action_ex, delay=0):
         func_name=_SCHEDULED_ON_ACTION_UPDATE_PATH,
         func_args={
             'action_ex_id': action_ex.id,
-            'wf_action': isinstance(action_ex, models.WorkflowExecution)
+            'wf_action': isinstance(action_ex, models.WorkflowExecution),
         },
-        key='th_on_a_u-%s' % action_ex.task_execution_id
+        key='th_on_a_u-%s' % action_ex.task_execution_id,
     )
 
     sched.schedule(job)

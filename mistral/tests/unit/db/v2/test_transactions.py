@@ -31,7 +31,7 @@ WF_EXECS = [
         'updated_at': None,
         'context': None,
         'task_id': None,
-        'trust_id': None
+        'trust_id': None,
     },
     {
         'name': '1',
@@ -43,23 +43,19 @@ WF_EXECS = [
         'updated_at': None,
         'context': None,
         'task_id': None,
-        'trust_id': None
-    }
+        'trust_id': None,
+    },
 ]
 
 
 class TransactionsTest(test_base.DbTestCase):
-
     def setUp(self):
         super(TransactionsTest, self).setUp()
 
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 
         self.addCleanup(
-            cfg.CONF.set_default,
-            'auth_enable',
-            False,
-            group='pecan'
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
         )
 
     def test_read_only_transactions(self):

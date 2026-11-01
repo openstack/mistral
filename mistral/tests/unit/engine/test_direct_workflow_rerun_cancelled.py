@@ -29,16 +29,15 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
-
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 2',               # Mock task2 success.
-                'Task 3'                # Mock task3 success.
+                'Task 2',  # Mock task2 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun_cancelled_task(self):
         wb_def = """
@@ -73,8 +72,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         self.await_task_running(wf1_t1_ex.id)
         with db_api.transaction():
@@ -82,8 +80,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         wf1_t1_action_exs = db_api.get_action_executions(
@@ -95,8 +92,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Cancel action execution for task.
         self.engine.on_action_complete(
-            wf1_t1_action_exs[0].id,
-            ml_actions.Result(cancel=True)
+            wf1_t1_action_exs[0].id, ml_actions.Result(cancel=True)
         )
 
         self.await_task_cancelled(wf1_t1_ex.id)
@@ -146,14 +142,12 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Check there is exactly 1 action in Running and 1 in Cancelled state.
         # Order doesn't matter.
         wf1_t1_aex_running = self._assert_single_item(
-            wf1_t1_action_exs,
-            state=states.RUNNING
+            wf1_t1_action_exs, state=states.RUNNING
         )
         self._assert_single_item(wf1_t1_action_exs, state=states.CANCELLED)
 
         self.engine.on_action_complete(
-            wf1_t1_aex_running.id,
-            ml_actions.Result(data={'foo': 'bar'})
+            wf1_t1_aex_running.id, ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflow to succeed.
@@ -211,10 +205,10 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success.
-                'Task 3'                # Mock task3 success.
+                'Task 1',  # Mock task1 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun_cancelled_subflow(self):
         wb_def = """
@@ -261,8 +255,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         self.await_task_success(wf1_t1_ex.id)
@@ -273,8 +266,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t2_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t2'
+                wf1_ex.task_executions, name='t2'
             )
 
         self.await_task_state(wf1_t2_ex.id, states.RUNNING)
@@ -286,13 +278,11 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             self.assertEqual(1, len(sub_wf_exs))
             wf2_ex_running = self._assert_single_item(
-                sub_wf_exs,
-                state=states.RUNNING
+                sub_wf_exs, state=states.RUNNING
             )
 
             wf2_t1_ex = self._assert_single_item(
-                wf2_ex_running.task_executions,
-                name='wf2_t1'
+                wf2_ex_running.task_executions, name='wf2_t1'
             )
 
         self.await_task_state(wf2_t1_ex.id, states.RUNNING)
@@ -318,8 +308,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t2_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t2'
+                wf1_ex.task_executions, name='t2'
             )
 
         self.await_task_state(wf1_t2_ex.id, states.RUNNING)
@@ -334,8 +323,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             # state. Order doesn't matter.
             self._assert_single_item(sub_wf_exs, state=states.CANCELLED)
             wf2_ex_running = self._assert_single_item(
-                sub_wf_exs,
-                state=states.RUNNING
+                sub_wf_exs, state=states.RUNNING
             )
 
             wf2_t1_ex = self._assert_single_item(
@@ -353,8 +341,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Mark async action execution complete.
         self.engine.on_action_complete(
-            wf2_t1_action_exs[0].id,
-            ml_actions.Result(data={'foo': 'bar'})
+            wf2_t1_action_exs[0].id, ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflows to succeed.
@@ -383,10 +370,10 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 1',               # Mock task1 success.
-                'Task 3'                # Mock task3 success.
+                'Task 1',  # Mock task1 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun_cancelled_subflow_task(self):
         wb_def = """
@@ -433,8 +420,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         self.await_task_success(wf1_t1_ex.id)
@@ -445,8 +431,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t2_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t2'
+                wf1_ex.task_executions, name='t2'
             )
 
         self.await_task_state(wf1_t2_ex.id, states.RUNNING)
@@ -462,8 +447,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             wf2_ex = sub_wf_exs[0]
 
             wf2_t1_ex = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='wf2_t1'
+                wf2_ex.task_executions, name='wf2_t1'
             )
 
         self.await_task_state(wf2_t1_ex.id, states.RUNNING)
@@ -477,8 +461,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Cancel action execution for task.
         self.engine.on_action_complete(
-            wf2_t1_action_exs[0].id,
-            ml_actions.Result(cancel=True)
+            wf2_t1_action_exs[0].id, ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(wf2_ex.id)
@@ -492,8 +475,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t2_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t2'
+                wf1_ex.task_executions, name='t2'
             )
 
         self.await_task_state(wf1_t2_ex.id, states.RUNNING)
@@ -509,8 +491,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             wf2_ex = sub_wf_exs[0]
 
             wf2_t1_ex = self._assert_single_item(
-                wf2_ex.task_executions,
-                name='wf2_t1'
+                wf2_ex.task_executions, name='wf2_t1'
             )
 
         self.await_task_state(wf2_t1_ex.id, states.RUNNING)
@@ -524,14 +505,12 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Order doesn't matter.
         self._assert_single_item(wf2_t1_action_exs, state=states.CANCELLED)
         wf2_t1_aex_running = self._assert_single_item(
-            wf2_t1_action_exs,
-            state=states.RUNNING
+            wf2_t1_action_exs, state=states.RUNNING
         )
 
         # Mark async action execution complete.
         self.engine.on_action_complete(
-            wf2_t1_aex_running.id,
-            ml_actions.Result(data={'foo': 'bar'})
+            wf2_t1_aex_running.id, ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflows to succeed.
@@ -560,9 +539,9 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 2'                # Mock task2 success.
+                'Task 2'  # Mock task2 success.
             ]
-        )
+        ),
     )
     def test_rerun_cancelled_with_items(self):
         wb_def = """
@@ -594,8 +573,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         self.await_task_running(wf1_t1_ex.id)
 
@@ -604,8 +582,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         wf1_t1_action_exs = db_api.get_action_executions(
@@ -618,8 +595,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Cancel action execution for tasks.
         for wf1_t1_action_ex in wf1_t1_action_exs:
             self.engine.on_action_complete(
-                wf1_t1_action_ex.id,
-                ml_actions.Result(cancel=True)
+                wf1_t1_action_ex.id, ml_actions.Result(cancel=True)
             )
 
         self.await_workflow_cancelled(wf1_ex.id)
@@ -630,9 +606,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         self.assertEqual(3, len(wf1_t1_action_exs))
         self._assert_multiple_items(
-            wf1_t1_action_exs,
-            3,
-            state=states.CANCELLED
+            wf1_t1_action_exs, 3, state=states.CANCELLED
         )
 
         # Resume workflow and re-run failed with items task.
@@ -643,8 +617,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         self.await_task_running(wf1_t1_ex.id)
         with db_api.transaction():
@@ -652,8 +625,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         self.await_workflow_state(wf1_ex.id, states.RUNNING)
 
@@ -665,21 +637,16 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Check there is exactly 3 action in Running and 3 in Cancelled state.
         # Order doesn't matter.
         self._assert_multiple_items(
-            wf1_t1_action_exs,
-            3,
-            state=states.CANCELLED
+            wf1_t1_action_exs, 3, state=states.CANCELLED
         )
         wf1_t1_aexs_running = self._assert_multiple_items(
-            wf1_t1_action_exs,
-            3,
-            state=states.RUNNING
+            wf1_t1_action_exs, 3, state=states.RUNNING
         )
 
         # Mark async action execution complete.
         for action_ex in wf1_t1_aexs_running:
             self.engine.on_action_complete(
-                action_ex.id,
-                ml_actions.Result(data={'foo': 'bar'})
+                action_ex.id, ml_actions.Result(data={'foo': 'bar'})
             )
 
         # Wait for the workflows to succeed.
@@ -689,8 +656,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         wf1_t1_action_exs = db_api.get_action_executions(
@@ -702,7 +668,5 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Order doesn't matter.
         self._assert_multiple_items(wf1_t1_action_exs, 3, state=states.SUCCESS)
         self._assert_multiple_items(
-            wf1_t1_action_exs,
-            3,
-            state=states.CANCELLED
+            wf1_t1_action_exs, 3, state=states.CANCELLED
         )

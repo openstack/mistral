@@ -42,13 +42,7 @@ wf:
 
 
 def _find_task(task_name, tasks):
-    return next(
-        (
-            task
-            for task in tasks
-            if task['name'] == task_name
-        ), None
-    )
+    return next((task for task in tasks if task['name'] == task_name), None)
 
 
 class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
@@ -83,6 +77,5 @@ class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
     def assert_for_published_global(self, resp):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(
-            resp.json['published_global'],
-            '{"my_var": "Global value"}'
+            resp.json['published_global'], '{"my_var": "Global value"}'
         )

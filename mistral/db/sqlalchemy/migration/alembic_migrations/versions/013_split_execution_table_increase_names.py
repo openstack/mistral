@@ -54,25 +54,11 @@ def upgrade():
         sa.Column('input', st.JsonLongDictType(), nullable=True),
         sa.Column('output', st.JsonLongDictType(), nullable=True),
         sa.Column('task_execution_id', sa.String(length=36), nullable=True),
-
         sa.PrimaryKeyConstraint('id'),
-
-        sa.Index(
-            'action_executions_v2_project_id',
-            'project_id'
-        ),
-        sa.Index(
-            'action_executions_v2_scope',
-            'scope'
-        ),
-        sa.Index(
-            'action_executions_v2_state',
-            'state'
-        ),
-        sa.Index(
-            'action_executions_v2_updated_at',
-            'updated_at'
-        ),
+        sa.Index('action_executions_v2_project_id', 'project_id'),
+        sa.Index('action_executions_v2_scope', 'scope'),
+        sa.Index('action_executions_v2_state', 'state'),
+        sa.Index('action_executions_v2_updated_at', 'updated_at'),
     )
 
     op.create_table(
@@ -97,25 +83,11 @@ def upgrade():
         sa.Column('params', st.JsonLongDictType(), nullable=True),
         sa.Column('context', st.JsonLongDictType(), nullable=True),
         sa.Column('task_execution_id', sa.String(length=36), nullable=True),
-
         sa.PrimaryKeyConstraint('id'),
-
-        sa.Index(
-            'workflow_executions_v2_project_id',
-            'project_id'
-        ),
-        sa.Index(
-            'workflow_executions_v2_scope',
-            'scope'
-        ),
-        sa.Index(
-            'workflow_executions_v2_state',
-            'state'
-        ),
-        sa.Index(
-            'workflow_executions_v2_updated_at',
-            'updated_at'
-        ),
+        sa.Index('workflow_executions_v2_project_id', 'project_id'),
+        sa.Index('workflow_executions_v2_scope', 'scope'),
+        sa.Index('workflow_executions_v2_state', 'state'),
+        sa.Index('workflow_executions_v2_updated_at', 'updated_at'),
     )
 
     op.create_table(
@@ -139,37 +111,20 @@ def upgrade():
         sa.Column('in_context', st.JsonLongDictType(), nullable=True),
         sa.Column('published', st.JsonLongDictType(), nullable=True),
         sa.Column(
-            'workflow_execution_id',
-            sa.String(length=36),
-            nullable=True
+            'workflow_execution_id', sa.String(length=36), nullable=True
         ),
-
         sa.PrimaryKeyConstraint('id'),
-
+        sa.Index('task_executions_v2_project_id', 'project_id'),
+        sa.Index('task_executions_v2_scope', 'scope'),
+        sa.Index('task_executions_v2_state', 'state'),
+        sa.Index('task_executions_v2_updated_at', 'updated_at'),
         sa.Index(
-            'task_executions_v2_project_id',
-            'project_id'
-        ),
-        sa.Index(
-            'task_executions_v2_scope',
-            'scope'
-        ),
-        sa.Index(
-            'task_executions_v2_state',
-            'state'
-        ),
-        sa.Index(
-            'task_executions_v2_updated_at',
-            'updated_at'
-        ),
-        sa.Index(
-            'task_executions_v2_workflow_execution_id',
-            'workflow_execution_id'
+            'task_executions_v2_workflow_execution_id', 'workflow_execution_id'
         ),
         sa.ForeignKeyConstraint(
             ['workflow_execution_id'],
             ['workflow_executions_v2.id'],
-            ondelete='CASCADE'
+            ondelete='CASCADE',
         ),
     )
 
@@ -180,7 +135,7 @@ def upgrade():
         'task_executions_v2',
         ['task_execution_id'],
         ['id'],
-        ondelete='CASCADE'
+        ondelete='CASCADE',
     )
     op.create_foreign_key(
         None,
@@ -188,59 +143,33 @@ def upgrade():
         'task_executions_v2',
         ['task_execution_id'],
         ['id'],
-        ondelete='CASCADE'
+        ondelete='CASCADE',
+    )
+
+    op.alter_column('workbooks_v2', 'name', type_=sa.String(length=255))
+    op.alter_column('workbooks_v2', 'definition', type_=st.MediumText())
+    op.alter_column('workbooks_v2', 'spec', type_=st.JsonMediumDictType())
+
+    op.alter_column(
+        'workflow_definitions_v2', 'name', type_=sa.String(length=255)
+    )
+    op.alter_column(
+        'workflow_definitions_v2', 'definition', type_=st.MediumText()
+    )
+    op.alter_column(
+        'workflow_definitions_v2', 'spec', type_=st.JsonMediumDictType()
     )
 
     op.alter_column(
-        'workbooks_v2',
-        'name',
-        type_=sa.String(length=255)
+        'action_definitions_v2', 'name', type_=sa.String(length=255)
     )
     op.alter_column(
-        'workbooks_v2',
-        'definition',
-        type_=st.MediumText()
+        'action_definitions_v2', 'definition', type_=st.MediumText()
     )
     op.alter_column(
-        'workbooks_v2',
-        'spec',
-        type_=st.JsonMediumDictType()
+        'action_definitions_v2', 'spec', type_=st.JsonMediumDictType()
     )
 
     op.alter_column(
-        'workflow_definitions_v2',
-        'name',
-        type_=sa.String(length=255)
-    )
-    op.alter_column(
-        'workflow_definitions_v2',
-        'definition',
-        type_=st.MediumText()
-    )
-    op.alter_column(
-        'workflow_definitions_v2',
-        'spec',
-        type_=st.JsonMediumDictType()
-    )
-
-    op.alter_column(
-        'action_definitions_v2',
-        'name',
-        type_=sa.String(length=255)
-    )
-    op.alter_column(
-        'action_definitions_v2',
-        'definition',
-        type_=st.MediumText()
-    )
-    op.alter_column(
-        'action_definitions_v2',
-        'spec',
-        type_=st.JsonMediumDictType()
-    )
-
-    op.alter_column(
-        'cron_triggers_v2',
-        'workflow_name',
-        type_=sa.String(length=255)
+        'cron_triggers_v2', 'workflow_name', type_=sa.String(length=255)
     )

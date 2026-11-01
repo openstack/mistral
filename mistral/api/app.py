@@ -96,11 +96,14 @@ def setup_app(config=None):
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [request_body.RejectXMLHook(),
-                       ctx.AuthHook(), maintenance.MaintenanceHook(),
-                       ctx.ContextHook()],
+        hooks=lambda: [
+            request_body.RejectXMLHook(),
+            ctx.AuthHook(),
+            maintenance.MaintenanceHook(),
+            ctx.ContextHook(),
+        ],
         logging=getattr(config, 'logging', {}),
-        **app_conf
+        **app_conf,
     )
 
     # Set up access control.
@@ -115,7 +118,7 @@ def setup_app(config=None):
         app = osprofiler.web.WsgiMiddleware(
             app,
             hmac_keys=cfg.CONF.profiler.hmac_keys,
-            enabled=cfg.CONF.profiler.enabled
+            enabled=cfg.CONF.profiler.enabled,
         )
 
     # Create HTTPProxyToWSGI wrapper

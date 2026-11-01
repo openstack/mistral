@@ -120,8 +120,16 @@ class EngineServer(service_base.MistralService):
     def wait(self):
         LOG.info("Waiting for an engine server to exit...")
 
-    def start_workflow(self, rpc_ctx, wf_identifier, wf_namespace,
-                       wf_ex_id, wf_input, description, params):
+    def start_workflow(
+        self,
+        rpc_ctx,
+        wf_identifier,
+        wf_namespace,
+        wf_ex_id,
+        wf_input,
+        description,
+        params,
+    ):
         """Receives calls over RPC to start workflows on engine.
 
         :param rpc_ctx: RPC request context.
@@ -143,7 +151,7 @@ class EngineServer(service_base.MistralService):
             "Received RPC request 'start_workflow' "
             "[workflow_identifier=%s, description=%s]",
             wf_identifier,
-            description
+            description,
         )
 
         return self.engine.start_workflow(
@@ -152,31 +160,39 @@ class EngineServer(service_base.MistralService):
             wf_ex_id,
             wf_input,
             description,
-            **params
+            **params,
         )
 
-    def start_task(self, rpc_ctx, task_ex_id, first_run, waiting,
-                   triggered_by, rerun, **params):
-        """Receives calls over RPC to start tasks on engine.
-
-        """
+    def start_task(
+        self,
+        rpc_ctx,
+        task_ex_id,
+        first_run,
+        waiting,
+        triggered_by,
+        rerun,
+        **params,
+    ):
+        """Receives calls over RPC to start tasks on engine."""
         LOG.info(
             "Received RPC request 'start_task' [task_ex_id=%s, first_run=%s]",
             task_ex_id,
-            first_run
+            first_run,
         )
 
         return self.engine.start_task(
-            task_ex_id,
-            first_run,
-            waiting,
-            triggered_by,
-            rerun,
-            **params
+            task_ex_id, first_run, waiting, triggered_by, rerun, **params
         )
 
-    def start_action(self, rpc_ctx, action_name,
-                     action_input, description, namespace, params):
+    def start_action(
+        self,
+        rpc_ctx,
+        action_name,
+        action_input,
+        description,
+        namespace,
+        params,
+    ):
         """Receives calls over RPC to start actions on engine.
 
         :param rpc_ctx: RPC request context.
@@ -190,17 +206,14 @@ class EngineServer(service_base.MistralService):
         # Log only the action name: the input carries user-supplied secrets
         # (a std.ssh* action's private_key/password), and params/env may
         # carry credentials, so neither is logged.
-        LOG.info(
-            "Received RPC request 'start_action' [name=%s]",
-            action_name
-        )
+        LOG.info("Received RPC request 'start_action' [name=%s]", action_name)
 
         return self.engine.start_action(
             action_name,
             action_input,
             description,
             namespace=namespace,
-            **params
+            **params,
         )
 
     def on_action_complete(self, rpc_ctx, action_ex_id, result, wf_action):
@@ -218,7 +231,7 @@ class EngineServer(service_base.MistralService):
         # masks values under known key names, so it is not logged.
         LOG.info(
             "Received RPC request 'on_action_complete' [action_ex_id=%s]",
-            action_ex_id
+            action_ex_id,
         )
         return self.engine.on_action_complete(action_ex_id, result, wf_action)
 
@@ -235,7 +248,7 @@ class EngineServer(service_base.MistralService):
             "Received RPC request 'on_action_update' "
             "[action_ex_id=%s, state=%s]",
             action_ex_id,
-            state
+            state,
         )
 
         return self.engine.on_action_update(action_ex_id, state, wf_action)
@@ -248,14 +261,14 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'pause_workflow' [execution_id=%s]",
-            wf_ex_id
+            "Received RPC request 'pause_workflow' [execution_id=%s]", wf_ex_id
         )
 
         return self.engine.pause_workflow(wf_ex_id)
 
-    def rerun_workflow(self, rpc_ctx, task_ex_id, reset=True,
-                       skip=False, env=None):
+    def rerun_workflow(
+        self, rpc_ctx, task_ex_id, reset=True, skip=False, env=None
+    ):
         """Receives calls over RPC to rerun workflows on engine.
 
         :param rpc_ctx: RPC request context.
@@ -267,8 +280,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'rerun_workflow' [task_ex_id=%s]",
-            task_ex_id
+            "Received RPC request 'rerun_workflow' [task_ex_id=%s]", task_ex_id
         )
 
         return self.engine.rerun_workflow(task_ex_id, reset, skip, env)
@@ -282,8 +294,7 @@ class EngineServer(service_base.MistralService):
         :return: Workflow execution.
         """
         LOG.info(
-            "Received RPC request 'resume_workflow' [wf_ex_id=%s]",
-            wf_ex_id
+            "Received RPC request 'resume_workflow' [wf_ex_id=%s]", wf_ex_id
         )
 
         return self.engine.resume_workflow(wf_ex_id, env)
@@ -308,7 +319,7 @@ class EngineServer(service_base.MistralService):
             " state=%s, message=%s]",
             wf_ex_id,
             state,
-            message
+            message,
         )
 
         return self.engine.stop_workflow(wf_ex_id, state, message)
@@ -322,7 +333,7 @@ class EngineServer(service_base.MistralService):
         """
         LOG.info(
             "Received RPC request 'rollback_workflow' [execution_id=%s]",
-            wf_ex_id
+            wf_ex_id,
         )
 
         return self.engine.rollback_workflow(wf_ex_id)
@@ -334,9 +345,8 @@ class EngineServer(service_base.MistralService):
         :param action_ex_ids: Action execution ids.
         """
         LOG.info(
-            "Received RPC request 'report_running_actions' "
-            "[action_ex_ids=%s]",
-            action_ex_ids
+            "Received RPC request 'report_running_actions' [action_ex_ids=%s]",
+            action_ex_ids,
         )
 
         return self.engine.process_action_heartbeats(action_ex_ids)
@@ -344,6 +354,5 @@ class EngineServer(service_base.MistralService):
 
 def get_oslo_service(setup_profiler=True):
     return EngineServer(
-        default_engine.DefaultEngine(),
-        setup_profiler=setup_profiler
+        default_engine.DefaultEngine(), setup_profiler=setup_profiler
     )

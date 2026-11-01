@@ -89,35 +89,29 @@ class AdhocActionServiceTest(base.DbTestCase):
 
     def test_create_actions_in_namespace(self):
         db_actions = adhoc_action_service.create_actions(
-            ACTION_LIST,
-            namespace=NAMESPACE
+            ACTION_LIST, namespace=NAMESPACE
         )
 
         self.assertEqual(2, len(db_actions))
 
         self._assert_single_item(
-            db_actions,
-            name='action1',
-            namespace=NAMESPACE
+            db_actions, name='action1', namespace=NAMESPACE
         )
 
         self._assert_single_item(
-            db_actions,
-            name='action2',
-            namespace=NAMESPACE
+            db_actions, name='action2', namespace=NAMESPACE
         )
 
         self.assertRaises(
             DBEntityNotFoundError,
             db_api.get_action_definition,
             name='action1',
-            namespace=''
+            namespace='',
         )
 
     def test_update_actions(self):
         db_actions = adhoc_action_service.create_actions(
-            ACTION_LIST,
-            namespace=NAMESPACE
+            ACTION_LIST, namespace=NAMESPACE
         )
 
         self.assertEqual(2, len(db_actions))
@@ -131,8 +125,7 @@ class AdhocActionServiceTest(base.DbTestCase):
         self.assertDictEqual({}, action1_spec.get_input())
 
         db_actions = adhoc_action_service.update_actions(
-            UPDATED_ACTION_LIST,
-            namespace=NAMESPACE
+            UPDATED_ACTION_LIST, namespace=NAMESPACE
         )
 
         # Action 1.
@@ -144,14 +137,11 @@ class AdhocActionServiceTest(base.DbTestCase):
         self.assertEqual('std.echo', action1_spec.get_base())
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
         self.assertIn('param1', action1_spec.get_input())
-        self.assertIs(
-            action1_spec.get_input().get('param1'),
-            utils.NotDefined
-        )
+        self.assertIs(action1_spec.get_input().get('param1'), utils.NotDefined)
 
         self.assertRaises(
             DBEntityNotFoundError,
             adhoc_action_service.update_actions,
             UPDATED_ACTION_LIST,
-            namespace=''
+            namespace='',
         )

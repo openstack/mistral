@@ -18,7 +18,7 @@ MASK = '***'
 _SENSITIVE_KEY_RE = re.compile(
     r'(passwd|password|token|secret|auth|api[_-]?key|apikey|credential|'
     r'cookie|private_key)',
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 

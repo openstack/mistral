@@ -35,8 +35,9 @@ class ServiceLauncherTest(base.DbTestCase):
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
     @mock.patch.object(service.ProcessLauncher, 'wait')
     @mock.patch('sys.exit')
-    def test_launch_one_process(self, mock_exit, mock_wait,
-                                mock_launch_service):
+    def test_launch_one_process(
+        self, mock_exit, mock_wait, mock_launch_service
+    ):
         # Launch API
         launch.launch_any(['api'])
 
@@ -50,8 +51,9 @@ class ServiceLauncherTest(base.DbTestCase):
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
     @mock.patch.object(service.ProcessLauncher, 'wait')
     @mock.patch('sys.exit')
-    def test_launch_multiple_processes(self, mock_exit, mock_wait,
-                                       mock_launch_service):
+    def test_launch_multiple_processes(
+        self, mock_exit, mock_wait, mock_launch_service
+    ):
         # Launch API and executor
         launch.launch_any(['api', 'executor'])
 
@@ -63,8 +65,7 @@ class ServiceLauncherTest(base.DbTestCase):
     @mock.patch.object(service.ProcessLauncher, 'launch_service')
     @mock.patch.object(service.ProcessLauncher, 'wait')
     @mock.patch('sys.exit')
-    def test_launch_periodic(self, mock_exit, mock_wait,
-                             mock_launch_service):
+    def test_launch_periodic(self, mock_exit, mock_wait, mock_launch_service):
         # Launch the periodic server
         launch.launch_any(['periodic'])
 

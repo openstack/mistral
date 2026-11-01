@@ -47,7 +47,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         self.publishers = {
             'wbhk': notif.get_notification_publisher('webhook'),
-            'noop': notif.get_notification_publisher('noop')
+            'noop': notif.get_notification_publisher('noop'),
         }
 
         self.publishers['wbhk'].publish = mock.MagicMock(side_effect=log_event)
@@ -80,12 +80,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         wf_svc.create_workflows(wf_text)
 
-        notify_options = [
-            {
-                'type': 'webhook',
-                'event_types': events.EVENTS
-            }
-        ]
+        notify_options = [{'type': 'webhook', 'event_types': events.EVENTS}]
 
         params = {'notify': notify_options}
 
@@ -165,7 +160,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -192,8 +187,8 @@ class NotifyEventsTest(base.NotifierTestCase):
                 'type': 'webhook',
                 'event_types': [
                     events.WORKFLOW_LAUNCHED,
-                    events.WORKFLOW_SUCCEEDED
-                ]
+                    events.WORKFLOW_SUCCEEDED,
+                ],
             }
         ]
 
@@ -243,10 +238,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         wf_svc.create_workflows(wf_text)
 
-        notify_options = [
-            {'type': 'webhook'},
-            {'type': 'noop'}
-        ]
+        notify_options = [{'type': 'webhook'}, {'type': 'noop'}]
 
         params = {'notify': notify_options}
 
@@ -282,7 +274,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t2_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_SUCCEEDED),
             (wf_ex.id, events.WORKFLOW_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -308,15 +300,10 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         wf_svc.create_workflows(wf_text)
 
-        notify_options = [
-            {'type': 'webhook'},
-            {'type': 'noop'}
-        ]
+        notify_options = [{'type': 'webhook'}, {'type': 'noop'}]
 
         cfg.CONF.set_default(
-            'notify',
-            json.dumps(notify_options),
-            group='notifier'
+            'notify', json.dumps(notify_options), group='notifier'
         )
 
         wf_ex = self.engine.start_workflow('wf', '')
@@ -351,7 +338,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t2_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_SUCCEEDED),
             (wf_ex.id, events.WORKFLOW_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -378,9 +365,7 @@ class NotifyEventsTest(base.NotifierTestCase):
         wf_svc.create_workflows(wf_text)
 
         cfg.CONF.set_default(
-            'notify',
-            json.dumps([{'type': 'noop'}]),
-            group='notifier'
+            'notify', json.dumps([{'type': 'noop'}]), group='notifier'
         )
 
         params = {'notify': [{'type': 'webhook'}]}
@@ -417,7 +402,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t2_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_SUCCEEDED),
             (wf_ex.id, events.WORKFLOW_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -499,7 +484,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf1_t1_ex.id, events.TASK_SUCCEEDED),
             (wf1_t2_ex.id, events.TASK_LAUNCHED),
             (wf1_t2_ex.id, events.TASK_SUCCEEDED),
-            (wf1_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf1_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -550,7 +535,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_FAILED),
-            (wf_ex.id, events.WORKFLOW_FAILED)
+            (wf_ex.id, events.WORKFLOW_FAILED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -594,7 +579,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_FAILED)
+            (wf_ex.id, events.WORKFLOW_FAILED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -647,7 +632,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -717,7 +702,7 @@ class NotifyEventsTest(base.NotifierTestCase):
         expected_order = [
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
-            (wf_ex.id, events.WORKFLOW_PAUSED)
+            (wf_ex.id, events.WORKFLOW_PAUSED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -725,8 +710,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         # Complete action execution of task 1.
         self.engine.on_action_complete(
-            t1_act_exs[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            t1_act_exs[0].id, ml_actions.Result(data={'result': 'foobar'})
         )
 
         self.await_workflow_paused(wf_ex.id)
@@ -748,7 +732,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (wf_ex.id, events.WORKFLOW_PAUSED),
-            (t1_ex.id, events.TASK_SUCCEEDED)
+            (t1_ex.id, events.TASK_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -782,7 +766,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_RESUMED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -852,7 +836,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_PAUSED),
-            (wf_ex.id, events.WORKFLOW_PAUSED)
+            (wf_ex.id, events.WORKFLOW_PAUSED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -877,8 +861,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         # Complete action execution of task 1.
         self.engine.on_action_complete(
-            t1_act_exs[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            t1_act_exs[0].id, ml_actions.Result(data={'result': 'foobar'})
         )
 
         # Wait for the workflow execution to complete.
@@ -912,7 +895,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (t1_ex.id, events.TASK_SUCCEEDED),
             (t2_ex.id, events.TASK_LAUNCHED),
             (t2_ex.id, events.TASK_SUCCEEDED),
-            (wf_ex.id, events.WORKFLOW_SUCCEEDED)
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -981,7 +964,7 @@ class NotifyEventsTest(base.NotifierTestCase):
         expected_order = [
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
-            (wf_ex.id, events.WORKFLOW_CANCELLED)
+            (wf_ex.id, events.WORKFLOW_CANCELLED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -989,8 +972,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         # Complete action execution of task 1.
         self.engine.on_action_complete(
-            t1_act_exs[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            t1_act_exs[0].id, ml_actions.Result(data={'result': 'foobar'})
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -1012,7 +994,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (wf_ex.id, events.WORKFLOW_CANCELLED),
-            (t1_ex.id, events.TASK_SUCCEEDED)
+            (t1_ex.id, events.TASK_SUCCEEDED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -1081,7 +1063,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_CANCELLED),
-            (wf_ex.id, events.WORKFLOW_CANCELLED)
+            (wf_ex.id, events.WORKFLOW_CANCELLED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
@@ -1124,14 +1106,16 @@ class NotifyEventsTest(base.NotifierTestCase):
             (wf_ex.id, events.WORKFLOW_LAUNCHED),
             (t1_ex.id, events.TASK_LAUNCHED),
             (t1_ex.id, events.TASK_FAILED),
-            (wf_ex.id, events.WORKFLOW_FAILED)
+            (wf_ex.id, events.WORKFLOW_FAILED),
         ]
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
         self.assertListEqual(expected_order, EVENT_LOGS)
 
-    @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
-        side_effect=[Exception(), None, None]))
+    @mock.patch(
+        'mistral.actions.std_actions.NoOpAction.run',
+        mock.MagicMock(side_effect=[Exception(), None, None]),
+    )
     def test_notify_rerun_task(self):
         wf_text = """
         version: '2.0'
@@ -1197,8 +1181,10 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertTrue(self.publishers['wbhk'].publish.called)
         self.assertListEqual(expected_order, EVENT_LOGS)
 
-    @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
-        side_effect=[Exception(), None, None, None]))
+    @mock.patch(
+        'mistral.actions.std_actions.NoOpAction.run',
+        mock.MagicMock(side_effect=[Exception(), None, None, None]),
+    )
     def test_notify_rerun_nested_workflow(self):
         wf_text = """
         version: '2.0'
@@ -1236,29 +1222,17 @@ class NotifyEventsTest(base.NotifierTestCase):
         with db_api.transaction():
             wf_exs = db_api.get_workflow_executions()
 
-            self._assert_single_item(
-                wf_exs,
-                name='wf_1',
-                state=states.ERROR
-            )
-            self._assert_single_item(
-                wf_exs,
-                name='wf_2',
-                state=states.ERROR
-            )
+            self._assert_single_item(wf_exs, name='wf_1', state=states.ERROR)
+            self._assert_single_item(wf_exs, name='wf_2', state=states.ERROR)
 
             task_exs = db_api.get_task_executions()
 
             self._assert_single_item(
-                task_exs,
-                name='wf_1_t1',
-                state=states.ERROR
+                task_exs, name='wf_1_t1', state=states.ERROR
             )
 
             wf_2_t1 = self._assert_single_item(
-                task_exs,
-                name='wf_2_t1',
-                state=states.ERROR
+                task_exs, name='wf_2_t1', state=states.ERROR
             )
 
         self.assertEqual(2, len(task_exs))
@@ -1273,40 +1247,28 @@ class NotifyEventsTest(base.NotifierTestCase):
             wf_exs = db_api.get_workflow_executions()
 
             wf_1_ex = self._assert_single_item(
-                wf_exs,
-                name='wf_1',
-                state=states.SUCCESS
+                wf_exs, name='wf_1', state=states.SUCCESS
             )
             wf_2_ex = self._assert_single_item(
-                wf_exs,
-                name='wf_2',
-                state=states.SUCCESS
+                wf_exs, name='wf_2', state=states.SUCCESS
             )
 
             task_wf_1_exs = wf_1_ex.task_executions
 
             wf_1_t1 = self._assert_single_item(
-                task_wf_1_exs,
-                name='wf_1_t1',
-                state=states.SUCCESS
+                task_wf_1_exs, name='wf_1_t1', state=states.SUCCESS
             )
             wf_1_t2 = self._assert_single_item(
-                task_wf_1_exs,
-                name='wf_1_t2',
-                state=states.SUCCESS
+                task_wf_1_exs, name='wf_1_t2', state=states.SUCCESS
             )
 
             task_wf_2_exs = wf_2_ex.task_executions
 
             wf_2_t1 = self._assert_single_item(
-                task_wf_2_exs,
-                name='wf_2_t1',
-                state=states.SUCCESS
+                task_wf_2_exs, name='wf_2_t1', state=states.SUCCESS
             )
             wf_2_t2 = self._assert_single_item(
-                task_wf_2_exs,
-                name='wf_2_t2',
-                state=states.SUCCESS
+                task_wf_2_exs, name='wf_2_t2', state=states.SUCCESS
             )
 
             self.assertEqual(2, len(task_wf_1_exs))

@@ -45,10 +45,7 @@ class ActionHeartbeatCheckerContextTest(base.DbTestCase):
 
         auth_ctx.set_ctx(
             auth_ctx.MistralContext(
-                user_id=None,
-                project_id=None,
-                auth_token=None,
-                is_admin=True
+                user_id=None, project_id=None, auth_token=None, is_admin=True
             )
         )
 
@@ -59,11 +56,11 @@ class ActionHeartbeatCheckerContextTest(base.DbTestCase):
     @mock.patch.object(db_api, 'get_task_execution')
     @mock.patch.object(db_api, 'get_running_expired_sync_action_executions')
     def test_context_stays_admin_across_the_batch(
-            self, get_expired_mock, get_task_mock, get_wf_mock,
-            action_handler_mock):
+        self, get_expired_mock, get_task_mock, get_wf_mock, action_handler_mock
+    ):
         get_expired_mock.return_value = [
             _action_ex_mock('a_ex_1', 't_ex_1'),
-            _action_ex_mock('a_ex_2', 't_ex_2')
+            _action_ex_mock('a_ex_2', 't_ex_2'),
         ]
 
         lookup_ctx_admin_flags = []
@@ -90,10 +87,7 @@ class ActionHeartbeatCheckerContextTest(base.DbTestCase):
         # context, including the ones after an action was processed.
         self.assertEqual([True, True], lookup_ctx_admin_flags)
 
-        self.assertEqual(
-            2,
-            action_handler_mock.on_action_complete.call_count
-        )
+        self.assertEqual(2, action_handler_mock.on_action_complete.call_count)
 
         # The thread context must still be administrative for the
         # next iterations of the checker loop.
@@ -104,21 +98,19 @@ class ActionHeartbeatCheckerContextTest(base.DbTestCase):
     @mock.patch.object(db_api, 'get_task_execution')
     @mock.patch.object(db_api, 'get_running_expired_sync_action_executions')
     def test_missing_task_execution_does_not_abort_the_batch(
-            self, get_expired_mock, get_task_mock, get_wf_mock,
-            action_handler_mock):
+        self, get_expired_mock, get_task_mock, get_wf_mock, action_handler_mock
+    ):
         get_expired_mock.return_value = [
             _action_ex_mock('a_ex_1', 't_ex_1'),
-            _action_ex_mock('a_ex_2', 't_ex_2')
+            _action_ex_mock('a_ex_2', 't_ex_2'),
         ]
 
         task_ex = mock.MagicMock()
         task_ex.workflow_execution_id = 'wf_ex_2'
 
         get_task_mock.side_effect = [
-            exc.DBEntityNotFoundError(
-                "Task execution not found [id=t_ex_1]"
-            ),
-            task_ex
+            exc.DBEntityNotFoundError("Task execution not found [id=t_ex_1]"),
+            task_ex,
         ]
 
         wf_ex = mock.MagicMock()
@@ -130,13 +122,10 @@ class ActionHeartbeatCheckerContextTest(base.DbTestCase):
         action_heartbeat_checker.handle_expired_actions()
 
         # The first action is skipped but the second one is processed.
-        self.assertEqual(
-            1,
-            action_handler_mock.on_action_complete.call_count
-        )
+        self.assertEqual(1, action_handler_mock.on_action_complete.call_count)
 
-        processed_action_ex = (
-            action_handler_mock.on_action_complete.call_args[0][0]
-        )
+        processed_action_ex = action_handler_mock.on_action_complete.call_args[
+            0
+        ][0]
 
         self.assertEqual('a_ex_2', processed_action_ex.id)

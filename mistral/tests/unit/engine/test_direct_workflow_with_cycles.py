@@ -56,8 +56,7 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow(
-            'workflow_cycle_in_out_verify',
-            wf_input={"num_of_cycles": 21}
+            'workflow_cycle_in_out_verify', wf_input={"num_of_cycles": 21}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -252,8 +251,7 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         return self.engine.start_workflow(
-            'wf',
-            wf_input={'num_of_cycles': num_of_cycles}
+            'wf', wf_input={'num_of_cycles': num_of_cycles}
         )
 
     def test_max_task_executions_within_limit(self):
@@ -267,9 +265,7 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self._assert_multiple_items(
-                wf_ex.task_executions,
-                5,
-                name='increment'
+                wf_ex.task_executions, 5, name='increment'
             )
 
     def test_max_task_executions_exceeded(self):
@@ -297,10 +293,7 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         self.assertEqual(expected, wf_ex.state_info)
 
         self._assert_multiple_items(
-            t_execs,
-            5,
-            name='increment',
-            state=states.SUCCESS
+            t_execs, 5, name='increment', state=states.SUCCESS
         )
 
     def test_max_task_executions_infinite_loop(self):
@@ -351,7 +344,5 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self._assert_multiple_items(
-                wf_ex.task_executions,
-                10,
-                name='increment'
+                wf_ex.task_executions, 10, name='increment'
             )

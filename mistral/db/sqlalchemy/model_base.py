@@ -24,9 +24,7 @@ from mistral_lib import utils
 
 def id_column():
     return sa.Column(
-        sa.String(36),
-        primary_key=True,
-        default=utils.generate_unicode_uuid
+        sa.String(36), primary_key=True, default=utils.generate_unicode_uuid
     )
 
 
@@ -52,9 +50,11 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
             # In case of single table inheritance a class attribute
             # corresponding to a table column may not exist so we need
             # to skip these attributes.
-            if (hasattr(self, col.name)
+            if (
+                hasattr(self, col.name)
                 and hasattr(other, col.name)
-                    and getattr(self, col.name) != getattr(other, col.name)):
+                and getattr(self, col.name) != getattr(other, col.name)
+            ):
                 return False
 
         return True
@@ -109,9 +109,7 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
                 setattr(m, col.name, getattr(self, col.name))
 
         setattr(
-            m,
-            'created_at',
-            utils.datetime_to_str(getattr(self, 'created_at'))
+            m, 'created_at', utils.datetime_to_str(getattr(self, 'created_at'))
         )
 
         updated_at = getattr(self, 'updated_at')
@@ -184,8 +182,5 @@ def register_secure_model_hooks():
     for sec_model_class in utils.iter_subclasses(MistralSecureModelBase):
         if '__abstract__' not in sec_model_class.__dict__:
             event.listen(
-                sec_model_class.project_id,
-                'set',
-                _set_project_id,
-                retval=True
+                sec_model_class.project_id, 'set', _set_project_id, retval=True
             )

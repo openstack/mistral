@@ -348,8 +348,7 @@ class PoliciesTest(base.EngineTestCase):
 
     def test_build_policies(self):
         arr = policies.build_policies(
-            self.task_spec.get_policies(),
-            self.wf_spec
+            self.task_spec.get_policies(), self.wf_spec
         )
 
         self.assertEqual(4, len(arr))
@@ -375,17 +374,10 @@ class PoliciesTest(base.EngineTestCase):
     def test_task_policy_class(self):
         policy = policies.base.TaskPolicy()
 
-        policy._schema = {
-            "properties": {
-                "delay": {"type": "integer"}
-            }
-        }
+        policy._schema = {"properties": {"delay": {"type": "integer"}}}
 
         wf_ex = models.WorkflowExecution(
-            id='1-2-3-4',
-            context={},
-            input={},
-            params={}
+            id='1-2-3-4', context={}, input={}, params={}
         )
 
         task_ex = models.TaskExecution(in_context={'int_var': 5})
@@ -455,8 +447,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertDictEqual(
-            {'wait_before_policy': {'skip': True}},
-            task_ex.runtime_context
+            {'wait_before_policy': {'skip': True}}, task_ex.runtime_context
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -484,8 +475,7 @@ class PoliciesTest(base.EngineTestCase):
 
             self.assertEqual(states.ERROR, task_ex.state)
             self.assertEqual(
-                [],
-                [lock.name for lock in db_api.get_named_locks()]
+                [], [lock.name for lock in db_api.get_named_locks()]
             )
 
     def test_wait_before_policy_zero_seconds(self):
@@ -499,7 +489,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            WAIT_BEFORE_WB % -1
+            WAIT_BEFORE_WB % -1,
         )
 
     def test_wait_before_policy_from_var(self):
@@ -507,8 +497,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_before': 10}
+            'wb.wf1', wf_input={'wait_before': 10}
         )
 
         with db_api.transaction():
@@ -526,8 +515,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_before': 0}
+            'wb.wf1', wf_input={'wait_before': 0}
         )
 
         with db_api.transaction():
@@ -541,8 +529,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_before': -1}
+            'wb.wf1', wf_input={'wait_before': -1}
         )
 
         with db_api.transaction():
@@ -631,7 +618,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            WAIT_AFTER_WB % -1
+            WAIT_AFTER_WB % -1,
         )
 
     def test_wait_after_policy_from_var(self):
@@ -639,8 +626,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_after': 2}
+            'wb.wf1', wf_input={'wait_after': 2}
         )
 
         with db_api.transaction():
@@ -659,8 +645,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_after': 0}
+            'wb.wf1', wf_input={'wait_after': 0}
         )
 
         with db_api.transaction():
@@ -686,8 +671,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_after': -1}
+            'wb.wf1', wf_input={'wait_after': -1}
         )
 
         with db_api.transaction():
@@ -705,9 +689,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertDictEqual({}, task_ex.runtime_context)
 
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB % {'count': 3, 'delay': 1})
@@ -734,14 +716,11 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            3,
-            task_ex.runtime_context["retry_task_policy"]["retry_no"]
+            3, task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_retry_policy_zero_count(self):
         wb_service.create_workbook_v2(RETRY_WB % {'count': 0, 'delay': 1})
@@ -772,37 +751,32 @@ class PoliciesTest(base.EngineTestCase):
         self.assertNotIn("retry_task_policy", task_ex.runtime_context)
 
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_retry_policy_negative_numbers(self):
         # Negative delay is not accepted.
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            RETRY_WB % {'count': 1, 'delay': -1}
+            RETRY_WB % {'count': 1, 'delay': -1},
         )
 
         # Negative count is not accepted.
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            RETRY_WB % {'count': -1, 'delay': 1}
+            RETRY_WB % {'count': -1, 'delay': 1},
         )
 
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_retry_policy_from_var(self):
         wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'count': 3, 'delay': 1}
+            'wb.wf1', wf_input={'count': 3, 'delay': 1}
         )
 
         with db_api.transaction():
@@ -824,22 +798,18 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            3,
-            task_ex.runtime_context["retry_task_policy"]["retry_no"]
+            3, task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
     @mock.patch.object(
-        requests,
-        'request',
-        mock.MagicMock(side_effect=Exception())
+        requests, 'request', mock.MagicMock(side_effect=Exception())
     )
     def test_retry_policy_from_var_negative_numbers(self):
         wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
 
         # Start workflow with negative count.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'count': -1, 'delay': 1}
+            'wb.wf1', wf_input={'count': -1, 'delay': 1}
         )
 
         with db_api.transaction():
@@ -855,8 +825,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow with negative delay.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'count': 1, 'delay': -1}
+            'wb.wf1', wf_input={'count': 1, 'delay': -1}
         )
 
         with db_api.transaction():
@@ -906,10 +875,7 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(
-            {},
-            task_ex.runtime_context["retry_task_policy"]
-        )
+        self.assertEqual({}, task_ex.runtime_context["retry_task_policy"])
 
     def test_retry_policy_break_on(self):
         retry_wb = """---
@@ -949,10 +915,7 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(
-            {},
-            task_ex.runtime_context["retry_task_policy"]
-        )
+        self.assertEqual({}, task_ex.runtime_context["retry_task_policy"])
 
     def test_retry_policy_break_on_not_happened(self):
         retry_wb = """---
@@ -993,8 +956,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            3,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            3, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     @mock.patch.object(
@@ -1037,8 +999,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            2,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            2, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_continue_on_not_happened(self):
@@ -1076,18 +1037,17 @@ class PoliciesTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(
-            {},
-            task_ex.runtime_context['retry_task_policy']
-        )
+        self.assertEqual({}, task_ex.runtime_context['retry_task_policy'])
 
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
-        mock.Mock(side_effect=[
-            {'status': 'pending'},
-            {'status': 'done', 'value': 42}
-        ])
+        mock.Mock(
+            side_effect=[
+                {'status': 'pending'},
+                {'status': 'done', 'value': 42},
+            ]
+        ),
     )
     def test_retry_continue_on_publish_intermediate_result(self):
         wf_text = """---
@@ -1118,8 +1078,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual({'value': 42}, task_ex.published)
         self.assertEqual(
-            1,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            1, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_continue_on_publish_error_on_last_iteration(self):
@@ -1152,8 +1111,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task_ex.state)
         self.assertIn('Can not evaluate YAQL expression', task_ex.state_info)
         self.assertEqual(
-            2,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            2, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_continue_on_published_var_publish_error(self):
@@ -1189,12 +1147,14 @@ class PoliciesTest(base.EngineTestCase):
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
-        mock.Mock(side_effect=[
-            {'status': 'pending', 'value': 1},
-            {'status': 'done'},
-            {'status': 'done'},
-            {'status': 'done'}
-        ])
+        mock.Mock(
+            side_effect=[
+                {'status': 'pending', 'value': 1},
+                {'status': 'done'},
+                {'status': 'done'},
+                {'status': 'done'},
+            ]
+        ),
     )
     def test_retry_continue_on_stale_published_after_publish_error(self):
         wf_text = """---
@@ -1228,8 +1188,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertIn('expression=task().result.value', task_ex.state_info)
         self.assertEqual({}, task_ex.published)
         self.assertEqual(
-            1,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            1, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_policy_one_line(self):
@@ -1267,8 +1226,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            3,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            3, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     def test_retry_policy_subworkflow_force_fail(self):
@@ -1312,14 +1270,13 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            3,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            3, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
-        mock.Mock(side_effect=[exc.ActionException(), "mocked result"])
+        mock.Mock(side_effect=[exc.ActionException(), "mocked result"]),
     )
     def test_retry_policy_succeed_after_failure(self):
         retry_wb = """---
@@ -1360,8 +1317,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertDictEqual(
-            {'retry_no': 1},
-            task_ex.runtime_context['retry_task_policy']
+            {'retry_no': 1}, task_ex.runtime_context['retry_task_policy']
         )
 
         self.assertDictEqual({'result': 'mocked result'}, wf_output)
@@ -1400,9 +1356,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self._assert_single_item(task_execs, name="task2", state=states.ERROR)
         self._assert_single_item(
-            task_execs,
-            name="join_task",
-            state=states.ERROR
+            task_execs, name="join_task", state=states.ERROR
         )
 
     def test_retry_join_task_after_idle_task(self):
@@ -1441,15 +1395,13 @@ class PoliciesTest(base.EngineTestCase):
 
         self._assert_single_item(task_execs, name="task2", state=states.ERROR)
         self._assert_single_item(
-            task_execs,
-            name="join_task",
-            state=states.ERROR
+            task_execs, name="join_task", state=states.ERROR
         )
 
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
-        mock.MagicMock(side_effect=[exc.ActionException(), 'value'])
+        mock.MagicMock(side_effect=[exc.ActionException(), 'value']),
     )
     def test_retry_policy_succeed_after_failure_with_publish(self):
         retry_wf = """---
@@ -1489,8 +1441,7 @@ class PoliciesTest(base.EngineTestCase):
         retry_task = self._assert_single_item(task_execs, name='task2')
 
         self.assertDictEqual(
-            {'retry_no': 1},
-            retry_task.runtime_context['retry_task_policy']
+            {'retry_no': 1}, retry_task.runtime_context['retry_task_policy']
         )
 
         self.assertDictEqual({'result': 'value'}, wf_output)
@@ -1498,7 +1449,7 @@ class PoliciesTest(base.EngineTestCase):
     @mock.patch.object(
         std_actions.MistralHTTPAction,
         'run',
-        mock.MagicMock(return_value='mock')
+        mock.MagicMock(return_value='mock'),
     )
     def test_retry_async_action(self):
         """Test that an action won't be done twice
@@ -1544,7 +1495,7 @@ class PoliciesTest(base.EngineTestCase):
         # Send an action complete event with error so the task will retry
         complete_action_params = (
             first_action_ex.id,
-            ml_actions.Result(error="mock")
+            ml_actions.Result(error="mock"),
         )
         rpc.get_engine_client().on_action_complete(*complete_action_params)
 
@@ -1552,7 +1503,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertRaises(
             exc.MistralException,
             rpc.get_engine_client().on_action_complete,
-            *complete_action_params
+            *complete_action_params,
         )
 
         # And the task should be restarted
@@ -1565,7 +1516,7 @@ class PoliciesTest(base.EngineTestCase):
         # This time, send a success action complete
         complete_action_params = (
             second_action_ex.id,
-            ml_actions.Result(data="mock")
+            ml_actions.Result(data="mock"),
         )
         rpc.get_engine_client().on_action_complete(*complete_action_params)
 
@@ -1608,8 +1559,9 @@ class PoliciesTest(base.EngineTestCase):
 
         def _schedule(job):
             if job.run_after and job.func_name in (
-                    policies._CONTINUE_TASK_PATH,
-                    task_handler._REFRESH_TASK_STATE_PATH):
+                policies._CONTINUE_TASK_PATH,
+                task_handler._REFRESH_TASK_STATE_PATH,
+            ):
                 self.delayed_jobs.append(job)
             else:
                 schedule(job)
@@ -1618,7 +1570,8 @@ class PoliciesTest(base.EngineTestCase):
         # held jobs must still count as scheduled.
         def _has_scheduled_jobs(**filters):
             if 'key' in filters and any(
-                    j.key == filters['key'] for j in self.delayed_jobs):
+                j.key == filters['key'] for j in self.delayed_jobs
+            ):
                 return True
 
             return has_scheduled_jobs(**filters)
@@ -1626,9 +1579,11 @@ class PoliciesTest(base.EngineTestCase):
         self.has_scheduled_jobs = mock.Mock(side_effect=_has_scheduled_jobs)
 
         self.useFixture(fixtures.MockPatchObject(sched, 'schedule', _schedule))
-        self.useFixture(fixtures.MockPatchObject(
-            sched, 'has_scheduled_jobs', self.has_scheduled_jobs
-        ))
+        self.useFixture(
+            fixtures.MockPatchObject(
+                sched, 'has_scheduled_jobs', self.has_scheduled_jobs
+            )
+        )
 
     def _run_delayed_job(self, func_path):
         self._await(lambda: self.delayed_jobs, delay=0.1)
@@ -1643,7 +1598,8 @@ class PoliciesTest(base.EngineTestCase):
         def _running_action():
             with db_api.transaction():
                 for a_ex in db_api.get_task_execution(
-                        task_ex_id).action_executions:
+                    task_ex_id
+                ).action_executions:
                     if a_ex.state == states.RUNNING:
                         return a_ex.id
 
@@ -1660,16 +1616,14 @@ class PoliciesTest(base.EngineTestCase):
         self._await(lambda: not _refresh_pending(), delay=0.1)
 
         self.engine.on_action_complete(
-            _running_action(),
-            ml_actions.Result(error='Fail')
+            _running_action(), ml_actions.Result(error='Fail')
         )
 
     def _start_join_task(self, wf_ex_id):
         def _join_task_execs():
             with db_api.transaction():
                 return db_api.get_task_executions(
-                    workflow_execution_id=wf_ex_id,
-                    name='join_task'
+                    workflow_execution_id=wf_ex_id, name='join_task'
                 )
 
         self._await(lambda: len(_join_task_execs()) == 1, delay=0.1)
@@ -1889,16 +1843,15 @@ class PoliciesTest(base.EngineTestCase):
         self.await_task_running(task_ex.id)
 
         with db_api.transaction():
-            action_ex_id = db_api.get_task_execution(
-                task_ex.id
-            ).action_executions[0].id
+            action_ex_id = (
+                db_api.get_task_execution(task_ex.id).action_executions[0].id
+            )
 
         self.engine.stop_workflow(wf_ex.id, states.CANCELLED)
         self.await_workflow_cancelled(wf_ex.id)
 
         self.engine.on_action_complete(
-            action_ex_id,
-            ml_actions.Result(error='Fail')
+            action_ex_id, ml_actions.Result(error='Fail')
         )
 
         self.await_task_error(task_ex.id)
@@ -1994,7 +1947,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            TIMEOUT_WB % -1
+            TIMEOUT_WB % -1,
         )
 
     def test_timeout_policy_success_after_timeout(self):
@@ -2083,11 +2036,11 @@ class PoliciesTest(base.EngineTestCase):
 
             return fail_if_incomplete(*args, **kwargs)
 
-        self.useFixture(fixtures.MockPatchObject(
-            policies,
-            '_fail_task_if_incomplete',
-            _late_fail_if_incomplete
-        ))
+        self.useFixture(
+            fixtures.MockPatchObject(
+                policies, '_fail_task_if_incomplete', _late_fail_if_incomplete
+            )
+        )
 
         wf_ex = self.engine.start_workflow('wf1')
 
@@ -2124,11 +2077,11 @@ class PoliciesTest(base.EngineTestCase):
 
             return fail_if_incomplete(*args, **kwargs)
 
-        self.useFixture(fixtures.MockPatchObject(
-            policies,
-            '_fail_task_if_incomplete',
-            _late_fail_if_incomplete
-        ))
+        self.useFixture(
+            fixtures.MockPatchObject(
+                policies, '_fail_task_if_incomplete', _late_fail_if_incomplete
+            )
+        )
 
         wf_ex = self.engine.start_workflow('wf1')
 
@@ -2163,10 +2116,12 @@ class PoliciesTest(base.EngineTestCase):
         self.await_task_error(task_ex.id, delay=0.2)
 
         self._await(
-            lambda: not db_api.get_scheduled_jobs_count(
-                func_name=policies._CONTINUE_TASK_PATH
+            lambda: (
+                not db_api.get_scheduled_jobs_count(
+                    func_name=policies._CONTINUE_TASK_PATH
+                )
             ),
-            delay=0.2
+            delay=0.2,
         )
 
         with db_api.transaction():
@@ -2209,14 +2164,14 @@ class PoliciesTest(base.EngineTestCase):
             wf_table = models.WorkflowExecution.__table__
 
             session.execute(
-                task_table.update().where(
-                    task_table.c.id == task_ex_id
-                ).values(state=states.ERROR)
+                task_table.update()
+                .where(task_table.c.id == task_ex_id)
+                .values(state=states.ERROR)
             )
             session.execute(
-                wf_table.update().where(
-                    wf_table.c.id == wf_ex.id
-                ).values(state=states.RUNNING)
+                wf_table.update()
+                .where(wf_table.c.id == wf_ex.id)
+                .values(state=states.RUNNING)
             )
 
         acquire_lock = db_api.acquire_lock
@@ -2265,9 +2220,10 @@ class PoliciesTest(base.EngineTestCase):
             table = models.TaskExecution.__table__
 
             session.execute(
-                table.update().where(table.c.id == task_ex_id).values(
-                    state=states.RUNNING_DELAYED,
-                    runtime_context=retry_ctx
+                table.update()
+                .where(table.c.id == task_ex_id)
+                .values(
+                    state=states.RUNNING_DELAYED, runtime_context=retry_ctx
                 )
             )
 
@@ -2288,8 +2244,7 @@ class PoliciesTest(base.EngineTestCase):
 
             self.assertEqual(states.ERROR, task_ex.state)
             self.assertEqual(
-                {'retry_no': 1},
-                task_ex.runtime_context['retry_task_policy']
+                {'retry_no': 1}, task_ex.runtime_context['retry_task_policy']
             )
             self.assertTrue(task_ex.runtime_context['timed_out'])
 
@@ -2585,8 +2540,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(states.IDLE, task_ex.state)
@@ -2600,8 +2554,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(states.SUCCESS, task_ex.state)
@@ -2653,8 +2606,7 @@ class PoliciesTest(base.EngineTestCase):
                 wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
                 task_ex = self._assert_single_item(
-                    wf_ex.task_executions,
-                    name='join_task'
+                    wf_ex.task_executions, name='join_task'
                 )
 
                 self.assertEqual(states.IDLE, task_ex.state)
@@ -2668,8 +2620,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(2, len(task_ex.executions))
@@ -2711,8 +2662,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(states.ERROR, task_ex.state)
@@ -2750,8 +2700,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
 
         def _no_refresh_job():
@@ -2778,8 +2727,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(states.PAUSED, wf_ex.state)
@@ -2826,12 +2774,10 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
             join_task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
         self.await_task_running(task2_ex.id)
@@ -2847,9 +2793,11 @@ class PoliciesTest(base.EngineTestCase):
         calls = []
 
         with mock.patch.object(
-                rpc.EngineClient, 'start_task',
-                autospec=True,
-                side_effect=lambda _self, **kw: calls.append(kw)):
+            rpc.EngineClient,
+            'start_task',
+            autospec=True,
+            side_effect=lambda _self, **kw: calls.append(kw),
+        ):
             self.engine.resume_workflow(wf_ex.id)
 
             self._await(lambda: len(calls) == 2, delay=0.05)
@@ -2905,14 +2853,13 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(states.SUCCESS, task_ex.state)
             self.assertEqual(
                 {'skip': True},
-                task_ex.runtime_context.get('wait_before_policy')
+                task_ex.runtime_context.get('wait_before_policy'),
             )
             self.assertEqual(1, len(task_ex.executions))
 
@@ -2958,7 +2905,7 @@ class PoliciesTest(base.EngineTestCase):
             policies.WaitBeforePolicy,
             'before_task_start',
             autospec=True,
-            side_effect=_before_task_start
+            side_effect=_before_task_start,
         ):
             wf_ex = self.engine.start_workflow('wf')
 
@@ -3008,7 +2955,7 @@ class PoliciesTest(base.EngineTestCase):
             policies.WaitAfterPolicy,
             'after_task_complete',
             autospec=True,
-            side_effect=_after_task_complete
+            side_effect=_after_task_complete,
         ):
             wf_ex = self.engine.start_workflow('wf')
 
@@ -3046,8 +2993,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
 
         self.await_task_running(task2_ex.id)
@@ -3146,8 +3092,10 @@ class PoliciesTest(base.EngineTestCase):
 
                     new = [e for e in t_ex.executions if e.id not in seen]
 
-                    if (len(t_ex.executions) == idx + 1 and
-                            new[0].state == states.RUNNING):
+                    if (
+                        len(t_ex.executions) == idx + 1
+                        and new[0].state == states.RUNNING
+                    ):
                         return new[0].id
 
             self._await(lambda: _new_running_action() is not None)
@@ -3163,7 +3111,7 @@ class PoliciesTest(base.EngineTestCase):
                     db_api.get_scheduled_jobs(
                         func_name=policies._FAIL_IF_INCOMPLETE_TASK_PATH
                     ),
-                    key=lambda j: j.created_at
+                    key=lambda j: j.created_at,
                 )
 
         _complete_action(0)
@@ -3176,7 +3124,8 @@ class PoliciesTest(base.EngineTestCase):
             ).runtime_context['timeout_policy']['id']
 
         stale = [
-            j for j in _get_timeout_jobs()
+            j
+            for j in _get_timeout_jobs()
             if j.func_args['timeout_id'] != cur_id
         ]
 
@@ -3245,8 +3194,10 @@ class PoliciesTest(base.EngineTestCase):
 
                     new = [e for e in t_ex.executions if e.id not in seen]
 
-                    if (len(t_ex.executions) == idx + 1 and
-                            new[0].state == states.RUNNING):
+                    if (
+                        len(t_ex.executions) == idx + 1
+                        and new[0].state == states.RUNNING
+                    ):
                         return new[0].id
 
             self._await(lambda: _new_running_action() is not None)
@@ -3326,8 +3277,7 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='join_task'
+                wf_ex.task_executions, name='join_task'
             )
 
             self.assertEqual(2, task_ex.runtime_context['concurrency'])
@@ -3373,7 +3323,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertRaises(
             exc.InvalidModelException,
             wb_service.create_workbook_v2,
-            CONCURRENCY_WB % -1
+            CONCURRENCY_WB % -1,
         )
 
     def test_concurrency_is_in_runtime_context_from_var(self):
@@ -3381,8 +3331,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'concurrency': 4}
+            'wb.wf1', wf_input={'concurrency': 4}
         )
 
         with db_api.transaction():
@@ -3406,8 +3355,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'concurrency': 0}
+            'wb.wf1', wf_input={'concurrency': 0}
         )
 
         with db_api.transaction():
@@ -3424,8 +3372,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'concurrency': -1}
+            'wb.wf1', wf_input={'concurrency': -1}
         )
 
         with db_api.transaction():
@@ -3455,16 +3402,14 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
-            wf_input={'wait_before': '1'}
+            'wb.wf1', wf_input={'wait_before': '1'}
         )
         self.await_workflow_error(wf_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn(
-            'Invalid data type in WaitBeforePolicy',
-            wf_ex.state_info
+            'Invalid data type in WaitBeforePolicy', wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)
 
@@ -3529,10 +3474,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.ERROR, fail_task_ex.state)
 
-        self.assertEqual(
-            {},
-            fail_task_ex.runtime_context["retry_task_policy"]
-        )
+        self.assertEqual({}, fail_task_ex.runtime_context["retry_task_policy"])
 
     def test_fail_on_true_condition(self):
         retry_wb = """---
@@ -3614,9 +3556,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(task_ex.state, states.ERROR, "Check task state")
 
     @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.Mock(side_effect=[1, 2, 3, 4])
+        std_actions.EchoAction, 'run', mock.Mock(side_effect=[1, 2, 3, 4])
     )
     def test_fail_on_with_retry(self):
         retry_wb = """---
@@ -3647,14 +3587,11 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
         self.assertEqual(
-            2,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            2, task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
     @mock.patch.object(
-        std_actions.EchoAction,
-        'run',
-        mock.Mock(side_effect=[1, 2, 3, 4])
+        std_actions.EchoAction, 'run', mock.Mock(side_effect=[1, 2, 3, 4])
     )
     def test_fail_on_with_retry_and_with_items(self):
         retry_wb = """---
@@ -3686,6 +3623,5 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
         self.assertEqual(
-            1,
-            task_ex.runtime_context['retry_task_policy']['retry_no']
+            1, task_ex.runtime_context['retry_task_policy']['retry_no']
         )

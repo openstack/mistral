@@ -93,9 +93,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
 
         # Verify task1 info.
         task1 = self._assert_single_item(
-            tasks,
-            name='task1',
-            state=states.SUCCESS
+            tasks, name='task1', state=states.SUCCESS
         )
 
         self.assertEqual(0, len(task1['workflow_executions']))
@@ -108,9 +106,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
 
         # Verify task2 info.
         task2 = self._assert_single_item(
-            tasks,
-            name='task2',
-            state=states.ERROR
+            tasks, name='task2', state=states.ERROR
         )
 
         self.assertEqual(1, len(task2['action_executions']))
@@ -184,26 +180,20 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(2, len(sub_wf_tasks))
 
         sub_wf_task1 = self._assert_single_item(
-            sub_wf_tasks,
-            name='task1',
-            state=states.SUCCESS
+            sub_wf_tasks, name='task1', state=states.SUCCESS
         )
         sub_wf_task2 = self._assert_single_item(
-            sub_wf_tasks,
-            name='task2',
-            state=states.ERROR
+            sub_wf_tasks, name='task2', state=states.ERROR
         )
 
         self.assertEqual(1, len(sub_wf_task1['action_executions']))
         self.assertEqual(
-            states.SUCCESS,
-            sub_wf_task1['action_executions'][0]['state']
+            states.SUCCESS, sub_wf_task1['action_executions'][0]['state']
         )
 
         self.assertEqual(1, len(sub_wf_task2['action_executions']))
         self.assertEqual(
-            states.ERROR,
-            sub_wf_task2['action_executions'][0]['state']
+            states.ERROR, sub_wf_task2['action_executions'][0]['state']
         )
 
         # Verify statistics.
@@ -259,7 +249,8 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf1')
 
         resp = self.app.get(
-            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id)
+            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id
+        )
 
         self.assertEqual(200, resp.status_int)
 
@@ -280,7 +271,8 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf1')
 
         resp = self.app.get(
-            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id)
+            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id
+        )
 
         self.assertEqual(200, resp.status_int)
 
@@ -334,15 +326,12 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(1, len(sub_wf_tasks))
 
         sub_wf_task2 = self._assert_single_item(
-            sub_wf_tasks,
-            name='task2',
-            state=states.ERROR
+            sub_wf_tasks, name='task2', state=states.ERROR
         )
 
         self.assertEqual(1, len(sub_wf_task2['action_executions']))
         self.assertEqual(
-            states.ERROR,
-            sub_wf_task2['action_executions'][0]['state']
+            states.ERROR, sub_wf_task2['action_executions'][0]['state']
         )
 
         # Verify statistics.
@@ -457,9 +446,7 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
 
         # Verify task2 info.
         task2 = self._assert_single_item(
-            tasks,
-            name='task2',
-            state=states.ERROR
+            tasks, name='task2', state=states.ERROR
         )
 
         self.assertEqual(3, task2['retry_count'])

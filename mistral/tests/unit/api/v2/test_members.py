@@ -31,14 +31,14 @@ WF_DEFINITION = {
     'tags': ['mc'],
     'scope': 'private',
     'project_id': security.get_project_id(),
-    'trust_id': '1234'
+    'trust_id': '1234',
 }
 
 WORKFLOW_MEMBER_PENDING = {
     'member_id': '11-22-33',
     'project_id': '<default-project>',
     'resource_type': 'workflow',
-    'status': 'pending'
+    'status': 'pending',
 }
 
 WORKFLOW_MEMBER_ACCEPTED = {}
@@ -72,7 +72,7 @@ class TestMembersController(base.APITest):
         self.assertIn(
             "Resource sharing feature can only be supported with "
             "authentication enabled",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     @mock.patch('mistral.context.AuthHook.before')
@@ -82,7 +82,7 @@ class TestMembersController(base.APITest):
         resp = self.app.post_json(
             '/v2/workflows/%s/members' % nonexistent_wf_id,
             {'member_id': '11-22-33'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -94,9 +94,7 @@ class TestMembersController(base.APITest):
         self.assertEqual(201, resp.status_int)
 
         resp = self.app.post_json(
-            MEMBER_URL,
-            {'member_id': '11-22-33'},
-            expect_errors=True
+            MEMBER_URL, {'member_id': '11-22-33'}, expect_errors=True
         )
 
         self.assertEqual(409, resp.status_int)
@@ -113,13 +111,12 @@ class TestMembersController(base.APITest):
         resp = self.app.post_json(
             '/v2/workflows/%s/members' % wf_public.id,
             {'member_id': '11-22-33'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
-            "Only private resource could be shared",
-            resp.body.decode()
+            "Only private resource could be shared", resp.body.decode()
         )
 
     @mock.patch('mistral.context.AuthHook.before')
@@ -133,9 +130,7 @@ class TestMembersController(base.APITest):
 
         with mock.patch(GET_PROJECT_PATH, get_mock):
             resp = self.app.post_json(
-                MEMBER_URL,
-                {'member_id': 'other_tenant'},
-                expect_errors=True
+                MEMBER_URL, {'member_id': 'other_tenant'}, expect_errors=True
             )
 
         self.assertEqual(404, resp.status_int)
@@ -153,8 +148,7 @@ class TestMembersController(base.APITest):
 
         with mock.patch(GET_PROJECT_PATH, get_b):
             resp = self.app.put_json(
-                '%s/11-22-33' % MEMBER_URL,
-                {'status': 'accepted'}
+                '%s/11-22-33' % MEMBER_URL, {'status': 'accepted'}
             )
 
             self.assertEqual(200, resp.status_int)
@@ -164,13 +158,12 @@ class TestMembersController(base.APITest):
             resp = self.app.post_json(
                 MEMBER_URL,
                 {'member_id': 'third-project-C'},
-                expect_errors=True
+                expect_errors=True,
             )
 
             self.assertEqual(403, resp.status_int)
             self.assertIn(
-                "Only the owner of a resource can share it",
-                resp.body.decode()
+                "Only the owner of a resource can share it", resp.body.decode()
             )
 
         # And no membership for C leaked into the database.
@@ -178,10 +171,7 @@ class TestMembersController(base.APITest):
             WORKFLOW_MEMBER_PENDING['resource_id'], 'workflow'
         )
 
-        self.assertNotIn(
-            'third-project-C',
-            [m.member_id for m in member_c]
-        )
+        self.assertNotIn('third-project-C', [m.member_id for m in member_c])
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_get_other_memberships(self, auth_mock):
@@ -206,7 +196,7 @@ class TestMembersController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            member_data  # Successful run
+            member_data,  # Successful run
         ]
 
         resp = self.app.post_json(MEMBER_URL, member_data)
@@ -245,18 +235,14 @@ class TestMembersController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(1, len(resp.json['members']))
         self._assert_dict_contains_subset(
-            WORKFLOW_MEMBER_PENDING,
-            resp.json['members'][0]
+            WORKFLOW_MEMBER_PENDING, resp.json['members'][0]
         )
 
         # Workflow owner queries the exact workflow member.
         resp = self.app.get('%s/11-22-33' % MEMBER_URL)
 
         self.assertEqual(200, resp.status_int)
-        self._assert_dict_contains_subset(
-            WORKFLOW_MEMBER_PENDING,
-            resp.json
-        )
+        self._assert_dict_contains_subset(WORKFLOW_MEMBER_PENDING, resp.json)
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_get_other_membership(self, auth_mock):
@@ -268,10 +254,7 @@ class TestMembersController(base.APITest):
         get_mock = mock.MagicMock(return_value='other_tenant')
 
         with mock.patch(GET_PROJECT_PATH, get_mock):
-            resp = self.app.get(
-                '%s/11-22-33' % MEMBER_URL,
-                expect_errors=True
-            )
+            resp = self.app.get('%s/11-22-33' % MEMBER_URL, expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
 
@@ -288,15 +271,11 @@ class TestMembersController(base.APITest):
         # Tenant accepts the workflow shared to him.
         with mock.patch(GET_PROJECT_PATH, get_mock):
             resp = self.app.put_json(
-                '%s/11-22-33' % MEMBER_URL,
-                {'status': 'accepted'}
+                '%s/11-22-33' % MEMBER_URL, {'status': 'accepted'}
             )
 
         self.assertEqual(200, resp.status_int)
-        self._assert_dict_contains_subset(
-            WORKFLOW_MEMBER_ACCEPTED,
-            resp.json
-        )
+        self._assert_dict_contains_subset(WORKFLOW_MEMBER_ACCEPTED, resp.json)
 
         # Tenant queries exact member of workflow shared to him.
         # (status=accepted).
@@ -304,20 +283,14 @@ class TestMembersController(base.APITest):
             resp = self.app.get('%s/11-22-33' % MEMBER_URL)
 
         self.assertEqual(200, resp.status_int)
-        self._assert_dict_contains_subset(
-            WORKFLOW_MEMBER_ACCEPTED,
-            resp.json
-        )
+        self._assert_dict_contains_subset(WORKFLOW_MEMBER_ACCEPTED, resp.json)
 
         # Workflow owner queries the exact workflow member.
         # (status=accepted).
         resp = self.app.get('%s/11-22-33' % MEMBER_URL)
 
         self.assertEqual(200, resp.status_int)
-        self._assert_dict_contains_subset(
-            WORKFLOW_MEMBER_ACCEPTED,
-            resp.json
-        )
+        self._assert_dict_contains_subset(WORKFLOW_MEMBER_ACCEPTED, resp.json)
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_update_membership_invalid_status(self, auth_mock):
@@ -332,14 +305,11 @@ class TestMembersController(base.APITest):
             resp = self.app.put_json(
                 '%s/11-22-33' % MEMBER_URL,
                 {'status': 'invalid'},
-                expect_errors=True
+                expect_errors=True,
             )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn(
-            "Invalid input",
-            resp.body.decode()
-        )
+        self.assertIn("Invalid input", resp.body.decode())
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_update_membership_not_shared_user(self, auth_mock):
@@ -350,7 +320,7 @@ class TestMembersController(base.APITest):
         resp = self.app.put_json(
             '%s/11-22-33' % MEMBER_URL,
             {'status': 'accepted'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(404, resp.status_int)
@@ -394,8 +364,7 @@ class TestMembersController(base.APITest):
 
         with mock.patch(GET_PROJECT_PATH, get_mock):
             resp = self.app.delete(
-                '%s/11-22-33' % MEMBER_URL,
-                expect_errors=True
+                '%s/11-22-33' % MEMBER_URL, expect_errors=True
             )
 
         self.assertEqual(404, resp.status_int)

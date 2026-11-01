@@ -60,7 +60,7 @@ WF_EX = models.WorkflowExecution(
     output={},
     params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
 )
 
 WF_EX_JSON = {
@@ -73,7 +73,7 @@ WF_EX_JSON = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'workflow_name': 'some',
-    'workflow_id': '123e4567-e89b-12d3-a456-426655441111'
+    'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
 }
 
 SUB_WF_EX = models.WorkflowExecution(
@@ -90,7 +90,7 @@ SUB_WF_EX = models.WorkflowExecution(
     params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    task_execution_id=uuidutils.generate_uuid()
+    task_execution_id=uuidutils.generate_uuid(),
 )
 
 SUB_WF_EX_JSON = {
@@ -104,7 +104,7 @@ SUB_WF_EX_JSON = {
     'state_info': None,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'task_execution_id': SUB_WF_EX.task_execution_id
+    'task_execution_id': SUB_WF_EX.task_execution_id,
 }
 
 MOCK_SUB_WF_EXECUTIONS = mock.MagicMock(return_value=[SUB_WF_EX])
@@ -133,8 +133,9 @@ SOURCE_WF_EX['source_execution_id'] = WF_EX.id
 SOURCE_WF_EX['id'] = uuidutils.generate_uuid()
 SOURCE_WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON_WITH_DESC)
 SOURCE_WF_EX_JSON_WITH_DESC['id'] = SOURCE_WF_EX.id
-SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id'] = \
+SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id'] = (
     SOURCE_WF_EX.source_execution_id
+)
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_SUB_WF_EX = mock.MagicMock(return_value=SUB_WF_EX)
@@ -162,7 +163,8 @@ class TestExecutionsController(base.APITest):
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
     def test_get_with_fields_filter(self, mocked_get):
         mocked_get.return_value = (
-            WF_EX_JSON_WITH_DESC['id'], WF_EX_JSON_WITH_DESC['description'],
+            WF_EX_JSON_WITH_DESC['id'],
+            WF_EX_JSON_WITH_DESC['description'],
         )
         resp = self.app.get('/v2/executions/123?fields=description')
         expected = {
@@ -178,7 +180,7 @@ class TestExecutionsController(base.APITest):
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            WF_EX  # Successful run
+            WF_EX,  # Successful run
         ]
 
         resp = self.app.get('/v2/executions/123')
@@ -207,8 +209,9 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, 'get_workflow_execution',
-                       return_value=WF_EX_WITH_PROJECT_ID)
+    @mock.patch.object(
+        db_api, 'get_workflow_execution', return_value=WF_EX_WITH_PROJECT_ID
+    )
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
 
@@ -216,20 +219,13 @@ class TestExecutionsController(base.APITest):
         self.assertIn('project_id', resp.json)
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(
-        rpc_clients.EngineClient,
-        'pause_workflow',
-        MOCK_UPDATED_WF_EX
+        rpc_clients.EngineClient, 'pause_workflow', MOCK_UPDATED_WF_EX
     )
     def test_put_state_paused(self):
-        update_exec = {
-            'id': WF_EX['id'],
-            'state': states.PAUSED
-        }
+        update_exec = {'id': WF_EX['id'], 'state': states.PAUSED}
 
         resp = self.app.put_json('/v2/executions/123', update_exec)
 
@@ -240,16 +236,14 @@ class TestExecutionsController(base.APITest):
         self.assertDictEqual(expected_exec, resp.json)
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_error(self, mock_stop_wf):
         update_exec = {
             'id': WF_EX['id'],
             'state': states.ERROR,
-            'state_info': 'Force'
+            'state_info': 'Force',
         }
 
         wf_ex = copy.deepcopy(WF_EX)
@@ -268,16 +262,11 @@ class TestExecutionsController(base.APITest):
         mock_stop_wf.assert_called_once_with('123', 'ERROR', 'Force')
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'resume_workflow')
     def test_put_state_resume(self, mock_resume_wf):
-        update_exec = {
-            'id': WF_EX['id'],
-            'state': states.RUNNING
-        }
+        update_exec = {'id': WF_EX['id'], 'state': states.RUNNING}
 
         wf_ex = copy.deepcopy(WF_EX)
         wf_ex['state'] = states.RUNNING
@@ -295,36 +284,26 @@ class TestExecutionsController(base.APITest):
         mock_resume_wf.assert_called_once_with('123', env=None)
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     def test_put_invalid_state(self):
         invalid_states = [states.IDLE, states.WAITING, states.RUNNING_DELAYED]
 
         for state in invalid_states:
-            update_exec = {
-                'id': WF_EX['id'],
-                'state': state
-            }
+            update_exec = {'id': WF_EX['id'], 'state': state}
 
             resp = self.app.put_json(
-                '/v2/executions/123',
-                update_exec,
-                expect_errors=True
+                '/v2/executions/123', update_exec, expect_errors=True
             )
 
             self.assertEqual(400, resp.status_int)
 
             self.assertIn(
-                'Cannot change state to %s.' % state,
-                resp.json['faultstring']
+                'Cannot change state to %s.' % state, resp.json['faultstring']
             )
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_info_unset(self, mock_stop_wf):
@@ -350,8 +329,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
     @mock.patch(
-        'mistral.db.v2.api.update_workflow_execution',
-        return_value=WF_EX
+        'mistral.db.v2.api.update_workflow_execution', return_value=WF_EX
     )
     def test_put_description(self, mock_update, mock_ensure):
         update_params = {'description': 'execution description.'}
@@ -362,19 +340,21 @@ class TestExecutionsController(base.APITest):
 
         mock_ensure.assert_called_once_with(
             '123',
-            fields=(models.WorkflowExecution.id,
-                    models.WorkflowExecution.root_execution_id)
+            fields=(
+                models.WorkflowExecution.id,
+                models.WorkflowExecution.root_execution_id,
+            ),
         )
         mock_update.assert_called_once_with('123', update_params)
 
     @mock.patch.object(
         sql_db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX)),
     )
     @mock.patch(
         'mistral.services.workflows.update_workflow_execution_env',
-        return_value=copy.deepcopy(UPDATED_WF_EX_ENV)
+        return_value=copy.deepcopy(UPDATED_WF_EX_ENV),
     )
     def test_put_env(self, mock_update_env):
         update_exec = {'params': '{"env": {"k1": "def"}}'}
@@ -389,17 +369,13 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'update_workflow_execution', MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put_json(
-            '/v2/executions/123',
-            dict(state=states.PAUSED),
-            expect_errors=True
+            '/v2/executions/123', dict(state=states.PAUSED), expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     def test_put_empty(self):
         resp = self.app.put_json('/v2/executions/123', {}, expect_errors=True)
@@ -407,44 +383,41 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn(
             'state, description, or env is not provided for update',
-            resp.json['faultstring']
+            resp.json['faultstring'],
         )
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     def test_put_state_and_description(self):
         resp = self.app.put_json(
             '/v2/executions/123',
             {'description': 'foobar', 'state': states.ERROR},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
             'description must be updated separately from state',
-            resp.json['faultstring']
+            resp.json['faultstring'],
         )
 
     @mock.patch.object(
         sql_db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX)),
     )
     @mock.patch(
-        'mistral.db.v2.api.update_workflow_execution',
-        return_value=WF_EX
+        'mistral.db.v2.api.update_workflow_execution', return_value=WF_EX
     )
     @mock.patch(
         'mistral.services.workflows.update_workflow_execution_env',
-        return_value=copy.deepcopy(UPDATED_WF_EX_ENV_DESC)
+        return_value=copy.deepcopy(UPDATED_WF_EX_ENV_DESC),
     )
     def test_put_env_and_description(self, mock_update_env, mock_update):
         update_exec = {
             'description': 'foobar',
-            'params': '{"env": {"k1": "def"}}'
+            'params': '{"env": {"k1": "def"}}',
         }
 
         resp = self.app.put_json('/v2/executions/123', update_exec)
@@ -457,21 +430,17 @@ class TestExecutionsController(base.APITest):
         mock_update_env.assert_called_once_with(UPDATED_WF_EX, {'k1': 'def'})
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_execution',
-        mock.MagicMock(return_value=WF_EX)
+        db_api, 'get_workflow_execution', mock.MagicMock(return_value=WF_EX)
     )
     def test_put_env_wrong_state(self):
         update_exec = {
             'id': WF_EX['id'],
             'state': states.SUCCESS,
-            'params': '{"env": {"k1": "def"}}'
+            'params': '{"env": {"k1": "def"}}',
         }
 
         resp = self.app.put_json(
-            '/v2/executions/123',
-            update_exec,
-            expect_errors=True
+            '/v2/executions/123', update_exec, expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
@@ -509,14 +478,15 @@ class TestExecutionsController(base.APITest):
             '',
             wf_ex_dict['id'],
             json.loads(expected_json['input']),
-            **kwargs
+            **kwargs,
         )
 
     @mock.patch.object(security, 'delete_trust')
     @mock.patch.object(security, 'create_trust')
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
-    def test_post_trust_deleted_when_start_fails(self, start_wf_func,
-                                                 m_create, m_delete):
+    def test_post_trust_deleted_when_start_fails(
+        self, start_wf_func, m_create, m_delete
+    ):
         self.override_config('auth_enable', True, group='pecan')
         self.override_config('use_trusts', True, group='engine')
         m_create.return_value = mock.Mock(id='trust-1')
@@ -524,8 +494,9 @@ class TestExecutionsController(base.APITest):
 
         with mock.patch('mistral.context.AuthHook.before'):
             resp = self.app.post_json(
-                '/v2/executions', WF_EX_JSON_WITH_DESC.copy(),
-                expect_errors=True
+                '/v2/executions',
+                WF_EX_JSON_WITH_DESC.copy(),
+                expect_errors=True,
             )
 
         self.assertEqual(500, resp.status_int)
@@ -534,8 +505,9 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     @mock.patch.object(db_api, 'load_workflow_execution')
-    def test_post_with_exec_id_exec_doesnt_exist(self, load_wf_ex_func,
-                                                 start_wf_func):
+    def test_post_with_exec_id_exec_doesnt_exist(
+        self, load_wf_ex_func, start_wf_func
+    ):
         # NOTE: In fact, we use "white box" testing here to understand
         # if the REST controller calls other APIs as expected. This is
         # the only way of testing available with the current testing
@@ -556,8 +528,7 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
-        load_wf_ex_func.assert_called_once_with(expected_json['id'],
-                                                fields=())
+        load_wf_ex_func.assert_called_once_with(expected_json['id'], fields=())
 
         kwargs = json.loads(expected_json['params'])
         kwargs['description'] = expected_json['description']
@@ -567,13 +538,14 @@ class TestExecutionsController(base.APITest):
             '',
             expected_json['id'],
             json.loads(expected_json['input']),
-            **kwargs
+            **kwargs,
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     @mock.patch.object(db_api, 'load_workflow_execution')
-    def test_post_with_exec_id_exec_exists(self, load_wf_ex_func,
-                                           start_wf_func):
+    def test_post_with_exec_id_exec_exists(
+        self, load_wf_ex_func, start_wf_func
+    ):
         # NOTE: In fact, we use "white box" testing here to understand
         # if the REST controller calls other APIs as expected. This is
         # the only way of testing available with the current testing
@@ -593,8 +565,7 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
-        load_wf_ex_func.assert_called_once_with(expected_json['id'],
-                                                fields=())
+        load_wf_ex_func.assert_called_once_with(expected_json['id'], fields=())
 
         # Note that "start_workflow" method on engine API should not be called
         # in this case because we passed execution ID to the endpoint and the
@@ -606,8 +577,9 @@ class TestExecutionsController(base.APITest):
     def test_post_with_source_execution_id(self, wf_exec_mock):
         wf_exec_mock.return_value = SOURCE_WF_EX.to_dict()
 
-        resp = self.app.post_json('/v2/executions/',
-                                  SOURCE_WF_EX_JSON_WITH_DESC)
+        resp = self.app.post_json(
+            '/v2/executions/', SOURCE_WF_EX_JSON_WITH_DESC
+        )
 
         source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
         del source_wf_ex_json['source_execution_id']
@@ -619,7 +591,7 @@ class TestExecutionsController(base.APITest):
 
         expected_description = "{} Based on the execution '{}'".format(
             exec_dict['description'],
-            SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id']
+            SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id'],
         )
 
         wf_exec_mock.assert_called_once_with(
@@ -628,7 +600,7 @@ class TestExecutionsController(base.APITest):
             exec_dict['id'],
             json.loads(exec_dict['input']),
             description=expected_description,
-            **json.loads(exec_dict['params'])
+            **json.loads(exec_dict['params']),
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_EMPTY)
@@ -658,7 +630,7 @@ class TestExecutionsController(base.APITest):
             exec_dict['id'],
             json.loads(exec_dict['input']),
             description=exec_dict['description'],
-            **json.loads(exec_dict['params'])
+            **json.loads(exec_dict['params']),
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
@@ -680,17 +652,20 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post_with_internal_params(self, start_wf_func):
-        for key in ('task_execution_id', 'root_execution_id', 'index',
-                    'triggered_by', 'subworkflow_depth'):
+        for key in (
+            'task_execution_id',
+            'root_execution_id',
+            'index',
+            'triggered_by',
+            'subworkflow_depth',
+        ):
             json_body = WF_EX_JSON_WITH_DESC.copy()
             json_body['params'] = json.dumps(
                 {'env': {'k1': 'abc'}, key: uuidutils.generate_uuid()}
             )
 
             resp = self.app.post_json(
-                '/v2/executions',
-                json_body,
-                expect_errors=True
+                '/v2/executions', json_body, expect_errors=True
             )
 
             self.assertEqual(400, resp.status_int)
@@ -707,7 +682,7 @@ class TestExecutionsController(base.APITest):
             'root_execution_id': uuidutils.generate_uuid(),
             'index': 3,
             'triggered_by': {'type': 'cron_trigger', 'id': '123'},
-            'subworkflow_depth': 3
+            'subworkflow_depth': 3,
         }
 
         start_wf_func.return_value = SOURCE_WF_EX.to_dict()
@@ -715,8 +690,9 @@ class TestExecutionsController(base.APITest):
         json_body = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
         del json_body['params']
 
-        with mock.patch.object(db_api, 'get_workflow_execution',
-                               return_value=source_wf_ex):
+        with mock.patch.object(
+            db_api, 'get_workflow_execution', return_value=source_wf_ex
+        ):
             resp = self.app.post_json('/v2/executions/', json_body)
 
         self.assertEqual(201, resp.status_int)
@@ -725,21 +701,24 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual({'k1': 'abc'}, kwargs['env'])
 
-        for key in ('task_execution_id', 'root_execution_id', 'index',
-                    'triggered_by', 'subworkflow_depth'):
+        for key in (
+            'task_execution_id',
+            'root_execution_id',
+            'index',
+            'triggered_by',
+            'subworkflow_depth',
+        ):
             self.assertNotIn(key, kwargs)
 
     @mock.patch.object(
-        rpc_clients.EngineClient,
-        'start_workflow',
-        MOCK_ACTION_EXC
+        rpc_clients.EngineClient, 'start_workflow', MOCK_ACTION_EXC
     )
     def test_post_throws_exception(self):
         context = self.assertRaises(
             webtest_app.AppError,
             self.app.post_json,
             '/v2/executions',
-            WF_EX_JSON
+            WF_EX_JSON,
         )
 
         self.assertIn('Bad response: 400', context.args[0])
@@ -749,7 +728,7 @@ class TestExecutionsController(base.APITest):
             webtest_app.AppError,
             self.app.post_json,
             '/v2/executions',
-            {'description': 'some description here.'}
+            {'description': 'some description here.'},
         )
 
         self.assertIn('Bad response: 400', context.args[0])
@@ -757,7 +736,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        mock.MagicMock(return_value=(states.RUNNING,))
+        mock.MagicMock(return_value=(states.RUNNING,)),
     )
     def test_delete_running_execution(self):
         resp = self.app.delete('/v2/executions/123', expect_errors=True)
@@ -767,15 +746,15 @@ class TestExecutionsController(base.APITest):
             "Only completed executions can be deleted. "
             "Use --force to override this. "
             "Execution 123 is in RUNNING state",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
-    @mock.patch.object(db_api,
-                       'get_workflow_execution',
-                       mock.MagicMock(return_value=(states.SUCCESS,)))
-    @mock.patch.object(db_api,
-                       'delete_workflow_execution',
-                       MOCK_DELETE)
+    @mock.patch.object(
+        db_api,
+        'get_workflow_execution',
+        mock.MagicMock(return_value=(states.SUCCESS,)),
+    )
+    @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_DELETE)
     def test_delete_success_exec(self):
         resp = self.app.delete('/v2/executions/123')
 
@@ -801,7 +780,7 @@ class TestExecutionsController(base.APITest):
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [WF_EX]  # Successful run
+            [WF_EX],  # Successful run
         ]
 
         resp = self.app.get('/v2/executions')
@@ -823,7 +802,8 @@ class TestExecutionsController(base.APITest):
     def test_get_all_pagination(self):
         resp = self.app.get(
             '/v2/executions?limit=1&sort_keys=id,workflow_name'
-            '&sort_dirs=asc,desc')
+            '&sort_dirs=asc,desc'
+        )
 
         self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
@@ -831,15 +811,14 @@ class TestExecutionsController(base.APITest):
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json['executions'][0])
 
         param_dict = utils.get_dict_from_string(
-            resp.json['next'].split('?')[1],
-            delimiter='&'
+            resp.json['next'].split('?')[1], delimiter='&'
         )
 
         expected_dict = {
             'marker': '123e4567-e89b-12d3-a456-426655440000',
             'limit': 1,
             'sort_keys': 'id,workflow_name',
-            'sort_dirs': 'asc,desc'
+            'sort_dirs': 'asc,desc',
         }
 
         self.assertDictEqual(expected_dict, param_dict)
@@ -847,7 +826,7 @@ class TestExecutionsController(base.APITest):
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(
             '/v2/executions?limit=-1&sort_keys=id&sort_dirs=asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -857,7 +836,7 @@ class TestExecutionsController(base.APITest):
     def test_get_all_pagination_limit_not_integer(self):
         resp = self.app.get(
             '/v2/executions?limit=1.1&sort_keys=id&sort_dirs=asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -867,20 +846,20 @@ class TestExecutionsController(base.APITest):
     def test_get_all_pagination_invalid_sort_dirs_length(self):
         resp = self.app.get(
             '/v2/executions?limit=1&sort_keys=id&sort_dirs=asc,asc',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
-            resp.body.decode()
+            resp.body.decode(),
         )
 
     def test_get_all_pagination_unknown_direction(self):
         resp = self.app.get(
             '/v2/executions?limit=1&sort_keys=id&sort_dirs=nonexist',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(400, resp.status_int)
@@ -888,9 +867,7 @@ class TestExecutionsController(base.APITest):
         self.assertIn("Unknown sort direction", resp.body.decode())
 
     @mock.patch.object(
-        db_api,
-        'get_workflow_executions',
-        MOCK_SUB_WF_EXECUTIONS
+        db_api, 'get_workflow_executions', MOCK_SUB_WF_EXECUTIONS
     )
     def test_get_task_workflow_executions(self):
         resp = self.app.get(
@@ -901,13 +878,13 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(1, len(resp.json['executions']))
         self.assertDictEqual(
-            SUB_WF_EX_JSON_WITH_DESC,
-            resp.json['executions'][0]
+            SUB_WF_EX_JSON_WITH_DESC, resp.json['executions'][0]
         )
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
-    @mock.patch.object(rest_utils, 'get_all',
-                       return_value=resources.Executions())
+    @mock.patch.object(
+        rest_utils, 'get_all', return_value=resources.Executions()
+    )
     def test_get_all_executions_with_output(self, mock_get_all):
         resp = self.app.get('/v2/executions?include_output=true')
 
@@ -918,12 +895,13 @@ class TestExecutionsController(base.APITest):
 
         self.assertEqual(
             execution._get_workflow_execution_resource_with_output,
-            resource_function
+            resource_function,
         )
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
-    @mock.patch.object(rest_utils, 'get_all',
-                       return_value=resources.Executions())
+    @mock.patch.object(
+        rest_utils, 'get_all', return_value=resources.Executions()
+    )
     def test_get_all_executions_without_output(self, mock_get_all):
         resp = self.app.get('/v2/executions')
 
@@ -933,8 +911,7 @@ class TestExecutionsController(base.APITest):
         resource_function = kwargs['resource_function']
 
         self.assertEqual(
-            execution._get_workflow_execution_resource,
-            resource_function
+            execution._get_workflow_execution_resource, resource_function
         )
 
     @mock.patch('mistral.db.v2.api.get_workflow_executions')
@@ -951,8 +928,7 @@ class TestExecutionsController(base.APITest):
 
     def test_get_all_projects_normal_user(self):
         resp = self.app.get(
-            '/v2/executions?all_projects=true',
-            expect_errors=True
+            '/v2/executions?all_projects=true', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -977,39 +953,33 @@ class TestExecutionsController(base.APITest):
     def test_get_all_with_nulls_not_valid(self):
         resp = self.app.get(
             '/v2/executions?limit=10&sort_keys=id&sort_dirs=asc&nulls=invalid',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(500, resp.status_int)
         self.assertIn(
-            "'invalid' is not a valid field name.",
-            resp.body.decode()
+            "'invalid' is not a valid field name.", resp.body.decode()
         )
 
         resp = self.app.get(
             '/v2/executions?limit=10&sort_keys=id&sort_dirs=asc&nulls=id',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(500, resp.status_int)
         self.assertIn(
-            "The field 'id' can't hold None value.",
-            resp.body.decode()
+            "The field 'id' can't hold None value.", resp.body.decode()
         )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_all_tasks_within_execution(self):
         fake_execution_id = "00000000-0000-0000-0000-000000000000"
         resp = self.app.get(
-            '/v2/executions/%s/tasks' % fake_execution_id,
-            expect_errors=True
+            '/v2/executions/%s/tasks' % fake_execution_id, expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
-        self.assertIn(
-            "Object not found",
-            resp.body.decode()
-        )
+        self.assertIn("Object not found", resp.body.decode())
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_root_execution_id_present_in_logging_values(self, start_wf_func):
@@ -1028,5 +998,6 @@ class TestExecutionsController(base.APITest):
             ctx = calls[0][0][0]
             self.assertIsInstance(ctx, context.MistralContext)
             logging_values = ctx.get_logging_values()
-            self.assertEqual(exp_root_execution_id,
-                             logging_values["root_execution_id"])
+            self.assertEqual(
+                exp_root_execution_id, logging_values["root_execution_id"]
+            )

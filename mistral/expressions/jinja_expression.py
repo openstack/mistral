@@ -37,7 +37,7 @@ JINJA_BLOCK_REGEXP = '({%(.*?)%})'
 
 JINJA_OPTS = {'undefined_to_none': False}
 
-MAX_REPEAT_LENGTH = 10 ** 7
+MAX_REPEAT_LENGTH = 10**7
 
 
 class _ImmutableSandboxedEnvironment(sandbox.ImmutableSandboxedEnvironment):
@@ -65,22 +65,29 @@ class _BoundedSandboxedEnvironment(_ImmutableSandboxedEnvironment):
                 (right, left) if isinstance(left, int) else (left, right)
             )
 
-            if (isinstance(seq, (str, bytes, list, tuple)) and
-                    isinstance(count, int) and
-                    len(seq) * count > MAX_REPEAT_LENGTH):
+            if (
+                isinstance(seq, (str, bytes, list, tuple))
+                and isinstance(count, int)
+                and len(seq) * count > MAX_REPEAT_LENGTH
+            ):
                 raise sandbox.SecurityError(
                     "Repetition result exceeds %d items" % MAX_REPEAT_LENGTH
                 )
 
-            if (isinstance(left, int) and isinstance(right, int) and
-                    left.bit_length() + right.bit_length() >
-                    base.MAX_INT_BITS):
+            if (
+                isinstance(left, int)
+                and isinstance(right, int)
+                and left.bit_length() + right.bit_length() > base.MAX_INT_BITS
+            ):
                 raise sandbox.SecurityError(
                     "Integer result exceeds %d bits" % base.MAX_INT_BITS
                 )
-        elif (isinstance(left, int) and isinstance(right, int) and
-                abs(left) > 1 and
-                left.bit_length() * right > base.MAX_INT_BITS):
+        elif (
+            isinstance(left, int)
+            and isinstance(right, int)
+            and abs(left) > 1
+            and left.bit_length() * right > base.MAX_INT_BITS
+        ):
             raise sandbox.SecurityError(
                 "Integer result exceeds %d bits" % base.MAX_INT_BITS
             )
@@ -91,9 +98,7 @@ class _BoundedSandboxedEnvironment(_ImmutableSandboxedEnvironment):
 
 
 _environment = _BoundedSandboxedEnvironment(
-    undefined=jinja2.StrictUndefined,
-    trim_blocks=True,
-    lstrip_blocks=True
+    undefined=jinja2.StrictUndefined, trim_blocks=True, lstrip_blocks=True
 )
 
 _filters = base.get_custom_functions()
@@ -144,9 +149,9 @@ class JinjaEvaluator(base.Evaluator):
         ctx = get_jinja_context(data_context)
 
         try:
-            result = cls._env.compile_expression(
-                expression, **JINJA_OPTS
-            )(**ctx)
+            result = cls._env.compile_expression(expression, **JINJA_OPTS)(
+                **ctx
+            )
 
             # For StrictUndefined values, UndefinedError only gets raised
             # when the value is accessed, not when it gets created. The
@@ -191,17 +196,14 @@ class InlineJinjaEvaluator(base.Evaluator):
         try:
             cls._env.parse(expression)
         except jinja2.exceptions.TemplateError as e:
-            raise exc.JinjaGrammarException(
-                "Syntax error '%s'." % str(e)
-            )
+            raise exc.JinjaGrammarException("Syntax error '%s'." % str(e))
 
     @classmethod
     def evaluate(cls, expression, data_context):
         # NOTE: never log data_context, it may contain sensitive data
         # such as the auth token.
         LOG.debug(
-            "Start to evaluate Jinja expression. [expression='%s']",
-            expression
+            "Start to evaluate Jinja expression. [expression='%s']", expression
         )
 
         patterns = cls.find_expression_pattern.findall(expression)
@@ -226,7 +228,7 @@ class InlineJinjaEvaluator(base.Evaluator):
                     " error, re-raising initial exception [expression=%s,"
                     " error=%s]",
                     expression,
-                    str(e)
+                    str(e),
                 )
 
                 raise e
@@ -245,14 +247,12 @@ class InlineJinjaEvaluator(base.Evaluator):
 
         # NOTE: do not log the result, it may contain sensitive data
         # rendered from the workflow context (secrets, credentials).
-        LOG.debug(
-            "Finished evaluation. [expression='%s']",
-            expression
-        )
+        LOG.debug("Finished evaluation. [expression='%s']", expression)
 
         return result
 
     @classmethod
     def is_expression(cls, s):
-        return (cls.find_expression_pattern.search(s) or
-                cls.find_block_pattern.search(s))
+        return cls.find_expression_pattern.search(
+            s
+        ) or cls.find_block_pattern.search(s)

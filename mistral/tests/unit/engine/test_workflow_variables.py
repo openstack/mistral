@@ -67,11 +67,8 @@ class WorkflowVariablesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
 
         self.assertDictEqual(
-            {
-                'literal_var': 'Literal value',
-                'yaql_var': 'Hello Renat'
-            },
-            wf_output
+            {'literal_var': 'Literal value', 'yaql_var': 'Hello Renat'},
+            wf_output,
         )
 
     def test_dynamic_action_names(self):
@@ -95,8 +92,7 @@ class WorkflowVariablesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf2',
-            wf_input={'wf_action': 'std.echo', 'param1': 'Hello'}
+            'wf2', wf_input={'wf_action': 'std.echo', 'param1': 'Hello'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -136,7 +132,10 @@ class WorkflowVariablesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf3',
-            wf_input={'wf_action': 'std.echo', 'wf_input': {'output': 'Hello'}}
+            wf_input={
+                'wf_action': 'std.echo',
+                'wf_input': {'output': 'Hello'},
+            },
         )
 
         self.await_workflow_success(wf_ex.id)

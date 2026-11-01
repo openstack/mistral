@@ -54,23 +54,27 @@ class ReverseWorkflowControllerTest(base.DbTestCase):
     def _create_workflow_execution(self, params):
         wf_def = db_api.get_workflow_definitions()[0]
 
-        self.wf_ex = db_api.create_workflow_execution({
-            'id': '1-2-3-4',
-            'spec': self.wb_spec.get_workflows().get('wf').to_dict(),
-            'state': states.RUNNING,
-            'params': params,
-            'workflow_id': wf_def.id
-        })
+        self.wf_ex = db_api.create_workflow_execution(
+            {
+                'id': '1-2-3-4',
+                'spec': self.wb_spec.get_workflows().get('wf').to_dict(),
+                'state': states.RUNNING,
+                'params': params,
+                'workflow_id': wf_def.id,
+            }
+        )
 
     def _create_task_execution(self, name, state):
         tasks_spec = self.wb_spec.get_workflows()['wf'].get_tasks()
 
-        return db_api.create_task_execution({
-            'name': name,
-            'spec': tasks_spec[name].to_dict(),
-            'state': state,
-            'workflow_execution_id': self.wf_ex.id
-        })
+        return db_api.create_task_execution(
+            {
+                'name': name,
+                'spec': tasks_spec[name].to_dict(),
+                'state': state,
+                'workflow_execution_id': self.wf_ex.id,
+            }
+        )
 
     def test_start_workflow_task2(self):
         with db_api.transaction():
@@ -117,7 +121,7 @@ class ReverseWorkflowControllerTest(base.DbTestCase):
                     workflow_name='wf',
                     state=states.SUCCESS,
                     output={'result': 'Hey'},
-                    accepted=True
+                    accepted=True,
                 )
             )
 
@@ -137,7 +141,7 @@ class ReverseWorkflowControllerTest(base.DbTestCase):
                     workflow_name='wf',
                     state=states.SUCCESS,
                     output={'result': 'Hi!'},
-                    accepted=True
+                    accepted=True,
                 )
             )
 

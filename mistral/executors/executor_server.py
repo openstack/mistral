@@ -69,9 +69,9 @@ class ExecutorServer(service_base.MistralService):
         if self._rpc_server:
             self._rpc_server.stop(graceful)
 
-    def run_action(self, rpc_ctx, action, action_ex_id, safe_rerun, exec_ctx,
-                   timeout):
-
+    def run_action(
+        self, rpc_ctx, action, action_ex_id, safe_rerun, exec_ctx, timeout
+    ):
         """Receives calls over RPC to run action on executor.
 
         :param rpc_ctx: RPC request context dictionary.
@@ -89,7 +89,7 @@ class ExecutorServer(service_base.MistralService):
             "[action=%s, action_ex_id=%s, timeout=%s]",
             type(action).__name__,
             action_ex_id,
-            timeout
+            timeout,
         )
 
         redelivered = rpc_ctx.redelivered or False
@@ -100,21 +100,17 @@ class ExecutorServer(service_base.MistralService):
             safe_rerun,
             exec_ctx,
             redelivered,
-            timeout=timeout
+            timeout=timeout,
         )
 
         LOG.debug(
-            "Sending action result to engine"
-            " [action=%s, action_ex_id=%s]",
+            "Sending action result to engine [action=%s, action_ex_id=%s]",
             type(action).__name__,
-            action_ex_id
+            action_ex_id,
         )
 
         return res
 
 
 def get_oslo_service(setup_profiler=True):
-    return ExecutorServer(
-        exe.DefaultExecutor(),
-        setup_profiler=setup_profiler
-    )
+    return ExecutorServer(exe.DefaultExecutor(), setup_profiler=setup_profiler)

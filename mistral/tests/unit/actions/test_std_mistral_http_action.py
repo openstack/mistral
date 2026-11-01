@@ -21,29 +21,16 @@ from mistral.tests.unit import base
 
 URL = 'http://some_url'
 
-DATA = {
-    'server': {
-        'id': '12345',
-        'metadata': {
-            'name': 'super_server'
-        }
-    }
-}
+DATA = {'server': {'id': '12345', 'metadata': {'name': 'super_server'}}}
 
 
 def get_fake_response(content, code, **kwargs):
-    return base.FakeHTTPResponse(
-        content,
-        code,
-        **kwargs
-    )
+    return base.FakeHTTPResponse(content, code, **kwargs)
 
 
 def get_success_fake_response():
     return get_fake_response(
-        json.dumps(DATA),
-        200,
-        headers={'Content-Type': 'application/json'}
+        json.dumps(DATA), 200, headers={'Content-Type': 'application/json'}
     )
 
 
@@ -54,11 +41,7 @@ class MistralHTTPActionTest(base.BaseTest):
         mock_ctx = mock.Mock()
 
         action = std.MistralHTTPAction(
-            url=URL,
-            method='POST',
-            body=DATA,
-            timeout=20,
-            allow_redirects=True
+            url=URL, method='POST', body=DATA, timeout=20, allow_redirects=True
         )
 
         DATA_STR = json.dumps(DATA)
@@ -80,7 +63,7 @@ class MistralHTTPActionTest(base.BaseTest):
             'Mistral-Task-Id': mock_ex.task_execution_id,
             'Mistral-Callback-URL': mock_ex.callback_url,
             'Mistral-Action-Execution-Id': mock_ex.action_execution_id,
-            'Mistral-Workflow-Execution-Id': mock_ex.workflow_execution_id
+            'Mistral-Workflow-Execution-Id': mock_ex.workflow_execution_id,
         }
 
         mocked_method.assert_called_with(
@@ -95,5 +78,5 @@ class MistralHTTPActionTest(base.BaseTest):
             auth=None,
             allow_redirects=True,
             proxies=None,
-            verify=None
+            verify=None,
         )

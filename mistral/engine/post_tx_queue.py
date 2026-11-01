@@ -76,6 +76,7 @@ def run(func):
     be decorated with this decorator.
     Take a look at default_engine methods with @post_tx_queue.run
     """
+
     @functools.wraps(func)
     def decorate(*args, **kw):
         _prepare()
@@ -130,7 +131,8 @@ def _process_queue(queue):
                     func(*args)
                 except Exception:
                     LOG.exception(
-                        "Failed to run transactional engine operation.")
+                        "Failed to run transactional engine operation."
+                    )
 
                     raise
         else:
@@ -138,4 +140,5 @@ def _process_queue(queue):
                 func(*args)
             except Exception:
                 LOG.exception(
-                    "Failed to run non-transactional engine operation.")
+                    "Failed to run non-transactional engine operation."
+                )

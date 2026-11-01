@@ -57,9 +57,7 @@ class ExecutionTrustTest(base.EngineTestCase):
 
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
-            contexts = {
-                ex.name: ex.runtime_context for ex in wf_execs
-            }
+            contexts = {ex.name: ex.runtime_context for ex in wf_execs}
 
         self.assertEqual(
             'trust-1', contexts['parent'].get('execution_trust_id')

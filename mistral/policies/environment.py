@@ -22,72 +22,45 @@ rules = [
         name=ENVIRONMENTS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create a new environment.',
-        operations=[
-            {
-                'path': '/v2/environments',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/environments', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete the named environment.',
         operations=[
-            {
-                'path': '/v2/environments/{environment_name}',
-                'method': 'DELETE'
-            }
-        ]
+            {'path': '/v2/environments/{environment_name}', 'method': 'DELETE'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return the named environment.',
         operations=[
-            {
-                'path': '/v2/environments/{environment_name}',
-                'method': 'GET'
-            }
-        ]
+            {'path': '/v2/environments/{environment_name}', 'method': 'GET'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all environments.',
-        operations=[
-            {
-                'path': '/v2/environments',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/environments', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make an environment publicly available.',
         operations=[
-            {
-                'path': '/v2/environments',
-                'method': 'POST'
-            },
-            {
-                'path': '/v2/environments',
-                'method': 'PUT'
-            }
-        ]
+            {'path': '/v2/environments', 'method': 'POST'},
+            {'path': '/v2/environments', 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=ENVIRONMENTS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update an environment.',
-        operations=[
-            {
-                'path': '/v2/environments',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/environments', 'method': 'PUT'}],
+    ),
 ]
 
 

@@ -32,7 +32,9 @@ class EgressValidateHostTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_host,
-            'metadata.internal', 22, 'action_std_ssh'
+            'metadata.internal',
+            22,
+            'action_std_ssh',
         )
 
         gai.assert_called_once_with('metadata.internal', 22)
@@ -46,14 +48,17 @@ class EgressValidateHostTest(base.BaseTest):
     @mock.patch.object(socket, 'getaddrinfo')
     def test_options_are_read_from_group(self, gai):
         self.override_config('denied_cidrs', [], group='action_std_http')
-        self.override_config('allowed_hosts', ['ok.example.com'],
-                             group='action_std_http')
+        self.override_config(
+            'allowed_hosts', ['ok.example.com'], group='action_std_http'
+        )
         gai.return_value = _addrinfo('127.0.0.1')
 
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_host,
-            'other.example.com', 22, 'action_std_ssh'
+            'other.example.com',
+            22,
+            'action_std_ssh',
         )
 
         self.override_config('denied_cidrs', [], group='action_std_ssh')
@@ -62,8 +67,9 @@ class EgressValidateHostTest(base.BaseTest):
 
     @mock.patch.object(socket, 'getaddrinfo')
     def test_allowed_hosts(self, gai):
-        self.override_config('allowed_hosts', ['ok.example.com'],
-                             group='action_std_ssh')
+        self.override_config(
+            'allowed_hosts', ['ok.example.com'], group='action_std_ssh'
+        )
         gai.return_value = _addrinfo('93.184.216.34')
 
         egress.validate_host('ok.example.com', 22, 'action_std_ssh')
@@ -71,5 +77,7 @@ class EgressValidateHostTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_host,
-            'other.example.com', 22, 'action_std_ssh'
+            'other.example.com',
+            22,
+            'action_std_ssh',
         )

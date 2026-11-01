@@ -40,7 +40,7 @@ SUPPORTED_TRANSITION_STATES = [
     states.ERROR,
     states.CANCELLED,
     states.PAUSED,
-    states.RUNNING
+    states.RUNNING,
 ]
 
 
@@ -58,8 +58,7 @@ def _get_action_execution(id, fields=()):
 
     with db_api.transaction():
         return _get_action_execution_resource(
-            db_api.get_action_execution(id),
-            fields=fields
+            db_api.get_action_execution(id), fields=fields
         )
 
 
@@ -76,9 +75,16 @@ def _get_action_execution_resource_for_list(action_ex, fields=()):
     return resources.ActionExecution.from_db_model(action_ex, fields=fields)
 
 
-def _get_action_executions(task_execution_id=None, marker=None, limit=None,
-                           sort_keys='created_at', sort_dirs='asc',
-                           fields='', include_output=False, **filters):
+def _get_action_executions(
+    task_execution_id=None,
+    marker=None,
+    limit=None,
+    sort_keys='created_at',
+    sort_dirs='asc',
+    fields='',
+    include_output=False,
+    **filters,
+):
     """Return all action executions.
 
     Where project_id is the same as the requester or
@@ -119,14 +125,15 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **filters
+        **filters,
     )
 
 
 class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text,
-                         types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.ActionExecution, wtypes.text, types.uniquelist
+    )
     def get(self, id, fields=None):
         """Return the specified action_execution.
 
@@ -140,25 +147,24 @@ class ActionExecutionsController(rest.RestController):
         LOG.debug("Fetch action_execution [id=%s]", id)
 
         rest_utils.validate_fields(
-            fields,
-            resources.ActionExecution.get_fields()
+            fields, resources.ActionExecution.get_fields()
         )
 
         return _get_action_execution(id, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecution,
-                         body=resources.ActionExecution, status_code=201)
+    @wsme_pecan.wsexpose(
+        resources.ActionExecution,
+        body=resources.ActionExecution,
+        status_code=201,
+    )
     def post(self, action_ex):
         """Create new action_execution.
 
         :param action_ex: Action to execute
         """
         acl.enforce('action_executions:create', context.ctx())
-        LOG.debug(
-            "Create action_execution [action_execution=%s]",
-            action_ex
-        )
+        LOG.debug("Create action_execution [action_execution=%s]", action_ex)
         name = action_ex.name
         description = action_ex.description or None
         action_input = action_ex.input or {}
@@ -175,16 +181,14 @@ class ActionExecutionsController(rest.RestController):
             action_input,
             description=description,
             namespace=namespace,
-            **params
+            **params,
         )
 
         return resources.ActionExecution.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
-        resources.ActionExecution,
-        wtypes.text,
-        body=resources.ActionExecution
+        resources.ActionExecution, wtypes.text, body=resources.ActionExecution
     )
     def put(self, id, action_ex):
         """Update the specified action_execution.
@@ -197,15 +201,13 @@ class ActionExecutionsController(rest.RestController):
         LOG.debug(
             "Update action_execution [id=%s, action_execution=%s]",
             id,
-            action_ex
+            action_ex,
         )
 
         if action_ex.state not in SUPPORTED_TRANSITION_STATES:
             raise exc.InvalidResultException(
-                "Error. Expected one of %s, actual: %s" % (
-                    SUPPORTED_TRANSITION_STATES,
-                    action_ex.state
-                )
+                "Error. Expected one of %s, actual: %s"
+                % (SUPPORTED_TRANSITION_STATES, action_ex.state)
             )
 
         if states.is_completed(action_ex.state):
@@ -229,18 +231,52 @@ class ActionExecutionsController(rest.RestController):
         return resources.ActionExecution.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text, types.uuid,
-                         wtypes.text, wtypes.text, bool, types.jsontype,
-                         types.jsontype, types.jsontype, wtypes.text, bool)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', created_at=None, name=None,
-                tags=None, updated_at=None, workflow_name=None,
-                task_name=None, task_execution_id=None, state=None,
-                state_info=None, accepted=None, input=None, output=None,
-                params=None, description=None, include_output=False):
+    @wsme_pecan.wsexpose(
+        resources.ActionExecutions,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        types.uuid,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        types.jsontype,
+        types.jsontype,
+        types.jsontype,
+        wtypes.text,
+        bool,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        created_at=None,
+        name=None,
+        tags=None,
+        updated_at=None,
+        workflow_name=None,
+        task_name=None,
+        task_execution_id=None,
+        state=None,
+        state_info=None,
+        accepted=None,
+        input=None,
+        output=None,
+        params=None,
+        description=None,
+        include_output=False,
+    ):
         """Return all tasks within the execution.
 
         Where project_id is the same as the requester or
@@ -301,7 +337,7 @@ class ActionExecutionsController(rest.RestController):
             input=input,
             output=output,
             params=params,
-            description=description
+            description=description,
         )
 
         LOG.debug(
@@ -311,7 +347,7 @@ class ActionExecutionsController(rest.RestController):
             limit,
             sort_keys,
             sort_dirs,
-            filters
+            filters,
         )
 
         return _get_action_executions(
@@ -321,7 +357,7 @@ class ActionExecutionsController(rest.RestController):
             sort_dirs=sort_dirs,
             fields=fields,
             include_output=include_output,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
@@ -336,8 +372,9 @@ class ActionExecutionsController(rest.RestController):
         LOG.debug("Delete action_execution [id=%s]", id)
 
         if not cfg.CONF.api.allow_action_execution_deletion:
-            raise exc.NotAllowedException("Action execution deletion is not "
-                                          "allowed.")
+            raise exc.NotAllowedException(
+                "Action execution deletion is not allowed."
+            )
 
         with db_api.transaction():
             action_ex = db_api.get_action_execution(id)
@@ -357,19 +394,52 @@ class ActionExecutionsController(rest.RestController):
 
 class TasksActionExecutionController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, types.uuid,
-                         int, types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, types.uniquelist, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text, bool, types.jsontype, types.jsontype,
-                         types.jsontype, wtypes.text, bool)
-    def get_all(self, task_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='',
-                created_at=None, name=None, tags=None,
-                updated_at=None, workflow_name=None, task_name=None,
-                state=None, state_info=None, accepted=None, input=None,
-                output=None, params=None, description=None,
-                include_output=None):
+    @wsme_pecan.wsexpose(
+        resources.ActionExecutions,
+        types.uuid,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        types.jsontype,
+        types.jsontype,
+        types.jsontype,
+        wtypes.text,
+        bool,
+    )
+    def get_all(
+        self,
+        task_execution_id,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        created_at=None,
+        name=None,
+        tags=None,
+        updated_at=None,
+        workflow_name=None,
+        task_name=None,
+        state=None,
+        state_info=None,
+        accepted=None,
+        input=None,
+        output=None,
+        params=None,
+        description=None,
+        include_output=None,
+    ):
         """Return all tasks within the execution.
 
         Where project_id is the same as the requester or
@@ -430,7 +500,7 @@ class TasksActionExecutionController(rest.RestController):
             input=input,
             output=output,
             params=params,
-            description=description
+            description=description,
         )
 
         LOG.debug(
@@ -440,7 +510,7 @@ class TasksActionExecutionController(rest.RestController):
             limit,
             sort_keys,
             sort_dirs,
-            filters
+            filters,
         )
 
         return _get_action_executions(
@@ -450,12 +520,13 @@ class TasksActionExecutionController(rest.RestController):
             sort_dirs=sort_dirs,
             fields=fields,
             include_output=include_output,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text, wtypes.text,
-                         types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.ActionExecution, wtypes.text, wtypes.text, types.uniquelist
+    )
     def get(self, task_execution_id, action_ex_id, fields=()):
         """Return the specified action_execution.
 
@@ -470,8 +541,7 @@ class TasksActionExecutionController(rest.RestController):
         LOG.debug("Fetch action_execution [id=%s]", action_ex_id)
 
         rest_utils.validate_fields(
-            fields,
-            resources.ActionExecution.get_fields()
+            fields, resources.ActionExecution.get_fields()
         )
 
         return _get_action_execution(action_ex_id, fields=fields)

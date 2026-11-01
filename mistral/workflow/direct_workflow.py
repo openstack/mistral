@@ -49,8 +49,10 @@ class DirectWorkflowController(base.WorkflowController):
     __workflow_type__ = "direct"
 
     def _get_upstream_task_executions(self, task_spec, triggered_by=None):
-        t_specs_names = [t_spec.get_name() for t_spec in
-                         self.wf_spec.find_inbound_task_specs(task_spec)]
+        t_specs_names = [
+            t_spec.get_name()
+            for t_spec in self.wf_spec.find_inbound_task_specs(task_spec)
+        ]
 
         if not t_specs_names:
             return []
@@ -59,15 +61,16 @@ class DirectWorkflowController(base.WorkflowController):
             if triggered_by and len(triggered_by) > 0:
                 return self._get_task_executions(
                     name=t_specs_names[0],  # not a join, has just one parent
-                    state={'in': (states.SUCCESS, states.ERROR,
-                                  states.CANCELLED)},
+                    state={
+                        'in': (states.SUCCESS, states.ERROR, states.CANCELLED)
+                    },
                     id={'in': triggered_by},
-                    processed=True
+                    processed=True,
                 )
             return self._get_task_executions(
                 name=t_specs_names[0],  # not a join, has just one parent
                 state={'in': (states.SUCCESS, states.ERROR, states.CANCELLED)},
-                processed=True
+                processed=True,
             )
 
         t_execs_candidates = self._get_task_executions(
@@ -98,7 +101,8 @@ class DirectWorkflowController(base.WorkflowController):
             task_execs = [task_ex]
         else:
             task_execs = [
-                t_ex for t_ex in self.wf_ex.task_executions
+                t_ex
+                for t_ex in self.wf_ex.task_executions
                 if states.is_completed(t_ex.state) and not t_ex.processed
             ]
 
@@ -113,14 +117,13 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_ex,
                 self.wf_spec,
                 t_s,
-                self.get_task_inbound_context(t_s)
+                self.get_task_inbound_context(t_s),
             )
             for t_s in self.wf_spec.find_start_tasks()
         ]
 
     @profiler.trace(
-        'direct-wf-controller-find-next-commands-for-task',
-        hide_args=True
+        'direct-wf-controller-find-next-commands-for-task', hide_args=True
     )
     def _find_next_commands_for_task(self, task_ex):
         """Finds next commands based on the state of the given task.
@@ -143,20 +146,13 @@ class DirectWorkflowController(base.WorkflowController):
             elif not t_s:
                 t_s = self.wf_spec.get_task(task_ex.name)
 
-            triggered_by = [
-                {
-                    'task_id': task_ex.id,
-                    'event': event_name
-                }
-            ]
+            triggered_by = [{'task_id': task_ex.id, 'event': event_name}]
 
             failed_t_ex = None
 
             if t_n not in commands.ENGINE_CMD_CLS:
                 failed_t_ex = self._find_failed_downstream_task_execution(
-                    task_ex,
-                    t_s,
-                    reused_ids
+                    task_ex, t_s, reused_ids
                 )
 
             if failed_t_ex:
@@ -170,7 +166,7 @@ class DirectWorkflowController(base.WorkflowController):
                     triggered_by=triggered_by,
                     handles_error=(event_name == 'on-error'),
                     rerun=True,
-                    ctx=ctx
+                    ctx=ctx,
                 )
             else:
                 cmd = commands.create_command(
@@ -181,7 +177,7 @@ class DirectWorkflowController(base.WorkflowController):
                     ctx,
                     params=params,
                     triggered_by=triggered_by,
-                    handles_error=(event_name == 'on-error')
+                    handles_error=(event_name == 'on-error'),
                 )
 
             self._configure_if_join(cmd)
@@ -192,15 +188,17 @@ class DirectWorkflowController(base.WorkflowController):
 
         return cmds
 
-    def _find_failed_downstream_task_execution(self, task_ex, task_spec,
-                                               exclude_ids):
+    def _find_failed_downstream_task_execution(
+        self, task_ex, task_spec, exclude_ids
+    ):
         """Finds a failed execution of task_spec triggered by task_ex.
 
         It exists when task_ex was rerun after it had already triggered it.
         """
 
-        if (task_spec.get_join() or
-                (task_ex.runtime_context or {}).get('new_pass')):
+        if task_spec.get_join() or (task_ex.runtime_context or {}).get(
+            'new_pass'
+        ):
             return None
 
         t_name = task_spec.get_name()
@@ -209,8 +207,7 @@ class DirectWorkflowController(base.WorkflowController):
             return None
 
         t_execs = self._get_task_executions(
-            name=t_name,
-            state={'in': (states.ERROR, states.CANCELLED)}
+            name=t_name, state={'in': (states.ERROR, states.CANCELLED)}
         )
 
         # Prefer the unhandled failure over one from an earlier loop pass.
@@ -240,8 +237,7 @@ class DirectWorkflowController(base.WorkflowController):
 
     def rerun_tasks(self, task_execs, reset=True):
         cmds = super(DirectWorkflowController, self).rerun_tasks(
-            task_execs,
-            reset
+            task_execs, reset
         )
 
         for cmd in cmds:
@@ -258,13 +254,11 @@ class DirectWorkflowController(base.WorkflowController):
             if not cfg.CONF.context_versioning.enabled:
                 for t_ex in batch:
                     ctx = utils.merge_dicts(
-                        ctx,
-                        data_flow.evaluate_task_outbound_context(t_ex)
+                        ctx, data_flow.evaluate_task_outbound_context(t_ex)
                     )
             else:
                 ctx = data_flow.evaluate_upstream_context(
-                    batch,
-                    additive_context=ctx
+                    batch, additive_context=ctx
                 )
 
         return ctx
@@ -281,16 +275,22 @@ class DirectWorkflowController(base.WorkflowController):
         return self._get_join_logical_state(task_spec)
 
     def find_indirectly_affected_task_executions(self, t_name):
-        all_joins = {task_spec.get_name()
-                     for task_spec in self.wf_spec.get_tasks()
-                     if task_spec.get_join()}
+        all_joins = {
+            task_spec.get_name()
+            for task_spec in self.wf_spec.get_tasks()
+            if task_spec.get_join()
+        }
 
-        t_execs_cache = {
-            t_ex.name: t_ex for t_ex in self._get_task_executions(
-                fields=('id', 'name'),
-                name={'in': all_joins}
-            )
-        } if all_joins else {}
+        t_execs_cache = (
+            {
+                t_ex.name: t_ex
+                for t_ex in self._get_task_executions(
+                    fields=('id', 'name'), name={'in': all_joins}
+                )
+            }
+            if all_joins
+            else {}
+        )
 
         visited_task_names = set()
         clauses = self.wf_spec.find_outbound_task_names(t_name)
@@ -327,15 +327,14 @@ class DirectWorkflowController(base.WorkflowController):
         cnt = db_api.get_task_executions_count(
             workflow_execution_id=self.wf_ex.id,
             state=states.ERROR,
-            error_handled=False
+            error_handled=False,
         )
 
         return cnt == 0
 
     def _find_end_task_executions_as_batches(self):
         batches = db_api.get_completed_task_executions_as_batches(
-            workflow_execution_id=self.wf_ex.id,
-            has_next_tasks=False
+            workflow_execution_id=self.wf_ex.id, has_next_tasks=False
         )
 
         for batch in batches:
@@ -358,7 +357,7 @@ class DirectWorkflowController(base.WorkflowController):
             ctx,
             data_flow.get_workflow_environment_dict(self.wf_ex),
             self.wf_ex.context,
-            self.wf_ex.input
+            self.wf_ex.input,
         )
 
         # [(task_name, params, 'on-success'|'on-error'|'on-complete'), ...]
@@ -390,8 +389,9 @@ class DirectWorkflowController(base.WorkflowController):
 
                     result.append((name, params, 'on-success'))
 
-        if states.is_completed(t_s) \
-                and not states.is_cancelled_or_skipped(t_s):
+        if states.is_completed(t_s) and not states.is_cancelled_or_skipped(
+            t_s
+        ):
             for name, cond, params in self.wf_spec.get_on_complete_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)
@@ -401,8 +401,7 @@ class DirectWorkflowController(base.WorkflowController):
         return result
 
     @profiler.trace(
-        'direct-wf-controller-get-join-logical-state',
-        hide_args=True
+        'direct-wf-controller-get-join-logical-state', hide_args=True
     )
     def _get_join_logical_state(self, task_spec):
         """Evaluates logical state of 'join' task.
@@ -435,20 +434,11 @@ class DirectWorkflowController(base.WorkflowController):
             t_ex = t_execs_cache[t_s.get_name()]
 
             tup = self._get_induced_join_state(
-                t_s,
-                t_ex,
-                task_spec,
-                t_execs_cache
+                t_s, t_ex, task_spec, t_execs_cache
             )
 
             induced_states.append(
-                (
-                    t_s.get_name(),
-                    t_ex,
-                    tup[0],
-                    tup[1],
-                    tup[2]
-                )
+                (t_s.get_name(), t_ex, tup[0], tup[1], tup[2])
             )
 
         def count(state):
@@ -467,16 +457,14 @@ class DirectWorkflowController(base.WorkflowController):
         total_count = len(induced_states)
 
         def _blocked_message():
-            return (
-                'Blocked by tasks: %s' %
-                [s[0] for s in induced_states if s[2] == states.WAITING]
-            )
+            return 'Blocked by tasks: %s' % [
+                s[0] for s in induced_states if s[2] == states.WAITING
+            ]
 
         def _failed_message():
-            return (
-                'Failed by tasks: %s' %
-                [s[0] for s in induced_states if s[2] == states.ERROR]
-            )
+            return 'Failed by tasks: %s' % [
+                s[0] for s in induced_states if s[2] == states.ERROR
+            ]
 
         def _triggered_by(state):
             return [
@@ -491,8 +479,7 @@ class DirectWorkflowController(base.WorkflowController):
 
             if runnings_tuple[0] >= spec_cardinality:
                 return base.TaskLogicalState(
-                    states.RUNNING,
-                    triggered_by=_triggered_by(states.RUNNING)
+                    states.RUNNING, triggered_by=_triggered_by(states.RUNNING)
                 )
 
             # E.g. 'join: 3' with inbound [ERROR, ERROR, RUNNING, WAITING]
@@ -504,23 +491,20 @@ class DirectWorkflowController(base.WorkflowController):
             cardinality = spec_cardinality - runnings_tuple[0]
 
             return base.TaskLogicalState(
-                states.WAITING,
-                _blocked_message(),
-                cardinality=cardinality
+                states.WAITING, _blocked_message(), cardinality=cardinality
             )
 
         if join_expr == 'all':
             if total_count == runnings_tuple[0]:
                 return base.TaskLogicalState(
-                    states.RUNNING,
-                    triggered_by=_triggered_by(states.RUNNING)
+                    states.RUNNING, triggered_by=_triggered_by(states.RUNNING)
                 )
 
             if errors_tuple[0] > 0:
                 return base.TaskLogicalState(
                     states.ERROR,
                     _failed_message(),
-                    triggered_by=_triggered_by(states.ERROR)
+                    triggered_by=_triggered_by(states.ERROR),
                 )
 
             # Remaining cardinality is just a difference between all tasks and
@@ -528,9 +512,7 @@ class DirectWorkflowController(base.WorkflowController):
             cardinality = total_count - runnings_tuple[1]
 
             return base.TaskLogicalState(
-                states.WAITING,
-                _blocked_message(),
-                cardinality=cardinality
+                states.WAITING, _blocked_message(), cardinality=cardinality
             )
 
         raise RuntimeError('Unexpected join expression: %s' % join_expr)
@@ -539,18 +521,15 @@ class DirectWorkflowController(base.WorkflowController):
     # we may have multiple task executions for a task. It should
     # accept inbound task execution rather than a spec.
     @profiler.trace(
-        'direct-wf-controller-get-induced-join-state',
-        hide_args=True
+        'direct-wf-controller-get-induced-join-state', hide_args=True
     )
-    def _get_induced_join_state(self, in_task_spec, in_task_ex,
-                                join_task_spec, t_execs_cache):
+    def _get_induced_join_state(
+        self, in_task_spec, in_task_ex, join_task_spec, t_execs_cache
+    ):
         join_task_name = join_task_spec.get_name()
 
         if not in_task_ex:
-            possible, depth = self._possible_route(
-                in_task_spec,
-                t_execs_cache
-            )
+            possible, depth = self._possible_route(in_task_spec, t_execs_cache)
 
             if possible:
                 return states.WAITING, depth, None
@@ -586,9 +565,7 @@ class DirectWorkflowController(base.WorkflowController):
 
             if not t_ex:
                 possible, depth = self._possible_route(
-                    t_s,
-                    t_execs_cache,
-                    depth + 1
+                    t_s, t_execs_cache, depth + 1
                 )
 
                 if possible:
@@ -625,17 +602,21 @@ class DirectWorkflowController(base.WorkflowController):
     def _prepare_task_executions_cache(self, task_spec):
         names = self._find_all_parent_task_names(task_spec)
 
-        t_execs = self._get_task_executions(
-            fields=('id', 'name', 'state', 'next_tasks', 'created_at'),
-            name={'in': names}
-        ) if names else []  # don't perform a db request if 'names' are empty
+        t_execs = (
+            self._get_task_executions(
+                fields=('id', 'name', 'state', 'next_tasks', 'created_at'),
+                name={'in': names},
+            )
+            if names
+            else []
+        )  # don't perform a db request if 'names' are empty
 
         # In a cycle a task has one execution per pass; keep the current one.
         t_execs_cache = {}
 
         for t_ex in sorted(
             t_execs,
-            key=lambda t: (not states.is_completed(t.state), t.created_at)
+            key=lambda t: (not states.is_completed(t.state), t.created_at),
         ):
             t_execs_cache[t_ex.name] = t_ex
 

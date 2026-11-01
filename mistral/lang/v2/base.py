@@ -25,9 +25,9 @@ class BaseSpec(base.BaseSpec):
             "name": types.NONEMPTY_STRING,
             "version": types.VERSION,
             "description": types.NONEMPTY_STRING,
-            "tags": types.UNIQUE_STRING_LIST
+            "tags": types.UNIQUE_STRING_LIST,
         },
-        "required": ["name", "version"]
+        "required": ["name", "version"],
     }
 
 

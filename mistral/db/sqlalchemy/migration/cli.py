@@ -17,6 +17,7 @@
 # Hardcode the threading backend to avoid using eventlet until this will
 # eventually become the default
 import oslo_service.backend as service_backend
+
 service_backend.init_backend(service_backend.BackendType.THREADING)
 
 import os
@@ -64,9 +65,7 @@ def do_upgrade(config, cmd):
 
 def do_stamp(config, cmd):
     do_alembic_command(
-        config, cmd,
-        CONF.command.revision,
-        sql=CONF.command.sql
+        config, cmd, CONF.command.revision, sql=CONF.command.sql
     )
 
 
@@ -83,11 +82,12 @@ def do_populate_actions(config, cmd):
 
 def do_revision(config, cmd):
     do_alembic_command(
-        config, cmd,
+        config,
+        cmd,
         message=CONF.command.message,
         autogenerate=CONF.command.autogenerate,
         sql=CONF.command.sql,
-        rev_id=CONF.command.rev_id
+        rev_id=CONF.command.rev_id,
     )
 
 
@@ -121,10 +121,12 @@ def add_command_parsers(subparsers):
     parser.set_defaults(func=do_revision)
 
 
-command_opt = cfg.SubCommandOpt('command',
-                                title='Command',
-                                help='Available commands',
-                                handler=add_command_parsers)
+command_opt = cfg.SubCommandOpt(
+    'command',
+    title='Command',
+    help='Available commands',
+    handler=add_command_parsers,
+)
 
 CONF.register_cli_opt(command_opt)
 
@@ -132,6 +134,7 @@ CONF.register_cli_opt(command_opt)
 # from mistral-extra if present
 try:
     import mistral_extra.config as extra_conf
+
     CONF.register_cli_opt(extra_conf.os_actions_mapping_path)
 except ImportError:
     LOG.debug("Mistral-extra not installed")
@@ -142,8 +145,7 @@ def main():
         os.path.join(os.path.dirname(__file__), 'alembic.ini')
     )
     config.set_main_option(
-        'script_location',
-        'mistral.db.sqlalchemy.migration:alembic_migrations'
+        'script_location', 'mistral.db.sqlalchemy.migration:alembic_migrations'
     )
     # attach the Mistral conf to the Alembic conf
     config.mistral_config = CONF

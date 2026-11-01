@@ -20,6 +20,7 @@ from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
 class PolicyTest(base.BaseTest):
     """Tests whether the configuration of the policy engine is correct."""
+
     def setUp(self):
         super(PolicyTest, self).setUp()
 
@@ -27,7 +28,7 @@ class PolicyTest(base.BaseTest):
 
         rules = {
             "example:admin": "rule:admin_only",
-            "example:admin_or_owner": "rule:admin_or_owner"
+            "example:admin_or_owner": "rule:admin_or_owner",
         }
 
         self.policy.register_rules(rules)
@@ -47,7 +48,7 @@ class PolicyTest(base.BaseTest):
             acl.enforce,
             'example:admin',
             auth_ctx,
-            auth_ctx.to_dict()
+            auth_ctx.to_dict(),
         )
 
     def test_admin_or_owner_api_allowed(self):
@@ -66,5 +67,5 @@ class PolicyTest(base.BaseTest):
             acl.enforce,
             'example:admin_or_owner',
             auth_ctx,
-            target
+            target,
         )

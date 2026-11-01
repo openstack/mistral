@@ -80,8 +80,15 @@ workflows:
 """
 
 
-def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx, target=None,
-                   async_=True, timeout=None):
+def _run_at_target(
+    action,
+    action_ex_id,
+    safe_rerun,
+    exec_ctx,
+    target=None,
+    async_=True,
+    timeout=None,
+):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
@@ -92,7 +99,7 @@ def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx, target=None,
         exec_ctx=exec_ctx,
         target=target,
         async_=async_,
-        timeout=timeout
+        timeout=timeout,
     )
 
 
@@ -127,10 +134,7 @@ class EnvironmentTest(base.EngineTestCase):
             wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
             wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
 
-            expected_wf1_input = {
-                'param1': 'Bonnie',
-                'param2': 'Clyde'
-            }
+            expected_wf1_input = {'param1': 'Bonnie', 'param2': 'Clyde'}
 
             self.assertIsNotNone(wf1_ex.task_execution_id)
             self.assertDictEqual(wf1_ex.input, expected_wf1_input)
@@ -142,8 +146,7 @@ class EnvironmentTest(base.EngineTestCase):
             wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
             self.assertDictEqual(
-                {'final_result': "'Bonnie & Clyde'"},
-                wf1_ex.output
+                {'final_result': "'Bonnie & Clyde'"}, wf1_ex.output
             )
 
         # Wait till workflow 'wf2' is completed.
@@ -154,7 +157,7 @@ class EnvironmentTest(base.EngineTestCase):
 
             self.assertDictEqual(
                 {'slogan': "'Bonnie & Clyde' is a cool movie!\n"},
-                wf2_ex.output
+                wf2_ex.output,
             )
 
         with db_api.transaction():
@@ -183,7 +186,7 @@ class EnvironmentTest(base.EngineTestCase):
                         'action_execution_id': a_ex.id,
                     },
                     target=TARGET,
-                    timeout=None
+                    timeout=None,
                 )
 
     def test_subworkflow_env_task_input(self):
@@ -191,7 +194,7 @@ class EnvironmentTest(base.EngineTestCase):
             'var1': TARGET,
             'var2': 'Bonnie',
             'var3': 'Clyde',
-            'var4': 'movie'
+            'var4': 'movie',
         }
 
         self._test_subworkflow(env)
@@ -202,7 +205,7 @@ class EnvironmentTest(base.EngineTestCase):
             'var2': 'Bonnie',
             'var3': '<% env().var5 %>',
             'var4': 'movie',
-            'var5': 'Clyde'
+            'var5': 'Clyde',
         }
 
         self._test_subworkflow(env)
@@ -222,18 +225,11 @@ class EnvironmentTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        env = {
-            "var1": "val1",
-            "var2": "<% env().var1 %>"
-        }
+        env = {"var1": "val1", "var2": "<% env().var1 %>"}
 
         # Run with 'evaluate_env' set to True.
 
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            env=env,
-            evaluate_env=True
-        )
+        wf_ex = self.engine.start_workflow('wf', env=env, evaluate_env=True)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -242,21 +238,11 @@ class EnvironmentTest(base.EngineTestCase):
 
             t = self._assert_single_item(wf_ex.task_executions, name='task1')
 
-            self.assertDictEqual(
-                {
-                    "var1": "val1",
-                    "var2": "val1"
-                },
-                t.published
-            )
+            self.assertDictEqual({"var1": "val1", "var2": "val1"}, t.published)
 
         # Run with 'evaluate_env' set to False.
 
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            env=env,
-            evaluate_env=False
-        )
+        wf_ex = self.engine.start_workflow('wf', env=env, evaluate_env=False)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -266,11 +252,7 @@ class EnvironmentTest(base.EngineTestCase):
             t = self._assert_single_item(wf_ex.task_executions, name='task1')
 
             self.assertDictEqual(
-                {
-                    "var1": "val1",
-                    "var2": "<% env().var1 %>"
-                },
-                t.published
+                {"var1": "val1", "var2": "<% env().var1 %>"}, t.published
             )
 
     def test_evaluate_env_parameter_subworkflow(self):
@@ -300,9 +282,7 @@ class EnvironmentTest(base.EngineTestCase):
         env = {"dummy": "<% $.ENSURE.MISTRAL.DOESNT.EVALUATE.ENV %>"}
 
         parent_wf_ex = self.engine.start_workflow(
-            'parent_wf',
-            env=env,
-            evaluate_env=False
+            'parent_wf', env=env, evaluate_env=False
         )
 
         self.await_workflow_success(parent_wf_ex.id)
@@ -311,19 +291,16 @@ class EnvironmentTest(base.EngineTestCase):
             parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
 
             t = self._assert_single_item(
-                parent_wf_ex.task_executions,
-                name='task1'
+                parent_wf_ex.task_executions, name='task1'
             )
 
-            sub_wf_ex = db_api.get_workflow_executions(
-                task_execution_id=t.id
-            )[0]
+            sub_wf_ex = db_api.get_workflow_executions(task_execution_id=t.id)[
+                0
+            ]
 
             self.assertDictEqual(
-                {
-                    "result": "<% $.ENSURE.MISTRAL.DOESNT.EVALUATE.ENV %>"
-                },
-                sub_wf_ex.output
+                {"result": "<% $.ENSURE.MISTRAL.DOESNT.EVALUATE.ENV %>"},
+                sub_wf_ex.output,
             )
 
         # Run with 'evaluate_env' set to True.
@@ -331,9 +308,7 @@ class EnvironmentTest(base.EngineTestCase):
         env = {"dummy": "<% 1 + 1 %>"}
 
         parent_wf_ex = self.engine.start_workflow(
-            'parent_wf',
-            env=env,
-            evaluate_env=True
+            'parent_wf', env=env, evaluate_env=True
         )
 
         self.await_workflow_success(parent_wf_ex.id)
@@ -342,20 +317,14 @@ class EnvironmentTest(base.EngineTestCase):
             parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
 
             t = self._assert_single_item(
-                parent_wf_ex.task_executions,
-                name='task1'
+                parent_wf_ex.task_executions, name='task1'
             )
 
-            sub_wf_ex = db_api.get_workflow_executions(
-                task_execution_id=t.id
-            )[0]
+            sub_wf_ex = db_api.get_workflow_executions(task_execution_id=t.id)[
+                0
+            ]
 
-            self.assertDictEqual(
-                {
-                    "result": 2
-                },
-                sub_wf_ex.output
-            )
+            self.assertDictEqual({"result": 2}, sub_wf_ex.output)
 
     def test_env_not_copied_to_context(self):
         wf_text = """---
@@ -371,11 +340,7 @@ class EnvironmentTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        env = {
-            'param1': 'val1',
-            'param2': 'val2',
-            'param3': 'val3'
-        }
+        env = {'param1': 'val1', 'param2': 'val2', 'param3': 'val3'}
 
         wf_ex = self.engine.start_workflow('wf', env=env)
 
@@ -384,10 +349,7 @@ class EnvironmentTest(base.EngineTestCase):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            t = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
-            )
+            t = self._assert_single_item(wf_ex.task_executions, name='task1')
 
             self.assertDictEqual({'result': 'val1'}, t.published)
 
@@ -415,11 +377,7 @@ class EnvironmentTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        env = {
-            'param1': 'val1',
-            'param2': 'val2',
-            'param3': 'val3'
-        }
+        env = {'param1': 'val1', 'param2': 'val2', 'param3': 'val3'}
 
         parent_wf_ex = self.engine.start_workflow('parent_wf', env=env)
 
@@ -429,20 +387,14 @@ class EnvironmentTest(base.EngineTestCase):
             parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
 
             t = self._assert_single_item(
-                parent_wf_ex.task_executions,
-                name='task1'
+                parent_wf_ex.task_executions, name='task1'
             )
 
-            sub_wf_ex = db_api.get_workflow_executions(
-                task_execution_id=t.id
-            )[0]
+            sub_wf_ex = db_api.get_workflow_executions(task_execution_id=t.id)[
+                0
+            ]
 
-            self.assertDictEqual(
-                {
-                    "result": "val1"
-                },
-                sub_wf_ex.output
-            )
+            self.assertDictEqual({"result": "val1"}, sub_wf_ex.output)
 
             # The environment of the subworkflow must be empty.
             # To evaluate expressions it should be taken from the

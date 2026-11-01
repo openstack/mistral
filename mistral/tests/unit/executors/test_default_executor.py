@@ -53,9 +53,7 @@ class DefaultExecutorTimeoutTest(base.BaseTest):
 
         self.engine_client = mock.Mock()
         patcher = mock.patch.object(
-            d_exe.rpc,
-            'get_engine_client',
-            return_value=self.engine_client
+            d_exe.rpc, 'get_engine_client', return_value=self.engine_client
         )
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -64,9 +62,7 @@ class DefaultExecutorTimeoutTest(base.BaseTest):
 
         # Threads abandoned by other tests still update the shared counter.
         self._await(
-            lambda: d_exe._abandoned_count == 0,
-            delay=0.05,
-            timeout=10
+            lambda: d_exe._abandoned_count == 0, delay=0.05, timeout=10
         )
 
     def _blocking_action(self):
@@ -101,9 +97,7 @@ class DefaultExecutorTimeoutTest(base.BaseTest):
     def test_timed_out_action_late_result_is_ignored(self):
         action, _ = self._blocking_action()
 
-        result = self.executor.run_action(
-            action, None, False, {}, timeout=0.2
-        )
+        result = self.executor.run_action(action, None, False, {}, timeout=0.2)
 
         self.assertTrue(result.is_error())
         self.assertTrue(action.started.wait(5))

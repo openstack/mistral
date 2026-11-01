@@ -68,6 +68,7 @@ class DefaultSchedulerTest(base.DbTestCase):
             """Re-raise a thread timeout if occurred"""
             if t.exception:
                 raise t.exception
+
         self.addCleanup(reraise_timeout, self.timeout_thread)
 
     def target_method(self, *args, **kwargs):
@@ -96,7 +97,7 @@ class DefaultSchedulerTest(base.DbTestCase):
         job = scheduler_base.SchedulerJob(
             run_after=1,
             func_name=TARGET_METHOD_PATH,
-            func_args={'name': 'task', 'id': '321'}
+            func_args={'name': 'task', 'id': '321'},
         )
 
         self.scheduler.schedule(job)
@@ -130,7 +131,8 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         self.assertIsNotNone(captured_at)
         self.assertTrue(
-            timeutils.utcnow() - captured_at < datetime.timedelta(seconds=3))
+            timeutils.utcnow() - captured_at < datetime.timedelta(seconds=3)
+        )
 
         self._unlock_target_method()
         self._wait_target_method_end()
@@ -143,12 +145,13 @@ class DefaultSchedulerTest(base.DbTestCase):
     def test_in_memory_job_removed_when_capture_fails(self):
         # If a job can't be captured (e.g. another scheduler grabbed it first)
         # the in-memory collection must still be cleaned up.
-        with mock.patch.object(self.scheduler, '_capture_scheduled_job',
-                               return_value=False):
+        with mock.patch.object(
+            self.scheduler, '_capture_scheduled_job', return_value=False
+        ):
             job = scheduler_base.SchedulerJob(
                 run_after=0,
                 func_name=TARGET_METHOD_PATH,
-                func_args={'name': 'task', 'id': '321'}
+                func_args={'name': 'task', 'id': '321'},
             )
 
             self.scheduler.schedule(job)
@@ -160,8 +163,7 @@ class DefaultSchedulerTest(base.DbTestCase):
 
     def test_stop_drops_pending_jobs(self):
         job = scheduler_base.SchedulerJob(
-            run_after=10000,
-            func_name=TARGET_METHOD_PATH
+            run_after=10000, func_name=TARGET_METHOD_PATH
         )
 
         self.scheduler.schedule(job)
@@ -180,16 +182,20 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         method.side_effect = lambda **kwargs: calls.append(kwargs['id'])
 
-        self.scheduler.schedule(scheduler_base.SchedulerJob(
-            run_after=4,
-            func_name=TARGET_METHOD_PATH,
-            func_args={'id': 'late'}
-        ))
-        self.scheduler.schedule(scheduler_base.SchedulerJob(
-            run_after=1,
-            func_name=TARGET_METHOD_PATH,
-            func_args={'id': 'soon'}
-        ))
+        self.scheduler.schedule(
+            scheduler_base.SchedulerJob(
+                run_after=4,
+                func_name=TARGET_METHOD_PATH,
+                func_args={'id': 'late'},
+            )
+        )
+        self.scheduler.schedule(
+            scheduler_base.SchedulerJob(
+                run_after=1,
+                func_name=TARGET_METHOD_PATH,
+                func_args={'id': 'soon'},
+            )
+        )
 
         self._await(lambda: calls == ['soon', 'late'])
 
@@ -203,14 +209,16 @@ class DefaultSchedulerTest(base.DbTestCase):
         # 1. Create a scheduled job in Job Store.
         execute_at = timeutils.utcnow() + datetime.timedelta(seconds=1)
 
-        db_api.create_scheduled_job({
-            'run_after': 1,
-            'func_name': TARGET_METHOD_PATH,
-            'func_args': {'name': 'task', 'id': '321'},
-            'execute_at': execute_at,
-            'captured_at': None,
-            'auth_ctx': {}
-        })
+        db_api.create_scheduled_job(
+            {
+                'run_after': 1,
+                'func_name': TARGET_METHOD_PATH,
+                'func_args': {'name': 'task', 'id': '321'},
+                'execute_at': execute_at,
+                'captured_at': None,
+                'auth_ctx': {},
+            }
+        )
 
         self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
@@ -233,20 +241,20 @@ class DefaultSchedulerTest(base.DbTestCase):
         # 1. Create a scheduled job in Job Store marked as captured in one
         #    second in the future. It can be captured again only after 3
         #    seconds after that according to the config option.
-        captured_at = timeutils.utcnow() + datetime.timedelta(
-            seconds=1
-        )
+        captured_at = timeutils.utcnow() + datetime.timedelta(seconds=1)
 
         before_ts = timeutils.utcnow()
 
-        db_api.create_scheduled_job({
-            'run_after': 1,
-            'func_name': TARGET_METHOD_PATH,
-            'func_args': {'name': 'task', 'id': '321'},
-            'execute_at': timeutils.utcnow(),
-            'captured_at': captured_at,
-            'auth_ctx': {}
-        })
+        db_api.create_scheduled_job(
+            {
+                'run_after': 1,
+                'func_name': TARGET_METHOD_PATH,
+                'func_args': {'name': 'task', 'id': '321'},
+                'execute_at': timeutils.utcnow(),
+                'captured_at': captured_at,
+                'auth_ctx': {},
+            }
+        )
 
         self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
@@ -260,4 +268,5 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         # At least 3 seconds should have passed.
         self.assertTrue(
-            timeutils.utcnow() - before_ts >= datetime.timedelta(seconds=3))
+            timeutils.utcnow() - before_ts >= datetime.timedelta(seconds=3)
+        )

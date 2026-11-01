@@ -32,5 +32,5 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'workflow_executions_v2',
-        sa.Column('root_execution_id', sa.String(length=80), nullable=True)
+        sa.Column('root_execution_id', sa.String(length=80), nullable=True),
     )

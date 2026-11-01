@@ -50,12 +50,14 @@ master_doc = 'index'
 project = 'Mistral'
 copyright = '2023-present, Mistral Contributors'
 
-policy_generator_config_file = \
+policy_generator_config_file = (
     '../../tools/config/policy-generator.mistral.conf'
+)
 sample_policy_basename = '_static/mistral'
 
-config_generator_config_file = \
+config_generator_config_file = (
     '../../tools/config/config-generator.mistral.conf'
+)
 sample_config_basename = '_static/mistral'
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
@@ -95,10 +97,7 @@ html_title = 'Mistral'
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'mistral', 'Mistral',
-     ['OpenStack Foundation'], 1)
-]
+man_pages = [('index', 'mistral', 'Mistral', ['OpenStack Foundation'], 1)]
 
 # If true, show URL addresses after external links.
 man_show_urls = True

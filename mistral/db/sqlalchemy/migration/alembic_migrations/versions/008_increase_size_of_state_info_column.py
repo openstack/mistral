@@ -30,5 +30,4 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.alter_column('executions_v2', 'state_info',
-                    type_=sa.Text())
+    op.alter_column('executions_v2', 'state_info', type_=sa.Text())

@@ -36,8 +36,9 @@ _CHECK_AND_FIX_INTEGRITY_PATH = (
 
 
 @profiler.trace('workflow-handler-start-workflow', hide_args=True)
-def start_workflow(wf_identifier, wf_namespace, wf_ex_id, wf_input, desc,
-                   params):
+def start_workflow(
+    wf_identifier, wf_namespace, wf_ex_id, wf_input, desc, params
+):
     wf = workflows.Workflow()
 
     wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
@@ -50,7 +51,7 @@ def start_workflow(wf_identifier, wf_namespace, wf_ex_id, wf_input, desc,
         wf_ex_id=wf_ex_id,
         input_dict=wf_input,
         desc=desc,
-        params=params
+        params=params,
     )
 
     _schedule_check_and_fix_integrity(wf.wf_ex, delay=10)
@@ -131,7 +132,7 @@ def _check_and_fix_integrity(wf_ex_id):
         running_task_execs = db_api.get_task_executions(
             workflow_execution_id=wf_ex.id,
             state=states.RUNNING,
-            limit=CONF.engine.execution_integrity_check_batch_size
+            limit=CONF.engine.execution_integrity_check_batch_size,
         )
 
         for t_ex in running_task_execs:
@@ -157,12 +158,13 @@ def _check_and_fix_integrity(wf_ex_id):
             if all_finished:
                 # Find the timestamp of the most recently finished child.
                 most_recent_child_timestamp = max(
-                    [c_ex.updated_at or c_ex.created_at for c_ex in
-                     child_executions]
+                    [
+                        c_ex.updated_at or c_ex.created_at
+                        for c_ex in child_executions
+                    ]
                 )
                 interval = timeutils.delta_seconds(
-                    most_recent_child_timestamp,
-                    timeutils.utcnow()
+                    most_recent_child_timestamp, timeutils.utcnow()
                 )
 
                 if interval > check_after_seconds:
@@ -175,7 +177,7 @@ def _check_and_fix_integrity(wf_ex_id):
                         "Found a task execution that is likely stuck in"
                         " RUNNING state because all child executions are"
                         " finished, will try to recover [task_execution=%s]",
-                        t_ex.id
+                        t_ex.id,
                     )
 
                     task_handler.schedule_on_action_complete(
@@ -216,14 +218,13 @@ def rerun_workflow(wf_ex, task_ex, reset=True, skip=False, env=None):
     wf.rerun(task, reset=reset, skip=skip, env=env)
 
     _schedule_check_and_fix_integrity(
-        wf_ex,
-        delay=CONF.engine.execution_integrity_check_delay
+        wf_ex, delay=CONF.engine.execution_integrity_check_delay
     )
 
     if wf_ex.task_execution_id:
         _schedule_check_and_fix_integrity(
             wf_ex.task_execution.workflow_execution,
-            delay=CONF.engine.execution_integrity_check_delay
+            delay=CONF.engine.execution_integrity_check_delay,
         )
 
 
@@ -266,8 +267,7 @@ def _get_integrity_check_key(wf_ex):
 
 
 @profiler.trace(
-    'workflow-handler-schedule-check-and-fix-integrity',
-    hide_args=True
+    'workflow-handler-schedule-check-and-fix-integrity', hide_args=True
 )
 def _schedule_check_and_fix_integrity(wf_ex, delay=0):
     """Schedules workflow integrity check.
@@ -286,7 +286,7 @@ def _schedule_check_and_fix_integrity(wf_ex, delay=0):
         run_after=delay,
         func_name=_CHECK_AND_FIX_INTEGRITY_PATH,
         func_args={'wf_ex_id': wf_ex.id},
-        key=_get_integrity_check_key(wf_ex)
+        key=_get_integrity_check_key(wf_ex),
     )
 
     sched.schedule(job)

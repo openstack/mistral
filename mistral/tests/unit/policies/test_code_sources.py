@@ -45,11 +45,10 @@ class TestCodeSourcePolicy(base.APITest):
         # Default policy requires admin_only for create.
         # A non-admin user should be denied.
         resp = self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s' % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -60,10 +59,9 @@ class TestCodeSourcePolicy(base.APITest):
         self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s' % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -73,11 +71,11 @@ class TestCodeSourcePolicy(base.APITest):
         # The default test context has is_admin=False, so a regular user
         # (project owner) should be denied.
         resp = self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s&scope=public' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s&scope=public'
+            % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -89,10 +87,10 @@ class TestCodeSourcePolicy(base.APITest):
         self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s&scope=public' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s&scope=public'
+            % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -103,21 +101,20 @@ class TestCodeSourcePolicy(base.APITest):
         self.ctx.is_admin = True
 
         self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s' % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         # Now switch back to non-admin and try to update to public.
         self.ctx.is_admin = False
 
         resp = self.app.put(
-            '/v2/code_sources?identifier=%s&namespace=%s&scope=public' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?identifier=%s&namespace=%s&scope=public'
+            % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -128,18 +125,17 @@ class TestCodeSourcePolicy(base.APITest):
         self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         self.app.post(
-            '/v2/code_sources?name=%s&namespace=%s' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?name=%s&namespace=%s' % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         # Update to public as admin.
         resp = self.app.put(
-            '/v2/code_sources?identifier=%s&namespace=%s&scope=public' %
-            (MODULE_NAME, NAMESPACE),
+            '/v2/code_sources?identifier=%s&namespace=%s&scope=public'
+            % (MODULE_NAME, NAMESPACE),
             FILE_CONTENT,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -150,8 +146,7 @@ class TestCodeSourcePolicy(base.APITest):
         )
 
         resp = self.app.get(
-            '/v2/code_sources?all_projects=1',
-            expect_errors=True
+            '/v2/code_sources?all_projects=1', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)

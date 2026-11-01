@@ -50,17 +50,23 @@ def handle_event(self, ctxt, publisher_id, event_type, payload, metadata):
     :param metadata: the notification metadata, is always a mapping containing
                      a unique message_id and a timestamp.
     """
-    LOG.debug('Received notification. publisher_id: %s, event_type: %s, '
-              'payload: %s, metadata: %s.', publisher_id, event_type, payload,
-              metadata)
+    LOG.debug(
+        'Received notification. publisher_id: %s, event_type: %s, '
+        'payload: %s, metadata: %s.',
+        publisher_id,
+        event_type,
+        payload,
+        metadata,
+    )
 
     notification = {
         'event_type': event_type,
         'payload': payload,
         'publisher': publisher_id,
-        'timestamp': metadata.get('timestamp',
-                                  ctxt.get('timestamp', timeutils.utcnow())),
-        'context': ctxt
+        'timestamp': metadata.get(
+            'timestamp', ctxt.get('timestamp', timeutils.utcnow())
+        ),
+        'context': ctxt,
     }
 
     self.event_engine.process_notification_event(notification)
@@ -74,15 +80,15 @@ class NotificationEndpoint(object, metaclass=abc.ABCMeta):
     Only handle notifications that match the NotificationFilter rule set into
     the filter_rule attribute of the endpoint.
     """
+
     event_types = []
 
     def __init__(self, event_engine):
         self.event_engine = event_engine
 
         self.filter_rule = oslo_messaging.NotificationFilter(
-            event_type=r'(?:%s)\Z' % '|'.join(
-                re.escape(e) for e in self.event_types
-            )
+            event_type=r'(?:%s)\Z'
+            % '|'.join(re.escape(e) for e in self.event_types)
         )
 
 
@@ -114,7 +120,7 @@ def start_listener(conf, exchange, topic, endpoints):
         endpoints,
         executor='threading',
         allow_requeue=False,
-        pool=pool_name
+        pool=pool_name,
     )
     notification_listener.start()
 

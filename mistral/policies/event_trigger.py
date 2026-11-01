@@ -24,27 +24,16 @@ rules = [
         name=EVENT_TRIGGERS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create a new event trigger.',
-        operations=[
-            {
-                'path': '/v2/event_triggers',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/event_triggers', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make an event trigger publicly available.',
         operations=[
-            {
-                'path': '/v2/event_triggers',
-                'method': 'POST'
-            },
-            {
-                'path': '/v2/event_triggers',
-                'method': 'PUT'
-            }
-        ]
+            {'path': '/v2/event_triggers', 'method': 'POST'},
+            {'path': '/v2/event_triggers', 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'delete',
@@ -53,54 +42,36 @@ rules = [
         operations=[
             {
                 'path': '/v2/event_triggers/{event_trigger_id}',
-                'method': 'DELETE'
+                'method': 'DELETE',
             }
-        ]
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Returns the specified event trigger.',
         operations=[
-            {
-                'path': '/v2/event_triggers/{event_trigger_id}',
-                'method': 'GET'
-            }
-        ]
+            {'path': '/v2/event_triggers/{event_trigger_id}', 'method': 'GET'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all event triggers.',
-        operations=[
-            {
-                'path': '/v2/event_triggers',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/event_triggers', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all event triggers from all projects.',
-        operations=[
-            {
-                'path': '/v2/event_triggers',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/event_triggers', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=EVENT_TRIGGERS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Updates an existing event trigger.',
-        operations=[
-            {
-                'path': '/v2/event_triggers',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/event_triggers', 'method': 'PUT'}],
+    ),
 ]
 
 

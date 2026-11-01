@@ -56,10 +56,10 @@ def fake_evaluate(_, context):
 
 
 class JavaScriptEngineTest(base.EngineTestCase):
-
-    @testtools.skipIf(not importutils.try_import('py_mini_racer'),
-                      'This test requires that py_mini_racer library was '
-                      'installed')
+    @testtools.skipIf(
+        not importutils.try_import('py_mini_racer'),
+        'This test requires that py_mini_racer library was installed',
+    )
     def test_py_mini_racer_javascript_action(self):
         cfg.CONF.set_default('js_implementation', 'py_mini_racer')
 
@@ -68,10 +68,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
         wf_service.create_workflows(JAVASCRIPT_WORKFLOW)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={'length': length}
-        )
+        wf_ex = self.engine.start_workflow('wf', wf_input={'length': length})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -84,9 +81,10 @@ class JavaScriptEngineTest(base.EngineTestCase):
 
         self.assertEqual(length / 2, task_ex.published['res'])
 
-    @testtools.skipIf(not importutils.try_import('py_mini_racer'),
-                      'This test requires that py_mini_racer library was '
-                      'installed')
+    @testtools.skipIf(
+        not importutils.try_import('py_mini_racer'),
+        'This test requires that py_mini_racer library was installed',
+    )
     def test_py_mini_racer_javascript_action_disabled_yaql_conversion(self):
         cfg.CONF.set_default('js_implementation', 'py_mini_racer')
 
@@ -135,8 +133,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             t_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             self.assertDictEqual({'result': 'default_val'}, t_ex.published)
@@ -148,10 +145,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
         wf_service.create_workflows(JAVASCRIPT_WORKFLOW)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={'length': length}
-        )
+        wf_ex = self.engine.start_workflow('wf', wf_input={'length': length})
 
         self.await_workflow_success(wf_ex.id)
 

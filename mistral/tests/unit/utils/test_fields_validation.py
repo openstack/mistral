@@ -27,7 +27,7 @@ class FieldsListValidationTest(base.BaseTest):
             wsme_exc.ClientSideError,
             rest_utils.fields_list_to_cls_fields_tuple,
             models.WorkflowExecution,
-            ['does_not_exist']
+            ['does_not_exist'],
         )
 
     def test_valid_fields_pass(self):
@@ -39,6 +39,8 @@ class FieldsListValidationTest(base.BaseTest):
 
     def test_empty_fields(self):
         self.assertEqual(
-            (), rest_utils.fields_list_to_cls_fields_tuple(
-                models.WorkflowExecution, None)
+            (),
+            rest_utils.fields_list_to_cls_fields_tuple(
+                models.WorkflowExecution, None
+            ),
         )

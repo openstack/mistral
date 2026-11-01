@@ -54,8 +54,9 @@ class EventTriggersController(rest.RestController):
         return resources.EventTrigger.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.EventTrigger, body=resources.EventTrigger,
-                         status_code=201)
+    @wsme_pecan.wsexpose(
+        resources.EventTrigger, body=resources.EventTrigger, status_code=201
+    )
     def post(self, event_trigger):
         """Creates a new event trigger."""
         acl.enforce('event_triggers:create', auth_ctx.ctx())
@@ -65,8 +66,8 @@ class EventTriggersController(rest.RestController):
 
         if CREATE_MANDATORY - set(input_keys):
             raise exc.EventTriggerException(
-                "Params %s must be provided for creating event trigger." %
-                CREATE_MANDATORY
+                "Params %s must be provided for creating event trigger."
+                % CREATE_MANDATORY
             )
 
         if values.get('scope') == 'public':
@@ -90,8 +91,9 @@ class EventTriggersController(rest.RestController):
         return resources.EventTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.EventTrigger, types.uuid,
-                         body=resources.EventTrigger)
+    @wsme_pecan.wsexpose(
+        resources.EventTrigger, types.uuid, body=resources.EventTrigger
+    )
     def put(self, id, event_trigger):
         """Updates an existing event trigger.
 
@@ -109,8 +111,8 @@ class EventTriggersController(rest.RestController):
         for field in UPDATE_NOT_ALLOWED:
             if values.get(field):
                 raise exc.EventTriggerException(
-                    "Can not update fields %s of event trigger." %
-                    UPDATE_NOT_ALLOWED
+                    "Can not update fields %s of event trigger."
+                    % UPDATE_NOT_ALLOWED
                 )
 
         LOG.debug('Update event trigger: [id=%s, values=%s]', id, values)
@@ -145,11 +147,26 @@ class EventTriggersController(rest.RestController):
         _delete_event_trigger()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.EventTriggers, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         bool, types.jsontype)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', all_projects=False, **filters):
+    @wsme_pecan.wsexpose(
+        resources.EventTriggers,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        bool,
+        types.jsontype,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        all_projects=False,
+        **filters,
+    ):
         """Return all event triggers."""
         acl.enforce('event_triggers:list', auth_ctx.ctx())
 
@@ -158,8 +175,14 @@ class EventTriggersController(rest.RestController):
 
         LOG.debug(
             "Fetch event triggers. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, fields=%s, all_projects=%s, filters=%s", marker,
-            limit, sort_keys, sort_dirs, fields, all_projects, filters
+            "sort_dirs=%s, fields=%s, all_projects=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            fields,
+            all_projects,
+            filters,
         )
 
         return rest_utils.get_all(
@@ -174,5 +197,5 @@ class EventTriggersController(rest.RestController):
             sort_dirs=sort_dirs,
             fields=fields,
             all_projects=all_projects,
-            **filters
+            **filters,
         )

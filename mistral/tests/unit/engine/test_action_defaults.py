@@ -83,11 +83,13 @@ wf1_with_items:
 
 class ActionDefaultTest(base.EngineTestCase):
     @mock.patch.object(
-        requests, 'request',
-        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
+        requests,
+        'request',
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')),
+    )
     @mock.patch.object(
-        std_actions.HTTPAction, 'is_sync',
-        mock.MagicMock(return_value=True))
+        std_actions.HTTPAction, 'is_sync', mock.MagicMock(return_value=True)
+    )
     def test_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1)
 
@@ -113,15 +115,17 @@ class ActionDefaultTest(base.EngineTestCase):
             proxies=None,
             verify=None,
             auth=EXPECTED_ENV_AUTH,
-            timeout=ENV['__actions']['std.http']['timeout']
+            timeout=ENV['__actions']['std.http']['timeout'],
         )
 
     @mock.patch.object(
-        requests, 'request',
-        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
+        requests,
+        'request',
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')),
+    )
     @mock.patch.object(
-        std_actions.HTTPAction, 'is_sync',
-        mock.MagicMock(return_value=True))
+        std_actions.HTTPAction, 'is_sync', mock.MagicMock(return_value=True)
+    )
     def test_action_defaults_from_env_not_applied(self):
         wf_service.create_workflows(WORKFLOW2)
 
@@ -136,33 +140,40 @@ class ActionDefaultTest(base.EngineTestCase):
             self._assert_single_item(wf_ex.task_executions, name='task1')
 
         requests.request.assert_called_with(
-            'GET', 'https://api.library.org/books',
-            params=None, data=None, json=None, headers=None, cookies=None,
-            allow_redirects=None, proxies=None, verify=None,
+            'GET',
+            'https://api.library.org/books',
+            params=None,
+            data=None,
+            json=None,
+            headers=None,
+            cookies=None,
+            allow_redirects=None,
+            proxies=None,
+            verify=None,
             auth=EXPECTED_ENV_AUTH,
-            timeout=60
+            timeout=60,
         )
 
     @mock.patch.object(
-        requests, 'request',
-        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
+        requests,
+        'request',
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')),
+    )
     @mock.patch.object(
-        std_actions.HTTPAction, 'is_sync',
-        mock.MagicMock(return_value=True))
+        std_actions.HTTPAction, 'is_sync', mock.MagicMock(return_value=True)
+    )
     def test_with_items_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1_WITH_ITEMS)
 
         wf_input = {
             'links': [
                 'https://api.library.org/books',
-                'https://api.library.org/authors'
+                'https://api.library.org/authors',
             ]
         }
 
         wf_ex = self.engine.start_workflow(
-            'wf1_with_items',
-            wf_input=wf_input,
-            env=ENV
+            'wf1_with_items', wf_input=wf_input, env=ENV
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -173,11 +184,22 @@ class ActionDefaultTest(base.EngineTestCase):
             self.assertEqual(states.SUCCESS, wf_ex.state)
             self._assert_single_item(wf_ex.task_executions, name='task1')
 
-            calls = [mock.call('GET', url, params=None, data=None,
-                               json=None, headers=None, cookies=None,
-                               allow_redirects=None, proxies=None,
-                               auth=EXPECTED_ENV_AUTH, verify=None,
-                               timeout=ENV['__actions']['std.http']['timeout'])
-                     for url in wf_input['links']]
+            calls = [
+                mock.call(
+                    'GET',
+                    url,
+                    params=None,
+                    data=None,
+                    json=None,
+                    headers=None,
+                    cookies=None,
+                    allow_redirects=None,
+                    proxies=None,
+                    auth=EXPECTED_ENV_AUTH,
+                    verify=None,
+                    timeout=ENV['__actions']['std.http']['timeout'],
+                )
+                for url in wf_input['links']
+            ]
 
         requests.request.assert_has_calls(calls, any_order=True)

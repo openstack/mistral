@@ -44,7 +44,7 @@ WF_DB = models.WorkflowDefinition(
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'input': ['param1']}
+    spec={'input': ['param1']},
 )
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
 
@@ -68,14 +68,12 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_workflow_create_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"workflows:create": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"workflows:create": "role:FAKE"})
         resp = self.app.post(
             '/v2/workflows',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -91,7 +89,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -105,7 +103,7 @@ class TestWorkflowPolicy(base.APITest):
             '/v2/workflows?scope=public',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -123,7 +121,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.post(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(201, resp.status_int)
@@ -131,13 +129,8 @@ class TestWorkflowPolicy(base.APITest):
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     def test_workflow_delete_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workflows:delete": "role:FAKE"}
-        )
-        resp = self.app.delete(
-            '/v2/workflows/123',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workflows:delete": "role:FAKE"})
+        resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -147,21 +140,14 @@ class TestWorkflowPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workflows:delete": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.delete(
-            '/v2/workflows/123'
-        )
+        resp = self.app.delete('/v2/workflows/123')
 
         self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     def test_workflow_get_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workflows:get": "role:FAKE"}
-        )
-        resp = self.app.get(
-            '/v2/workflows/123',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workflows:get": "role:FAKE"})
+        resp = self.app.get('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -170,20 +156,13 @@ class TestWorkflowPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workflows:get": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/workflows/123'
-        )
+        resp = self.app.get('/v2/workflows/123')
 
         self.assertEqual(200, resp.status_int)
 
     def test_workflow_list_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"workflows:list": "role:FAKE"}
-        )
-        resp = self.app.get(
-            '/v2/workflows',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"workflows:list": "role:FAKE"})
+        resp = self.app.get('/v2/workflows', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -191,45 +170,42 @@ class TestWorkflowPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"workflows:list": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/workflows'
-        )
+        resp = self.app.get('/v2/workflows')
 
         self.assertEqual(200, resp.status_int)
 
     def test_workflow_list_all_not_allowed(self):
-        self.policy.change_policy_definition({
-            "workflows:list": "role:FAKE or rule:admin_or_owner",
-            "workflows:list:all_projects": "role:FAKE"
-        })
-        resp = self.app.get(
-            '/v2/workflows?all_projects=1',
-            expect_errors=True
+        self.policy.change_policy_definition(
+            {
+                "workflows:list": "role:FAKE or rule:admin_or_owner",
+                "workflows:list:all_projects": "role:FAKE",
+            }
         )
+        resp = self.app.get('/v2/workflows?all_projects=1', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
     def test_workflow_list_all_allowed(self):
-        self.policy.change_policy_definition({
-            "workflows:list": "role:FAKE or rule:admin_or_owner",
-            "workflows:list:all_projects": "role:FAKE or rule:admin_or_owner"
-        })
-        resp = self.app.get(
-            '/v2/workflows?all_projects=1'
+        self.policy.change_policy_definition(
+            {
+                "workflows:list": "role:FAKE or rule:admin_or_owner",
+                "workflows:list:all_projects": (
+                    "role:FAKE or rule:admin_or_owner"
+                ),
+            }
         )
+        resp = self.app.get('/v2/workflows?all_projects=1')
 
         self.assertEqual(200, resp.status_int)
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_workflow_update_not_allowed(self, mock_obj):
-        self.policy.change_policy_definition(
-            {"workflows:update": "role:FAKE"}
-        )
+        self.policy.change_policy_definition({"workflows:update": "role:FAKE"})
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -245,7 +221,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workflows',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -259,7 +235,7 @@ class TestWorkflowPolicy(base.APITest):
             '/v2/workflows?scope=public',
             WF_DEFINITION,
             headers={'Content-Type': 'text/plain'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -277,7 +253,7 @@ class TestWorkflowPolicy(base.APITest):
         resp = self.app.put(
             '/v2/workflows?scope=public',
             WF_DEFINITION,
-            headers={'Content-Type': 'text/plain'}
+            headers={'Content-Type': 'text/plain'},
         )
 
         self.assertEqual(200, resp.status_int)

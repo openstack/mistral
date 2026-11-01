@@ -22,12 +22,7 @@ rules = [
         name=SERVICES % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all Mistral services.',
-        operations=[
-            {
-                'path': '/v2/services',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/services', 'method': 'GET'}],
     )
 ]
 

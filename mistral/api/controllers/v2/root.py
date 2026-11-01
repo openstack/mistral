@@ -61,5 +61,6 @@ class Controller(object):
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):
-        return RootResource(uri='%s/%s' % (pecan.request.application_url,
-                                           'v2'))
+        return RootResource(
+            uri='%s/%s' % (pecan.request.application_url, 'v2')
+        )

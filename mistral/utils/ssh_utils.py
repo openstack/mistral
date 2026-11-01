@@ -62,9 +62,9 @@ def _resolve_private_key_path(private_key_filename):
     return key_path
 
 
-def _to_paramiko_private_key(private_key_filename,
-                             private_key=None,
-                             password=None):
+def _to_paramiko_private_key(
+    private_key_filename, private_key=None, password=None
+):
 
     if private_key_filename:
         private_key_path = _resolve_private_key_path(private_key_filename)
@@ -74,12 +74,11 @@ def _to_paramiko_private_key(private_key_filename,
         try:
             if private_key:
                 return pkey_class.from_private_key(
-                    file_obj=io.StringIO(private_key),
-                    password=password)
+                    file_obj=io.StringIO(private_key), password=password
+                )
             if private_key_filename:
                 return pkey_class.from_private_key_file(
-                    filename=private_key_path,
-                    password=password
+                    filename=private_key_path, password=password
                 )
         except (IOError, PasswordRequiredException, SSHException) as e:
             exception = e
@@ -126,7 +125,7 @@ def _connect(host, username, password=None, pkey=None, proxy=None):
         pkey=pkey,
         sock=proxy,
         look_for_keys=False,
-        allow_agent=False
+        allow_agent=False,
     )
 
     return ssh_client
@@ -136,8 +135,7 @@ def _cleanup(ssh_client):
     ssh_client.close()
 
 
-def _execute_command(ssh_client, cmd, get_stderr=False,
-                     raise_when_error=True):
+def _execute_command(ssh_client, cmd, get_stderr=False, raise_when_error=True):
     try:
         chan = ssh_client.get_transport().open_session()
         chan.exec_command(cmd)
@@ -149,8 +147,10 @@ def _execute_command(ssh_client, cmd, get_stderr=False,
         ret_code = chan.recv_exit_status()
 
         if ret_code and raise_when_error:
-            raise RuntimeError("Cmd: %s\nReturn code: %s\nstdout: %s"
-                               % (cmd, ret_code, stdout))
+            raise RuntimeError(
+                "Cmd: %s\nReturn code: %s\nstdout: %s"
+                % (cmd, ret_code, stdout)
+            )
         if get_stderr:
             return ret_code, stdout, stderr
         else:
@@ -159,17 +159,24 @@ def _execute_command(ssh_client, cmd, get_stderr=False,
         _cleanup(ssh_client)
 
 
-def execute_command_via_gateway(cmd, host, username, private_key_filename,
-                                gateway_host, gateway_username=None,
-                                proxy_command=None, password=None,
-                                private_key=None):
+def execute_command_via_gateway(
+    cmd,
+    host,
+    username,
+    private_key_filename,
+    gateway_host,
+    gateway_username=None,
+    proxy_command=None,
+    password=None,
+    private_key=None,
+):
     LOG.debug('Creating SSH connection')
 
     _validate_host_literal(host)
 
-    private_key = _to_paramiko_private_key(private_key_filename,
-                                           private_key,
-                                           password)
+    private_key = _to_paramiko_private_key(
+        private_key_filename, private_key, password
+    )
 
     proxy = None
 
@@ -210,41 +217,41 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
         pkey=private_key,
         sock=proxy,
         look_for_keys=False,
-        allow_agent=False
+        allow_agent=False,
     )
 
     proxy = _proxy_ssh_client.get_transport().open_session()
     proxy.exec_command("nc {0} 22".format(shlex.quote(host)))
 
     ssh_client = _connect(
-        host,
-        username=username,
-        pkey=private_key,
-        proxy=proxy
+        host, username=username, pkey=private_key, proxy=proxy
     )
 
     try:
         return _execute_command(
-            ssh_client,
-            cmd,
-            get_stderr=False,
-            raise_when_error=True
+            ssh_client, cmd, get_stderr=False, raise_when_error=True
         )
     finally:
         _cleanup(_proxy_ssh_client)
 
 
-def execute_command(cmd, host, username, password=None,
-                    private_key_filename=None,
-                    private_key=None, get_stderr=False,
-                    raise_when_error=True):
+def execute_command(
+    cmd,
+    host,
+    username,
+    password=None,
+    private_key_filename=None,
+    private_key=None,
+    get_stderr=False,
+    raise_when_error=True,
+):
     LOG.debug('Creating SSH connection')
 
     egress.validate_host(host, SSH_PORT, 'action_std_ssh')
 
-    private_key = _to_paramiko_private_key(private_key_filename,
-                                           private_key,
-                                           password)
+    private_key = _to_paramiko_private_key(
+        private_key_filename, private_key, password
+    )
 
     ssh_client = _connect(host, username, password, private_key)
 

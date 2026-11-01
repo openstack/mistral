@@ -34,5 +34,5 @@ from mistral.db.sqlalchemy import types as st
 def upgrade():
     op.add_column(
         'task_executions_v2',
-        sa.Column('next_tasks', st.JsonListType(), nullable=True)
+        sa.Column('next_tasks', st.JsonListType(), nullable=True),
     )

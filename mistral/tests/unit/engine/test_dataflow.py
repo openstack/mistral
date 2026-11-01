@@ -88,8 +88,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'hi': 'Hi'}, task1.published)
         self.assertDictEqual({'to': 'Morpheus'}, task2.published)
         self.assertDictEqual(
-            {'result': 'Hi, Morpheus! Your Neo.'},
-            task3.published
+            {'result': 'Hi, Morpheus! Your Neo.'}, task3.published
         )
 
         # Make sure that task inbound context doesn't contain workflow
@@ -160,36 +159,21 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
 
         exp_published_arr = [
-            {
-                'hi': 'Hi',
-                'progress': 'completed task1'
-            },
-            {
-                'to': 'Morpheus',
-                'progress': 'completed task2'
-            },
+            {'hi': 'Hi', 'progress': 'completed task1'},
+            {'to': 'Morpheus', 'progress': 'completed task2'},
             {
                 'result': 'Hi, Morpheus! Your Neo.',
-                'progress': 'completed task3'
-            }
+                'progress': 'completed task3',
+            },
         ]
 
         self.assertDictEqual(exp_published_arr[0], task1.published)
         self.assertDictEqual(exp_published_arr[1], task2.published)
         self.assertDictEqual(exp_published_arr[2], task3.published)
 
-        self.assertIn(
-            exp_published_arr[0]['progress'],
-            notify_published_arr
-        )
-        self.assertIn(
-            exp_published_arr[1]['progress'],
-            notify_published_arr
-        )
-        self.assertIn(
-            exp_published_arr[2]['progress'],
-            notify_published_arr
-        )
+        self.assertIn(exp_published_arr[0]['progress'], notify_published_arr)
+        self.assertIn(exp_published_arr[1]['progress'], notify_published_arr)
+        self.assertIn(exp_published_arr[2]['progress'], notify_published_arr)
 
     def test_parallel_tasks(self):
         wf_text = """---
@@ -213,7 +197,9 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf',)
+        wf_ex = self.engine.start_workflow(
+            'wf',
+        )
 
         self.await_workflow_success(wf_ex.id)
 
@@ -391,10 +377,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'greeting': 'Hi'}, task1.published)
         self.assertDictEqual({'greeting': 'Yo'}, task2.published)
         self.assertDictEqual({'to': 'Morpheus'}, task3.published)
-        self.assertDictEqual(
-            {'result': 'Yo, Morpheus! Neo.'},
-            task4.published
-        )
+        self.assertDictEqual({'result': 'Yo, Morpheus! Neo.'}, task4.published)
 
     def test_sequential_tasks_publishing_same_structured(self):
         wf_text = """---
@@ -492,8 +475,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task4 = self._assert_single_item(tasks, name='task4')
 
         self.assertDictEqual(
-            {'result': 'Hi, Morpheus! Your Neo.\n'},
-            task4.published
+            {'result': 'Hi, Morpheus! Your Neo.\n'}, task4.published
         )
 
     def test_destroy_result(self):
@@ -529,10 +511,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             result = data_flow.get_task_execution_result(task1)
 
         # Published vars are saved.
-        self.assertDictEqual(
-            {'hi': ["Hi", "John Doe!"]},
-            task1.published
-        )
+        self.assertDictEqual({'hi': ["Hi", "John Doe!"]}, task1.published)
 
         # But all result is cleared.
         self.assertIsNone(result)
@@ -563,8 +542,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1 = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             result = data_flow.get_task_execution_result(task1)
@@ -609,15 +587,9 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertEqual(states.ERROR, task1.state)
         self.assertEqual('hello_from_error', task1.published['hi'])
-        self.assertIn(
-            'Fail action expected exception',
-            task1.published['err']
-        )
+        self.assertIn('Fail action expected exception', task1.published['err'])
         self.assertEqual('hello_from_error', wf_output['out'])
-        self.assertIn(
-            'Fail action expected exception',
-            wf_output['result']
-        )
+        self.assertIn('Fail action expected exception', wf_output['result'])
 
     def test_publish_with_all(self):
         wf_text = """---
@@ -663,26 +635,31 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             main_task = self._assert_single_item(tasks, name='main-task')
             main_task_published_vars = main_task.get("published")
             expected_main_variables = {'res_x3', 'res_x2', 'res_x1'}
-            self.assertEqual(set(main_task_published_vars.keys()),
-                             expected_main_variables)
+            self.assertEqual(
+                set(main_task_published_vars.keys()), expected_main_variables
+            )
 
-            complete_task = self._assert_single_item(tasks,
-                                                     name='complete-task')
+            complete_task = self._assert_single_item(
+                tasks, name='complete-task'
+            )
 
             complete_task_published_vars = complete_task.get("published")
             expected_complete_variables = {'complete_x2', 'complete_x1'}
-            self.assertEqual(set(complete_task_published_vars.keys()),
-                             expected_complete_variables)
+            self.assertEqual(
+                set(complete_task_published_vars.keys()),
+                expected_complete_variables,
+            )
 
             success_task = self._assert_single_item(tasks, name='success-task')
             success_task_published_vars = success_task.get("published")
             expected_success_variables = {'success_x2', 'success_x1'}
-            self.assertEqual(set(success_task_published_vars.keys()),
-                             expected_success_variables)
+            self.assertEqual(
+                set(success_task_published_vars.keys()),
+                expected_success_variables,
+            )
 
             all_expected_published_variables = expected_main_variables.union(
-                expected_success_variables,
-                expected_complete_variables
+                expected_success_variables, expected_complete_variables
             )
             self.assertEqual(set(wf_output), all_expected_published_variables)
 
@@ -721,18 +698,23 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             main_task = self._assert_single_item(tasks, name='main-task')
             main_task_published_vars = main_task.get("published")
             expected_main_variables = {'res_x3', 'res_x1'}
-            self.assertEqual(set(main_task_published_vars.keys()),
-                             expected_main_variables)
+            self.assertEqual(
+                set(main_task_published_vars.keys()), expected_main_variables
+            )
 
-            complete_task = self._assert_single_item(tasks,
-                                                     name='complete-task')
+            complete_task = self._assert_single_item(
+                tasks, name='complete-task'
+            )
             complete_task_published_vars = complete_task.get("published")
             expected_complete_variables = {'complete_x2', 'complete_x1'}
-            self.assertEqual(set(complete_task_published_vars.keys()),
-                             expected_complete_variables)
+            self.assertEqual(
+                set(complete_task_published_vars.keys()),
+                expected_complete_variables,
+            )
 
             all_expected_published_variables = expected_main_variables.union(
-                expected_complete_variables)
+                expected_complete_variables
+            )
             self.assertEqual(set(wf_output), all_expected_published_variables)
 
     def test_output_on_error_wb_yaql_failed(self):
@@ -779,8 +761,10 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             tasks = wf_ex.task_executions
 
         self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIn('Failed to evaluate expression in output-on-error!',
-                      wf_ex.state_info)
+        self.assertIn(
+            'Failed to evaluate expression in output-on-error!',
+            wf_ex.state_info,
+        )
         self.assertIn('$.message', wf_ex.state_info)
 
         task1 = self._assert_single_item(tasks, name='task1')
@@ -808,9 +792,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # of the custom message. This is a random number value used for
         # test case only.
         cfg.CONF.set_default(
-            'execution_field_size_limit_kb',
-            1121,
-            group='engine'
+            'execution_field_size_limit_kb', 1121, group='engine'
         )
 
         kilobytes = cfg.CONF.engine.execution_field_size_limit_kb
@@ -832,8 +814,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             wf_output = wf_ex.output
 
         self.assertLess(
-            len(str(wf_output.get('custom_error'))),
-            total_output_length
+            len(str(wf_output.get('custom_error'))), total_output_length
         )
 
     def test_override_json_input(self):
@@ -855,12 +836,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_input = {
-            'a': {
-                'cc': 'cc',
-                'dd': 'dd'
-            }
-        }
+        wf_input = {'a': {'cc': 'cc', 'dd': 'dd'}}
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', wf_input=wf_input)
@@ -997,11 +973,8 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task2 = self._assert_single_item(tasks, name='task2')
 
         self.assertDictEqual(
-            {
-                'local': 'Branch local value',
-                'global': 'Global value'
-            },
-            task2.published
+            {'local': 'Branch local value', 'global': 'Global value'},
+            task2.published,
         )
 
     def test_get_published_global(self):
@@ -1038,11 +1011,8 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             )
 
         self.assertDictEqual(
-            {
-                'global_var1': 'Global value 1',
-                'global_var2': 'Global value 2'
-            },
-            published_global
+            {'global_var1': 'Global value 1', 'global_var2': 'Global value 2'},
+            published_global,
         )
 
     def test_linear_data_with_input_expressions(self):
@@ -1082,22 +1052,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(
-            tasks,
-            name='task1',
-            state=states.SUCCESS
+            tasks, name='task1', state=states.SUCCESS
         )
         task2 = self._assert_single_item(
-            tasks,
-            name='task2',
-            state=states.SUCCESS
+            tasks, name='task2', state=states.SUCCESS
         )
 
         self.assertDictEqual(
-            {
-                'key1': 'value1',
-                'key2': 'value2'
-            },
-            task1.published['res1']
+            {'key1': 'value1', 'key2': 'value2'}, task1.published['res1']
         )
         self.assertEqual('value2', task2.published['res2'])
 
@@ -1111,53 +1073,46 @@ class DataFlowTest(test_base.BaseTest):
                 'name': 'task1',
                 'with-items': 'var in [1]',
                 'type': 'direct',
-                'action': 'my_action'
+                'action': 'my_action',
             },
-            runtime_context={
-                'with_items': {'count': 1}
-            }
+            runtime_context={'with_items': {'count': 1}},
         )
 
-        task_ex.action_executions = [models.ActionExecution(
-            name='my_action',
-            output={'result': 1},
-            accepted=True,
-            runtime_context={'index': 0}
-        )]
+        task_ex.action_executions = [
+            models.ActionExecution(
+                name='my_action',
+                output={'result': 1},
+                accepted=True,
+                runtime_context={'index': 0},
+            )
+        ]
 
         self.assertEqual([1], data_flow.get_task_execution_result(task_ex))
 
-        task_ex.action_executions.append(models.ActionExecution(
-            name='my_action',
-            output={'result': 1},
-            accepted=True,
-            runtime_context={'index': 0}
-        ))
-
-        task_ex.action_executions.append(models.ActionExecution(
-            name='my_action',
-            output={'result': 1},
-            accepted=False,
-            runtime_context={'index': 0}
-        ))
-
-        self.assertEqual(
-            [1, 1],
-            data_flow.get_task_execution_result(task_ex)
+        task_ex.action_executions.append(
+            models.ActionExecution(
+                name='my_action',
+                output={'result': 1},
+                accepted=True,
+                runtime_context={'index': 0},
+            )
         )
+
+        task_ex.action_executions.append(
+            models.ActionExecution(
+                name='my_action',
+                output={'result': 1},
+                accepted=False,
+                runtime_context={'index': 0},
+            )
+        )
+
+        self.assertEqual([1, 1], data_flow.get_task_execution_result(task_ex))
 
     def test_context_view(self):
         ctx = data_flow.ContextView(
-            {
-                'k1': 'v1',
-                'k11': 'v11',
-                'k3': 'v3'
-            },
-            {
-                'k2': 'v2',
-                'k21': 'v21',
-                'k3': 'v32'
-            }
+            {'k1': 'v1', 'k11': 'v11', 'k3': 'v3'},
+            {'k2': 'v2', 'k21': 'v21', 'k3': 'v32'},
         )
 
         self.assertIsInstance(ctx, dict)
@@ -1195,25 +1150,14 @@ class DataFlowTest(test_base.BaseTest):
         # Now change the order of dictionaries and make sure to have
         # a different for key 'k3'.
         ctx = data_flow.ContextView(
-            {
-                'k2': 'v2',
-                'k21': 'v21',
-                'k3': 'v32'
-            },
-            {
-                'k1': 'v1',
-                'k11': 'v11',
-                'k3': 'v3'
-            }
+            {'k2': 'v2', 'k21': 'v21', 'k3': 'v32'},
+            {'k1': 'v1', 'k11': 'v11', 'k3': 'v3'},
         )
 
         self.assertEqual('v32', expr.evaluate('<% $.k3 %>', ctx))
 
     def test_context_view_eval_root_with_yaql(self):
-        ctx = data_flow.ContextView(
-            {'k1': 'v1'},
-            {'k2': 'v2'}
-        )
+        ctx = data_flow.ContextView({'k1': 'v1'}, {'k2': 'v2'})
 
         res = expr.evaluate('<% $ %>', ctx)
 
@@ -1222,10 +1166,7 @@ class DataFlowTest(test_base.BaseTest):
         self.assertEqual(2, len(res))
 
     def test_context_view_eval_keys(self):
-        ctx = data_flow.ContextView(
-            {'k1': 'v1'},
-            {'k2': 'v2'}
-        )
+        ctx = data_flow.ContextView({'k1': 'v1'}, {'k2': 'v2'})
 
         res = expr.evaluate('<% $.keys() %>', ctx)
 
@@ -1236,10 +1177,7 @@ class DataFlowTest(test_base.BaseTest):
         self.assertIn('k2', res)
 
     def test_context_view_eval_values(self):
-        ctx = data_flow.ContextView(
-            {'k1': 'v1'},
-            {'k2': 'v2'}
-        )
+        ctx = data_flow.ContextView({'k1': 'v1'}, {'k2': 'v2'})
 
         res = expr.evaluate('<% $.values() %>', ctx)
 
@@ -1250,11 +1188,7 @@ class DataFlowTest(test_base.BaseTest):
         self.assertIn('v2', res)
 
     def test_context_view_repr(self):
-        ctx = data_flow.ContextView(
-            {'k1': 'v1'},
-            {'k2': 'v2'},
-            {3: 3}
-        )
+        ctx = data_flow.ContextView({'k1': 'v1'}, {'k2': 'v2'}, {3: 3})
 
         str_repr = str(ctx)
 
@@ -1313,7 +1247,7 @@ class DataFlowTest(test_base.BaseTest):
             'user_id': 'my-user',
             'service_catalog': '[{"type": "compute"}]',
             'roles': 'admin',
-            'is_admin': True
+            'is_admin': True,
         }
 
         wf_ex = models.WorkflowExecution()

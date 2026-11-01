@@ -20,6 +20,7 @@ Revises: 033
 Create Date: 2019-07-01 17:38:41.153354
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.engine import reflection
@@ -52,9 +53,7 @@ def upgrade():
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('run_after', sa.Integer(), nullable=True),
         sa.Column(
-            'target_factory_func_name',
-            sa.String(length=200),
-            nullable=True
+            'target_factory_func_name', sa.String(length=200), nullable=True
         ),
         sa.Column('func_name', sa.String(length=80), nullable=True),
         sa.Column('func_args', st.JsonEncoded(), nullable=True),
@@ -63,6 +62,5 @@ def upgrade():
         sa.Column('execute_at', sa.DateTime(), nullable=False),
         sa.Column('captured_at', sa.DateTime(), nullable=True),
         sa.Column('key', sa.String(length=250), nullable=True),
-
         sa.PrimaryKeyConstraint('id'),
     )

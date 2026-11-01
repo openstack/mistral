@@ -16,15 +16,15 @@ from mistral.tests.unit import base
 
 
 class NodeIdentifierOptsTest(base.BaseTest):
-
     def test_arbitrary_string_identifiers(self):
-        for group, name in (('engine', 'host'),
-                            ('executor', 'host'),
-                            ('event_engine', 'host'),
-                            ('event_engine', 'listener_pool_name')):
+        for group, name in (
+            ('engine', 'host'),
+            ('executor', 'host'),
+            ('event_engine', 'host'),
+            ('event_engine', 'listener_pool_name'),
+        ):
             self.override_config(name, 'executor_1', group)
 
             self.assertEqual(
-                'executor_1',
-                getattr(getattr(cfg.CONF, group), name)
+                'executor_1', getattr(getattr(cfg.CONF, group), name)
             )

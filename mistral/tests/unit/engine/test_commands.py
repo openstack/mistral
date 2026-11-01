@@ -104,9 +104,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
     def test_fail_second(self):
@@ -121,9 +119,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.assertEqual(2, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         task2_db = self._assert_single_item(task_execs, name='task2')
 
@@ -142,9 +138,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
     def test_succeed_second(self):
@@ -159,9 +153,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.assertEqual(2, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         task2_db = self._assert_single_item(task_execs, name='task2')
 
@@ -213,9 +205,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertEqual('my_var value is 1', wf_ex.state_info)
@@ -232,9 +222,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertEqual("my_var value is 2", wf_ex.state_info)
@@ -251,9 +239,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual("my_var value is 3", wf_ex.state_info)
@@ -269,9 +255,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(2, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task2',
-            state=states.SUCCESS
+            task_execs, name='task2', state=states.SUCCESS
         )
 
 
@@ -321,9 +305,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertEqual("my_var value is 1", wf_ex.state_info)
@@ -340,9 +322,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertEqual("my_var value is 2", wf_ex.state_info)
@@ -359,9 +339,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual("my_var value is 3", wf_ex.state_info)

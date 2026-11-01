@@ -31,9 +31,7 @@ def _build_action_descriptor(name, action_cls):
     action_cls_attrs = i_utils.get_public_fields(action_cls)
 
     return ml_actions.PythonActionDescriptor(
-        name,
-        action_cls,
-        action_cls_attrs
+        name, action_cls, action_cls_attrs
     )
 
 
@@ -50,8 +48,7 @@ class TestActionProvider(ml_actions.ActionProvider):
 
     def register_python_action(self, action_name, action_cls):
         self._action_descs[action_name] = _build_action_descriptor(
-            action_name,
-            action_cls
+            action_name, action_cls
         )
 
     def cleanup(self):
@@ -60,7 +57,13 @@ class TestActionProvider(ml_actions.ActionProvider):
     def find(self, action_name, namespace=None):
         return self._action_descs.get(action_name)
 
-    def find_all(self, namespace=None, limit=None, sort_fields=None,
-                 sort_dirs=None, **filters):
+    def find_all(
+        self,
+        namespace=None,
+        limit=None,
+        sort_fields=None,
+        sort_dirs=None,
+        **filters,
+    ):
         # TODO(rakhmerov): Apply sort_keys, sort_dirs, and filters.
         return self._action_descs.values()

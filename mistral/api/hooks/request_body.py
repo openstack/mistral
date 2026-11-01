@@ -43,5 +43,5 @@ class RejectXMLHook(hooks.PecanHook):
             pecan.abort(
                 status_code=415,
                 detail=msg,
-                headers={'Server-Error-Message': msg}
+                headers={'Server-Error-Message': msg},
             )

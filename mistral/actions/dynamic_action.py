@@ -45,16 +45,20 @@ class DynamicAction(ml_actions.Action):
 
 
 class DynamicActionDescriptor(ml_actions.PythonActionDescriptor):
-    def __init__(self, name, cls_name, action_cls, code_source_id, version,
-                 action_cls_attrs=None, namespace='', project_id=None,
-                 scope=None):
+    def __init__(
+        self,
+        name,
+        cls_name,
+        action_cls,
+        code_source_id,
+        version,
+        action_cls_attrs=None,
+        namespace='',
+        project_id=None,
+        scope=None,
+    ):
         super(DynamicActionDescriptor, self).__init__(
-            name,
-            action_cls,
-            action_cls_attrs,
-            namespace,
-            project_id,
-            scope
+            name, action_cls, action_cls_attrs, namespace, project_id, scope
         )
 
         self.cls_name = cls_name
@@ -62,33 +66,27 @@ class DynamicActionDescriptor(ml_actions.PythonActionDescriptor):
         self.version = version
 
     def __repr__(self):
-        return 'Dynamic action [name=%s, cls=%s , code_source_id=%s,' \
-               ' version=%s]' % (
-                   self.name,
-                   self._action_cls,
-                   self.code_source_id,
-                   self.version
-               )
+        return (
+            'Dynamic action [name=%s, cls=%s , code_source_id=%s,'
+            ' version=%s]'
+            % (self.name, self._action_cls, self.code_source_id, self.version)
+        )
 
     def instantiate(self, params, wf_ctx):
         if not self._action_cls_attrs:
             # No need to create new dynamic type.
             return DynamicAction(
-                self._action_cls(**params),
-                self.code_source_id,
-                self.namespace
+                self._action_cls(**params), self.code_source_id, self.namespace
             )
 
         dynamic_cls = type(
             self._action_cls.__name__,
             (self._action_cls,),
-            **self._action_cls_attrs
+            **self._action_cls_attrs,
         )
 
         return DynamicAction(
-            dynamic_cls(**params),
-            self.code_source_id,
-            self.namespace
+            dynamic_cls(**params), self.code_source_id, self.namespace
         )
 
 
@@ -108,8 +106,7 @@ class DynamicActionSerializer(serialization.DictBasedSerializer):
         cls_name = entity_dict['cls_name']
 
         mod = _get_python_module(
-            entity_dict['code_source_id'],
-            entity_dict['namespace']
+            entity_dict['code_source_id'], entity_dict['namespace']
         )
 
         cls = getattr(mod[0], cls_name)
@@ -125,17 +122,12 @@ class DynamicActionSerializer(serialization.DictBasedSerializer):
             setattr(action, k, v)
 
         return DynamicAction(
-            action,
-            entity_dict['code_source_id'],
-            entity_dict['namespace']
+            action, entity_dict['code_source_id'], entity_dict['namespace']
         )
 
 
 def _get_python_module(code_source_id, namespace=''):
-    code_source = db_api.get_code_source(
-        code_source_id,
-        namespace=namespace
-    )
+    code_source = db_api.get_code_source(code_source_id, namespace=namespace)
 
     mod = _load_python_module(code_source.name, code_source.content)
 
@@ -200,13 +192,12 @@ class DynamicActionProvider(ml_actions.ActionProvider):
             code_source_id=action_def.code_source_id,
             version=1,
             project_id=action_def.project_id,
-            scope=action_def.scope
+            scope=action_def.scope,
         )
 
     def find(self, action_name, namespace=None):
         action_def = db_api.load_dynamic_action_definition(
-            action_name,
-            namespace
+            action_name, namespace
         )
 
         if action_def is None:
@@ -214,18 +205,21 @@ class DynamicActionProvider(ml_actions.ActionProvider):
 
         return self._build_action_descriptor(action_def)
 
-    def find_all(self, namespace='', limit=None, sort_fields=None,
-                 sort_dirs=None, filters=None):
+    def find_all(
+        self,
+        namespace='',
+        limit=None,
+        sort_fields=None,
+        sort_dirs=None,
+        filters=None,
+    ):
         if filters is None:
             filters = dict()
 
         filters['namespace'] = {'eq': namespace}
 
         action_defs = db_api.get_dynamic_action_definitions(
-            limit=limit,
-            sort_keys=sort_fields,
-            sort_dirs=sort_dirs,
-            **filters
+            limit=limit, sort_keys=sort_fields, sort_dirs=sort_dirs, **filters
         )
 
         return [self._build_action_descriptor(a_d) for a_d in action_defs]

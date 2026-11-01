@@ -51,7 +51,7 @@ STATE_TYPES = wtypes.Enum(
     states.SUCCESS,
     states.ERROR,
     states.PAUSED,
-    states.CANCELLED
+    states.CANCELLED,
 )
 
 
@@ -74,8 +74,7 @@ def _get_workflow_execution(id, must_exist=True, fields=None):
         fields.insert(0, 'id')
 
     fields_tuple = rest_utils.fields_list_to_cls_fields_tuple(
-        db_models.WorkflowExecution,
-        fields
+        db_models.WorkflowExecution, fields
     )
 
     with db_api.transaction():
@@ -85,8 +84,7 @@ def _get_workflow_execution(id, must_exist=True, fields=None):
             wf_ex = db_api.load_workflow_execution(id, fields=fields_tuple)
 
         return rest_utils.load_deferred_fields(
-            wf_ex,
-            ['params', 'input', 'output', 'context', 'spec']
+            wf_ex, ['params', 'input', 'output', 'context', 'spec']
         )
 
 
@@ -129,9 +127,7 @@ class ExecutionsController(rest.RestController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
-        resources.Execution,
-        wtypes.text,
-        body=resources.Execution
+        resources.Execution, wtypes.text, body=resources.Execution
     )
     def put(self, id, wf_ex):
         """Update the specified workflow execution.
@@ -149,8 +145,10 @@ class ExecutionsController(rest.RestController):
                 # ensure that workflow execution exists
                 wf_ex_old = db_api.get_workflow_execution(
                     id,
-                    fields=(db_models.WorkflowExecution.id,
-                            db_models.WorkflowExecution.root_execution_id)
+                    fields=(
+                        db_models.WorkflowExecution.id,
+                        db_models.WorkflowExecution.root_execution_id,
+                    ),
                 )
                 root_execution_id = wf_ex_old.root_execution_id
                 if not root_execution_id:
@@ -185,9 +183,11 @@ class ExecutionsController(rest.RestController):
 
                 # If state change, environment cannot be updated
                 # if not RUNNING.
-                if (delta.get('env') and
-                        delta.get('state') and
-                        delta['state'] != states.RUNNING):
+                if (
+                    delta.get('env')
+                    and delta.get('state')
+                    and delta['state'] != states.RUNNING
+                ):
                     raise exc.InputException(
                         'The property env can only be updated when workflow '
                         'execution is not running or on resume from pause.'
@@ -195,15 +195,13 @@ class ExecutionsController(rest.RestController):
 
                 if delta.get('description'):
                     wf_ex = db_api.update_workflow_execution(
-                        id,
-                        {'description': delta['description']}
+                        id, {'description': delta['description']}
                     )
 
                 if not delta.get('state') and delta.get('env'):
                     wf_ex = db_api.get_workflow_execution(id)
                     wf_ex = wf_service.update_workflow_execution_env(
-                        wf_ex,
-                        delta.get('env')
+                        wf_ex, delta.get('env')
                     )
 
                 return delta, wf_ex
@@ -215,28 +213,28 @@ class ExecutionsController(rest.RestController):
                 wf_ex = rpc.get_engine_client().pause_workflow(id)
             elif delta.get('state') == states.RUNNING:
                 wf_ex = rpc.get_engine_client().resume_workflow(
-                    id,
-                    env=delta.get('env')
+                    id, env=delta.get('env')
                 )
             elif states.is_completed(delta.get('state')):
                 msg = wf_ex.state_info if wf_ex.state_info else None
                 wf_ex = rpc.get_engine_client().stop_workflow(
-                    id,
-                    delta.get('state'),
-                    msg
+                    id, delta.get('state'), msg
                 )
             else:
                 # To prevent changing state in other cases throw a message.
                 raise exc.InputException(
-                    "Cannot change state to %s. Allowed states are: '%s" % (
+                    "Cannot change state to %s. Allowed states are: '%s"
+                    % (
                         wf_ex.state,
-                        ', '.join([
-                            states.RUNNING,
-                            states.PAUSED,
-                            states.SUCCESS,
-                            states.ERROR,
-                            states.CANCELLED
-                        ])
+                        ', '.join(
+                            [
+                                states.RUNNING,
+                                states.PAUSED,
+                                states.SUCCESS,
+                                states.ERROR,
+                                states.CANCELLED,
+                            ]
+                        ),
                     )
                 )
 
@@ -246,9 +244,7 @@ class ExecutionsController(rest.RestController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
-        resources.Execution,
-        body=resources.Execution,
-        status_code=201
+        resources.Execution, body=resources.Execution, status_code=201
     )
     def post(self, wf_ex):
         """Create a new Execution.
@@ -293,18 +289,20 @@ class ExecutionsController(rest.RestController):
             # previous workflow execution model and the information to start
             # a new workflow based on that information.
             source_exec_dict = db_api.get_workflow_execution(
-                source_execution_id).to_dict()
+                source_execution_id
+            ).to_dict()
 
             exec_dict['description'] = "{} Based on the execution '{}'".format(
-                exec_dict['description'],
-                source_execution_id
+                exec_dict['description'], source_execution_id
             )
             exec_dict['description'] = exec_dict['description'].strip()
 
         result_exec_dict = merge_dicts(source_exec_dict, exec_dict)
 
-        if not (result_exec_dict.get('workflow_id') or
-                result_exec_dict.get('workflow_name')):
+        if not (
+            result_exec_dict.get('workflow_id')
+            or result_exec_dict.get('workflow_name')
+        ):
             raise exc.WorkflowException(
                 "Workflow ID or workflow name must be provided. Workflow ID is"
                 " recommended."
@@ -317,8 +315,7 @@ class ExecutionsController(rest.RestController):
         try:
             result = engine.start_workflow(
                 result_exec_dict.get(
-                    'workflow_id',
-                    result_exec_dict.get('workflow_name')
+                    'workflow_id', result_exec_dict.get('workflow_name')
                 ),
                 result_exec_dict.get('workflow_namespace', ''),
                 result_exec_dict.get('id'),
@@ -326,7 +323,7 @@ class ExecutionsController(rest.RestController):
                 description=result_exec_dict.get('description', ''),
                 **wf_service.strip_internal_workflow_params(
                     result_exec_dict.get('params')
-                )
+                ),
             )
         except Exception:
             security.delete_execution_trust()
@@ -351,8 +348,7 @@ class ExecutionsController(rest.RestController):
 
         if not force:
             state = db_api.get_workflow_execution(
-                id,
-                fields=(db_models.WorkflowExecution.state,)
+                id, fields=(db_models.WorkflowExecution.state,)
             )[0]
 
             if not states.is_completed(state):
@@ -367,23 +363,56 @@ class ExecutionsController(rest.RestController):
         )(id)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, types.uuid, wtypes.text,
-                         types.uniquelist, types.jsontype, types.uuid,
-                         types.uuid, STATE_TYPES, wtypes.text,
-                         types.jsontype, types.jsontype, wtypes.text,
-                         wtypes.text, bool, types.uuid,
-                         bool, types.list)
-    def get_all(self, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='',
-                workflow_name=None, workflow_id=None, description=None,
-                tags=None, params=None, task_execution_id=None,
-                root_execution_id=None, state=None, state_info=None,
-                input=None, output=None, created_at=None,
-                updated_at=None, include_output=None, project_id=None,
-                all_projects=False, nulls=''):
-
+    @wsme_pecan.wsexpose(
+        resources.Executions,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        types.uuid,
+        wtypes.text,
+        types.uniquelist,
+        types.jsontype,
+        types.uuid,
+        types.uuid,
+        STATE_TYPES,
+        wtypes.text,
+        types.jsontype,
+        types.jsontype,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        types.uuid,
+        bool,
+        types.list,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        workflow_name=None,
+        workflow_id=None,
+        description=None,
+        tags=None,
+        params=None,
+        task_execution_id=None,
+        root_execution_id=None,
+        state=None,
+        state_info=None,
+        input=None,
+        output=None,
+        created_at=None,
+        updated_at=None,
+        include_output=None,
+        project_id=None,
+        all_projects=False,
+        nulls='',
+    ):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -457,8 +486,13 @@ class ExecutionsController(rest.RestController):
 
         LOG.debug(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, filters=%s, all_projects=%s", marker, limit,
-            sort_keys, sort_dirs, filters, all_projects
+            "sort_dirs=%s, filters=%s, all_projects=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters,
+            all_projects,
         )
 
         if include_output:
@@ -478,5 +512,5 @@ class ExecutionsController(rest.RestController):
             sort_dirs=sort_dirs,
             fields=fields,
             all_projects=all_projects,
-            **filters
+            **filters,
         )

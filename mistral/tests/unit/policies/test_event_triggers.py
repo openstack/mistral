@@ -26,11 +26,7 @@ WF = models.WorkflowDefinition(
     spec={
         'version': '2.0',
         'name': 'my_wf',
-        'tasks': {
-            'task1': {
-                'action': 'std.noop'
-            }
-        }
+        'tasks': {'task1': {'action': 'std.noop'}},
     }
 )
 WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
@@ -45,16 +41,16 @@ TRIGGER = {
     'scope': 'private',
     'exchange': 'openstack',
     'topic': 'notification',
-    'event': 'compute.instance.create.start'
+    'event': 'compute.instance.create.start',
 }
 
 trigger_values = copy.deepcopy(TRIGGER)
 trigger_values['id'] = TRIGGER_ID
 trigger_values['trust_id'] = TRUST_ID
-trigger_values['workflow_input'] = json.loads(
-    trigger_values['workflow_input'])
+trigger_values['workflow_input'] = json.loads(trigger_values['workflow_input'])
 trigger_values['workflow_params'] = json.loads(
-    trigger_values['workflow_params'])
+    trigger_values['workflow_params']
+)
 
 TRIGGER_DB = models.EventTrigger()
 TRIGGER_DB.update(trigger_values)
@@ -92,7 +88,7 @@ class TestEventTriggerPolicy(base.APITest):
 
         resp = self.app.get(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -114,10 +110,7 @@ class TestEventTriggerPolicy(base.APITest):
             {"event_triggers:list": "role:FAKE"}
         )
 
-        resp = self.app.get(
-            '/v2/event_triggers',
-            expect_errors=True
-        )
+        resp = self.app.get('/v2/event_triggers', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -126,35 +119,35 @@ class TestEventTriggerPolicy(base.APITest):
             {"event_triggers:list": "role:FAKE or rule:admin_or_owner"}
         )
 
-        resp = self.app.get(
-            '/v2/event_triggers'
-        )
+        resp = self.app.get('/v2/event_triggers')
 
         self.assertEqual(200, resp.status_int)
 
     def test_event_trigger_list_all_not_allowed(self):
-        self.policy.change_policy_definition({
-            "event_triggers:list": "role:FAKE or rule:admin_or_owner",
-            "event_triggers:list:all_projects": "role:FAKE"
-        })
+        self.policy.change_policy_definition(
+            {
+                "event_triggers:list": "role:FAKE or rule:admin_or_owner",
+                "event_triggers:list:all_projects": "role:FAKE",
+            }
+        )
 
         resp = self.app.get(
-            '/v2/event_triggers?all_projects=1',
-            expect_errors=True
+            '/v2/event_triggers?all_projects=1', expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
 
     def test_event_trigger_list_all_allowed(self):
-        self.policy.change_policy_definition({
-            "event_triggers:list": "role:FAKE or rule:admin_or_owner",
-            "event_triggers:list:all_projects":
-                "role:FAKE or rule:admin_or_owner"
-        })
-
-        resp = self.app.get(
-            '/v2/event_triggers?all_projects=1'
+        self.policy.change_policy_definition(
+            {
+                "event_triggers:list": "role:FAKE or rule:admin_or_owner",
+                "event_triggers:list:all_projects": (
+                    "role:FAKE or rule:admin_or_owner"
+                ),
+            }
         )
+
+        resp = self.app.get('/v2/event_triggers?all_projects=1')
 
         self.assertEqual(200, resp.status_int)
 
@@ -164,24 +157,21 @@ class TestEventTriggerPolicy(base.APITest):
         )
 
         resp = self.app.post_json(
-            '/v2/event_triggers',
-            TRIGGER,
-            expect_errors=True
+            '/v2/event_triggers', TRIGGER, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch('mistral.services.triggers.create_event_trigger',
-                return_value=TRIGGER_DB)
+    @mock.patch(
+        'mistral.services.triggers.create_event_trigger',
+        return_value=TRIGGER_DB,
+    )
     def test_event_trigger_create_allowed(self, mock_obj):
         self.policy.change_policy_definition(
             {"event_triggers:create": "role:FAKE or rule:admin_or_owner"}
         )
 
-        resp = self.app.post_json(
-            '/v2/event_triggers',
-            TRIGGER
-        )
+        resp = self.app.post_json('/v2/event_triggers', TRIGGER)
 
         self.assertEqual(201, resp.status_int)
 
@@ -193,15 +183,15 @@ class TestEventTriggerPolicy(base.APITest):
         trigger['scope'] = 'public'
 
         resp = self.app.post_json(
-            '/v2/event_triggers',
-            trigger,
-            expect_errors=True
+            '/v2/event_triggers', trigger, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch('mistral.services.triggers.create_event_trigger',
-                return_value=TRIGGER_DB)
+    @mock.patch(
+        'mistral.services.triggers.create_event_trigger',
+        return_value=TRIGGER_DB,
+    )
     def test_event_trigger_create_public_allowed(self, mock_obj):
         # Default policy requires admin_only for event_triggers:publicize.
         # An admin user should be allowed.
@@ -211,18 +201,16 @@ class TestEventTriggerPolicy(base.APITest):
         trigger = copy.deepcopy(TRIGGER)
         trigger['scope'] = 'public'
 
-        resp = self.app.post_json(
-            '/v2/event_triggers',
-            trigger
-        )
+        resp = self.app.post_json('/v2/event_triggers', trigger)
 
         self.assertEqual(201, resp.status_int)
 
     @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
-    def test_event_trigger_update_not_allowed(self, mock_update,
-                                              mock_rpc_client):
+    def test_event_trigger_update_not_allowed(
+        self, mock_update, mock_rpc_client
+    ):
         self.policy.change_policy_definition(
             {"event_triggers:update": "role:FAKE"}
         )
@@ -230,7 +218,7 @@ class TestEventTriggerPolicy(base.APITest):
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'name': 'new_name'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -240,8 +228,7 @@ class TestEventTriggerPolicy(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
-    def test_event_trigger_update_allowed(self, mock_update,
-                                          mock_rpc_client):
+    def test_event_trigger_update_allowed(self, mock_update, mock_rpc_client):
         client = mock.Mock()
         mock_rpc_client.return_value = client
 
@@ -256,7 +243,7 @@ class TestEventTriggerPolicy(base.APITest):
 
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            {'name': 'new_name'}
+            {'name': 'new_name'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -264,15 +251,16 @@ class TestEventTriggerPolicy(base.APITest):
     @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
-    def test_event_trigger_update_public_not_allowed(self, mock_update,
-                                                     mock_rpc_client):
+    def test_event_trigger_update_public_not_allowed(
+        self, mock_update, mock_rpc_client
+    ):
         # Default policy requires admin_only for event_triggers:publicize.
         # The default test context has is_admin=False, so a regular user
         # (project owner) should be denied.
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
             {'scope': 'public'},
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)
@@ -282,8 +270,9 @@ class TestEventTriggerPolicy(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
-    def test_event_trigger_update_public_allowed(self, mock_update,
-                                                 mock_rpc_client):
+    def test_event_trigger_update_public_allowed(
+        self, mock_update, mock_rpc_client
+    ):
         # Default policy requires admin_only for event_triggers:publicize.
         # An admin user should be allowed.
         self.ctx.is_admin = True
@@ -299,7 +288,7 @@ class TestEventTriggerPolicy(base.APITest):
 
         resp = self.app.put_json(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            {'scope': 'public'}
+            {'scope': 'public'},
         )
 
         self.assertEqual(200, resp.status_int)
@@ -315,7 +304,7 @@ class TestEventTriggerPolicy(base.APITest):
 
         resp = self.app.delete(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
-            expect_errors=True
+            expect_errors=True,
         )
 
         self.assertEqual(403, resp.status_int)

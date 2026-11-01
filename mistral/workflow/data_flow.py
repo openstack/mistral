@@ -128,10 +128,7 @@ def evaluate_upstream_context(upstream_task_execs, additive_context=None):
             # temporary solution. There's still the bug
             # https://bugs.launchpad.net/mistral/+bug/1424461 that needs to be
             # fixed using context variable versioning.
-            published_vars = utils.merge_dicts(
-                published_vars,
-                t_ex.published
-            )
+            published_vars = utils.merge_dicts(published_vars, t_ex.published)
 
             utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
 
@@ -154,8 +151,7 @@ def evaluate_upstream_context(upstream_task_execs, additive_context=None):
 
     for t_ex in upstream_task_execs:
         ctx_versioning.merge_context_by_version(
-            ctx,
-            evaluate_task_outbound_context(t_ex)
+            ctx, evaluate_task_outbound_context(t_ex)
         )
 
     return ctx
@@ -198,14 +194,13 @@ def publish_variables(task_ex, task_spec):
         task_ex.in_context,
         get_workflow_environment_dict(wf_ex),
         wf_ex.context,
-        wf_ex.input
+        wf_ex.input,
     )
 
     if task_ex.name in expr_ctx:
         LOG.warning(
-            'Shadowing context variable with task name while '
-            'publishing: %s',
-            task_ex.name
+            'Shadowing context variable with task name while publishing: %s',
+            task_ex.name,
         )
 
     publish_spec = task_spec.get_publish(task_ex.state)
@@ -223,7 +218,7 @@ def publish_variables(task_ex, task_spec):
 
     utils.merge_dicts(
         task_ex.workflow_execution.context,
-        expr.evaluate_recursively(global_vars, expr_ctx)
+        expr.evaluate_recursively(global_vars, expr_ctx),
     )
 
     # TODO(rakhmerov):
@@ -233,10 +228,7 @@ def publish_variables(task_ex, task_spec):
     #    {'branch': {vars}, 'global': {vars}, 'atomic': {vars}}
 
 
-@profiler.trace(
-    'data-flow-evaluate-task-outbound-context',
-    hide_args=True
-)
+@profiler.trace('data-flow-evaluate-task-outbound-context', hide_args=True)
 def evaluate_task_outbound_context(task_ex):
     """Evaluates task outbound Data Flow context.
 
@@ -272,10 +264,7 @@ def evaluate_workflow_output(wf_ex, wf_output, ctx):
 
     # Evaluate workflow 'output' clause using the final workflow context.
     ctx_view = ContextView(
-        ctx,
-        get_workflow_environment_dict(wf_ex),
-        wf_ex.context,
-        wf_ex.input
+        ctx, get_workflow_environment_dict(wf_ex), wf_ex.context, wf_ex.input
     )
 
     output = expr.evaluate_recursively(wf_output, ctx_view)
@@ -287,12 +276,7 @@ def evaluate_workflow_output(wf_ex, wf_output, ctx):
 
 
 def get_current_task_dict(task_ex):
-    return {
-        '__task_execution': {
-            'id': task_ex.id,
-            'name': task_ex.name
-        }
-    }
+    return {'__task_execution': {'id': task_ex.id, 'name': task_ex.name}}
 
 
 def add_openstack_data_to_context(wf_ex):
@@ -323,9 +307,7 @@ def add_workflow_variables_to_context(wf_ex, wf_spec):
     # The context for calculating workflow variables is workflow input
     # and other data already stored in workflow initial context.
     ctx_view = ContextView(
-        get_workflow_environment_dict(wf_ex),
-        wf_ex.context,
-        wf_ex.input
+        get_workflow_environment_dict(wf_ex), wf_ex.context, wf_ex.input
     )
 
     wf_vars = expr.evaluate_recursively(wf_spec.get_vars(), ctx_view)

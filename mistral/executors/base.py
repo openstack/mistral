@@ -27,9 +27,7 @@ def cleanup():
 def get_executor(exec_type):
     if not _EXECUTORS.get(exec_type):
         mgr = driver.DriverManager(
-            'mistral.executors',
-            exec_type,
-            invoke_on_load=True
+            'mistral.executors', exec_type, invoke_on_load=True
         )
 
         _EXECUTORS[exec_type] = mgr.driver
@@ -41,8 +39,17 @@ class Executor(object, metaclass=abc.ABCMeta):
     """Action executor interface."""
 
     @abc.abstractmethod
-    def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
-                   redelivered=False, target=None, async_=True, timeout=None):
+    def run_action(
+        self,
+        action,
+        action_ex_id,
+        safe_rerun,
+        exec_ctx,
+        redelivered=False,
+        target=None,
+        async_=True,
+        timeout=None,
+    ):
         """Runs the given action.
 
         :param action: Action to run.

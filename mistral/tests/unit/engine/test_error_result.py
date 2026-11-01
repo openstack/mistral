@@ -62,8 +62,7 @@ class MyAction(actions_base.Action):
 
     def run(self, context):
         return actions_base.Result(
-            data=self.success_result,
-            error=self.error_result
+            data=self.success_result, error=self.error_result
         )
 
     def test(self):
@@ -71,7 +70,6 @@ class MyAction(actions_base.Action):
 
 
 class MyAsyncAction(MyAction):
-
     def is_sync(self):
         return False
 
@@ -88,11 +86,7 @@ class ErrorResultTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={
-                'success_result': None,
-                'error_result': 2
-            }
+            'wf', wf_input={'success_result': None, 'error_result': 2}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -121,11 +115,7 @@ class ErrorResultTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={
-                'success_result': 'success',
-                'error_result': None
-            }
+            'wf', wf_input={'success_result': 'success', 'error_result': None}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -146,8 +136,7 @@ class ErrorResultTest(base.EngineTestCase):
             # field must be empty.
             self.assertDictEqual({'p_var': 'success'}, task1.published)
             self.assertEqual(
-                'success',
-                data_flow.get_task_execution_result(task1)
+                'success', data_flow.get_task_execution_result(task1)
             )
 
     def test_async_error_result(self):
@@ -155,11 +144,7 @@ class ErrorResultTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={
-                'success_result': None,
-                'error_result': 2
-            }
+            'wf', wf_input={'success_result': None, 'error_result': 2}
         )
 
         # If the action errors, we expect the workflow to continue. The
@@ -171,11 +156,7 @@ class ErrorResultTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={
-                'success_result': 'success',
-                'error_result': None
-            }
+            'wf', wf_input={'success_result': 'success', 'error_result': None}
         )
 
         # When the action is successful, the workflow will wait in the RUNNING

@@ -37,184 +37,166 @@ def upgrade():
         'action_definitions_v2_action_class',
         'action_definitions_v2',
         ['action_class'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'action_definitions_v2_is_system',
         'action_definitions_v2',
         ['is_system'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'action_definitions_v2_project_id',
         'action_definitions_v2',
         ['project_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'action_definitions_v2_scope',
         'action_definitions_v2',
         ['scope'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'cron_triggers_v2_next_execution_time',
         'cron_triggers_v2',
         ['next_execution_time'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'cron_triggers_v2_project_id',
         'cron_triggers_v2',
         ['project_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'cron_triggers_v2_scope',
-        'cron_triggers_v2',
-        ['scope'],
-        unique=False
+        'cron_triggers_v2_scope', 'cron_triggers_v2', ['scope'], unique=False
     )
 
     op.create_index(
         'cron_triggers_v2_workflow_name',
         'cron_triggers_v2',
         ['workflow_name'],
-        unique=False
+        unique=False,
     )
 
-    cron_v2_constrs = [uc['name'] for uc in
-                       inspector.get_unique_constraints('cron_triggers_v2')]
-    if ('cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key' in
-            cron_v2_constrs):
+    cron_v2_constrs = [
+        uc['name']
+        for uc in inspector.get_unique_constraints('cron_triggers_v2')
+    ]
+    if (
+        'cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key'
+        in cron_v2_constrs
+    ):
         op.drop_constraint(
             'cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key',
             'cron_triggers_v2',
-            type_='unique'
+            type_='unique',
         )
 
-    if ('cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1' in
-            cron_v2_constrs):
+    if (
+        'cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1'
+        in cron_v2_constrs
+    ):
         op.drop_constraint(
             'cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1',
             'cron_triggers_v2',
-            type_='unique'
+            type_='unique',
         )
 
     op.create_index(
         'delayed_calls_v2_processing_execution_time',
         'delayed_calls_v2',
         ['processing', 'execution_time'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'environments_v2_name',
-        'environments_v2',
-        ['name'],
-        unique=False
+        'environments_v2_name', 'environments_v2', ['name'], unique=False
     )
 
     op.create_index(
         'environments_v2_project_id',
         'environments_v2',
         ['project_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'environments_v2_scope',
-        'environments_v2',
-        ['scope'],
-        unique=False
+        'environments_v2_scope', 'environments_v2', ['scope'], unique=False
     )
 
     op.create_index(
         'executions_v2_project_id',
         'executions_v2',
         ['project_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'executions_v2_scope',
-        'executions_v2',
-        ['scope'],
-        unique=False
+        'executions_v2_scope', 'executions_v2', ['scope'], unique=False
     )
 
     op.create_index(
-        'executions_v2_state',
-        'executions_v2',
-        ['state'],
-        unique=False
+        'executions_v2_state', 'executions_v2', ['state'], unique=False
     )
 
     op.create_index(
         'executions_v2_task_execution_id',
         'executions_v2',
         ['task_execution_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'executions_v2_type',
-        'executions_v2',
-        ['type'],
-        unique=False
+        'executions_v2_type', 'executions_v2', ['type'], unique=False
     )
 
     op.create_index(
         'executions_v2_updated_at',
         'executions_v2',
         ['updated_at'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'executions_v2_workflow_execution_id',
         'executions_v2',
         ['workflow_execution_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
-        'workbooks_v2_project_id',
-        'workbooks_v2',
-        ['project_id'],
-        unique=False
+        'workbooks_v2_project_id', 'workbooks_v2', ['project_id'], unique=False
     )
 
     op.create_index(
-        'workbooks_v2_scope',
-        'workbooks_v2',
-        ['scope'],
-        unique=False
+        'workbooks_v2_scope', 'workbooks_v2', ['scope'], unique=False
     )
 
     op.create_index(
         'workflow_definitions_v2_is_system',
         'workflow_definitions_v2',
         ['is_system'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'workflow_definitions_v2_project_id',
         'workflow_definitions_v2',
         ['project_id'],
-        unique=False
+        unique=False,
     )
 
     op.create_index(
         'workflow_definitions_v2_scope',
         'workflow_definitions_v2',
         ['scope'],
-        unique=False
+        unique=False,
     )

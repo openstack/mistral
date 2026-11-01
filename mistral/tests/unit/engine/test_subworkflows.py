@@ -253,16 +253,12 @@ class SubworkflowsTest(base.EngineTestCase):
             self._assert_dict_contains_subset(
                 {
                     'task_name': 'task2',
-                    'task_execution_id': wf1_ex.task_execution_id
+                    'task_execution_id': wf1_ex.task_execution_id,
                 },
-                wf1_ex.params
+                wf1_ex.params,
             )
             self.assertDictEqual(
-                {
-                    'param1': 'Bonnie',
-                    'param2': 'Clyde'
-                },
-                wf1_ex.input
+                {'param1': 'Bonnie', 'param2': 'Clyde'}, wf1_ex.input
             )
 
         # Wait till workflow 'wf1' is completed.
@@ -273,10 +269,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
             wf1_output = wf1_ex.output
 
-        self.assertDictEqual(
-            {'final_result': "'Bonnie & Clyde'"},
-            wf1_output
-        )
+        self.assertDictEqual({'final_result': "'Bonnie & Clyde'"}, wf1_output)
 
         # Wait till workflow 'wf2' is completed.
         self.await_workflow_success(wf2_ex.id, timeout=4)
@@ -287,8 +280,7 @@ class SubworkflowsTest(base.EngineTestCase):
             wf2_output = wf2_ex.output
 
         self.assertDictEqual(
-            {'slogan': "'Bonnie & Clyde' is a cool movie!"},
-            wf2_output
+            {'slogan': "'Bonnie & Clyde' is a cool movie!"}, wf2_output
         )
 
         # Check project_id in tasks.
@@ -307,8 +299,11 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(project_id, wf1_task1_ex.project_id)
         self.assertEqual(project_id, wf1_task2_ex.project_id)
 
-    @mock.patch.object(std_actions.EchoAction, 'run',
-                       mock.MagicMock(side_effect=exc.ActionException))
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.MagicMock(side_effect=exc.ActionException),
+    )
     def test_subworkflow_error(self):
         self.engine.start_workflow('wb1.wf2')
 
@@ -358,8 +353,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
     def test_dynamic_subworkflow_call_failure(self):
         ex = self.engine.start_workflow(
-            'wb3.wf1',
-            wf_input={'wf_name': 'not_existing_wf'}
+            'wb3.wf1', wf_input={'wf_name': 'not_existing_wf'}
         )
 
         self.await_workflow_error(ex.id)
@@ -378,7 +372,7 @@ class SubworkflowsTest(base.EngineTestCase):
     def test_string_workflow_input_failure(self):
         ex = self.engine.start_workflow(
             'wb4.wf1',
-            wf_input={'wf_name': 'wf2', 'inp': 'invalid_string_input'}
+            wf_input={'wf_name': 'wf2', 'inp': 'invalid_string_input'},
         )
 
         self.await_workflow_error(ex.id)
@@ -390,8 +384,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
     def _test_dynamic_workflow_with_dict_param(self, wf_identifier):
         ex = self.engine.start_workflow(
-            wf_identifier,
-            wf_input={'wf_name': 'wf2', 'inp': {'inp': 'abc'}}
+            wf_identifier, wf_input={'wf_name': 'wf2', 'inp': {'inp': 'abc'}}
         )
 
         self.await_workflow_success(ex.id)
@@ -535,21 +528,20 @@ class SubworkflowsTest(base.EngineTestCase):
                 self.assertEqual(states.ERROR, ex.state)
 
             deepest = [
-                ex for ex in wf_execs
+                ex
+                for ex in wf_execs
                 if ex.params.get('subworkflow_depth') == 3
             ]
 
             self.assertEqual(1, len(deepest))
 
             task_ex = self._assert_single_item(
-                deepest[0].task_executions,
-                name='recurse'
+                deepest[0].task_executions, name='recurse'
             )
 
         self.assertEqual(states.ERROR, task_ex.state)
         self.assertIn(
-            "maximum sub-workflow depth (3) exceeded",
-            task_ex.state_info
+            "maximum sub-workflow depth (3) exceeded", task_ex.state_info
         )
 
     def test_subworkflow_depth_within_limit(self):
@@ -565,7 +557,8 @@ class SubworkflowsTest(base.EngineTestCase):
             wf_execs = db_api.get_workflow_executions()
 
             depths = sorted(
-                ex.params['subworkflow_depth'] for ex in wf_execs
+                ex.params['subworkflow_depth']
+                for ex in wf_execs
                 if ex.task_execution_id
             )
 

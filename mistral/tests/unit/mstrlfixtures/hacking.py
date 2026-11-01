@@ -20,7 +20,6 @@ import fixtures
 
 
 class HackingLogging(fixtures.Fixture):
-
     shared_imports = """
                 import logging
                 from oslo_log import log

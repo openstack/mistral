@@ -37,7 +37,7 @@ WF_EXEC = {
     'description': None,
     'output': None,
     'accepted': False,
-    'some_invalid_field': "foobar"
+    'some_invalid_field': "foobar",
 }
 
 WF = """---
@@ -120,10 +120,8 @@ class TestRestResource(base.DbTestCase):
             'input': [
                 'no_default_value_input',
                 {'string_param': 'string'},
-                {
-                    'json_param': {'string_param': 'string'}
-                }
-            ]
+                {'json_param': {'string_param': 'string'}},
+            ],
         }
 
         workflows_list = wf_service.create_workflows(WF)
@@ -134,10 +132,7 @@ class TestRestResource(base.DbTestCase):
         self.assertDictEqual(expected_interface, wf_resource.interface)
 
     def test_from_db_model_workflow_resource_no_params(self):
-        expected_interface = {
-            'input': [],
-            'output': []
-        }
+        expected_interface = {'input': [], 'output': []}
 
         workflows_list = wf_service.create_workflows(WF_NO_PARAMS)
         self.assertEqual(1, len(workflows_list))
@@ -154,20 +149,28 @@ class TestRestResource(base.DbTestCase):
 
         self.assertEqual(2, len(workflows_list))
 
-        wf_two_params = workflows_list[0] \
-            if workflows_list[0].name == 'WF_2_PARAMS' \
+        wf_two_params = (
+            workflows_list[0]
+            if workflows_list[0].name == 'WF_2_PARAMS'
             else workflows_list[1]
+        )
 
-        wf_three_params = workflows_list[0] \
-            if workflows_list[0].name == 'WF_3_PARAMS' \
+        wf_three_params = (
+            workflows_list[0]
+            if workflows_list[0].name == 'WF_3_PARAMS'
             else workflows_list[1]
+        )
 
         two_params_wf_resource = resources.Workflow.from_db_model(
-            wf_two_params)
+            wf_two_params
+        )
         three_params_wf_resource = resources.Workflow.from_db_model(
-            wf_three_params)
+            wf_three_params
+        )
 
-        self.assertEqual(expected_input_two_params,
-                         two_params_wf_resource.input)
-        self.assertEqual(expected_input_three_params,
-                         three_params_wf_resource.input)
+        self.assertEqual(
+            expected_input_two_params, two_params_wf_resource.input
+        )
+        self.assertEqual(
+            expected_input_three_params, three_params_wf_resource.input
+        )

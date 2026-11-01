@@ -47,5 +47,5 @@ def list_rules():
         service.list_rules(),
         task.list_rules(),
         workbook.list_rules(),
-        workflow.list_rules()
+        workflow.list_rules(),
     )

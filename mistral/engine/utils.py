@@ -46,10 +46,7 @@ def _compare_parameters(expected_input, actual_input):
 def validate_input(expected_input, actual_input, obj_name, obj_class):
     actual_input = actual_input or {}
 
-    missing, unexpected = _compare_parameters(
-        expected_input,
-        actual_input
-    )
+    missing, unexpected = _compare_parameters(expected_input, actual_input)
 
     if missing or unexpected:
         msg = 'Invalid input [name=%s, class=%s'
@@ -68,8 +65,9 @@ def validate_input(expected_input, actual_input, obj_name, obj_class):
         raise exc.InputException(msg % tuple(msg_props))
 
 
-def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,
-                                namespace, wf_spec_name):
+def resolve_workflow_definition(
+    parent_wf_name, parent_wf_spec_name, namespace, wf_spec_name
+):
     wf_def = None
 
     if parent_wf_name != parent_wf_spec_name:
@@ -89,8 +87,8 @@ def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,
 
     if not wf_def:
         raise exc.WorkflowException(
-            "Failed to find workflow [name=%s] [namespace=%s]" %
-            (wf_spec_name, namespace)
+            "Failed to find workflow [name=%s] [namespace=%s]"
+            % (wf_spec_name, namespace)
         )
 
     return wf_def

@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 _RETRY_ERRORS = (
     db_exc.DBDeadlock,
     db_exc.DBConnectionError,
-    sqla_exc.OperationalError
+    sqla_exc.OperationalError,
 )
 
 
@@ -85,13 +85,13 @@ def retry_on_db_error(func, retry=None):
     if not retry:
         retry = tenacity.Retrying(
             retry=(
-                tenacity.retry_if_exception_type(_RETRY_ERRORS) |
-                tenacity.retry_if_exception_message(
+                tenacity.retry_if_exception_type(_RETRY_ERRORS)
+                | tenacity.retry_if_exception_message(
                     match='Too many connections'
                 )
             ),
             stop=tenacity.stop_after_attempt(50),
-            wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
+            wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2),
         )
 
     # The `assigned` arg should be empty as some of the default values are not
@@ -120,14 +120,14 @@ def check_db_obj_access(db_obj):
 
     if not is_admin and db_obj.project_id != security.get_project_id():
         raise exc.NotAllowedException(
-            "Can not access %s resource of other projects, ID: %s" %
-            (db_obj.__class__.__name__, db_obj.id)
+            "Can not access %s resource of other projects, ID: %s"
+            % (db_obj.__class__.__name__, db_obj.id)
         )
 
     if not is_admin and hasattr(db_obj, 'is_system') and db_obj.is_system:
         raise exc.InvalidActionException(
-            "Can not modify a system %s resource, ID: %s" %
-            (db_obj.__class__.__name__, db_obj.id)
+            "Can not modify a system %s resource, ID: %s"
+            % (db_obj.__class__.__name__, db_obj.id)
         )
 
 
@@ -164,8 +164,9 @@ def tx_cached(use_args=None, ignore_args=None):
                 )
 
             ignore_args_tup = (
-                ignore_args if isinstance(ignore_args, tuple) else
-                (ignore_args,)
+                ignore_args
+                if isinstance(ignore_args, tuple)
+                else (ignore_args,)
             )
 
             for arg_name in ignore_args_tup:

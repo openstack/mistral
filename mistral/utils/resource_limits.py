@@ -49,5 +49,5 @@ def apply_memory_limit(limit_mb):
 
     LOG.info(
         "Applied a soft address-space limit of %d MiB to the process.",
-        new_soft // (1024 * 1024)
+        new_soft // (1024 * 1024),
     )

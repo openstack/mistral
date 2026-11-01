@@ -36,9 +36,7 @@ class IsolationLevelTest(base.BaseTest):
 
         with mock.patch.object(db_base, '_facade', None):
             with mock.patch.object(
-                db_base.enginefacade,
-                'transaction_context',
-                return_value=ctx
+                db_base.enginefacade, 'transaction_context', return_value=ctx
             ):
                 db_base._get_facade()
 

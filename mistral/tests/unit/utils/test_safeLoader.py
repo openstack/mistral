@@ -47,24 +47,26 @@ class TestSafeLoader(TestCase):
 
         result = {
             'version': '2.0',
-            'wf1':
-                {'type': 'direct',
-                 'input': [
-                     {'a': '&a ["lol","lol","lol","lol","lol"]'},
-                     {'b': '&b [*a,*a,*a,*a,*a,*a,*a,*a,*a]'},
-                     {'c': '&c [*b,*b,*b,*b,*b,*b,*b,*b,*b]'},
-                     {'d': '&d [*c,*c,*c,*c,*c,*c,*c,*c,*c]'},
-                     {'e': '&e [*d,*d,*d,*d,*d,*d,*d,*d,*d]'},
-                     {'f': '&f [*e,*e,*e,*e,*e,*e,*e,*e,*e]'},
-                     {'g': '&g [*f,*f,*f,*f,*f,*f,*f,*f,*f]'},
-                     {'h': '&h [*g,*g,*g,*g,*g,*g,*g,*g,*g]'},
-                     {'i': '&i [*h,*h,*h,*h,*h,*h,*h,*h,*h]'}],
-                 'tasks':
-                    {'hello': {
+            'wf1': {
+                'type': 'direct',
+                'input': [
+                    {'a': '&a ["lol","lol","lol","lol","lol"]'},
+                    {'b': '&b [*a,*a,*a,*a,*a,*a,*a,*a,*a]'},
+                    {'c': '&c [*b,*b,*b,*b,*b,*b,*b,*b,*b]'},
+                    {'d': '&d [*c,*c,*c,*c,*c,*c,*c,*c,*c]'},
+                    {'e': '&e [*d,*d,*d,*d,*d,*d,*d,*d,*d]'},
+                    {'f': '&f [*e,*e,*e,*e,*e,*e,*e,*e,*e]'},
+                    {'g': '&g [*f,*f,*f,*f,*f,*f,*f,*f,*f]'},
+                    {'h': '&h [*g,*g,*g,*g,*g,*g,*g,*g,*g]'},
+                    {'i': '&i [*h,*h,*h,*h,*h,*h,*h,*h,*h]'},
+                ],
+                'tasks': {
+                    'hello': {
                         'action': 'std.echo output="Hello"',
-                        'wait-before': 1, 'publish':
-                            {'result': '<% task(hello).result %>'}
-                    }}
-                 }
+                        'wait-before': 1,
+                        'publish': {'result': '<% task(hello).result %>'},
+                    }
+                },
+            },
         }
         self.assertEqual(result, safe_yaml.load(yaml_text))

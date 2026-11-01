@@ -159,18 +159,16 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         self.assertEqual(
-            states.SUCCESS,
-            self.engine.resume_workflow(wf_ex.id).state
+            states.SUCCESS, self.engine.resume_workflow(wf_ex.id).state
         )
 
         self.assertRaises(
-            exc.WorkflowException,
-            self.engine.pause_workflow, wf_ex.id
+            exc.WorkflowException, self.engine.pause_workflow, wf_ex.id
         )
 
         self.assertEqual(
             states.SUCCESS,
-            self.engine.stop_workflow(wf_ex.id, states.ERROR).state
+            self.engine.stop_workflow(wf_ex.id, states.ERROR).state,
         )
 
     def test_task_not_updated(self):
@@ -276,7 +274,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn(
             "Failed to find action [action_name=wrong.task, namespace=]",
-            wf_ex.state_info
+            wf_ex.state_info,
         )
         self.assertEqual(states.ERROR, wf_ex.state)
 
@@ -312,9 +310,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # 'task1' should be in SUCCESS.
         task_1_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
         # 'task1' should have exactly one action execution (in SUCCESS).
@@ -327,15 +323,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # 'task2' should exist but in ERROR.
         task_2_ex = self._assert_single_item(
-            task_execs,
-            name='task2',
-            state=states.ERROR
+            task_execs, name='task2', state=states.ERROR
         )
 
         # 'task2' must not have action executions.
         self.assertEqual(
             0,
-            len(db_api.get_action_executions(task_execution_id=task_2_ex.id))
+            len(db_api.get_action_executions(task_execution_id=task_2_ex.id)),
         )
 
     def test_async_next_task_with_input_yaql_error(self):
@@ -378,8 +372,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # Update async action execution result.
         self.engine.on_action_complete(
-            task_1_action_exs[0].id,
-            ml_actions.Result(data='foobar')
+            task_1_action_exs[0].id, ml_actions.Result(data='foobar')
         )
 
         with db_api.transaction():
@@ -401,9 +394,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # 'task1' must be in SUCCESS.
         task_1_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
+            task_execs, name='task1', state=states.SUCCESS
         )
 
         # 'task1' must have exactly one action execution (in SUCCESS).
@@ -416,15 +407,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # 'task2' must be in ERROR.
         task_2_ex = self._assert_single_item(
-            task_execs,
-            name='task2',
-            state=states.ERROR
+            task_execs, name='task2', state=states.ERROR
         )
 
         # 'task2' must not have action executions.
         self.assertEqual(
             0,
-            len(db_api.get_action_executions(task_execution_id=task_2_ex.id))
+            len(db_api.get_action_executions(task_execution_id=task_2_ex.id)),
         )
 
     def test_join_all_task_with_input_jinja_error(self):
@@ -470,12 +459,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         with db_api.transaction():
             task_1_1_action_exs = db_api.get_action_executions(
-                task_execution_id=task_1_1.id)
+                task_execution_id=task_1_1.id
+            )
             task_1_2_action_exs = db_api.get_action_executions(
-                task_execution_id=task_1_2.id)
+                task_execution_id=task_1_2.id
+            )
 
             task_2_action_exs = db_api.get_action_executions(
-                task_execution_id=task_2.id)
+                task_execution_id=task_2.id
+            )
 
         self.assertEqual(1, len(task_1_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_1_action_exs[0].state)
@@ -505,7 +497,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertIn(
             "Can not evaluate YAQL expression [expression=wrong(yaql)",
-            wf_ex.state_info
+            wf_ex.state_info,
         )
         self.assertEqual(states.ERROR, wf_ex.state)
 
@@ -570,10 +562,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # Assert that there is only one task execution and it's SUCCESS.
         self.assertEqual(1, len(task_execs))
 
-        task_1_ex = self._assert_single_item(
-            task_execs,
-            name='task1'
-        )
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.ERROR, task_1_ex.state)
 
@@ -630,8 +619,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         # Update async action execution result.
         self.engine.on_action_complete(
-            task_1_action_exs[0].id,
-            ml_actions.Result(data='foobar')
+            task_1_action_exs[0].id, ml_actions.Result(data='foobar')
         )
 
         # Assert that task1 is SUCCESS and workflow is ERROR.
@@ -670,9 +658,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         """
 
         exception = self.assertRaises(
-            exc.InvalidModelException,
-            wf_service.create_workflows,
-            wf_text
+            exc.InvalidModelException, wf_service.create_workflows, wf_text
         )
 
         self.assertIn("Task 'task3' not found", str(exception))
@@ -825,33 +811,18 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertIsNone(task1.runtime_context.get(key))
 
         self.assertListEqual(
-            [
-                {
-                    "task_id": task1.id,
-                    "event": "on-success"
-                }
-            ],
-            task2.runtime_context.get(key)
+            [{"task_id": task1.id, "event": "on-success"}],
+            task2.runtime_context.get(key),
         )
 
         self.assertListEqual(
-            [
-                {
-                    "task_id": task2.id,
-                    "event": "on-error"
-                }
-            ],
-            task3.runtime_context.get(key)
+            [{"task_id": task2.id, "event": "on-error"}],
+            task3.runtime_context.get(key),
         )
 
         self.assertListEqual(
-            [
-                {
-                    "task_id": task3.id,
-                    "event": "on-complete"
-                }
-            ],
-            task4.runtime_context.get(key)
+            [{"task_id": task3.id, "event": "on-complete"}],
+            task4.runtime_context.get(key),
         )
 
     def test_big_on_closures(self):
@@ -906,8 +877,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             )
 
         wf_text = wf_text.replace(
-            '{{{__ON_SUCCESS_LIST__}}}',
-            on_success_list_str
+            '{{{__ON_SUCCESS_LIST__}}}', on_success_list_str
         )
 
         task_list_str = ''
@@ -964,14 +934,11 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1',
-                state=states.ERROR
+                wf_ex.task_executions, name='task1', state=states.ERROR
             )
 
             a_ex = self._assert_single_item(
-                task_ex.action_executions,
-                name='std.fail'
+                task_ex.action_executions, name='std.fail'
             )
 
             self.assertIsInstance(a_ex.output.get('result'), list)
@@ -1017,19 +984,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
             task_execs = wf_ex.task_executions
 
-        t_ex = self._assert_single_item(
-            task_execs,
-            name='branch2'
-        )
+        t_ex = self._assert_single_item(task_execs, name='branch2')
         self.engine.start_task(t_ex.id, True, False, None, False, False)
 
-        t_action_exs = db_api.get_action_executions(
-            task_execution_id=t_ex.id
-        )
+        t_action_exs = db_api.get_action_executions(task_execution_id=t_ex.id)
 
         self.engine.on_action_complete(
-            t_action_exs[0].id,
-            ml_actions.Result(error="Error!")
+            t_action_exs[0].id, ml_actions.Result(error="Error!")
         )
 
         self.await_workflow_error(wf_ex.id)
@@ -1086,13 +1047,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertEqual(5, len(task_execs))
 
-        expected_context = {
-            "bs": 1,
-            "b3": 1,
-            "b1": 1,
-            "b2": 1,
-            "join_task": 1
-        }
+        expected_context = {"bs": 1, "b3": 1, "b1": 1, "b2": 1, "join_task": 1}
 
         self._assert_dict_contains_subset(expected_context, output)
 
@@ -1169,70 +1124,30 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual({'a': 0, 'b': 0}, task_start.published)
 
         self.assertDictEqual(
-            {
-                'a': 0,
-                'b': 0,
-                '__versions':
-                {
-                    'a': 1,
-                    'b': 1
-                }
-            },
-            task1_left.in_context
+            {'a': 0, 'b': 0, '__versions': {'a': 1, 'b': 1}},
+            task1_left.in_context,
         )
         self.assertDictEqual({'a': 1}, task1_left.published)
 
         self.assertDictEqual(
-            {
-                'a': 0,
-                'b': 0,
-                '__versions':
-                {
-                    'a': 1,
-                    'b': 1
-                }
-            },
-            task1_right.in_context
+            {'a': 0, 'b': 0, '__versions': {'a': 1, 'b': 1}},
+            task1_right.in_context,
         )
         self.assertDictEqual({'b': 1}, task1_right.published)
 
         self.assertDictEqual(
-            {
-                'a': 1,
-                'b': 0,
-                '__versions':
-                {
-                    'a': 2,
-                    'b': 1
-                }
-            },
-            task2_left.in_context
+            {'a': 1, 'b': 0, '__versions': {'a': 2, 'b': 1}},
+            task2_left.in_context,
         )
 
         self.assertDictEqual(
-            {
-                'a': 0,
-                'b': 1,
-                '__versions':
-                {
-                    'a': 1,
-                    'b': 2
-                }
-            },
-            task2_right.in_context
+            {'a': 0, 'b': 1, '__versions': {'a': 1, 'b': 2}},
+            task2_right.in_context,
         )
 
         self.assertDictEqual(
-            {
-                'a': 1,
-                'b': 1,
-                '__versions':
-                {
-                    'a': 2,
-                    'b': 2
-                }
-            },
-            task_final.in_context
+            {'a': 1, 'b': 1, '__versions': {'a': 2, 'b': 2}},
+            task_final.in_context,
         )
 
         self.assertDictEqual({'a': 1, 'b': 1}, wf_output)

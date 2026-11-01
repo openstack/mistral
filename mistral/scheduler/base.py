@@ -68,9 +68,16 @@ class SchedulerJob(object):
     Encapsulates information about a command that needs to be executed
     at some point in future.
     """
-    def __init__(self, run_after=0, target_factory_func_name=None,
-                 func_name=None, func_args=None,
-                 func_arg_serializers=None, key=None):
+
+    def __init__(
+        self,
+        run_after=0,
+        target_factory_func_name=None,
+        func_name=None,
+        func_args=None,
+        func_arg_serializers=None,
+        key=None,
+    ):
         """Initializes a Scheduler Job.
 
         :param run_after: Amount of seconds after which to invoke
@@ -128,8 +135,7 @@ def _get_scheduler_implementation():
 
     if not _SCHEDULER_IMPL:
         _SCHEDULER_IMPL = driver.DriverManager(
-            'mistral.schedulers',
-            CONF.scheduler_type
+            'mistral.schedulers', CONF.scheduler_type
         ).driver
 
     return _SCHEDULER_IMPL

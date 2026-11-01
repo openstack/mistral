@@ -34,10 +34,10 @@ down_revision = '038'
 def upgrade():
     op.add_column(
         'action_definitions_v2',
-        sa.Column('workbook_name', sa.String(length=255), nullable=True)
+        sa.Column('workbook_name', sa.String(length=255), nullable=True),
     )
 
     op.add_column(
         'workflow_definitions_v2',
-        sa.Column('workbook_name', sa.String(length=255), nullable=True)
+        sa.Column('workbook_name', sa.String(length=255), nullable=True),
     )

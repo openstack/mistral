@@ -21,14 +21,14 @@ from mistral_lib import utils
 
 def generate_test_function(item, expect_error):
     """Function used to dynamically generate tests"""
+
     def test(self):
         overlay = {'test': {'tasks': {}}}
         utils.merge_dicts(overlay['test']['tasks'], {'get': item})
         self._parse_dsl_spec(
-            add_tasks=True,
-            changes=overlay,
-            expect_error=expect_error
+            add_tasks=True, changes=overlay, expect_error=expect_error
         )
+
     return test
 
 
@@ -38,7 +38,8 @@ class TaskSpecValidationItems(v2_base.WorkflowSpecValidationTestCase):
 
 
 class TaskSpecValidationTransitionAdvancedSchema(
-        v2_base.WorkflowSpecValidationTestCase):
+    v2_base.WorkflowSpecValidationTestCase
+):
     # NOTE(amorin) empty class that is filled dynamically
     pass
 
@@ -75,7 +76,7 @@ tests_items = [
     ({'with-items': ['x in {{ _.y }}', 'i in [1, 2, 3]']}, False),
     ({'with-items': ['x in {{ _.y }}', 'i in {{ _.j }}']}, False),
     ({'with-items': ['x in {{ * }}']}, True),
-    ({'with-items': ['x in {{ _.y }}', 'i in {{ * }}']}, True)
+    ({'with-items': ['x in {{ _.y }}', 'i in {{ * }}']}, True),
 ]
 for index, test in enumerate(tests_items):
     test_name = f"test_index_{index}"
@@ -92,11 +93,11 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 }
             }
         },
-        False
+        False,
     ),
     (
         {
@@ -104,11 +105,11 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': '<% * %>'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 }
             }
         },
-        True
+        True,
     ),
     (
         {
@@ -116,12 +117,12 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 },
-                'next': 'email'
+                'next': 'email',
             }
         },
-        False
+        False,
     ),
     (
         {
@@ -129,12 +130,12 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 },
-                'next': ['email']
+                'next': ['email'],
             }
         },
-        False
+        False,
     ),
     (
         {
@@ -142,12 +143,12 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 },
-                'next': [{'email': '<% 1 %>'}]
+                'next': [{'email': '<% 1 %>'}],
             }
         },
-        False
+        False,
     ),
     (
         {
@@ -155,12 +156,12 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 },
-                'next': [{'email': '<% $.v1 and $.v2 %>'}]
+                'next': [{'email': '<% $.v1 and $.v2 %>'}],
             }
         },
-        False
+        False,
     ),
     (
         {
@@ -168,20 +169,26 @@ tests_transitions = [
                 'publish': {
                     'branch': {'var1': 1234},
                     'global': {'global_var1': 'val'},
-                    'atomic': {'atomic_var1': '<% my_func() %>'}
+                    'atomic': {'atomic_var1': '<% my_func() %>'},
                 },
-                'next': [{'email': '<% * %>'}]
+                'next': [{'email': '<% * %>'}],
             }
         },
-        True
+        True,
     ),
     ({'on-success': {'next': [{'email': '<% $.v1 %>'}]}}, False),
     ({'on-success': {'next': 'email'}}, False),
     ({'on-success': {'next': ['email']}}, False),
     ({'on-success': {'next': [{'email': 'email'}]}}, True),
-    ({'on-success': {'next': [{'email': 'email',
-                               'more_email': 'more_email'}]}}, True),
-    ({'on-success': {'next': {'email': 'email'}}}, True)
+    (
+        {
+            'on-success': {
+                'next': [{'email': 'email', 'more_email': 'more_email'}]
+            }
+        },
+        True,
+    ),
+    ({'on-success': {'next': {'email': 'email'}}}, True),
 ]
 for index, test in enumerate(tests_transitions):
     test_name = f"test_index_{index}"
@@ -209,7 +216,7 @@ tests_directs = [
     ([''], True),
     ([], True),
     (['email', 'email'], True),
-    (['email', 12345], True)
+    (['email', 12345], True),
 ]
 for index, test in enumerate(tests_directs):
     test_name = f"test_index_{index}"
@@ -219,24 +226,34 @@ for index, test in enumerate(tests_directs):
 # policies
 tests_policies = [
     ({'retry': {'count': 3, 'delay': 1}}, False),
-    ({'retry': {
-        'continue-on': '<% 1 %>', 'delay': 2,
-        'break-on': '<% 1 %>', 'count': 2
-    }}, False),
-    ({'retry': {
-        'count': 3, 'delay': 1, 'continue-on': '<% 1 %>'
-    }}, False),
+    (
+        {
+            'retry': {
+                'continue-on': '<% 1 %>',
+                'delay': 2,
+                'break-on': '<% 1 %>',
+                'count': 2,
+            }
+        },
+        False,
+    ),
+    ({'retry': {'count': 3, 'delay': 1, 'continue-on': '<% 1 %>'}}, False),
     ({'retry': {'count': '<% 3 %>', 'delay': 1}}, False),
     ({'retry': {'count': '<% * %>', 'delay': 1}}, True),
     ({'retry': {'count': 3, 'delay': '<% 1 %>'}}, False),
     ({'retry': {'count': 3, 'delay': '<% * %>'}}, True),
-    ({'retry': {
-        'continue-on': '{{ 1 }}', 'delay': 2,
-        'break-on': '{{ 1 }}', 'count': 2
-    }}, False),
-    ({'retry': {
-        'count': 3, 'delay': 1, 'continue-on': '{{ 1 }}'
-    }}, False),
+    (
+        {
+            'retry': {
+                'continue-on': '{{ 1 }}',
+                'delay': 2,
+                'break-on': '{{ 1 }}',
+                'count': 2,
+            }
+        },
+        False,
+    ),
+    ({'retry': {'count': 3, 'delay': 1, 'continue-on': '{{ 1 }}'}}, False),
     ({'retry': {'count': '{{ 3 }}', 'delay': 1}}, False),
     ({'retry': {'count': '{{ * }}', 'delay': 1}}, True),
     ({'retry': {'count': 3, 'delay': '{{ 1 }}'}}, False),
@@ -287,7 +304,7 @@ tests_policies = [
     ({'concurrency': '{{ * }}'}, True),
     ({'concurrency': -10}, True),
     ({'concurrency': 10.1}, True),
-    ({'concurrency': '10'}, True)
+    ({'concurrency': '10'}, True),
 ]
 for index, test in enumerate(tests_policies):
     test_name = f"test_index_{index}"
@@ -301,16 +318,13 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
     # of doing a dynamic declaration like above
 
     def test_type_injection(self):
-        tests = [
-            ({'type': 'direct'}, False),
-            ({'type': 'reverse'}, False)
-        ]
+        tests = [({'type': 'direct'}, False), ({'type': 'reverse'}, False)]
 
         for wf_type, expect_error in tests:
             overlay = {'test': wf_type}
-            wfs_spec = self._parse_dsl_spec(add_tasks=True,
-                                            changes=overlay,
-                                            expect_error=expect_error)
+            wfs_spec = self._parse_dsl_spec(
+                add_tasks=True, changes=overlay, expect_error=expect_error
+            )
 
             if not expect_error:
                 self.assertIsInstance(wfs_spec, workflows.WorkflowListSpec)
@@ -349,16 +363,14 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'action': ''}, True),
             ({'workflow': ''}, True),
             ({'action': None}, True),
-            ({'workflow': None}, True)
+            ({'workflow': None}, True),
         ]
 
         for task, expect_error in tests:
             overlay = {'test': {'tasks': {'task1': task}}}
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=False, changes=overlay, expect_error=expect_error
             )
 
     def test_inputs(self):
@@ -372,7 +384,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'input': {'k1': '<% * %>'}}, True),
             ({'input': {'k1': '{{ _.v1 }}'}}, False),
             ({'input': {'k1': '{{ 1 + 2 }}'}}, False),
-            ({'input': {'k1': '{{ * }}'}}, True)
+            ({'input': {'k1': '{{ * }}'}}, True),
         ]
 
         for task_input, expect_error in tests:
@@ -381,9 +393,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks']['task1'], task_input)
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=False, changes=overlay, expect_error=expect_error
             )
 
     def test_publish(self):
@@ -397,7 +407,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'publish': {'k1': '<% * %>'}}, True),
             ({'publish': {'k1': '{{ _.v1 }}'}}, False),
             ({'publish': {'k1': '{{ 1 + 2 }}'}}, False),
-            ({'publish': {'k1': '{{ * }}'}}, True)
+            ({'publish': {'k1': '{{ * }}'}}, True),
         ]
 
         for output, expect_error in tests:
@@ -406,9 +416,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks']['task1'], output)
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=False, changes=overlay, expect_error=expect_error
             )
 
     def test_publish_on_error(self):
@@ -422,7 +430,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'publish-on-error': {'k1': '<% * %>'}}, True),
             ({'publish-on-error': {'k1': '{{ _.v1 }}'}}, False),
             ({'publish-on-error': {'k1': '{{ 1 + 2 }}'}}, False),
-            ({'publish-on-error': {'k1': '{{ * }}'}}, True)
+            ({'publish-on-error': {'k1': '{{ * }}'}}, True),
         ]
 
         for output, expect_error in tests:
@@ -431,9 +439,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks']['task1'], output)
 
             self._parse_dsl_spec(
-                add_tasks=False,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=False, changes=overlay, expect_error=expect_error
             )
 
     def test_join(self):
@@ -446,7 +452,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'join': 2}, False),
             ({'join': 3}, True),
             ({'join': '3'}, True),
-            ({'join': -3}, True)
+            ({'join': -3}, True),
         ]
 
         on_success = {'on-success': ['email']}
@@ -459,9 +465,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks'], {'email': join})
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_requires(self):
@@ -483,9 +487,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks'], {'email': require})
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )
 
     def test_keep_result(self):
@@ -502,7 +504,7 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             ({'keep-result': '<% * %>'}, True),
             ({'keep-result': "{{ 'a' in _.val }}"}, False),
             ({'keep-result': '{{ 1 + 2 }}'}, False),
-            ({'keep-result': '{{ * }}'}, True)
+            ({'keep-result': '{{ * }}'}, True),
         ]
 
         for keep_result, expect_error in tests:
@@ -511,7 +513,5 @@ class TaskSpecValidationOthers(v2_base.WorkflowSpecValidationTestCase):
             utils.merge_dicts(overlay['test']['tasks'], {'email': keep_result})
 
             self._parse_dsl_spec(
-                add_tasks=True,
-                changes=overlay,
-                expect_error=expect_error
+                add_tasks=True, changes=overlay, expect_error=expect_error
             )

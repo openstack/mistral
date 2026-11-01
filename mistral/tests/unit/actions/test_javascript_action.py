@@ -20,9 +20,7 @@ from mistral.utils import javascript
 
 
 class JavascriptActionTest(base.BaseTest):
-    @mock.patch.object(
-        javascript, 'evaluate', mock.Mock(return_value="3")
-    )
+    @mock.patch.object(javascript, 'evaluate', mock.Mock(return_value="3"))
     def test_js_action(self):
         mock_ctx = mock.Mock()
         script = "return 1 + 2"

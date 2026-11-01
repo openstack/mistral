@@ -50,11 +50,16 @@ def upgrade():
     # create the correct latest unique constraint for table cron_triggers_v2
     op.create_unique_constraint(
         None,
-        'cron_triggers_v2', [
-            'workflow_input_hash', 'workflow_name', 'pattern',
-            'project_id', 'workflow_params_hash', 'remaining_executions',
-            'first_execution_time'
-        ]
+        'cron_triggers_v2',
+        [
+            'workflow_input_hash',
+            'workflow_name',
+            'pattern',
+            'project_id',
+            'workflow_params_hash',
+            'remaining_executions',
+            'first_execution_time',
+        ],
     )
 
     # column was added in 012. nullable value does not match today's model.
@@ -62,7 +67,7 @@ def upgrade():
         'event_triggers_v2',
         'workflow_id',
         existing_type=mysql.VARCHAR(length=36),
-        nullable=True
+        nullable=True,
     )
 
     # column was added in 010. nullable value does not match today's model
@@ -70,5 +75,5 @@ def upgrade():
         'resource_members_v2',
         'project_id',
         existing_type=mysql.VARCHAR(length=80),
-        nullable=True
+        nullable=True,
     )

@@ -22,31 +22,16 @@ class RetrySpec(base.BaseSpec):
     _retry_dict_schema = {
         "type": "object",
         "properties": {
-            "count": {
-                "oneOf": [
-                    types.EXPRESSION,
-                    types.POSITIVE_INTEGER
-                ]
-            },
+            "count": {"oneOf": [types.EXPRESSION, types.POSITIVE_INTEGER]},
             "break-on": types.EXPRESSION,
             "continue-on": types.EXPRESSION,
-            "delay": {
-                "oneOf": [
-                    types.EXPRESSION,
-                    types.POSITIVE_INTEGER
-                ]
-            },
+            "delay": {"oneOf": [types.EXPRESSION, types.POSITIVE_INTEGER]},
         },
         "required": ["delay", "count"],
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
-    _schema = {
-        "oneOf": [
-            _retry_dict_schema,
-            types.NONEMPTY_STRING
-        ]
-    }
+    _schema = {"oneOf": [_retry_dict_schema, types.NONEMPTY_STRING]}
 
     @classmethod
     def get_schema(cls, includes=('definitions',)):

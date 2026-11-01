@@ -30,7 +30,7 @@ WORKFLOWS = [
     WORKFLOW_CANCELLED,
     WORKFLOW_PAUSED,
     WORKFLOW_RESUMED,
-    WORKFLOW_RERUN
+    WORKFLOW_RERUN,
 ]
 
 TASK_LAUNCHED = 'TASK_LAUNCHED'
@@ -50,7 +50,7 @@ TASKS = [
     TASK_PAUSED,
     TASK_RESUMED,
     TASK_RERUN,
-    TASK_SKIPPED
+    TASK_SKIPPED,
 ]
 
 EVENTS = WORKFLOWS + TASKS
@@ -62,14 +62,13 @@ _TASK_EVENT_MAP = {
         states.IDLE: TASK_RESUMED,
         states.PAUSED: TASK_RESUMED,
         states.WAITING: TASK_RESUMED,
-        states.ERROR: TASK_RERUN
-
+        states.ERROR: TASK_RERUN,
     },
     states.SUCCESS: {'ANY': TASK_SUCCEEDED},
     states.ERROR: {'ANY': TASK_FAILED},
     states.CANCELLED: {'ANY': TASK_CANCELLED},
     states.PAUSED: {'ANY': TASK_PAUSED},
-    states.SKIPPED: {'ANY': TASK_SKIPPED}
+    states.SKIPPED: {'ANY': TASK_SKIPPED},
 }
 
 # Describes what state transition matches to what event.
@@ -78,22 +77,17 @@ _WF_EVENT_MAP = {
         'ANY': WORKFLOW_LAUNCHED,
         states.IDLE: WORKFLOW_LAUNCHED,
         states.PAUSED: WORKFLOW_RESUMED,
-        states.ERROR: WORKFLOW_RERUN
-
+        states.ERROR: WORKFLOW_RERUN,
     },
     states.SUCCESS: {'ANY': WORKFLOW_SUCCEEDED},
     states.ERROR: {'ANY': WORKFLOW_FAILED},
     states.CANCELLED: {'ANY': WORKFLOW_CANCELLED},
-    states.PAUSED: {'ANY': WORKFLOW_PAUSED}
+    states.PAUSED: {'ANY': WORKFLOW_PAUSED},
 }
 
 
 def _identify_event(from_state, to_state, event_map):
-    event_options = (
-        event_map[to_state]
-        if to_state in event_map
-        else {}
-    )
+    event_options = event_map[to_state] if to_state in event_map else {}
 
     if not event_options:
         return None

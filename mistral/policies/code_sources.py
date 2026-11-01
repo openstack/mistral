@@ -25,83 +25,47 @@ rules = [
         name=CODE_SOURCES % 'create',
         check_str=base.RULE_ADMIN_ONLY,
         description='Create a new code source.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'delete',
         check_str=base.RULE_ADMIN_ONLY,
         description='Delete the named code source.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'DELETE'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'DELETE'}],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'get',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return the named code source.',
-        operations=[
-            {
-                'path': BASE_PATH + '/{action_id}',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH + '/{action_id}', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'list',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all code sources.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all code sources from all projects.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': BASE_PATH, 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a code source publicly available.',
         operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'POST'
-            },
-            {
-                'path': BASE_PATH,
-                'method': 'PUT'
-            }
-        ]
+            {'path': BASE_PATH, 'method': 'POST'},
+            {'path': BASE_PATH, 'method': 'PUT'},
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'update',
         check_str=base.RULE_ADMIN_ONLY,
         description='Update one or more code source.',
-        operations=[
-            {
-                'path': BASE_PATH,
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': BASE_PATH, 'method': 'PUT'}],
+    ),
 ]
 
 

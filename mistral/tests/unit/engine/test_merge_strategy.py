@@ -22,9 +22,9 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
-
-    def _run_workflow(self, wf_text, wf_input=None,
-                      expected_state=states.SUCCESS):
+    def _run_workflow(
+        self, wf_text, wf_input=None, expected_state=states.SUCCESS
+    ):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf', wf_input=wf_input)
@@ -34,8 +34,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         return db_api.get_workflow_execution(wf_ex.id)
 
     def test_replace(self):
-        self.override_config('merge_strategy', 'replace',
-                             group='engine')
+        self.override_config('merge_strategy', 'replace', group='engine')
         wf_text = """
         version: '2.0'
         wf:
@@ -76,28 +75,19 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             wf_ex_res = wf_ex.output
 
-            task1 = self._assert_single_item(wf_ex.task_executions,
-                                             name='task1')
+            task1 = self._assert_single_item(
+                wf_ex.task_executions, name='task1'
+            )
             task1_publish = task1.published
 
-        expected_wf_ex_res = {
-            "aa": {
-                "bb": "task2_res"
-            }
-        }
+        expected_wf_ex_res = {"aa": {"bb": "task2_res"}}
         self.assertDictEqual(expected_wf_ex_res, wf_ex_res)
 
-        expected_task1_res = {
-            "aa": {
-                "cc": "task1_res",
-                "dd": "task1_res"
-            }
-        }
+        expected_task1_res = {"aa": {"cc": "task1_res", "dd": "task1_res"}}
         self.assertDictEqual(expected_task1_res, task1_publish)
 
     def test_merge_input_and_publish(self):
-        self.override_config('merge_strategy', 'merge',
-                             group='engine')
+        self.override_config('merge_strategy', 'merge', group='engine')
 
         wf_text = """
         version: '2.0'
@@ -136,19 +126,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         expected_wf_ex_res = {
             "aa": {
-                "bb": {
-                    "bb_1": "wf_ex_input",
-                    "bb_2": "task_res"
-                },
+                "bb": {"bb_1": "wf_ex_input", "bb_2": "task_res"},
                 "cc": "task_res",
-                "dd": "task_res"
+                "dd": "task_res",
             }
         }
         self.assertDictEqual(expected_wf_ex_res, wf_ex_res)
 
     def test_merge_publish_two_tasks(self):
-        self.override_config('merge_strategy', 'merge',
-                             group='engine')
+        self.override_config('merge_strategy', 'merge', group='engine')
         wf_text = """
         version: '2.0'
         wf:
@@ -194,14 +180,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 "bb": "task2_res",
                 "cc": "task1_res",
                 "dd": "task1_res",
-                "zz": "wf_ex_input"
+                "zz": "wf_ex_input",
             }
         }
         self.assertDictEqual(expected_wf_ex_res, wf_ex_res)
 
     def test_merge_publish_result_from_join(self):
-        self.override_config('merge_strategy', 'merge',
-                             group='engine')
+        self.override_config('merge_strategy', 'merge', group='engine')
         wf_text = """
         version: '2.0'
         wf:
@@ -275,7 +260,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 "cc_1": "task2_res",
                 "zz": "task1_restask2_restask0_res",
                 "zz_1": "task3_res",
-                "dd": "wf_ex_input"
+                "dd": "wf_ex_input",
             }
         }
         self.assertDictEqual(expected_wf_ex_res, wf_ex_res)

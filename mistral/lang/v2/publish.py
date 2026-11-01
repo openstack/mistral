@@ -25,9 +25,9 @@ class PublishSpec(base.BaseSpec):
         "properties": {
             "branch": types.NONEMPTY_DICT,
             "global": types.NONEMPTY_DICT,
-            "atomic": types.NONEMPTY_DICT
+            "atomic": types.NONEMPTY_DICT,
         },
-        "additionalProperties": False
+        "additionalProperties": False,
     }
 
     def __init__(self, data, validate):

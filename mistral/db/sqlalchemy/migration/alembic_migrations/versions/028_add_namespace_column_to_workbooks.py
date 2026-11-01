@@ -34,21 +34,19 @@ def upgrade():
 
     op.add_column(
         'workbooks_v2',
-        sa.Column('namespace', sa.String(length=255), nullable=True)
+        sa.Column('namespace', sa.String(length=255), nullable=True),
     )
 
     inspect = reflection.Inspector.from_engine(op.get_bind())
 
     unique_constraints = [
-        unique_constraint['name'] for unique_constraint in
-        inspect.get_unique_constraints('workbooks_v2')
+        unique_constraint['name']
+        for unique_constraint in inspect.get_unique_constraints('workbooks_v2')
     ]
 
     if 'name' in unique_constraints:
         op.drop_index('name', table_name='workbooks_v2')
 
     op.create_unique_constraint(
-        None,
-        'workbooks_v2',
-        ['name', 'namespace', 'project_id']
+        None, 'workbooks_v2', ['name', 'namespace', 'project_id']
     )

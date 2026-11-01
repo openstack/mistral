@@ -47,14 +47,12 @@ class ExpressionErrorNoContextLeakTest(base.BaseTest):
         # A block template that raises at render time goes through the
         # generic wrapping path.
         self._assert_no_leak(
-            jinja_expression.InlineJinjaEvaluator,
-            '{{ 1 / 0 }}'
+            jinja_expression.InlineJinjaEvaluator, '{{ 1 / 0 }}'
         )
 
     def test_yaql_error_does_not_leak_context(self):
         self._assert_no_leak(
-            yaql_expression.InlineYAQLEvaluator,
-            '<% 1 / 0 %>'
+            yaql_expression.InlineYAQLEvaluator, '<% 1 / 0 %>'
         )
 
     def test_evaluate_recursively_error_does_not_leak_context(self):

@@ -33,15 +33,14 @@ INTERNAL_WF_PARAMS = (
     'root_execution_id',
     'index',
     'triggered_by',
-    'subworkflow_depth'
+    'subworkflow_depth',
 )
 
 
 def register_preinstalled_workflows(run_in_tx=True):
 
     extensions = extension.ExtensionManager(
-        namespace='mistral.preinstalled_workflows',
-        invoke_on_load=True
+        namespace='mistral.preinstalled_workflows', invoke_on_load=True
     )
 
     for ext in extensions:
@@ -59,7 +58,7 @@ def register_workflow(run_in_tx, wf_path):
         scope='public',
         is_system=True,
         run_in_tx=run_in_tx,
-        namespace=''
+        namespace='',
     )
 
 
@@ -76,13 +75,18 @@ def sync_db():
         register_preinstalled_workflows(run_in_tx=False)
 
 
-def create_workflows(definition, scope='private', is_system=False,
-                     run_in_tx=True, namespace='', validate=True):
+def create_workflows(
+    definition,
+    scope='private',
+    is_system=False,
+    run_in_tx=True,
+    namespace='',
+    validate=True,
+):
     LOG.debug("Creating workflows...")
 
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(
-        definition,
-        validate=services.is_validation_enabled(validate)
+        definition, validate=services.is_validation_enabled(validate)
     )
 
     db_wfs = []
@@ -90,28 +94,19 @@ def create_workflows(definition, scope='private', is_system=False,
     if run_in_tx:
         with db_api.transaction():
             _append_all_workflows(
-                definition,
-                is_system,
-                scope,
-                namespace,
-                wf_list_spec,
-                db_wfs
+                definition, is_system, scope, namespace, wf_list_spec, db_wfs
             )
     else:
         _append_all_workflows(
-            definition,
-            is_system,
-            scope,
-            namespace,
-            wf_list_spec,
-            db_wfs
+            definition, is_system, scope, namespace, wf_list_spec, db_wfs
         )
 
     return db_wfs
 
 
-def _append_all_workflows(definition, is_system, scope, namespace,
-                          wf_list_spec, db_wfs):
+def _append_all_workflows(
+    definition, is_system, scope, namespace, wf_list_spec, db_wfs
+):
     wfs = wf_list_spec.get_workflows()
 
     wfs_yaml = safe_yaml.load(definition) if len(wfs) != 1 else None
@@ -119,28 +114,21 @@ def _append_all_workflows(definition, is_system, scope, namespace,
     for wf_spec in wfs:
         if len(wfs) != 1:
             definition = _cut_wf_definition_from_all(
-                wfs_yaml,
-                wf_spec.get_name()
+                wfs_yaml, wf_spec.get_name()
             )
 
         db_wfs.append(
-            _create_workflow(
-                wf_spec,
-                definition,
-                scope,
-                namespace,
-                is_system
-            )
+            _create_workflow(wf_spec, definition, scope, namespace, is_system)
         )
 
 
-def update_workflows(definition, scope='private', identifier=None,
-                     namespace='', validate=True):
+def update_workflows(
+    definition, scope='private', identifier=None, namespace='', validate=True
+):
     LOG.debug("Updating workflows...")
 
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(
-        definition,
-        validate=services.is_validation_enabled(validate)
+        definition, validate=services.is_validation_enabled(validate)
     )
 
     wfs = wf_list_spec.get_workflows()
@@ -148,8 +136,7 @@ def update_workflows(definition, scope='private', identifier=None,
     if identifier and len(wfs) > 1:
         raise exc.InputException(
             "More than one workflows are not supported for "
-            "update with identifier. [identifier: %s]" %
-            identifier
+            "update with identifier. [identifier: %s]" % identifier
         )
 
     db_wfs = []
@@ -160,8 +147,7 @@ def update_workflows(definition, scope='private', identifier=None,
         for wf_spec in wfs:
             if len(wfs) != 1:
                 definition = _cut_wf_definition_from_all(
-                    wfs_yaml,
-                    wf_spec.get_name()
+                    wfs_yaml, wf_spec.get_name()
                 )
 
             db_wfs.append(
@@ -170,7 +156,7 @@ def update_workflows(definition, scope='private', identifier=None,
                     definition,
                     scope,
                     namespace=namespace,
-                    identifier=identifier
+                    identifier=identifier,
                 )
             )
 
@@ -203,18 +189,19 @@ def validate_workflow_params(params):
 
 def strip_internal_workflow_params(params):
     return {
-        k: v for k, v in (params or {}).items()
-        if k not in INTERNAL_WF_PARAMS
+        k: v for k, v in (params or {}).items() if k not in INTERNAL_WF_PARAMS
     }
 
 
 def get_workflow_definition_checksum(definition):
     return hashlib.md5(
-        definition.encode('utf-8'), usedforsecurity=False).hexdigest()
+        definition.encode('utf-8'), usedforsecurity=False
+    ).hexdigest()
 
 
-def _get_workflow_values(wf_spec, definition, scope, namespace=None,
-                         is_system=False):
+def _get_workflow_values(
+    wf_spec, definition, scope, namespace=None, is_system=False
+):
     values = {
         'name': wf_spec.get_name(),
         'tags': wf_spec.get_tags(),
@@ -223,7 +210,7 @@ def _get_workflow_values(wf_spec, definition, scope, namespace=None,
         'spec': wf_spec.to_dict(),
         'scope': scope,
         'namespace': namespace,
-        'is_system': is_system
+        'is_system': is_system,
     }
 
     return values
@@ -235,18 +222,18 @@ def _create_workflow(wf_spec, definition, scope, namespace, is_system):
     )
 
 
-def _update_workflow(wf_spec, definition, scope, identifier=None,
-                     namespace=''):
+def _update_workflow(
+    wf_spec, definition, scope, identifier=None, namespace=''
+):
     values = _get_workflow_values(wf_spec, definition, scope, namespace)
 
     return db_api.update_workflow_definition(
-        identifier if identifier else values['name'],
-        values
+        identifier if identifier else values['name'], values
     )
 
 
 def _cut_wf_definition_from_all(wfs_yaml, wf_name):
-    return safe_yaml.dump({
-        'version': wfs_yaml['version'],
-        wf_name: wfs_yaml[wf_name]
-    }, sort_keys=False)
+    return safe_yaml.dump(
+        {'version': wfs_yaml['version'], wf_name: wfs_yaml[wf_name]},
+        sort_keys=False,
+    )

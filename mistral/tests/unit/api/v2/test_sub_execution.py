@@ -40,7 +40,6 @@ WF_TEXT = """---
 
 
 class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
-
     def setUp(self):
         super(TestSubExecutionsController, self).setUp()
 
@@ -62,8 +61,7 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
         self._assert_single_item(main_wf_ex_list, workflow_name='fail_wf')
 
         middle_wf = self._assert_single_item(
-            main_wf_ex_list,
-            workflow_name='middle_wf'
+            main_wf_ex_list, workflow_name='middle_wf'
         )
 
         # check the sub execs of a sub-ex
@@ -83,8 +81,7 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
         self.await_workflow_error(wf_ex.id)
 
         resp = self.app.get(
-            '/v2/executions/%s/executions?errors_only=True'
-            % wf_ex.id
+            '/v2/executions/%s/executions?errors_only=True' % wf_ex.id
         )
 
         self.assertEqual(200, resp.status_int)
@@ -101,8 +98,7 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
         self.await_workflow_error(wf_ex.id)
 
         resp = self.app.get(
-            '/v2/executions/%s/executions?max_depth=1'
-            % wf_ex.id
+            '/v2/executions/%s/executions?max_depth=1' % wf_ex.id
         )
 
         self.assertEqual(200, resp.status_int)
@@ -125,13 +121,11 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
 
         self.assertEqual(4, len(main_wf_ex_list))
         middle_wf = self._assert_single_item(
-            main_wf_ex_list,
-            workflow_name='middle_wf'
+            main_wf_ex_list, workflow_name='middle_wf'
         )
 
         resp = self.app.get(
-            '/v2/tasks/%s/executions'
-            % middle_wf['task_execution_id']
+            '/v2/tasks/%s/executions' % middle_wf['task_execution_id']
         )
 
         self.assertEqual(200, resp.status_int)
@@ -148,14 +142,12 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
         self.await_workflow_error(wf_ex.id)
 
         resp = self.app.get(
-            '/v2/executions/%s/executions?include_output=true'
-            % wf_ex.id
+            '/v2/executions/%s/executions?include_output=true' % wf_ex.id
         )
 
         self.assertEqual(200, resp.status_int)
         main_wf = self._assert_single_item(
-            resp.json['executions'],
-            workflow_name='main_wf'
+            resp.json['executions'], workflow_name='main_wf'
         )
 
         self.assertIsNotNone(main_wf.get('output'))
@@ -165,7 +157,6 @@ class TestSubExecutionsController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(200, resp.status_int)
 
         main_wf = self._assert_single_item(
-            resp.json['executions'],
-            workflow_name='main_wf'
+            resp.json['executions'], workflow_name='main_wf'
         )
         self.assertIsNone(main_wf.get('output'))

@@ -38,6 +38,5 @@ class TimeoutThreadWithException(threading.Thread):
         # an exception so that the main process can read that and decide to
         # re-raise or not
         self.exception = Exception(
-            "Timeout after %(secs)s seconds" %
-            {'secs': self.timeout}
+            "Timeout after %(secs)s seconds" % {'secs': self.timeout}
         )

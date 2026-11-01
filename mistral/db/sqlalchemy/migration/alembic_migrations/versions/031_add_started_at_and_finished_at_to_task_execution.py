@@ -32,9 +32,9 @@ import sqlalchemy as sa
 def upgrade():
     op.add_column(
         'task_executions_v2',
-        sa.Column('started_at', sa.DateTime(), nullable=True)
+        sa.Column('started_at', sa.DateTime(), nullable=True),
     )
     op.add_column(
         'task_executions_v2',
-        sa.Column('finished_at', sa.DateTime(), nullable=True)
+        sa.Column('finished_at', sa.DateTime(), nullable=True),
     )

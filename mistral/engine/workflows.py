@@ -102,7 +102,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
             "task_execution_id": self.wf_ex.task_execution_id,
             "root_execution_id": self.wf_ex.root_execution_id,
             "created_at": utils.datetime_to_str(self.wf_ex.created_at),
-            "updated_at": utils.datetime_to_str(self.wf_ex.updated_at)
+            "updated_at": utils.datetime_to_str(self.wf_ex.updated_at),
         }
 
         def _send_notification():
@@ -111,7 +111,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
                 data,
                 event,
                 self.wf_ex.updated_at,
-                filtered_publishers
+                filtered_publishers,
             )
 
         post_tx_queue.register_operation(_send_notification)
@@ -133,24 +133,19 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         # New workflow execution.
         self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf_def.id,
-            wf_def.updated_at
+            wf_def.id, wf_def.updated_at
         )
 
         wf_trace.info(
             self.wf_ex,
-            'Starting workflow [name=%s, input=%s]' %
-            (wf_def.name, utils.cut(input_dict))
+            'Starting workflow [name=%s, input=%s]'
+            % (wf_def.name, utils.cut(input_dict)),
         )
 
         self.validate_input(input_dict)
 
         self._create_execution(
-            wf_def,
-            wf_ex_id,
-            self.prepare_input(input_dict),
-            desc,
-            params
+            wf_def, wf_ex_id, self.prepare_input(input_dict), desc, params
         )
 
         self.set_state(states.RUNNING)
@@ -158,8 +153,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         dispatcher.dispatch_workflow_commands(
-            self.wf_ex,
-            wf_ctrl.continue_workflow()
+            self.wf_ex, wf_ctrl.continue_workflow()
         )
 
     def stop(self, state, msg=None):
@@ -196,6 +190,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if self.wf_ex.task_execution_id:
             # Import the task_handler module here to avoid circular reference.
             from mistral.engine import task_handler
+
             task_handler.schedule_on_action_update(self.wf_ex)
 
     def resume(self, env=None):
@@ -239,7 +234,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
             self.wf_spec.get_input(),
             input_dict,
             self.wf_spec.get_name(),
-            self.wf_spec.__class__.__name__
+            self.wf_spec.__class__.__name__,
         )
 
     def rerun(self, task, reset=True, skip=False, env=None):
@@ -304,6 +299,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
             # Ideally, we should just build (or get) an instance of Task and
             # call set_state() on it.
             from mistral.engine import task_handler
+
             task_handler.mark_task_running(parent_task_ex, parent_wf.wf_spec)
 
     def _get_backlog(self):
@@ -322,7 +318,8 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # because workflow controller takes only completed tasks
         # with flag 'processed' equal to False.
         unprocessed_task_execs = [
-            t_ex for t_ex in self.wf_ex.task_executions
+            t_ex
+            for t_ex in self.wf_ex.task_executions
             if states.is_completed(t_ex.state) and not t_ex.processed
         ]
 
@@ -359,7 +356,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
                 '[wf_ex_id: %s, wf_name: %s, error: %s]',
                 self.wf_ex.id,
                 self.wf_ex.name,
-                str(e)
+                str(e),
             )
 
         return final_ctx
@@ -378,7 +375,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
             'output': {},
             'task_execution_id': params.get('task_execution_id'),
             'root_execution_id': params.get('root_execution_id'),
-            'runtime_context': {'index': params.get('index', 0)}
+            'runtime_context': {'index': params.get('index', 0)},
         }
 
         if wf_def.workbook_name:
@@ -391,16 +388,19 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         ctx = auth_ctx.ctx() if auth_ctx.has_ctx() else None
 
-        if ctx and ctx.execution_trust and not params.get(
-                'task_execution_id'):
+        if ctx and ctx.execution_trust and not params.get('task_execution_id'):
             values['runtime_context']['execution_trust_id'] = ctx.trust_id
 
         self.wf_ex = db_api.create_workflow_execution(values)
 
-        LOG.info("Created workflow execution [workflow_name=%s, wf_ex_id=%s, "
-                 "task_execution_id=%s, root_execution_id=%s]", wf_def.name,
-                 self.wf_ex.id, params.get('task_execution_id'),
-                 params.get('root_execution_id'))
+        LOG.info(
+            "Created workflow execution [workflow_name=%s, wf_ex_id=%s, "
+            "task_execution_id=%s, root_execution_id=%s]",
+            wf_def.name,
+            self.wf_ex.id,
+            params.get('task_execution_id'),
+            params.get('root_execution_id'),
+        )
 
         self.wf_ex.input = input_dict or {}
 
@@ -413,8 +413,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         data_flow.add_workflow_variables_to_context(self.wf_ex, self.wf_spec)
 
         spec_parser.cache_workflow_spec_by_execution_id(
-            self.wf_ex.id,
-            self.wf_spec
+            self.wf_ex.id, self.wf_spec
         )
 
     @profiler.trace('workflow-set-state')
@@ -425,9 +424,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         if states.is_valid_transition(cur_state, state):
             wf_ex = db_api.update_workflow_execution_state(
-                id=self.wf_ex.id,
-                cur_state=cur_state,
-                state=state
+                id=self.wf_ex.id, cur_state=cur_state, state=state
             )
 
             if wf_ex is None:
@@ -435,23 +432,30 @@ class Workflow(object, metaclass=abc.ABCMeta):
                 return False
 
             self.wf_ex = wf_ex
-            self.wf_ex.state_info = json.dumps(state_info) \
-                if isinstance(state_info, dict) else state_info
+            self.wf_ex.state_info = (
+                json.dumps(state_info)
+                if isinstance(state_info, dict)
+                else state_info
+            )
 
             self._notify(cur_state, state)
 
             wf_trace.info(
                 self.wf_ex,
-                "Workflow '%s' [%s -> %s, msg=%s]" %
-                (self.wf_ex.workflow_name,
-                 cur_state,
-                 state,
-                 self.wf_ex.state_info)
+                "Workflow '%s' [%s -> %s, msg=%s]"
+                % (
+                    self.wf_ex.workflow_name,
+                    cur_state,
+                    state,
+                    self.wf_ex.state_info,
+                ),
             )
         else:
-            msg = ("Can't change workflow execution state from %s to %s. "
-                   "[workflow=%s, execution_id=%s]" %
-                   (cur_state, state, self.wf_ex.name, self.wf_ex.id))
+            msg = (
+                "Can't change workflow execution state from %s to %s. "
+                "[workflow=%s, execution_id=%s]"
+                % (cur_state, state, self.wf_ex.name, self.wf_ex.id)
+            )
 
             raise exc.WorkflowException(msg)
 
@@ -517,15 +521,11 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
     def _succeed_workflow(self, final_context, msg=None):
         output = data_flow.evaluate_workflow_output(
-            self.wf_ex,
-            self.wf_spec.get_output(),
-            final_context
+            self.wf_ex, self.wf_spec.get_output(), final_context
         )
 
         db_models.validate_long_type_length(
-            db_models.WorkflowExecution,
-            'output',
-            output
+            db_models.WorkflowExecution, 'output', output
         )
 
         # Set workflow execution to success after output is evaluated.
@@ -545,9 +545,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         try:
             output_on_error = data_flow.evaluate_workflow_output(
-                self.wf_ex,
-                self.wf_spec.get_output_on_error(),
-                final_context
+                self.wf_ex, self.wf_spec.get_output_on_error(), final_context
             )
         except exc.MistralException as e:
             msg = (
@@ -566,19 +564,19 @@ class Workflow(object, metaclass=abc.ABCMeta):
             db_models.validate_long_type_length(
                 db_models.WorkflowExecution,
                 'output',
-                utils.merge_dicts({'result': '...'}, output_on_error)
+                utils.merge_dicts({'result': '...'}, output_on_error),
             )
         except exc.SizeLimitExceededException:
             LOG.warning(
                 "Dropping output-on-error of workflow execution %s, it does"
-                " not fit into the field size limit.", self.wf_ex.id
+                " not fit into the field size limit.",
+                self.wf_ex.id,
             )
 
             output_on_error = {}
 
         msg = db_models.cut_to_size_limit(
-            msg,
-            lambda m: utils.merge_dicts({'result': m}, output_on_error)
+            msg, lambda m: utils.merge_dicts({'result': m}, output_on_error)
         )
 
         self.wf_ex.output = utils.merge_dicts({'result': msg}, output_on_error)
@@ -611,8 +609,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         from mistral.engine import task_handler
 
         idle_task_execs = db_api.get_task_executions(
-            workflow_execution_id=self.wf_ex.id,
-            state=states.IDLE
+            workflow_execution_id=self.wf_ex.id, state=states.IDLE
         )
 
         for t_ex in idle_task_execs:
@@ -631,15 +628,15 @@ class Workflow(object, metaclass=abc.ABCMeta):
             result = None
         elif self.wf_ex.state == states.ERROR:
             err_msg = (
-                self.wf_ex.state_info or
-                'Failed subworkflow [execution_id=%s]' % self.wf_ex.id
+                self.wf_ex.state_info
+                or 'Failed subworkflow [execution_id=%s]' % self.wf_ex.id
             )
 
             result = ml_actions.Result(error=err_msg)
         elif self.wf_ex.state == states.CANCELLED:
             err_msg = (
-                self.wf_ex.state_info or
-                'Cancelled subworkflow [execution_id=%s]' % self.wf_ex.id
+                self.wf_ex.state_info
+                or 'Cancelled subworkflow [execution_id=%s]' % self.wf_ex.id
             )
 
             result = ml_actions.Result(error=err_msg, cancel=True)
@@ -653,9 +650,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # to the parent workflow outside of the main DB transaction.
         def _send_result():
             rpc.get_engine_client().on_action_complete(
-                self.wf_ex.id,
-                result,
-                wf_action=True
+                self.wf_ex.id, result, wf_action=True
             )
 
         post_tx_queue.register_operation(_send_result)
@@ -673,9 +668,7 @@ def _get_environment(params):
         env_db = db_api.load_environment(env)
 
         if not env_db:
-            raise exc.InputException(
-                'Environment is not found: %s' % env
-            )
+            raise exc.InputException('Environment is not found: %s' % env)
 
         env_dict = env_db.variables
     else:
@@ -684,8 +677,7 @@ def _get_environment(params):
             % (env, type(env))
         )
 
-    if ('evaluate_env' in params and
-            not params['evaluate_env']):
+    if 'evaluate_env' in params and not params['evaluate_env']:
         return env_dict
     else:
         return expr.evaluate_recursively(env_dict, {'__env': env_dict})
@@ -694,15 +686,18 @@ def _get_environment(params):
 def _build_fail_info_message(wf_ctrl, wf_ex):
     # Try to find where error is exactly.
     failed_tasks = [
-        t_ex for t_ex in db_api.get_task_executions(
+        t_ex
+        for t_ex in db_api.get_task_executions(
             workflow_execution_id=wf_ex.id,
             state=states.ERROR,
-            sort_keys=['name']
-        ) if not wf_ctrl.is_error_handled_for(t_ex)
+            sort_keys=['name'],
+        )
+        if not wf_ctrl.is_error_handled_for(t_ex)
     ]
 
-    msg = ('Failure caused by error in tasks: %s\n' %
-           ', '.join([t.name for t in failed_tasks]))
+    msg = 'Failure caused by error in tasks: %s\n' % ', '.join(
+        [t.name for t in failed_tasks]
+    )
 
     for t in failed_tasks:
         msg += '\n  %s [task_ex_id=%s] -> %s\n' % (t.name, t.id, t.state_info)
@@ -710,23 +705,19 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
         for i, ex in enumerate(t.action_executions):
             if ex.state == states.ERROR:
                 output = (ex.output or dict()).get('result', 'Unknown')
-                msg += (
-                    '    [action_ex_id=%s, idx=%s]: %s\n' % (
-                        ex.id,
-                        i,
-                        str(output)
-                    )
+                msg += '    [action_ex_id=%s, idx=%s]: %s\n' % (
+                    ex.id,
+                    i,
+                    str(output),
                 )
 
         for i, ex in enumerate(t.workflow_executions):
             if ex.state == states.ERROR:
                 output = (ex.output or dict()).get('result', 'Unknown')
-                msg += (
-                    '    [wf_ex_id=%s, idx=%s]: %s\n' % (
-                        ex.id,
-                        i,
-                        str(output)
-                    )
+                msg += '    [wf_ex_id=%s, idx=%s]: %s\n' % (
+                    ex.id,
+                    i,
+                    str(output),
                 )
 
     return msg
@@ -735,13 +726,12 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
 def _build_cancel_info_message(wf_ctrl, wf_ex):
     # Try to find where cancel is exactly.
     cancelled_tasks = [
-        t_ex for t_ex in db_api.get_task_executions(
+        t_ex
+        for t_ex in db_api.get_task_executions(
             workflow_execution_id=wf_ex.id,
             state=states.CANCELLED,
-            sort_keys=['name']
+            sort_keys=['name'],
         )
     ]
 
-    return (
-        'Cancelled tasks: %s' % ', '.join([t.name for t in cancelled_tasks])
-    )
+    return 'Cancelled tasks: %s' % ', '.join([t.name for t in cancelled_tasks])

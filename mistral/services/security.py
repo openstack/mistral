@@ -57,7 +57,7 @@ def create_trust():
             trustee_user=trustee_id,
             impersonation=True,
             role_names=ctx.roles,
-            project=ctx.project_id
+            project=ctx.project_id,
         )
     except ks_exc.Forbidden as e:
         raise exc.NotAllowedException(
@@ -100,10 +100,7 @@ def create_context(trust_id, project_id):
         )
 
     return auth_ctx.MistralContext(
-        user_id=None,
-        project_id=None,
-        auth_token=None,
-        is_admin=True
+        user_id=None, project_id=None, auth_token=None, is_admin=True
     )
 
 
@@ -127,9 +124,7 @@ def delete_trust(trust_id=None):
 def add_trust_id(secure_object_values):
     if cfg.CONF.pecan.auth_enable:
         trust = create_trust()
-        secure_object_values.update({
-            'trust_id': trust.id
-        })
+        secure_object_values.update({'trust_id': trust.id})
 
 
 def add_execution_trust():
@@ -146,7 +141,8 @@ def add_execution_trust():
     except Exception as e:
         LOG.warning(
             "Failed to create a trust, the workflow execution will use the "
-            "caller's token and stop working when it expires: %s", e
+            "caller's token and stop working when it expires: %s",
+            e,
         )
         return
 

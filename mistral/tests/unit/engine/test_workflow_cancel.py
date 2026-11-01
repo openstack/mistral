@@ -37,9 +37,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf')
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -85,9 +83,7 @@ class WorkflowCancelTest(base.EngineTestCase):
             db_api.delete_workflow_definition(wf.id)
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -112,9 +108,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.await_workflow_paused(wf_ex.id)
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -133,10 +127,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             task_execs = wf_ex.task_executions
 
-        task_1_ex = self._assert_single_item(
-            task_execs,
-            name='task1'
-        )
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.CANCELLED, wf_ex.state)
         self.assertEqual("Cancelled by user.", wf_ex.state_info)
@@ -164,16 +155,13 @@ class WorkflowCancelTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         self.await_task_state(task_1_ex.id, states.IDLE)
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -187,7 +175,7 @@ class WorkflowCancelTest(base.EngineTestCase):
                 0,
                 db_api.get_incomplete_task_executions_count(
                     workflow_execution_id=wf_ex.id
-                )
+                ),
             )
 
     def test_cancel_completed_workflow(self):
@@ -208,9 +196,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         with db_api.transaction():
@@ -259,9 +245,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.await_task_running(task_ex.id)
 
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -329,8 +313,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
         self.await_task_running(task_ex.id)
         with db_api.transaction():
@@ -338,15 +321,12 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_ex = self._assert_single_item(wf_execs, name='wb.subwf')
 
         self.engine.stop_workflow(
-            subwf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            subwf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(subwf_ex.id)
@@ -358,8 +338,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_ex = self._assert_single_item(wf_execs, name='wb.subwf')
 
@@ -408,9 +387,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         task_ex = self._assert_single_item(task_execs, name='taskx')
         self.await_task_running(task_ex.id)
         self.engine.stop_workflow(
-            wf_ex.id,
-            states.CANCELLED,
-            "Cancelled by user."
+            wf_ex.id, states.CANCELLED, "Cancelled by user."
         )
 
         with db_api.transaction():
@@ -428,13 +405,10 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.assertEqual(states.CANCELLED, subwf_exs[0].state)
@@ -482,8 +456,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
 
         self.await_task_running(task_ex.id)
@@ -492,19 +465,14 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.engine.stop_workflow(
-            subwf_exs[0].id,
-            states.CANCELLED,
-            "Cancelled by user."
+            subwf_exs[0].id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(subwf_exs[0].id)
@@ -517,13 +485,10 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.assertEqual(states.CANCELLED, subwf_exs[0].state)
@@ -571,8 +536,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
 
         self.await_task_running(task_ex.id)
@@ -581,25 +545,18 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.engine.stop_workflow(
-            subwf_exs[0].id,
-            states.CANCELLED,
-            "Cancelled by user."
+            subwf_exs[0].id, states.CANCELLED, "Cancelled by user."
         )
 
         self.engine.stop_workflow(
-            subwf_exs[1].id,
-            states.ERROR,
-            "Failed by user."
+            subwf_exs[1].id, states.ERROR, "Failed by user."
         )
 
         self.await_workflow_cancelled(subwf_exs[0].id)
@@ -612,13 +569,10 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.assertEqual(states.CANCELLED, subwf_exs[0].state)
@@ -666,8 +620,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
         self.await_task_running(task_ex.id)
 
@@ -677,21 +630,15 @@ class WorkflowCancelTest(base.EngineTestCase):
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
 
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.engine.stop_workflow(
-            subwf_exs[1].id,
-            states.ERROR,
-            "Failed by user."
+            subwf_exs[1].id, states.ERROR, "Failed by user."
         )
 
         self.engine.stop_workflow(
-            subwf_exs[0].id,
-            states.CANCELLED,
-            "Cancelled by user."
+            subwf_exs[0].id, states.CANCELLED, "Cancelled by user."
         )
 
         self.await_workflow_cancelled(subwf_exs[0].id)
@@ -704,13 +651,10 @@ class WorkflowCancelTest(base.EngineTestCase):
 
             wf_ex = self._assert_single_item(wf_execs, name='wb.wf')
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='taskx'
+                wf_ex.task_executions, name='taskx'
             )
             subwf_exs = self._assert_multiple_items(
-                wf_execs,
-                2,
-                name='wb.subwf'
+                wf_execs, 2, name='wb.subwf'
             )
 
         self.assertEqual(states.CANCELLED, subwf_exs[0].state)

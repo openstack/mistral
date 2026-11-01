@@ -32,7 +32,7 @@ class EgressValidateUrlTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://169.254.169.254/latest/meta-data/'
+            'http://169.254.169.254/latest/meta-data/',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -42,7 +42,7 @@ class EgressValidateUrlTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://localhost:8080/'
+            'http://localhost:8080/',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -52,7 +52,7 @@ class EgressValidateUrlTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://[::ffff:127.0.0.1]/'
+            'http://[::ffff:127.0.0.1]/',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -62,7 +62,7 @@ class EgressValidateUrlTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://[64:ff9b::a9fe:a9fe]/'
+            'http://[64:ff9b::a9fe:a9fe]/',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -75,14 +75,14 @@ class EgressValidateUrlTest(base.BaseTest):
     @mock.patch.object(socket, 'getaddrinfo')
     def test_unspecified_addresses_are_blocked_by_default(self, gai):
         # Linux connects 0.0.0.0 and :: to the local host.
-        for ip, url in (('0.0.0.0', 'http://0.0.0.0:8989/'),
-                        ('::', 'http://[::]:8989/')):
+        for ip, url in (
+            ('0.0.0.0', 'http://0.0.0.0:8989/'),
+            ('::', 'http://[::]:8989/'),
+        ):
             gai.return_value = _addrinfo(ip)
 
             self.assertRaises(
-                exc.UrlNotAllowedException,
-                egress.validate_url,
-                url
+                exc.UrlNotAllowedException, egress.validate_url, url
             )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -99,7 +99,7 @@ class EgressValidateUrlTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'file:///etc/passwd'
+            'file:///etc/passwd',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
@@ -118,33 +118,36 @@ class EgressValidateUrlTest(base.BaseTest):
 
     @mock.patch.object(socket, 'getaddrinfo')
     def test_denied_cidrs_config_blocks_rfc1918(self, gai):
-        self.override_config('denied_cidrs', ['10.0.0.0/8'],
-                             group='action_std_http')
+        self.override_config(
+            'denied_cidrs', ['10.0.0.0/8'], group='action_std_http'
+        )
         gai.return_value = _addrinfo('10.0.0.5')
 
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://internal-keystone:5000/'
+            'http://internal-keystone:5000/',
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
     def test_allowed_hosts_allowlist(self, gai):
-        self.override_config('allowed_hosts', ['ok.example.com'],
-                             group='action_std_http')
+        self.override_config(
+            'allowed_hosts', ['ok.example.com'], group='action_std_http'
+        )
         gai.return_value = _addrinfo('93.184.216.34')
 
         egress.validate_url('http://ok.example.com/')
         self.assertRaises(
             exc.UrlNotAllowedException,
             egress.validate_url,
-            'http://other.example.com/'
+            'http://other.example.com/',
         )
 
     def test_unresolvable_host_fails_open(self):
         # If the host cannot be resolved the request would fail to connect
         # anyway, so validation must not raise (and must not break the
         # existing tests that use non-resolvable hostnames).
-        with mock.patch.object(socket, 'getaddrinfo',
-                               side_effect=socket.gaierror):
+        with mock.patch.object(
+            socket, 'getaddrinfo', side_effect=socket.gaierror
+        ):
             egress.validate_url('http://some_url/')

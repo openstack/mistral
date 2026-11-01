@@ -21,7 +21,6 @@ from mistral_lib import actions as ml_actions
 
 
 class TaskPauseResumeTest(base.EngineTestCase):
-
     def test_pause_resume_action_ex(self):
         workflow = """
         version: '2.0'
@@ -50,8 +49,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
         self.await_task_running(task_1_ex.id)
         with db_api.transaction():
@@ -62,8 +60,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = db_api.get_action_executions(
@@ -87,8 +84,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = db_api.get_action_executions(
@@ -110,8 +106,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = db_api.get_action_executions(
@@ -127,7 +122,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
         # Complete action execution of task 1.
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         # Wait for the workflow execution to complete.
@@ -182,8 +177,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
         self.await_task_running(task_1_ex.id)
         with db_api.transaction():
@@ -194,13 +188,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = sorted(
             db_api.get_action_executions(task_execution_id=task_1_ex.id),
-            key=lambda x: x['runtime_context']['index']
+            key=lambda x: x['runtime_context']['index'],
         )
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -222,13 +215,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = sorted(
             db_api.get_action_executions(task_execution_id=task_1_ex.id),
-            key=lambda x: x['runtime_context']['index']
+            key=lambda x: x['runtime_context']['index'],
         )
 
         self.assertEqual(states.PAUSED, wf_ex.state)
@@ -241,13 +233,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
 
         # Complete 2nd and 3rd action executions of task 1.
         self.engine.on_action_complete(
-            task_1_action_exs[1].id,
-            ml_actions.Result(data={'result': 'two'})
+            task_1_action_exs[1].id, ml_actions.Result(data={'result': 'two'})
         )
 
         self.engine.on_action_complete(
             task_1_action_exs[2].id,
-            ml_actions.Result(data={'result': 'three'})
+            ml_actions.Result(data={'result': 'three'}),
         )
 
         with db_api.transaction():
@@ -256,13 +247,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = sorted(
             db_api.get_action_executions(task_execution_id=task_1_ex.id),
-            key=lambda x: x['runtime_context']['index']
+            key=lambda x: x['runtime_context']['index'],
         )
 
         self.assertEqual(states.PAUSED, wf_ex.state)
@@ -282,13 +272,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
         task_1_action_exs = sorted(
             db_api.get_action_executions(task_execution_id=task_1_ex.id),
-            key=lambda x: x['runtime_context']['index']
+            key=lambda x: x['runtime_context']['index'],
         )
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -302,7 +291,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
         # Complete the 1st action execution of task 1.
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            ml_actions.Result(data={'result': 'foobar'})
+            ml_actions.Result(data={'result': 'foobar'}),
         )
 
         # Wait for the workflow execution to complete.
@@ -317,7 +306,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
 
         task_1_action_exs = sorted(
             db_api.get_action_executions(task_execution_id=task_1_ex.id),
-            key=lambda x: x['runtime_context']['index']
+            key=lambda x: x['runtime_context']['index'],
         )
 
         task_2_ex = self._assert_single_item(task_execs, name='task2')

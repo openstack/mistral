@@ -39,7 +39,7 @@ def upgrade():
     if 'delayed_calls_v2_processing_execution_time' in unique_constraints:
         op.drop_index(
             'delayed_calls_v2_processing_execution_time',
-            table_name='delayed_calls_v2'
+            table_name='delayed_calls_v2',
         )
 
     if 'unique_key' in unique_constraints:
@@ -49,11 +49,11 @@ def upgrade():
 
     op.add_column(
         'delayed_calls_v2',
-        sa.Column('key', sa.String(length=250), nullable=True)
+        sa.Column('key', sa.String(length=250), nullable=True),
     )
     op.create_index(
         'delayed_calls_v2_execution_time',
         'delayed_calls_v2',
         ['execution_time'],
-        unique=False
+        unique=False,
     )

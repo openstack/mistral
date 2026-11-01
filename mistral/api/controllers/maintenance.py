@@ -29,13 +29,10 @@ class Maintenance(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(
-            status="1234"
-        )
+        return cls(status="1234")
 
 
 class MaintenanceController(rest.RestController):
-
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose('json')
     def get(self):
@@ -49,16 +46,10 @@ class MaintenanceController(rest.RestController):
 
         maintenance_status = db_api.get_maintenance_status()
 
-        return {
-            'status': maintenance_status
-        }
+        return {'status': maintenance_status}
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(
-        Maintenance,
-        body=Maintenance,
-        status_code=200
-    )
+    @wsme_pecan.wsexpose(Maintenance, body=Maintenance, status_code=200)
     def put(self, new_maintenance_status):
         # Enforce the policy while the request context is still available:
         # changing the maintenance status is a cluster-wide operation that

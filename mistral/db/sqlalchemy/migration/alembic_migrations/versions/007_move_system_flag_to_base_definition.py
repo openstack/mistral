@@ -31,10 +31,9 @@ import sqlalchemy as sa
 
 def upgrade():
     op.add_column(
-        'workbooks_v2',
-        sa.Column('is_system', sa.Boolean(), nullable=True)
+        'workbooks_v2', sa.Column('is_system', sa.Boolean(), nullable=True)
     )
     op.add_column(
         'workflow_definitions_v2',
-        sa.Column('is_system', sa.Boolean(), nullable=True)
+        sa.Column('is_system', sa.Boolean(), nullable=True),
     )

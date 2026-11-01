@@ -30,7 +30,7 @@ class TestRootController(base.APITest):
         self.assertEqual('CURRENT', data[0]['status'])
         self.assertEqual(
             [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
-            data[0]['links']
+            data[0]['links'],
         )
 
     def test_v2_root(self):
@@ -40,10 +40,7 @@ class TestRootController(base.APITest):
 
         data = jsonutils.loads(resp.body.decode())
 
-        self.assertEqual(
-            'http://localhost/v2',
-            data['uri']
-        )
+        self.assertEqual('http://localhost/v2', data['uri'])
 
 
 class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
@@ -58,7 +55,7 @@ class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
         self.assertEqual('CURRENT', data[0]['status'])
         self.assertEqual(
             [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
-            data[0]['links']
+            data[0]['links'],
         )
 
     def test_v2_root(self):
@@ -68,20 +65,22 @@ class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
 
         data = jsonutils.loads(resp.body.decode())
 
-        self.assertEqual(
-            'http://localhost/v2',
-            data['uri']
-        )
+        self.assertEqual('http://localhost/v2', data['uri'])
 
 
-class TestRootControllerWithHTTPProxyToWSGI(test_oslo_middleware.
-                                            TestHTTPProxyToWSGIMiddleware):
+class TestRootControllerWithHTTPProxyToWSGI(
+    test_oslo_middleware.TestHTTPProxyToWSGIMiddleware
+):
     def test_index_with_prefix(self):
-        resp = self.app.get('/',
-                            headers={'Accept': 'application/json',
-                                     'Host': 'openstack',
-                                     'X-Forwarded-Proto': 'https',
-                                     'X-Forwarded-Prefix': '/workflowv2'})
+        resp = self.app.get(
+            '/',
+            headers={
+                'Accept': 'application/json',
+                'Host': 'openstack',
+                'X-Forwarded-Proto': 'https',
+                'X-Forwarded-Prefix': '/workflowv2',
+            },
+        )
 
         self.assertEqual(200, resp.status_int)
 
@@ -90,23 +89,29 @@ class TestRootControllerWithHTTPProxyToWSGI(test_oslo_middleware.
         self.assertEqual('v2.0', data[0]['id'])
         self.assertEqual('CURRENT', data[0]['status'])
         self.assertEqual(
-            [{'href': 'https://openstack/workflowv2/v2', 'rel': 'self',
-              'target': 'v2'}],
-            data[0]['links']
+            [
+                {
+                    'href': 'https://openstack/workflowv2/v2',
+                    'rel': 'self',
+                    'target': 'v2',
+                }
+            ],
+            data[0]['links'],
         )
 
     def test_v2_root_with_prefix(self):
-        resp = self.app.get('/v2/',
-                            headers={'Accept': 'application/json',
-                                     'Host': 'openstack',
-                                     'X-Forwarded-Proto': 'https',
-                                     'X-Forwarded-Prefix': '/workflowv2'})
+        resp = self.app.get(
+            '/v2/',
+            headers={
+                'Accept': 'application/json',
+                'Host': 'openstack',
+                'X-Forwarded-Proto': 'https',
+                'X-Forwarded-Prefix': '/workflowv2',
+            },
+        )
 
         self.assertEqual(200, resp.status_int)
 
         data = jsonutils.loads(resp.body.decode())
 
-        self.assertEqual(
-            'https://openstack/workflowv2/v2',
-            data['uri']
-        )
+        self.assertEqual('https://openstack/workflowv2/v2', data['uri'])

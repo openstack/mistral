@@ -29,17 +29,19 @@ class Resource(wtypes.Base):
     # results, published values, ...). They are masked by __str__ so that
     # logging a resource - a very common pattern in the controllers - can
     # never leak them.
-    _sensitive_attributes = frozenset([
-        'input',
-        'output',
-        'params',
-        'result',
-        'published',
-        'published_global',
-        'runtime_context',
-        'env',
-        'variables',
-    ])
+    _sensitive_attributes = frozenset(
+        [
+            'input',
+            'output',
+            'params',
+            'result',
+            'published',
+            'published_global',
+            'runtime_context',
+            'env',
+            'variables',
+        ]
+    )
 
     def to_dict(self):
         d = {}
@@ -93,8 +95,9 @@ class Resource(wtypes.Base):
 
             # Mask attributes that may carry secrets, but keep unset ones
             # readable so the output still shows which fields are present.
-            if (attr.name in self._sensitive_attributes and
-                    not isinstance(value, wtypes.UnsetType)):
+            if attr.name in self._sensitive_attributes and not isinstance(
+                value, wtypes.UnsetType
+            ):
                 value = '***'
 
             res += "%s='%s'" % (attr.name, value)
@@ -122,17 +125,15 @@ class ResourceList(Resource):
         return getattr(self, self._type)
 
     @classmethod
-    def convert_with_links(cls, resources, limit, url=None, fields=None,
-                           **kwargs):
+    def convert_with_links(
+        cls, resources, limit, url=None, fields=None, **kwargs
+    ):
         resource_list = cls()
 
         setattr(resource_list, resource_list._type, resources)
 
         resource_list.next = resource_list.get_next(
-            limit,
-            url=url,
-            fields=fields,
-            **kwargs
+            limit, url=url, fields=fields, **kwargs
         )
 
         return resource_list
@@ -150,19 +151,19 @@ class ResourceList(Resource):
 
         for key, value in kwargs.items():
             if isinstance(value, dict):
-                q_args += '%s=%s:%s&' % \
-                          (key, list(value.keys())[0], list(value.values())[0])
+                q_args += '%s=%s:%s&' % (
+                    key,
+                    list(value.keys())[0],
+                    list(value.values())[0],
+                )
             else:
                 q_args += '%s=%s&' % (key, value)
 
-        resource_args = (
-            '?%(args)slimit=%(limit)d&marker=%(marker)s' %
-            {
-                'args': q_args,
-                'limit': limit,
-                'marker': self.collection[-1].id
-            }
-        )
+        resource_args = '?%(args)slimit=%(limit)d&marker=%(marker)s' % {
+            'args': q_args,
+            'limit': limit,
+            'marker': self.collection[-1].id,
+        }
 
         # Fields is handled specially here, we can move it above when it's
         # supported by all resources query.
@@ -172,7 +173,7 @@ class ResourceList(Resource):
         next_link = "%(host_url)s/v2/%(resource)s%(args)s" % {
             'host_url': url,
             'resource': self._type,
-            'args': resource_args
+            'args': resource_args,
         }
 
         return next_link
@@ -201,5 +202,4 @@ class Link(Resource):
 
     @classmethod
     def sample(cls):
-        return cls(href='http://example.com/here',
-                   target='here', rel='self')
+        return cls(href='http://example.com/here', target='here', rel='self')

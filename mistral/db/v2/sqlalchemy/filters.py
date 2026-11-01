@@ -48,9 +48,9 @@ def _compile_json_key_equals_mysql(element, compiler, **kw):
     return compiler.process(
         sa.and_(
             sa.func.json_contains(extracted, value),
-            sa.func.json_contains(value, extracted)
+            sa.func.json_contains(value, extracted),
         ),
-        **kw
+        **kw,
     )
 
 
@@ -61,12 +61,12 @@ def _compile_json_key_equals_sqlite(element, compiler, **kw):
     return compiler.process(
         sa.and_(
             sa.func.json_valid(element.column),
-            sa.func.json_extract(element.column, element.path) ==
-            sa.func.json_extract(wrapped, '$.v'),
-            sa.func.json_type(element.column, element.path) ==
-            sa.func.json_type(wrapped, '$.v')
+            sa.func.json_extract(element.column, element.path)
+            == sa.func.json_extract(wrapped, '$.v'),
+            sa.func.json_type(element.column, element.path)
+            == sa.func.json_type(wrapped, '$.v'),
         ),
-        **kw
+        **kw,
     )
 
 
@@ -88,8 +88,11 @@ def apply_filters(query, model, **filters):
         if key == 'tags':
             continue
 
-        if (isinstance(value, dict) and isinstance(value.get('eq'), dict)
-                and _is_json_column(column_attr)):
+        if (
+            isinstance(value, dict)
+            and isinstance(value.get('eq'), dict)
+            and _is_json_column(column_attr)
+        ):
             for k, v in value['eq'].items():
                 query = query.filter(JsonKeyEquals(column_attr, k, v))
         elif isinstance(value, dict):

@@ -25,8 +25,13 @@ class WebhookPublisherSsrfTest(base.BaseTest):
     @mock.patch.object(socket, 'getaddrinfo')
     def test_publish_to_metadata_is_blocked(self, gai, post):
         gai.return_value = [
-            (socket.AF_INET, socket.SOCK_STREAM, 6, '',
-             ('169.254.169.254', 80))
+            (
+                socket.AF_INET,
+                socket.SOCK_STREAM,
+                6,
+                '',
+                ('169.254.169.254', 80),
+            )
         ]
 
         pub = webhook.WebhookPublisher()
@@ -34,8 +39,12 @@ class WebhookPublisherSsrfTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             pub.publish,
-            {}, 'ex-id', {'a': 1}, 'event', 'ts',
-            url='http://169.254.169.254/'
+            {},
+            'ex-id',
+            {'a': 1},
+            'event',
+            'ts',
+            url='http://169.254.169.254/',
         )
 
         # The request must never be issued.

@@ -19,7 +19,6 @@ from mistral.utils import filter_utils
 
 
 class TestTypesController(base.BaseTest):
-
     base_id = '88888888-4444-4444-4444-777777755555'
     uuid_type = types.uuid
 
@@ -27,17 +26,20 @@ class TestTypesController(base.BaseTest):
         self.uuid_type.validate(self.base_id)
 
     def test_uuid_type_wit_invalid_format(self):
-        self.assertRaises(exc.InputException,
-                          self.uuid_type.validate, 'invalid_format')
-        self.assertRaises(exc.InputException,
-                          self.uuid_type.validate, '44-231-454-542123')
+        self.assertRaises(
+            exc.InputException, self.uuid_type.validate, 'invalid_format'
+        )
+        self.assertRaises(
+            exc.InputException, self.uuid_type.validate, '44-231-454-542123'
+        )
 
     def test_uuid_with_filters(self):
         for filter_type in filter_utils.ALL:
             value = '{}{}'.format(filter_type + ':', self.base_id)
             if filter_type.startswith((filter_utils.IN, filter_utils.NOT_IN)):
-                self.assertRaises(exc.InputException,
-                                  self.uuid_type.validate, value)
+                self.assertRaises(
+                    exc.InputException, self.uuid_type.validate, value
+                )
             else:
                 self.uuid_type.validate(value)
 

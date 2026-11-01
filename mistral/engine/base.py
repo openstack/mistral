@@ -28,8 +28,16 @@ class Engine(object, metaclass=abc.ABCMeta):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
-                       wf_input=None, description='', async_=False, **params):
+    def start_workflow(
+        self,
+        wf_identifier,
+        wf_namespace='',
+        wf_ex_id=None,
+        wf_input=None,
+        description='',
+        async_=False,
+        **params,
+    ):
         """Starts the specified workflow.
 
         :param wf_identifier: Workflow ID or name. Workflow ID is recommended,
@@ -47,16 +55,28 @@ class Engine(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def start_task(self, task_ex_id, first_run, waiting,
-                   triggered_by, rerun, reset, **params):
-        """Starts task sending a request to engine over RPC.
-
-        """
+    def start_task(
+        self,
+        task_ex_id,
+        first_run,
+        waiting,
+        triggered_by,
+        rerun,
+        reset,
+        **params,
+    ):
+        """Starts task sending a request to engine over RPC."""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def start_action(self, action_name, action_input,
-                     description=None, namespace='', **params):
+    def start_action(
+        self,
+        action_name,
+        action_input,
+        description=None,
+        namespace='',
+        **params,
+    ):
         """Starts the specific action.
 
         :param action_name: Action name.
@@ -69,8 +89,9 @@ class Engine(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_action_complete(self, action_ex_id, result, wf_action=False,
-                           async_=False):
+    def on_action_complete(
+        self, action_ex_id, result, wf_action=False, async_=False
+    ):
         """Accepts action result and continues the workflow.
 
         Action execution result here is a result which comes from an
@@ -160,6 +181,7 @@ class TaskPolicy(object, metaclass=abc.ABCMeta):
     An example of task policy may be 'retry' policy that makes engine
     to run a task repeatedly if it finishes with a failure.
     """
+
     _schema = {}
 
     def before_task_start(self, task):

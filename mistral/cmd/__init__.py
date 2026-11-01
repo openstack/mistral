@@ -16,4 +16,5 @@
 # Hardcode the threading backend to avoid using eventlet until this will
 # eventually become the default
 import oslo_service.backend as service_backend
+
 service_backend.init_backend(service_backend.BackendType.THREADING)

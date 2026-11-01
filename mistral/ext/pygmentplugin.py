@@ -17,7 +17,6 @@ from pygments import token
 
 
 class MistralLexer(lexer.RegexLexer):
-
     name = 'Mistral'
     aliases = ['mistral']
 
@@ -25,13 +24,19 @@ class MistralLexer(lexer.RegexLexer):
 
     tokens = {
         "root": [
-            (r'^(\s)*(workflows|tasks|input|output|type)(\s)*:',
-                token.Keyword),
+            (
+                r'^(\s)*(workflows|tasks|input|output|type)(\s)*:',
+                token.Keyword,
+            ),
             (r'^(\s)*(version|name|description)(\s)*:', token.Keyword),
-            (r'^(\s)*(publish|timeout|retry|with\-items)(\s)*:',
-                token.Keyword),
-            (r'^(\s)*(on\-success|on\-error|on\-complete)(\s)*:',
-                token.Keyword),
+            (
+                r'^(\s)*(publish|timeout|retry|with\-items)(\s)*:',
+                token.Keyword,
+            ),
+            (
+                r'^(\s)*(on\-success|on\-error|on\-complete)(\s)*:',
+                token.Keyword,
+            ),
             (r'^(\s)*(action|workflow)(\s)*:', token.Keyword, 'call'),
             (r'(\-|\:)(\s)*(fail|succeed|pause)(\s)+', token.Operator.Word),
             (r'<%', token.Name.Entity, 'expression'),
@@ -42,8 +47,11 @@ class MistralLexer(lexer.RegexLexer):
         ],
         "expression": [
             (r'\$', token.Operator),
-            (r'\s(json_parse|json_dump|task|tasks|execution|env|uuid)(?!\w)',
-                token.Name.Builtin),
+            (
+                r'\s(json_parse|json_dump|task|tasks|execution|env|uuid)'
+                r'(?!\w)',
+                token.Name.Builtin,
+            ),
             lexer.include("generic"),
             (r'%>', token.Name.Entity, '#pop'),
             (r'}\\}', token.Name.Entity, '#pop'),
@@ -60,5 +68,5 @@ class MistralLexer(lexer.RegexLexer):
             (r'"(\\\\|\\"|[^"])*"', token.String.Double),
             (r"'(\\\\|\\'|[^'])*'", token.String.Single),
             (r'\W|\w|\s|\(|\)|,|\.', token.Text),
-        ]
+        ],
     }

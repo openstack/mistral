@@ -29,8 +29,9 @@ class HttpActionHardeningTest(base.BaseTest):
     def test_default_timeout_applied_when_unset(self, req):
         self.override_config('default_timeout', 42, group='action_std_http')
         req.return_value = base.FakeHTTPResponse(
-            json.dumps({'a': 1}), 200,
-            headers={'Content-Type': 'application/json'}
+            json.dumps({'a': 1}),
+            200,
+            headers={'Content-Type': 'application/json'},
         )
 
         std.HTTPAction(url=URL).run(mock.Mock())
@@ -48,16 +49,15 @@ class HttpActionHardeningTest(base.BaseTest):
 
     @mock.patch.object(requests, 'request')
     def test_oversized_response_is_rejected(self, req):
-        self.override_config('max_response_size_bytes', 100,
-                             group='action_std_http')
+        self.override_config(
+            'max_response_size_bytes', 100, group='action_std_http'
+        )
         req.return_value = base.FakeHTTPResponse(
             'x', 200, headers={'Content-Length': '10000000'}
         )
 
         self.assertRaises(
-            exc.ActionException,
-            std.HTTPAction(url=URL).run,
-            mock.Mock()
+            exc.ActionException, std.HTTPAction(url=URL).run, mock.Mock()
         )
 
     @mock.patch.object(requests, 'request')
@@ -69,19 +69,21 @@ class HttpActionHardeningTest(base.BaseTest):
         )
 
         self.assertRaises(
-            exc.ActionException,
-            std.HTTPAction(url=URL).run,
-            mock.Mock()
+            exc.ActionException, std.HTTPAction(url=URL).run, mock.Mock()
         )
 
     @mock.patch.object(requests, 'request')
     def test_response_within_limit_is_allowed(self, req):
-        self.override_config('max_response_size_bytes', 100,
-                             group='action_std_http')
+        self.override_config(
+            'max_response_size_bytes', 100, group='action_std_http'
+        )
         req.return_value = base.FakeHTTPResponse(
-            json.dumps({'a': 1}), 200,
-            headers={'Content-Length': '20',
-                     'Content-Type': 'application/json'}
+            json.dumps({'a': 1}),
+            200,
+            headers={
+                'Content-Length': '20',
+                'Content-Type': 'application/json',
+            },
         )
 
         result = std.HTTPAction(url=URL).run(mock.Mock())

@@ -91,10 +91,7 @@ def validate_long_type_length(cls, field_name, value):
                 "Field size limit exceeded"
                 " [class={}, field={}, size={}KB, limit={}KB]"
             ).format(
-                cls.__name__,
-                field_name,
-                math.ceil(size / 1024),
-                size_limit_kb
+                cls.__name__, field_name, math.ceil(size / 1024), size_limit_kb
             )
 
             LOG.error(msg)
@@ -106,9 +103,7 @@ def validate_name_has_no_spaces(name):
     """Makes sure name does not contain spaces."""
     if name:
         if " " in name:
-            msg = (
-                "Name '{}' must not contain spaces"
-            ).format(name)
+            msg = ("Name '{}' must not contain spaces").format(name)
 
             LOG.error(msg)
 
@@ -126,7 +121,9 @@ def register_length_validator(attr_name):
             event.listen(
                 getattr(cls, attr_name),
                 'set',
-                lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
+                lambda t, v, o, i: validate_long_type_length(
+                    cls, attr_name, v
+                ),
             )
 
 
@@ -140,7 +137,7 @@ def register_name_validator():
         event.listen(
             getattr(cls, "name"),
             'set',
-            lambda t, v, o, i: validate_name_has_no_spaces(v)
+            lambda t, v, o, i: validate_name_has_no_spaces(v),
         )
 
 
@@ -162,11 +159,7 @@ class Workbook(Definition):
 
     __tablename__ = 'workbooks_v2'
     __table_args__ = (
-        sa.UniqueConstraint(
-            'name',
-            'namespace',
-            'project_id'
-        ),
+        sa.UniqueConstraint('name', 'namespace', 'project_id'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
@@ -178,11 +171,7 @@ class WorkflowDefinition(Definition):
     __tablename__ = 'workflow_definitions_v2'
     checksum = sa.Column(sa.String(32), nullable=True)
     __table_args__ = (
-        sa.UniqueConstraint(
-            'name',
-            'namespace',
-            'project_id'
-        ),
+        sa.UniqueConstraint('name', 'namespace', 'project_id'),
         sa.Index('%s_is_system' % __tablename__, 'is_system'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
@@ -196,10 +185,7 @@ class ActionDefinition(Definition):
 
     __tablename__ = 'action_definitions_v2'
     __table_args__ = (
-        sa.UniqueConstraint(
-            'name',
-            'namespace',
-            'project_id'),
+        sa.UniqueConstraint('name', 'namespace', 'project_id'),
         sa.Index('%s_is_system' % __tablename__, 'is_system'),
         sa.Index('%s_action_class' % __tablename__, 'action_class'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
@@ -222,11 +208,7 @@ class CodeSource(mb.MistralSecureModelBase):
 
     __tablename__ = 'code_sources'
     __table_args__ = (
-        sa.UniqueConstraint(
-            'name',
-            'namespace',
-            'project_id'
-        ),
+        sa.UniqueConstraint('name', 'namespace', 'project_id'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
@@ -244,9 +226,7 @@ class MistralMetrics(mb.MistralModelBase):
     """Table for maintenance mode."""
 
     __tablename__ = 'mistral_metrics'
-    __table_args__ = (
-        sa.UniqueConstraint('name'),
-    )
+    __table_args__ = (sa.UniqueConstraint('name'),)
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.String(255), nullable=False)
     value = sa.Column(sa.String(255), nullable=False)
@@ -257,11 +237,7 @@ class DynamicActionDefinition(mb.MistralSecureModelBase):
 
     __tablename__ = 'dynamic_action_definitions'
     __table_args__ = (
-        sa.UniqueConstraint(
-            'name',
-            'namespace',
-            'project_id'
-        ),
+        sa.UniqueConstraint('name', 'namespace', 'project_id'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
@@ -277,17 +253,16 @@ class DynamicActionDefinition(mb.MistralSecureModelBase):
 DynamicActionDefinition.code_source_id = sa.Column(
     sa.String(36),
     sa.ForeignKey(CodeSource.id, ondelete='CASCADE'),
-    nullable=False
+    nullable=False,
 )
 
 DynamicActionDefinition.code_source = relationship(
-    CodeSource,
-    remote_side=CodeSource.id,
-    lazy='select'
+    CodeSource, remote_side=CodeSource.id, lazy='select'
 )
 
 
 # Execution objects.
+
 
 class Execution(mb.MistralSecureModelBase):
     __abstract__ = True
@@ -316,7 +291,7 @@ class ActionExecution(Execution):
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
         sa.Index('%s_state' % __tablename__, 'state'),
-        sa.Index('%s_updated_at' % __tablename__, 'updated_at')
+        sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
     )
 
     # Main properties.
@@ -326,9 +301,12 @@ class ActionExecution(Execution):
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
     last_heartbeat = sa.Column(
         sa.DateTime,
-        default=lambda: utils.utc_now_sec() + datetime.timedelta(
-            seconds=CONF.action_heartbeat.first_heartbeat_timeout
-        )
+        default=lambda: (
+            utils.utc_now_sec()
+            + datetime.timedelta(
+                seconds=CONF.action_heartbeat.first_heartbeat_timeout
+            )
+        ),
     )
     is_sync = sa.Column(sa.Boolean(), default=None, nullable=True)
 
@@ -371,7 +349,7 @@ class TaskExecution(Execution):
         sa.Index('%s_scope' % __tablename__, 'scope'),
         sa.Index('%s_state' % __tablename__, 'state'),
         sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
-        sa.UniqueConstraint('unique_key')
+        sa.UniqueConstraint('unique_key'),
     )
 
     # Main properties.
@@ -438,7 +416,7 @@ for cls in utils.iter_subclasses(Execution):
         cls.state_info,
         'set',
         lambda t, v, o, i: utils.cut(v, 65500),
-        retval=True
+        retval=True,
     )
 
 # Many-to-one for 'ActionExecution' and 'TaskExecution'.
@@ -446,7 +424,7 @@ for cls in utils.iter_subclasses(Execution):
 ActionExecution.task_execution_id = sa.Column(
     sa.String(36),
     sa.ForeignKey(TaskExecution.id, ondelete='CASCADE'),
-    nullable=True
+    nullable=True,
 )
 
 TaskExecution.action_executions = relationship(
@@ -455,12 +433,11 @@ TaskExecution.action_executions = relationship(
     cascade='all, delete-orphan',
     foreign_keys=ActionExecution.task_execution_id,
     lazy='select',
-    passive_deletes=True
+    passive_deletes=True,
 )
 
 sa.Index(
-    '%s_task_execution_id' % ActionExecution.__tablename__,
-    'task_execution_id'
+    '%s_task_execution_id' % ActionExecution.__tablename__, 'task_execution_id'
 )
 
 # Many-to-one for 'WorkflowExecution' and 'TaskExecution'.
@@ -468,7 +445,7 @@ sa.Index(
 WorkflowExecution.task_execution_id = sa.Column(
     sa.String(36),
     sa.ForeignKey(TaskExecution.id, ondelete='CASCADE'),
-    nullable=True
+    nullable=True,
 )
 
 TaskExecution.workflow_executions = relationship(
@@ -477,12 +454,12 @@ TaskExecution.workflow_executions = relationship(
     cascade='all, delete-orphan',
     foreign_keys=WorkflowExecution.task_execution_id,
     lazy='select',
-    passive_deletes=True
+    passive_deletes=True,
 )
 
 sa.Index(
     '%s_task_execution_id' % WorkflowExecution.__tablename__,
-    'task_execution_id'
+    'task_execution_id',
 )
 
 # Many-to-one for 'WorkflowExecution' and 'WorkflowExecution'
@@ -490,20 +467,17 @@ sa.Index(
 WorkflowExecution.root_execution_id = sa.Column(
     sa.String(36),
     sa.ForeignKey(WorkflowExecution.id, ondelete='SET NULL'),
-    nullable=True
+    nullable=True,
 )
 
 WorkflowExecution.root_execution = relationship(
-    WorkflowExecution,
-    remote_side=WorkflowExecution.id,
-    lazy='select'
+    WorkflowExecution, remote_side=WorkflowExecution.id, lazy='select'
 )
 
 # Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
 
 TaskExecution.workflow_execution_id = sa.Column(
-    sa.String(36),
-    sa.ForeignKey(WorkflowExecution.id, ondelete='CASCADE')
+    sa.String(36), sa.ForeignKey(WorkflowExecution.id, ondelete='CASCADE')
 )
 
 WorkflowExecution.task_executions = relationship(
@@ -512,17 +486,18 @@ WorkflowExecution.task_executions = relationship(
     cascade='all, delete-orphan',
     foreign_keys=TaskExecution.workflow_execution_id,
     lazy='select',
-    passive_deletes=True
+    passive_deletes=True,
 )
 
 sa.Index(
     '%s_workflow_execution_id' % TaskExecution.__tablename__,
-    TaskExecution.workflow_execution_id
+    TaskExecution.workflow_execution_id,
 )
 
 sa.Index(
     '%s_workflow_execution_id_name' % TaskExecution.__tablename__,
-    TaskExecution.workflow_execution_id, TaskExecution.name
+    TaskExecution.workflow_execution_id,
+    TaskExecution.name,
 )
 
 
@@ -550,8 +525,7 @@ class DelayedCall(mb.MistralModelBase):
 
 
 sa.Index(
-    '%s_execution_time' % DelayedCall.__tablename__,
-    DelayedCall.execution_time
+    '%s_execution_time' % DelayedCall.__tablename__, DelayedCall.execution_time
 )
 
 
@@ -591,13 +565,10 @@ class ScheduledJob(mb.MistralModelBase):
 sa.Index(
     '%s_execute_at_captured_at' % ScheduledJob.__tablename__,
     ScheduledJob.execute_at,
-    ScheduledJob.captured_at
+    ScheduledJob.captured_at,
 )
 
-sa.Index(
-    '%s_key' % ScheduledJob.__tablename__,
-    ScheduledJob.key
-)
+sa.Index('%s_key' % ScheduledJob.__tablename__, ScheduledJob.key)
 
 
 class Environment(mb.MistralSecureModelBase):
@@ -627,13 +598,16 @@ class CronTrigger(mb.MistralSecureModelBase):
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
         sa.UniqueConstraint(
-            'workflow_input_hash', 'workflow_name', 'pattern', 'project_id',
-            'workflow_params_hash', 'remaining_executions',
-            'first_execution_time'
+            'workflow_input_hash',
+            'workflow_name',
+            'pattern',
+            'project_id',
+            'workflow_params_hash',
+            'remaining_executions',
+            'first_execution_time',
         ),
         sa.Index(
-            '%s_next_execution_time' % __tablename__,
-            'next_execution_time'
+            '%s_next_execution_time' % __tablename__, 'next_execution_time'
         ),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
@@ -645,7 +619,7 @@ class CronTrigger(mb.MistralSecureModelBase):
     pattern = sa.Column(
         sa.String(100),
         nullable=True,
-        default='0 0 30 2 0'  # Set default to 'never'.
+        default='0 0 30 2 0',  # Set default to 'never'.
     )
     first_execution_time = sa.Column(sa.DateTime, nullable=True)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
@@ -653,20 +627,17 @@ class CronTrigger(mb.MistralSecureModelBase):
     remaining_executions = sa.Column(sa.Integer)
 
     workflow_id = sa.Column(
-        sa.String(36),
-        sa.ForeignKey(WorkflowDefinition.id)
+        sa.String(36), sa.ForeignKey(WorkflowDefinition.id)
     )
     workflow = relationship('WorkflowDefinition', lazy='joined')
 
     workflow_params = sa.Column(st.JsonDictType())
     workflow_params_hash = sa.Column(
-        sa.CHAR(64),
-        default=_get_hash_function_by('workflow_params')
+        sa.CHAR(64), default=_get_hash_function_by('workflow_params')
     )
     workflow_input = sa.Column(st.JsonDictType())
     workflow_input_hash = sa.Column(
-        sa.CHAR(64),
-        default=_get_hash_function_by('workflow_input')
+        sa.CHAR(64), default=_get_hash_function_by('workflow_input')
     )
 
     trust_id = sa.Column(sa.String(80))
@@ -698,19 +669,13 @@ class ResourceMember(mb.MistralModelBase):
 
     __tablename__ = 'resource_members_v2'
     __table_args__ = (
-        sa.UniqueConstraint(
-            'resource_id',
-            'resource_type',
-            'member_id'
-        ),
+        sa.UniqueConstraint('resource_id', 'resource_type', 'member_id'),
     )
 
     id = mb.id_column()
     resource_id = sa.Column(sa.String(80), nullable=False)
     resource_type = sa.Column(
-        sa.String(50),
-        nullable=False,
-        default='workflow'
+        sa.String(50), nullable=False, default='workflow'
     )
     project_id = sa.Column(sa.String(80), default=security.get_project_id)
     member_id = sa.Column(sa.String(80), nullable=False)
@@ -723,18 +688,21 @@ class EventTrigger(mb.MistralSecureModelBase):
     __tablename__ = 'event_triggers_v2'
 
     __table_args__ = (
-        sa.UniqueConstraint('exchange', 'topic', 'event', 'workflow_id',
-                            'project_id'),
-        sa.Index('%s_project_id_workflow_id' % __tablename__, 'project_id',
-                 'workflow_id'),
+        sa.UniqueConstraint(
+            'exchange', 'topic', 'event', 'workflow_id', 'project_id'
+        ),
+        sa.Index(
+            '%s_project_id_workflow_id' % __tablename__,
+            'project_id',
+            'workflow_id',
+        ),
     )
 
     id = mb.id_column()
     name = sa.Column(sa.String(200))
 
     workflow_id = sa.Column(
-        sa.String(36),
-        sa.ForeignKey(WorkflowDefinition.id)
+        sa.String(36), sa.ForeignKey(WorkflowDefinition.id)
     )
     workflow = relationship('WorkflowDefinition', lazy='joined')
     workflow_params = sa.Column(st.JsonDictType())

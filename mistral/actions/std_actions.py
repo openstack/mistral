@@ -74,7 +74,7 @@ class EchoAction(actions.Action):
         LOG.info(
             'Running echo action [output=%s, delay=%s]',
             self.output,
-            self._delay
+            self._delay,
         )
 
         _check_wait(self._delay)
@@ -102,6 +102,7 @@ class NoOpAction(actions.Action):
     This action does nothing. It can be mostly useful for testing and
     debugging purposes.
     """
+
     def run(self, context):
         LOG.info('Running no-op action')
 
@@ -113,6 +114,7 @@ class NoOpAction(actions.Action):
 
 class AsyncNoOpAction(NoOpAction):
     """Asynchronous no-operation action."""
+
     def is_sync(self):
         return False
 
@@ -181,19 +183,21 @@ class HTTPAction(actions.Action):
         A CA_BUNDLE path can also be provided.
     """
 
-    def __init__(self,
-                 url,
-                 method="GET",
-                 params=None,
-                 body=None,
-                 json=None,
-                 headers=None,
-                 cookies=None,
-                 auth=None,
-                 timeout=None,
-                 allow_redirects=None,
-                 proxies=None,
-                 verify=None):
+    def __init__(
+        self,
+        url,
+        method="GET",
+        params=None,
+        body=None,
+        json=None,
+        headers=None,
+        cookies=None,
+        auth=None,
+        timeout=None,
+        allow_redirects=None,
+        proxies=None,
+        verify=None,
+    ):
         super(HTTPAction, self).__init__()
 
         if auth and len(auth.split(':')) == 2:
@@ -260,7 +264,7 @@ class HTTPAction(actions.Action):
             self.timeout,
             self.allow_redirects,
             self.proxies,
-            self.verify
+            self.verify,
         )
 
         try:
@@ -288,12 +292,12 @@ class HTTPAction(actions.Action):
                 timeout=timeout,
                 allow_redirects=self.allow_redirects,
                 proxies=self.proxies,
-                verify=action_verify
+                verify=action_verify,
             )
         except Exception as e:
             LOG.exception(
                 "Failed to send HTTP request for action execution: %s",
-                context.execution.action_execution_id
+                context.execution.action_execution_id,
             )
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
 
@@ -318,7 +322,7 @@ class HTTPAction(actions.Action):
         LOG.info("HTTP action response: %s", resp.status_code)
         LOG.debug(
             "HTTP action response body:\n%s",
-            rest_utils.prepare_response_body_log(resp.content)
+            rest_utils.prepare_response_body_log(resp.content),
         )
 
         # Represent important resp data as a dictionary.
@@ -339,7 +343,7 @@ class HTTPAction(actions.Action):
             'encoding': resp.encoding,
             'reason': resp.reason,
             'cookies': dict(resp.cookies.items()),
-            'elapsed': resp.elapsed.total_seconds()
+            'elapsed': resp.elapsed.total_seconds(),
         }
 
         if resp.status_code not in range(200, 307):
@@ -353,18 +357,20 @@ class HTTPAction(actions.Action):
 
 
 class MistralHTTPAction(HTTPAction):
-
     def run(self, context):
         self.headers = self.headers or {}
 
         exec_ctx = context.execution
-        self.headers.update({
-            'Mistral-Workflow-Name': exec_ctx.workflow_name,
-            'Mistral-Workflow-Execution-Id': exec_ctx.workflow_execution_id,
-            'Mistral-Task-Id': exec_ctx.task_execution_id,
-            'Mistral-Action-Execution-Id': exec_ctx.action_execution_id,
-            'Mistral-Callback-URL': exec_ctx.callback_url,
-        })
+        wf_ex_id = exec_ctx.workflow_execution_id
+        self.headers.update(
+            {
+                'Mistral-Workflow-Name': exec_ctx.workflow_name,
+                'Mistral-Workflow-Execution-Id': wf_ex_id,
+                'Mistral-Task-Id': exec_ctx.task_execution_id,
+                'Mistral-Action-Execution-Id': exec_ctx.action_execution_id,
+                'Mistral-Callback-URL': exec_ctx.callback_url,
+            }
+        )
 
         return super(MistralHTTPAction, self).run(context)
 
@@ -376,9 +382,19 @@ class MistralHTTPAction(HTTPAction):
 
 
 class SendEmailAction(actions.Action):
-    def __init__(self, from_addr, to_addrs, smtp_server, reply_to=None,
-                 cc_addrs=None, bcc_addrs=None, smtp_password=None,
-                 subject=None, body=None, html_body=None):
+    def __init__(
+        self,
+        from_addr,
+        to_addrs,
+        smtp_server,
+        reply_to=None,
+        cc_addrs=None,
+        bcc_addrs=None,
+        smtp_password=None,
+        subject=None,
+        body=None,
+        html_body=None,
+    ):
         super(SendEmailAction, self).__init__()
         # TODO(dzimine): validate parameters
 
@@ -408,18 +424,16 @@ class SendEmailAction(actions.Action):
             self.bcc,
             self.subject,
             self.smtp_server,
-            self.body[:128]
+            self.body[:128],
         )
         if not self.html_body:
             message = text.MIMEText(self.body, _charset='utf-8')
         else:
             message = multipart.MIMEMultipart('alternative')
-            message.attach(text.MIMEText(self.body,
-                                         'plain',
-                                         _charset='utf-8'))
-            message.attach(text.MIMEText(self.html_body,
-                                         'html',
-                                         _charset='utf-8'))
+            message.attach(text.MIMEText(self.body, 'plain', _charset='utf-8'))
+            message.attach(
+                text.MIMEText(self.html_body, 'html', _charset='utf-8')
+            )
         message['Subject'] = header.Header(self.subject, 'utf-8')
         message['From'] = self.sender
         message['Reply-To'] = header.Header(', '.join(self.reply_to))
@@ -449,15 +463,15 @@ class SendEmailAction(actions.Action):
                 s.ehlo()
                 s.login(self.sender, self.password)
 
-            s.sendmail(from_addr=self.sender,
-                       to_addrs=rcpt,
-                       msg=message.as_string())
+            s.sendmail(
+                from_addr=self.sender, to_addrs=rcpt, msg=message.as_string()
+            )
         except (smtplib.SMTPException, IOError):
             # Connection errors are not returned so the action cannot be
             # used as a port scanner.
             LOG.exception(
                 "Failed to send an email message for action execution: %s",
-                context.execution.action_execution_id
+                context.execution.action_execution_id,
             )
             raise exc.ActionException("Failed to send an email message.")
 
@@ -473,9 +487,7 @@ class SendEmailAction(actions.Action):
         try:
             return host, int(port)
         except ValueError:
-            raise exc.ActionException(
-                "Invalid smtp_server port: '%s'." % port
-            )
+            raise exc.ActionException("Invalid smtp_server port: '%s'." % port)
 
     def test(self, context):
         # Just logging the operation since this action is not supposed
@@ -491,7 +503,7 @@ class SendEmailAction(actions.Action):
             self.bcc,
             self.subject,
             self.smtp_server,
-            self.body[:128]
+            self.body[:128],
         )
 
 
@@ -503,13 +515,21 @@ class SSHAction(actions.Action):
     will be a single value, otherwise a list of results provided in the
     same order as provided hosts.
     """
+
     @property
     def _execute_cmd_method(self):
         return ssh_utils.execute_command
 
-    def __init__(self, cmd, host, username,
-                 password="", private_key_filename=None, private_key=None,
-                 return_result_on_error=False):
+    def __init__(
+        self,
+        cmd,
+        host,
+        username,
+        password="",
+        private_key_filename=None,
+        private_key=None,
+        return_result_on_error=False,
+    ):
         super(SSHAction, self).__init__()
 
         self.cmd = cmd
@@ -526,13 +546,15 @@ class SSHAction(actions.Action):
             'username': self.username,
             'password': self.password,
             'private_key_filename': self.private_key_filename,
-            'private_key': self.private_key
+            'private_key': self.private_key,
         }
 
     def run(self, context):
         def raise_exc(parent_exc=None, result=None):
-            message = ("Failed to execute ssh cmd "
-                       "'%s' on %s" % (self.cmd, self.host))
+            message = "Failed to execute ssh cmd '%s' on %s" % (
+                self.cmd,
+                self.host,
+            )
             # We suppress the actual parent error messages in favor of
             # more generic ones as we might be leaking information to the CLI
             if parent_exc:
@@ -555,20 +577,22 @@ class SSHAction(actions.Action):
                 if self.return_result_on_error:
                     # Execute command - always get the result data and stderr
                     status_code, stdout, stderr = self._execute_cmd_method(
-                        raise_when_error=False, get_stderr=True, **self.params)
+                        raise_when_error=False, get_stderr=True, **self.params
+                    )
 
                     # Always build consistent result structure
                     result = {
                         'stdout': stdout,
                         'stderr': stderr,
-                        'exit_code': status_code
+                        'exit_code': status_code,
                     }
 
                     results.append(result)
 
                 else:
                     status_code, result = self._execute_cmd_method(
-                        **self.params)
+                        **self.params
+                    )
 
                     if status_code > 0:
                         return raise_exc()
@@ -579,8 +603,11 @@ class SSHAction(actions.Action):
                 return results
 
             return result
-        except (exc.ActionException, exc.DataAccessException,
-                exc.UrlNotAllowedException):
+        except (
+            exc.ActionException,
+            exc.DataAccessException,
+            exc.UrlNotAllowedException,
+        ):
             # A typed ActionException already carries a deliberate, safe
             # message. Let it reach the caller as-is.
             raise
@@ -596,17 +623,20 @@ class SSHProxiedAction(SSHAction):
     def _execute_cmd_method(self):
         return ssh_utils.execute_command_via_gateway
 
-    def __init__(self, cmd, host, username, private_key_filename,
-                 gateway_host, gateway_username=None,
-                 password=None, proxy_command=None,
-                 private_key=None):
+    def __init__(
+        self,
+        cmd,
+        host,
+        username,
+        private_key_filename,
+        gateway_host,
+        gateway_username=None,
+        password=None,
+        proxy_command=None,
+        private_key=None,
+    ):
         super(SSHProxiedAction, self).__init__(
-            cmd,
-            host,
-            username,
-            password,
-            private_key_filename,
-            private_key
+            cmd, host, username, password, private_key_filename, private_key
         )
 
         self.gateway_host = gateway_host
@@ -616,15 +646,13 @@ class SSHProxiedAction(SSHAction):
             {
                 'gateway_host': gateway_host,
                 'gateway_username': gateway_username,
-                'proxy_command': proxy_command
+                'proxy_command': proxy_command,
             }
         )
 
 
 class JavaScriptAction(actions.Action):
-    """Evaluates given JavaScript.
-
-    """
+    """Evaluates given JavaScript."""
 
     def __init__(self, script, context=None):
         """Context here refers to a javasctript context
@@ -638,11 +666,14 @@ class JavaScriptAction(actions.Action):
 
     def run(self, context):
         try:
-            script = """function f() {
+            script = (
+                """function f() {
                 %s
             }
             f()
-            """ % self.script
+            """
+                % self.script
+            )
             return javascript.evaluate(script, self.js_context)
         except Exception as e:
             raise exc.ActionException("JavaScriptAction failed: %s" % str(e))
@@ -657,6 +688,7 @@ class SleepAction(actions.Action):
     This action sleeps for given amount of seconds. It can be mostly useful
     for testing and debugging purposes.
     """
+
     def __init__(self, seconds=1):
         super(SleepAction, self).__init__()
 
@@ -696,7 +728,7 @@ class TestDictAction(actions.Action):
             'Running test_dict action [size=%s, key_prefix=%s, val=%s]',
             self.size,
             self.key_prefix,
-            self.val
+            self.val,
         )
 
         res = {}

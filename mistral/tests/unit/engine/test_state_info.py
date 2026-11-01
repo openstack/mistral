@@ -111,12 +111,12 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         mock.MagicMock(
             side_effect=[
                 exc.ActionException(),  # Mock task1 exception for initial run.
-                'Task 1.1',             # Mock task1 success for initial run.
+                'Task 1.1',  # Mock task1 success for initial run.
                 exc.ActionException(),  # Mock task1 exception for initial run.
-                'Task 1.0',             # Mock task1 success for rerun.
-                'Task 1.2'              # Mock task1 success for rerun.
+                'Task 1.0',  # Mock task1 success for rerun.
+                'Task 1.2',  # Mock task1 success for rerun.
             ]
-        )
+        ),
     )
     def test_state_info_with_items(self):
         workflow = """---
@@ -153,14 +153,16 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         self.assertEqual(3, len(task_1_action_exs))
 
         error_actions = [
-            action_ex for action_ex in task_1_action_exs if
-            action_ex.state == states.ERROR
+            action_ex
+            for action_ex in task_1_action_exs
+            if action_ex.state == states.ERROR
         ]
         self.assertEqual(2, len(error_actions))
 
         success_actions = [
-            action_ex for action_ex in task_1_action_exs if
-            action_ex.state == states.SUCCESS
+            action_ex
+            for action_ex in task_1_action_exs
+            if action_ex.state == states.SUCCESS
         ]
         self.assertEqual(1, len(success_actions))
 

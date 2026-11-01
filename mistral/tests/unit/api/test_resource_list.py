@@ -18,7 +18,6 @@ from mistral.api.controllers.v2 import resources
 
 
 class TestResourceList(base.BaseTestCase):
-
     def test_next_link_correctness(self):
         task = resources.Task.sample()
 
@@ -29,7 +28,7 @@ class TestResourceList(base.BaseTestCase):
             sort_keys='created_at,id',
             sort_dirs='asc,asc',
             fields='',
-            state='eq:RUNNING'
+            state='eq:RUNNING',
         )
 
         next_link = result.next

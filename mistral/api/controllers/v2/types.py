@@ -79,9 +79,7 @@ class UuidType(wtypes.UserType):
     def validate(value):
         _, data = filter_utils.extract_filter_type_and_value(value)
         if not uuidutils.is_uuid_like(data):
-            raise exc.InputException(
-                "Expected a uuid but received %s." % data
-            )
+            raise exc.InputException("Expected a uuid but received %s." % data)
 
         return data
 

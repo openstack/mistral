@@ -38,15 +38,20 @@ def upgrade():
     op.drop_table('triggers')
     op.add_column(
         'cron_triggers_v2',
-        sa.Column('workflow_params', st.JsonEncoded(), nullable=True)
+        sa.Column('workflow_params', st.JsonEncoded(), nullable=True),
     )
     op.add_column(
         'cron_triggers_v2',
-        sa.Column('workflow_params_hash', sa.CHAR(length=64), nullable=True)
+        sa.Column('workflow_params_hash', sa.CHAR(length=64), nullable=True),
     )
     op.create_unique_constraint(
         None,
         'cron_triggers_v2',
-        ['workflow_input_hash', 'workflow_name', 'pattern',
-         'project_id', 'workflow_params_hash']
+        [
+            'workflow_input_hash',
+            'workflow_name',
+            'pattern',
+            'project_id',
+            'workflow_params_hash',
+        ],
     )

@@ -65,7 +65,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.engine.start_workflow,
             'wf',
             '',
-            {'wrong_param': 'some_value'}
+            {'wrong_param': 'some_value'},
         )
 
         self.assertEqual(0, len(db_api.get_workflow_executions()))
@@ -138,9 +138,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.ERROR
+                task_execs, name='task1', state=states.ERROR
             )
 
             action_execs = task_ex.executions
@@ -148,9 +146,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(action_execs))
 
         self._assert_single_item(
-            action_execs,
-            name='std.noop',
-            state=states.SUCCESS
+            action_execs, name='std.noop', state=states.SUCCESS
         )
 
         state_info = task_ex.state_info
@@ -209,9 +205,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.ERROR
+                task_execs, name='task1', state=states.ERROR
             )
 
             action_execs = task_ex.executions
@@ -219,9 +213,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(action_execs))
 
         self._assert_single_item(
-            action_execs,
-            name='std.noop',
-            state=states.SUCCESS
+            action_execs, name='std.noop', state=states.SUCCESS
         )
 
     def test_workflow_error(self):
@@ -257,9 +249,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.SUCCESS
+                task_execs, name='task1', state=states.SUCCESS
             )
 
             action_execs = task_ex.executions
@@ -267,9 +257,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(action_execs))
 
         self._assert_single_item(
-            action_execs,
-            name='std.noop',
-            state=states.SUCCESS
+            action_execs, name='std.noop', state=states.SUCCESS
         )
 
     def test_action_error_with_wait_before_policy(self):
@@ -306,9 +294,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.ERROR
+                task_execs, name='task1', state=states.ERROR
             )
 
             action_execs = task_ex.executions
@@ -360,9 +346,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertEqual(1, len(task_execs))
 
             task_ex = self._assert_single_item(
-                task_execs,
-                name='task1',
-                state=states.ERROR
+                task_execs, name='task1', state=states.ERROR
             )
 
             action_execs = task_ex.executions
@@ -370,9 +354,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(action_execs))
 
         self._assert_single_item(
-            action_execs,
-            name='std.noop',
-            state=states.SUCCESS
+            action_execs, name='std.noop', state=states.SUCCESS
         )
 
         state_info = task_ex.state_info
@@ -552,8 +534,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
     def test_invalid_action_result(self):
         self.register_action_class(
-            'test.invalid_unicode_action',
-            InvalidUnicodeAction
+            'test.invalid_unicode_action', InvalidUnicodeAction
         )
 
         wf_text = """---
@@ -590,9 +571,9 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                yaql_expression.get_yaql_context({})  # Successful run
+                yaql_expression.get_yaql_context({}),  # Successful run
             ]
-        )
+        ),
     )
     def test_db_error_in_yaql_expression(self):
         # This test just checks that the workflow completes successfully
@@ -630,9 +611,9 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                jinja_expression.get_jinja_context({})  # Successful run
+                jinja_expression.get_jinja_context({}),  # Successful run
             ]
-        )
+        ),
     )
     def test_db_error_in_jinja_expression(self):
         # This test just checks that the workflow completes successfully

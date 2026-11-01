@@ -58,16 +58,17 @@ class Workbook(resource.Resource, ScopedResource):
 
     @classmethod
     def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   name='book',
-                   definition='HERE GOES'
-                              'WORKBOOK DEFINITION IN MISTRAL DSL v2',
-                   tags=['large', 'expensive'],
-                   scope='private',
-                   project_id='a7eb669e9819420ea4bd1453e672c0a7',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000',
-                   namespace='')
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='book',
+            definition='HERE GOESWORKBOOK DEFINITION IN MISTRAL DSL v2',
+            tags=['large', 'expensive'],
+            scope='private',
+            project_id='a7eb669e9819420ea4bd1453e672c0a7',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000',
+            namespace='',
+        )
 
 
 class Workbooks(resource.ResourceList):
@@ -107,20 +108,19 @@ class Workflow(resource.Resource, ScopedResource):
 
     @classmethod
     def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   name='flow',
-                   input='param1, param2',
-                   definition='HERE GOES'
-                              'WORKFLOW DEFINITION IN MISTRAL DSL v2',
-                   tags=['large', 'expensive'],
-                   scope='private',
-                   project_id='a7eb669e9819420ea4bd1453e672c0a7',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000',
-                   namespace='',
-                   interface={"input": ["param1", {"param2": 2}],
-                              "output": []}
-                   )
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='flow',
+            input='param1, param2',
+            definition='HERE GOESWORKFLOW DEFINITION IN MISTRAL DSL v2',
+            tags=['large', 'expensive'],
+            scope='private',
+            project_id='a7eb669e9819420ea4bd1453e672c0a7',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000',
+            namespace='',
+            interface={"input": ["param1", {"param2": 2}], "output": []},
+        )
 
     def set_attributes_from_spec(self, wf_spec):
         #  Sets input and interface fields for the Workflow resource.
@@ -215,7 +215,7 @@ class CodeSource(resource.Resource, ScopedResource):
             project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            namespace=''
+            namespace='',
         )
 
 
@@ -271,7 +271,7 @@ class DynamicAction(resource.Resource, ScopedResource):
             project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            namespace=''
+            namespace='',
         )
 
 
@@ -313,10 +313,12 @@ class Workflows(resource.ResourceList):
     def sample(cls):
         workflows_sample = cls()
         workflows_sample.workflows = [Workflow.sample()]
-        workflows_sample.next = ("http://localhost:8989/v2/workflows?"
-                                 "sort_keys=id,name&"
-                                 "sort_dirs=asc,desc&limit=10&"
-                                 "marker=123e4567-e89b-12d3-a456-426655440000")
+        workflows_sample.next = (
+            "http://localhost:8989/v2/workflows?"
+            "sort_keys=id,name&"
+            "sort_dirs=asc,desc&limit=10&"
+            "marker=123e4567-e89b-12d3-a456-426655440000"
+        )
 
         return workflows_sample
 
@@ -356,7 +358,7 @@ class Action(resource.Resource, ScopedResource):
             project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            namespace=''
+            namespace='',
         )
 
 
@@ -481,20 +483,20 @@ class Execution(resource.Resource):
                         'url': 'http://endpoint/of/webhook',
                         'headers': {
                             'Content-Type': 'application/json',
-                            'X-Auth-Token': '123456789'
-                        }
+                            'X-Auth-Token': '123456789',
+                        },
                     },
                     {
                         'type': 'queue',
                         'topic': 'failover_queue',
                         'backend': 'rabbitmq',
                         'host': '127.0.0.1',
-                        'port': 5432
-                    }
-                ]
+                        'port': 5432,
+                    },
+                ],
             },
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
         )
 
 
@@ -575,10 +577,7 @@ class Task(resource.Resource):
             project_id='40a908dbddfe48ad80a87fb30fa70a03',
             runtime_context={
                 'triggered_by': [
-                    {
-                        'task_id': '123-123-123',
-                        'event': 'on-success'
-                    }
+                    {'task_id': '123-123-123', 'event': 'on-success'}
                 ]
             },
             result='task result',
@@ -587,7 +586,7 @@ class Task(resource.Resource):
             processed=True,
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            reset=True
+            reset=True,
         )
 
 
@@ -649,7 +648,7 @@ class ActionExecution(resource.Resource):
             output={'some_output': 'Hello, John Doe!'},
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            params={'save_result': True, "run_sync": False}
+            params={'save_result': True, "run_sync": False},
         )
 
 
@@ -703,7 +702,7 @@ class CronTrigger(resource.Resource):
             pattern='* * * * *',
             remaining_executions=42,
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
         )
 
 
@@ -744,12 +743,12 @@ class Environment(resource.Resource):
                 'server': 'localhost',
                 'database': 'temp',
                 'timeout': 600,
-                'verbose': True
+                'verbose': True,
             },
             scope='private',
             project_id='40a908dbddfe48ad80a87fb30fa70a03',
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
         )
 
 
@@ -788,7 +787,7 @@ class Member(resource.Resource):
             member_id='a7eb669e9819420ea4bd1453e672c0a7',
             status='accepted',
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
         )
 
 
@@ -840,17 +839,19 @@ class EventTrigger(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655441414',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000',
-                   project_id='project',
-                   name='expiration_event_trigger',
-                   workflow_id='123e4567-e89b-12d3-a456-426655441414',
-                   workflow_input={},
-                   workflow_params={},
-                   exchange='nova',
-                   topic='notifications',
-                   event='compute.instance.create.end')
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655441414',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000',
+            project_id='project',
+            name='expiration_event_trigger',
+            workflow_id='123e4567-e89b-12d3-a456-426655441414',
+            workflow_input={},
+            workflow_params={},
+            exchange='nova',
+            topic='notifications',
+            event='compute.instance.create.end',
+        )
 
 
 class EventTriggers(resource.ResourceList):
@@ -867,10 +868,12 @@ class EventTriggers(resource.ResourceList):
     def sample(cls):
         triggers_sample = cls()
         triggers_sample.event_triggers = [EventTrigger.sample()]
-        triggers_sample.next = ("http://localhost:8989/v2/event_triggers?"
-                                "sort_keys=id,name&"
-                                "sort_dirs=asc,desc&limit=10&"
-                                "marker=123e4567-e89b-12d3-a456-426655440000")
+        triggers_sample.next = (
+            "http://localhost:8989/v2/event_triggers?"
+            "sort_keys=id,name&"
+            "sort_dirs=asc,desc&limit=10&"
+            "marker=123e4567-e89b-12d3-a456-426655440000"
+        )
 
         return triggers_sample
 
@@ -893,7 +896,7 @@ class BaseExecutionReportEntry(resource.Resource):
             id='123e4567-e89b-12d3-a456-426655441414',
             created_at='2019-01-30T00:00:00.000000',
             updated_at='2019-01-30T00:00:00.000000',
-            state=states.SUCCESS
+            state=states.SUCCESS,
         )
 
 
@@ -1012,7 +1015,7 @@ class ExecutionReportStatistics(resource.Resource):
             error_tasks_count=2,
             idle_tasks_count=0,
             paused_tasks_count=0,
-            estimated_time=40
+            estimated_time=40,
         )
 
 

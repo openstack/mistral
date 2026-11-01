@@ -36,13 +36,23 @@ CONF = cfg.CONF
 
 
 _IDENTITY_ENVIRON_KEYS = (
-    'HTTP_X_USER_ID', 'HTTP_X_USER', 'HTTP_X_USER_NAME',
-    'HTTP_X_USER_DOMAIN_ID', 'HTTP_X_USER_DOMAIN_NAME',
-    'HTTP_X_PROJECT_ID', 'HTTP_X_TENANT_ID', 'HTTP_X_TENANT',
-    'HTTP_X_PROJECT_NAME', 'HTTP_X_TENANT_NAME',
-    'HTTP_X_PROJECT_DOMAIN_ID', 'HTTP_X_PROJECT_DOMAIN_NAME',
-    'HTTP_X_DOMAIN_ID', 'HTTP_X_DOMAIN_NAME',
-    'HTTP_X_ROLES', 'HTTP_X_ROLE', 'HTTP_X_IS_ADMIN_PROJECT',
+    'HTTP_X_USER_ID',
+    'HTTP_X_USER',
+    'HTTP_X_USER_NAME',
+    'HTTP_X_USER_DOMAIN_ID',
+    'HTTP_X_USER_DOMAIN_NAME',
+    'HTTP_X_PROJECT_ID',
+    'HTTP_X_TENANT_ID',
+    'HTTP_X_TENANT',
+    'HTTP_X_PROJECT_NAME',
+    'HTTP_X_TENANT_NAME',
+    'HTTP_X_PROJECT_DOMAIN_ID',
+    'HTTP_X_PROJECT_DOMAIN_NAME',
+    'HTTP_X_DOMAIN_ID',
+    'HTTP_X_DOMAIN_NAME',
+    'HTTP_X_ROLES',
+    'HTTP_X_ROLE',
+    'HTTP_X_IS_ADMIN_PROJECT',
     'HTTP_OPENSTACK_SYSTEM_SCOPE',
 )
 
@@ -69,11 +79,12 @@ class KeycloakAuthHandler(auth.AuthHandler):
             unverified = jwt.decode(
                 access_token,
                 algorithms=['RS256'],
-                options={'verify_signature': False}
+                options={'verify_signature': False},
             )
         except Exception as e:
-            msg = _("Token can't be decoded because of wrong format %s")\
-                % str(e)
+            msg = _("Token can't be decoded because of wrong format %s") % str(
+                e
+            )
 
             LOG.error(msg)
 
@@ -88,8 +99,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
 
         if user_info_endpoint_url.startswith(('http://', 'https://')):
             self.send_request_to_auth_server(
-                url=user_info_endpoint_url,
-                access_token=access_token
+                url=user_info_endpoint_url, access_token=access_token
             )
 
             claims = unverified
@@ -108,7 +118,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
                     public_key,
                     issuer=keycloak_iss,
                     algorithms=['RS256'],
-                    options={'verify_aud': False}
+                    options={'verify_aud': False},
                 )
             except Exception:
                 LOG.exception('The request access token is invalid.')
@@ -122,13 +132,15 @@ class KeycloakAuthHandler(auth.AuthHandler):
         admin_realm = CONF.keycloak_oidc.admin_realm
 
         for key in list(req.environ):
-            if (key in _IDENTITY_ENVIRON_KEYS or
-                    key.startswith('HTTP_X_SERVICE_')):
+            if key in _IDENTITY_ENVIRON_KEYS or key.startswith(
+                'HTTP_X_SERVICE_'
+            ):
                 del req.environ[key]
 
         req.environ['mistral.is_admin'] = bool(
-            admin_role and admin_role in roles and
-            (not admin_realm or admin_realm == realm_name)
+            admin_role
+            and admin_role in roles
+            and (not admin_realm or admin_realm == realm_name)
         )
 
         req.headers["X-Identity-Status"] = "Confirmed"
@@ -149,7 +161,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
             '/etc/ssl/ca-bundle.pem',
             '/etc/ssl/cert.pem',
             '/System/Library/OpenSSL/certs/cacert.pem',
-            requests.certs.where()
+            requests.certs.where(),
         ]
 
         for ca in ca_path:
@@ -165,9 +177,9 @@ class KeycloakAuthHandler(auth.AuthHandler):
     @cached(LRUCache(maxsize=32))
     def get_public_key(self, realm_name):
         keycloak_key_url = (
-            CONF.keycloak_oidc.auth_url +
-            CONF.keycloak_oidc.public_cert_url %
-            parse.quote(realm_name, safe='')
+            CONF.keycloak_oidc.auth_url
+            + CONF.keycloak_oidc.public_cert_url
+            % parse.quote(realm_name, safe='')
         )
 
         response_json = self.send_request_to_auth_server(keycloak_key_url)
@@ -179,9 +191,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
                 'Unexpected response structure from the keycloak server.'
             )
 
-        public_key = jwt_algos.RSAAlgorithm.from_jwk(
-            json.dumps(keys[0])
-        )
+        public_key = jwt_algos.RSAAlgorithm.from_jwk(json.dumps(keys[0]))
 
         return public_key
 
@@ -204,16 +214,12 @@ class KeycloakAuthHandler(auth.AuthHandler):
             headers["Authorization"] = "Bearer %s" % access_token
 
         try:
-            resp = requests.get(
-                url,
-                headers=headers,
-                verify=verify,
-                cert=cert
-            )
+            resp = requests.get(url, headers=headers, verify=verify, cert=cert)
         except requests.ConnectionError:
-            msg = _(
-                "Can't connect to the keycloak server with address '%s'."
-            ) % url
+            msg = (
+                _("Can't connect to the keycloak server with address '%s'.")
+                % url
+            )
 
             LOG.exception(msg)
 
@@ -224,12 +230,12 @@ class KeycloakAuthHandler(auth.AuthHandler):
                 "HTTP response from OIDC provider:"
                 " [%s] with WWW-Authenticate: [%s]",
                 pprint.pformat(resp.text),
-                resp.headers.get("WWW-Authenticate")
+                resp.headers.get("WWW-Authenticate"),
             )
         else:
             LOG.debug(
                 "HTTP response from the OIDC provider: %s",
-                pprint.pformat(resp.json())
+                pprint.pformat(resp.json()),
             )
 
         resp.raise_for_status()

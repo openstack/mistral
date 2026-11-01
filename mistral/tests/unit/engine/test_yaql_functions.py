@@ -75,14 +75,10 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_ex.state)
 
         task1 = self._assert_single_item(
-            tasks,
-            name='task1',
-            state=states.SUCCESS
+            tasks, name='task1', state=states.SUCCESS
         )
         task2 = self._assert_single_item(
-            tasks,
-            name='task2',
-            state=states.SUCCESS
+            tasks, name='task2', state=states.SUCCESS
         )
 
         self.assertDictEqual(
@@ -92,9 +88,9 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
                 'tags': ['t1'],
                 'state': states.SUCCESS,
                 'state_info': None,
-                'res': 1
+                'res': 1,
             },
-            task1.published
+            task1.published,
         )
         self.assertDictEqual(
             {
@@ -104,9 +100,9 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
                 'state': states.SUCCESS,
                 'state_info': None,
                 'res': 1,
-                'task2_res': 2
+                'task2_res': 2,
             },
-            task2.published
+            task2.published,
         )
 
     def test_task_function_caching(self):
@@ -135,9 +131,9 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
         # try to avoid it but we have to do it here because of technical
         # limitations.
         with mock.patch.object(
-                std_functions,
-                '_convert_to_user_model',
-                wraps=std_functions._convert_to_user_model
+            std_functions,
+            '_convert_to_user_model',
+            wraps=std_functions._convert_to_user_model,
         ) as mocked_mtd:
             wf_ex = self.engine.start_workflow('wf')
 
@@ -150,9 +146,7 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
                 tasks = wf_ex.task_executions
 
             task1_ex = self._assert_single_item(
-                tasks,
-                name='task1',
-                state=states.SUCCESS
+                tasks, name='task1', state=states.SUCCESS
             )
 
             published = task1_ex.published
@@ -192,11 +186,7 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self.assertDictEqual(
-                {
-                    'task2': None,
-                    'task2bool': True
-                },
-                wf_ex.output
+                {'task2': None, 'task2bool': True}, wf_ex.output
             )
 
             task_execs = wf_ex.task_executions
@@ -260,29 +250,27 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
 
             self.assertDictEqual(
                 {
                     'task1_id': task1_ex.id,
                     'task1_result': 1,
-                    'task1_state': states.SUCCESS
+                    'task1_state': states.SUCCESS,
                 },
-                task1_ex.published
+                task1_ex.published,
             )
             self.assertDictEqual(
                 {
                     'task2_id': task2_ex.id,
                     'task2_result': 2,
-                    'task2_state': states.SUCCESS
+                    'task2_state': states.SUCCESS,
                 },
-                task2_ex.published
+                task2_ex.published,
             )
 
         # The internal data needed for evaluation of the task() function
@@ -425,9 +413,7 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={'k1': 'v1'},
-            param1='blablabla'
+            'wf', wf_input={'k1': 'v1'}, param1='blablabla'
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -451,25 +437,16 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(spec['tasks']))
 
         self.assertDictEqual(
-            {
-                'k1': 'v1',
-                'k2': 'v2_default'
-            },
-            execution['input']
+            {'k1': 'v1', 'k2': 'v2_default'}, execution['input']
         )
 
         self.assertDictEqual(
-            {
-                'param1': 'blablabla',
-                'namespace': '',
-                'env': {}
-            },
-            execution['params']
+            {'param1': 'blablabla', 'namespace': '', 'env': {}},
+            execution['params'],
         )
 
         self.assertEqual(
-            wf_ex.created_at.isoformat(' '),
-            execution['created_at']
+            wf_ex.created_at.isoformat(' '), execution['created_at']
         )
 
     def test_yaml_dump_function(self):
@@ -499,8 +476,7 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task2'
+                wf_ex.task_executions, name='task2'
             )
 
             yaml_str = task_ex.published['yaml_str']
@@ -524,7 +500,7 @@ class YAQLFunctionsEngineTest(base.EngineTestCase):
                 "and": "this too",
                 "might": "as well",
             },
-            "validaswell"
+            "validaswell",
         ]
 
         expected = (

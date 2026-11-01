@@ -105,7 +105,7 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
                     'var5': {'a': 2, 'b': 4},
                     'var6': [1, {'k3': 'v3', 'k4': 'v4'}, 3],
                 },
-                t_ex.published
+                t_ex.published,
             )
 
     def test_configuration_check(self):
@@ -128,7 +128,7 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
             r"^The config property 'yaql\.convert_output_data' is set to "
             r"False so 'yaql\.convert_input_data' must also be set to "
             r"False\.$",
-            eng_svc.start
+            eng_svc.start,
         )
 
     def test_root_context(self):
@@ -173,8 +173,7 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             t_ex = self._assert_single_item(
-                wf_ex.task_executions,
-                name='task1'
+                wf_ex.task_executions, name='task1'
             )
 
             action_ex = t_ex.action_executions[0]
@@ -219,15 +218,11 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_input = {
-            'params': {
-                'k1': 'v1',
-                'k2': 'v2'
-            }
-        }
+        wf_input = {'params': {'k1': 'v1', 'k2': 'v2'}}
 
-        with mock.patch.object(self.executor, 'run_action',
-                               wraps=self.executor.run_action) as mocked:
+        with mock.patch.object(
+            self.executor, 'run_action', wraps=self.executor.run_action
+        ) as mocked:
             # Start workflow.
             wf_ex = self.engine.start_workflow('wf', wf_input=wf_input)
 
@@ -238,8 +233,7 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
                 wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
                 t_ex = self._assert_single_item(
-                    wf_ex.task_executions,
-                    name='task1'
+                    wf_ex.task_executions, name='task1'
                 )
 
                 action_ex = t_ex.action_executions[0]

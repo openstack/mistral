@@ -47,8 +47,9 @@ class Action(object, metaclass=abc.ABCMeta):
     Mistral engine or its components in order to manipulate with actions.
     """
 
-    def __init__(self, action_desc, action_ex=None, task_ex=None,
-                 task_ctx=None):
+    def __init__(
+        self, action_desc, action_ex=None, task_ex=None, task_ctx=None
+    ):
         self.action_desc = action_desc
         self.action_ex = action_ex
         self.namespace = action_desc.namespace if action_desc else None
@@ -87,15 +88,22 @@ class Action(object, metaclass=abc.ABCMeta):
 
         if not states.is_valid_transition(self.action_ex.state, state):
             raise exc.InvalidStateTransitionException(
-                'Invalid state transition from %s to %s.' %
-                (self.action_ex.state, state)
+                'Invalid state transition from %s to %s.'
+                % (self.action_ex.state, state)
             )
 
         self.action_ex.state = state
 
     @abc.abstractmethod
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+    def schedule(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        safe_rerun=False,
+        timeout=None,
+    ):
         """Schedule action run.
 
         This method is needed to schedule action run so its result can
@@ -116,8 +124,16 @@ class Action(object, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False, timeout=None):
+    def run(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        save=True,
+        safe_rerun=False,
+        timeout=None,
+    ):
         """Immediately run action.
 
         This method runs method w/o scheduling its run for a later time.
@@ -155,8 +171,9 @@ class Action(object, metaclass=abc.ABCMeta):
 
         return res
 
-    def _create_action_execution(self, input_dict, runtime_ctx,
-                                 desc='', action_ex_id=None, is_sync=True):
+    def _create_action_execution(
+        self, input_dict, runtime_ctx, desc='', action_ex_id=None, is_sync=True
+    ):
         action_ex_id = action_ex_id or utils.generate_unicode_uuid()
 
         values = {
@@ -167,24 +184,31 @@ class Action(object, metaclass=abc.ABCMeta):
             'runtime_context': runtime_ctx,
             'workflow_namespace': self.namespace,
             'description': desc,
-            'is_sync': is_sync
+            'is_sync': is_sync,
         }
 
         if self.task_ex:
-            values.update({
-                'task_execution_id': self.task_ex.id,
-                'workflow_name': self.task_ex.workflow_name,
-                'workflow_namespace': self.task_ex.workflow_namespace,
-                'workflow_id': self.task_ex.workflow_id,
-                'project_id': self.task_ex.project_id,
-            })
+            values.update(
+                {
+                    'task_execution_id': self.task_ex.id,
+                    'workflow_name': self.task_ex.workflow_name,
+                    'workflow_namespace': self.task_ex.workflow_namespace,
+                    'workflow_id': self.task_ex.workflow_id,
+                    'project_id': self.task_ex.project_id,
+                }
+            )
         else:
-            values.update({
-                'project_id': security.get_project_id(),
-            })
+            values.update(
+                {
+                    'project_id': security.get_project_id(),
+                }
+            )
 
-        LOG.info("Create action execution [action_name=%s, action_ex_id=%s]",
-                 self.action_desc.name, action_ex_id)
+        LOG.info(
+            "Create action execution [action_name=%s, action_ex_id=%s]",
+            self.action_desc.name,
+            action_ex_id,
+        )
 
         self.action_ex = db_api.create_action_execution(values)
 
@@ -201,14 +225,16 @@ class Action(object, metaclass=abc.ABCMeta):
             wf_trace.info(
                 None,
                 "Action '%s' (%s)(task_name=%s, "
-                "task_ex_id=%s) [%s -> %s, %s]" %
-                (self.action_ex.name,
-                 self.action_ex.id,
-                 self.task_ex.name if self.task_ex else None,
-                 self.task_ex.id if self.task_ex else None,
-                 prev_state,
-                 state,
-                 result.cut_repr())
+                "task_ex_id=%s) [%s -> %s, %s]"
+                % (
+                    self.action_ex.name,
+                    self.action_ex.id,
+                    self.task_ex.name if self.task_ex else None,
+                    self.task_ex.id if self.task_ex else None,
+                    prev_state,
+                    state,
+                    result.cut_repr(),
+                ),
             )
 
 
@@ -242,8 +268,15 @@ class RegularAction(Action):
         self._log_result(prev_state, result)
 
     @profiler.trace('action-schedule', hide_args=True)
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+    def schedule(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        safe_rerun=False,
+        timeout=None,
+    ):
         assert not self.action_ex
 
         self.action_desc.check_parameters(input_dict)
@@ -253,7 +286,7 @@ class RegularAction(Action):
         wf_ctx = data_flow.ContextView(
             self.task_ctx,
             data_flow.get_workflow_environment_dict(wf_ex),
-            wf_ex.context if wf_ex else {}
+            wf_ex.context if wf_ex else {},
         )
 
         try:
@@ -279,7 +312,7 @@ class RegularAction(Action):
             self._prepare_runtime_context(index, safe_rerun),
             desc=desc,
             action_ex_id=action_ex_id,
-            is_sync=action.is_sync()
+            is_sync=action.is_sync(),
         )
 
         def _run_action():
@@ -291,7 +324,7 @@ class RegularAction(Action):
                 safe_rerun,
                 self._prepare_execution_context(),
                 target=target,
-                timeout=timeout
+                timeout=timeout,
             )
 
         # Register an asynchronous command to run the action
@@ -299,8 +332,16 @@ class RegularAction(Action):
         post_tx_queue.register_operation(_run_action)
 
     @profiler.trace('action-run', hide_args=True)
-    def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False, timeout=None):
+    def run(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        save=True,
+        safe_rerun=False,
+        timeout=None,
+    ):
         assert not self.action_ex
 
         self.action_desc.check_parameters(input_dict)
@@ -329,7 +370,7 @@ class RegularAction(Action):
                 self._prepare_runtime_context(index, safe_rerun),
                 desc=desc,
                 action_ex_id=action_ex_id,
-                is_sync=action.is_sync()
+                is_sync=action.is_sync(),
             )
 
         executor = exe.get_executor(cfg.CONF.executor.type)
@@ -341,7 +382,7 @@ class RegularAction(Action):
             self._prepare_execution_context(),
             target=target,
             async_=False,
-            timeout=timeout
+            timeout=timeout,
         )
 
     def _prepare_runtime_context(self, index, safe_rerun):
@@ -368,8 +409,15 @@ class WorkflowAction(Action):
         pass
 
     @profiler.trace('workflow-action-schedule', hide_args=True)
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
-                 timeout=None):
+    def schedule(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        safe_rerun=False,
+        timeout=None,
+    ):
         assert not self.action_ex
 
         self.validate_input(input_dict)
@@ -399,12 +447,11 @@ class WorkflowAction(Action):
             parent_wf_ex.workflow_name,
             parent_wf_spec.get_name(),
             namespace=parent_wf_ex.params['namespace'],
-            wf_spec_name=self.wf_name
+            wf_spec_name=self.wf_name,
         )
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf_def.id,
-            wf_def.updated_at
+            wf_def.id, wf_def.updated_at
         )
 
         # If the parent has a root_execution_id, it must be a sub-workflow. So
@@ -416,21 +463,24 @@ class WorkflowAction(Action):
             'root_execution_id': root_execution_id,
             'task_execution_id': self.task_ex.id,
             'index': index,
-            'namespace': parent_wf_ex.params['namespace']
+            'namespace': parent_wf_ex.params['namespace'],
         }
 
         if 'notify' in parent_wf_ex.params:
             wf_params['notify'] = parent_wf_ex.params['notify']
 
         for k, v in list(input_dict.items()):
-            if (k not in wf_spec.get_input() and
-                    k not in wf_service.INTERNAL_WF_PARAMS):
+            if (
+                k not in wf_spec.get_input()
+                and k not in wf_service.INTERNAL_WF_PARAMS
+            ):
                 wf_params[k] = v
                 del input_dict[k]
 
         wf_params['subworkflow_depth'] = depth
 
         if cfg.CONF.engine.start_subworkflows_via_rpc:
+
             def _start_subworkflow():
                 rpc.get_engine_client().start_workflow(
                     wf_def.id,
@@ -439,7 +489,7 @@ class WorkflowAction(Action):
                     input_dict,
                     "sub-workflow execution",
                     async_=True,
-                    **wf_params
+                    **wf_params,
                 )
 
             post_tx_queue.register_operation(_start_subworkflow)
@@ -450,12 +500,20 @@ class WorkflowAction(Action):
                 None,
                 input_dict,
                 "sub-workflow execution",
-                wf_params
+                wf_params,
             )
 
     @profiler.trace('workflow-action-run', hide_args=True)
-    def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=True, timeout=None):
+    def run(
+        self,
+        input_dict,
+        target,
+        index=0,
+        desc='',
+        save=True,
+        safe_rerun=True,
+        timeout=None,
+    ):
         raise NotImplementedError('Does not apply to this WorkflowAction.')
 
     def validate_input(self, input_dict):

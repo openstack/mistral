@@ -123,7 +123,7 @@ def _checked_addresses(host, port, group='action_std_http'):
             candidates.append(address.ipv4_mapped)
 
         if address in NAT64_PREFIX:
-            candidates.append(ipaddress.IPv4Address(int(address) & 0xffffffff))
+            candidates.append(ipaddress.IPv4Address(int(address) & 0xFFFFFFFF))
 
         for candidate in candidates:
             for network in denied:

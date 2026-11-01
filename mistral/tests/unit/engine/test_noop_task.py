@@ -79,8 +79,7 @@ class NoopTaskEngineTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wf',
-            wf_input={'num1': 1, 'num2': 1}
+            'wf', wf_input={'num1': 1, 'num2': 1}
         )
 
         self.await_workflow_success(wf_ex.id)

@@ -30,13 +30,19 @@ class ExceptionTest(base.BaseTest):
         exc = exceptions.DBEntityNotFoundError()
 
         self.assertIn("Object not found", str(exc))
-        self.assertEqual(404, exc.http_code,)
+        self.assertEqual(
+            404,
+            exc.http_code,
+        )
 
     def test_duplicate_obj_code(self):
         exc = exceptions.DBDuplicateEntryError()
 
         self.assertIn("Database object already exists", str(exc))
-        self.assertEqual(409, exc.http_code,)
+        self.assertEqual(
+            409,
+            exc.http_code,
+        )
 
     def test_default_code_and_message(self):
         exc = exceptions.EngineException()

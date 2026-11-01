@@ -38,8 +38,7 @@ def _get_registered_providers():
     providers = []
 
     mgr = extension.ExtensionManager(
-        namespace='mistral.action.providers',
-        invoke_on_load=False
+        namespace='mistral.action.providers', invoke_on_load=False
     )
 
     allowlist = cfg.CONF.action_providers.allowlist
@@ -56,7 +55,7 @@ def _get_registered_providers():
         except Exception:
             LOG.exception(
                 'Failed to instantiate an action provider from the class: %s',
-                provider_cls
+                provider_cls,
             )
 
             raise
@@ -100,8 +99,7 @@ def get_system_action_provider():
         delegates.append(get_test_action_provider())
 
         _SYSTEM_PROVIDER = ml_actions.CompositeActionProvider(
-            'system',
-            delegates
+            'system', delegates
         )
 
     return _SYSTEM_PROVIDER

@@ -46,11 +46,13 @@ def process_cron_triggers_v2(self, ctx):
     # maintenance is lifted.
     maintenance_status = db_api_v2.get_maintenance_status()
 
-    if maintenance_status in (maintenance_service.PAUSING,
-                              maintenance_service.PAUSED):
+    if maintenance_status in (
+        maintenance_service.PAUSING,
+        maintenance_service.PAUSED,
+    ):
         LOG.debug(
             "Mistral is in maintenance mode (%s); skipping cron triggers.",
-            maintenance_status
+            maintenance_status,
         )
 
         return
@@ -65,12 +67,14 @@ def process_cron_triggers_v2(self, ctx):
             # queries in advance_cron_trigger() work. The expensive
             # trust-scoped context (Keystone round-trip) is only created
             # if this engine wins the race below.
-            auth_ctx.set_ctx(auth_ctx.MistralContext(
-                user_id=None,
-                project_id=trigger.project_id,
-                auth_token=None,
-                is_admin=False
-            ))
+            auth_ctx.set_ctx(
+                auth_ctx.MistralContext(
+                    user_id=None,
+                    project_id=trigger.project_id,
+                    auth_token=None,
+                    is_admin=False,
+                )
+            )
 
             # Try to advance the cron trigger next_execution_time and
             # remaining_executions if relevant.
@@ -80,8 +84,7 @@ def process_cron_triggers_v2(self, ctx):
             if modified:
                 # Setup admin context before scheduling the workflow.
                 trust_ctx = security.create_context(
-                    trigger.trust_id,
-                    trigger.project_id
+                    trigger.trust_id, trigger.project_id
                 )
 
                 auth_ctx.set_ctx(trust_ctx)
@@ -91,7 +94,7 @@ def process_cron_triggers_v2(self, ctx):
                 LOG.debug(
                     "Starting workflow '%s' by cron trigger '%s'",
                     trigger.workflow.name,
-                    trigger.name
+                    trigger.name,
                 )
 
                 triggered_by = {
@@ -104,7 +107,7 @@ def process_cron_triggers_v2(self, ctx):
                         "Workflow execution created by cron"
                         " trigger '(%s)'." % trigger.id
                     ),
-                    "triggered_by": triggered_by
+                    "triggered_by": triggered_by,
                 }
 
                 wf_params = wf_service.strip_internal_workflow_params(
@@ -118,20 +121,16 @@ def process_cron_triggers_v2(self, ctx):
                     None,
                     trigger.workflow_input,
                     description=json.dumps(description),
-                    **wf_params
+                    **wf_params,
                 )
         except Exception:
             # Log and continue to next cron trigger.
-            LOG.exception(
-                "Failed to process cron trigger %s",
-                str(trigger)
-            )
+            LOG.exception("Failed to process cron trigger %s", str(trigger))
         finally:
             auth_ctx.set_ctx(None)
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
-
     def __init__(self, conf):
         super(MistralPeriodicTasks, self).__init__(conf)
 
@@ -153,16 +152,13 @@ def advance_cron_trigger(t):
         # If this is the last execution.
         if t.remaining_executions == 0:
             modified_count = triggers.delete_cron_trigger(
-                t.name,
-                trust_id=t.trust_id,
-                delete_trust=False
+                t.name, trust_id=t.trust_id, delete_trust=False
             )
         else:  # if remaining execution = None or > 0.
             # In case the we are lagging or if the api stopped for some time
             # we use the max of the current time or the next scheduled time.
             next_time = triggers.get_next_execution_time(
-                t.pattern,
-                max(timeutils.utcnow(), t.next_execution_time)
+                t.pattern, max(timeutils.utcnow(), t.next_execution_time)
             )
 
             # Update the cron trigger with next execution details
@@ -171,17 +167,16 @@ def advance_cron_trigger(t):
                 t.name,
                 {
                     'next_execution_time': next_time,
-                    'remaining_executions': t.remaining_executions
+                    'remaining_executions': t.remaining_executions,
                 },
-                query_filter={
-                    'next_execution_time': t.next_execution_time
-                }
+                query_filter={'next_execution_time': t.next_execution_time},
             )
     except exc.DBEntityNotFoundError as e:
         # Cron trigger was probably already deleted by a different process.
         LOG.debug(
             "Cron trigger named '%s' does not exist anymore: %s",
-            t.name, str(e)
+            t.name,
+            str(e),
         )
 
     # Return True if this engine was able to modify the cron trigger in DB.
@@ -193,17 +188,14 @@ def setup():
     pt = MistralPeriodicTasks(CONF)
 
     ctx = auth_ctx.MistralContext(
-        user_id=None,
-        project_id=None,
-        auth_token=None,
-        is_admin=True
+        user_id=None, project_id=None, auth_token=None, is_admin=True
     )
 
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
-        context=ctx
+        context=ctx,
     )
 
     _periodic_tasks[pt] = tg

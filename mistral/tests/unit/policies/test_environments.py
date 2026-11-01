@@ -27,8 +27,8 @@ ENVIRONMENT = {
         'server': 'localhost',
         'database': 'test',
         'timeout': 600,
-        'verbose': True
-    }
+        'verbose': True,
+    },
 }
 
 ENVIRONMENT_DB = models.Environment(
@@ -39,9 +39,9 @@ ENVIRONMENT_DB = models.Environment(
         'server': 'localhost',
         'database': 'test',
         'timeout': 600,
-        'verbose': True
+        'verbose': True,
     },
-    scope='private'
+    scope='private',
 )
 
 MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
@@ -71,9 +71,7 @@ class TestEnvironmentPolicy(base.APITest):
             {"environments:create": "role:FAKE"}
         )
         resp = self.app.post_json(
-            '/v2/environments',
-            ENVIRONMENT,
-            expect_errors=True
+            '/v2/environments', ENVIRONMENT, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -85,10 +83,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:create": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.post_json(
-            '/v2/environments',
-            ENVIRONMENT
-        )
+        resp = self.app.post_json('/v2/environments', ENVIRONMENT)
 
         self.assertEqual(201, resp.status_int)
 
@@ -99,11 +94,7 @@ class TestEnvironmentPolicy(base.APITest):
         # (project owner) should be denied.
         env = dict(ENVIRONMENT, scope='public')
 
-        resp = self.app.post_json(
-            '/v2/environments',
-            env,
-            expect_errors=True
-        )
+        resp = self.app.post_json('/v2/environments', env, expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -118,10 +109,7 @@ class TestEnvironmentPolicy(base.APITest):
 
         env = dict(ENVIRONMENT, scope='public')
 
-        resp = self.app.post_json(
-            '/v2/environments',
-            env
-        )
+        resp = self.app.post_json('/v2/environments', env)
 
         self.assertEqual(201, resp.status_int)
 
@@ -130,10 +118,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:delete": "role:FAKE"}
         )
-        resp = self.app.delete(
-            '/v2/environments/test',
-            expect_errors=True
-        )
+        resp = self.app.delete('/v2/environments/test', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -142,21 +127,14 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:delete": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.delete(
-            '/v2/environments/test'
-        )
+        resp = self.app.delete('/v2/environments/test')
 
         self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
     def test_environment_get_not_allowed(self):
-        self.policy.change_policy_definition(
-            {"environments:get": "role:FAKE"}
-        )
-        resp = self.app.get(
-            '/v2/environments/test',
-            expect_errors=True
-        )
+        self.policy.change_policy_definition({"environments:get": "role:FAKE"})
+        resp = self.app.get('/v2/environments/test', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -165,9 +143,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:get": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/environments/test'
-        )
+        resp = self.app.get('/v2/environments/test')
 
         self.assertEqual(200, resp.status_int)
 
@@ -175,10 +151,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:list": "role:FAKE"}
         )
-        resp = self.app.get(
-            '/v2/environments',
-            expect_errors=True
-        )
+        resp = self.app.get('/v2/environments', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -186,9 +159,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:list": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/environments'
-        )
+        resp = self.app.get('/v2/environments')
 
         self.assertEqual(200, resp.status_int)
 
@@ -198,9 +169,7 @@ class TestEnvironmentPolicy(base.APITest):
             {"environments:update": "role:FAKE"}
         )
         resp = self.app.put_json(
-            '/v2/environments',
-            ENVIRONMENT,
-            expect_errors=True
+            '/v2/environments', ENVIRONMENT, expect_errors=True
         )
 
         self.assertEqual(403, resp.status_int)
@@ -212,10 +181,7 @@ class TestEnvironmentPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"environments:update": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.put_json(
-            '/v2/environments',
-            ENVIRONMENT
-        )
+        resp = self.app.put_json('/v2/environments', ENVIRONMENT)
 
         self.assertEqual(200, resp.status_int)
 
@@ -226,11 +192,7 @@ class TestEnvironmentPolicy(base.APITest):
         # (project owner) should be denied.
         env = dict(ENVIRONMENT, scope='public')
 
-        resp = self.app.put_json(
-            '/v2/environments',
-            env,
-            expect_errors=True
-        )
+        resp = self.app.put_json('/v2/environments', env, expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -245,9 +207,6 @@ class TestEnvironmentPolicy(base.APITest):
 
         env = dict(ENVIRONMENT, scope='public')
 
-        resp = self.app.put_json(
-            '/v2/environments',
-            env
-        )
+        resp = self.app.put_json('/v2/environments', env)
 
         self.assertEqual(200, resp.status_int)

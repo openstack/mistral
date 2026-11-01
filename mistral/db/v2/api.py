@@ -78,6 +78,7 @@ def acquire_lock(model, id):
 
 # Workbooks.
 
+
 def get_workbook(name, namespace, fields=()):
     return IMPL.get_workbook(name, namespace=namespace, fields=fields)
 
@@ -87,15 +88,21 @@ def load_workbook(name, namespace, fields=()):
     return IMPL.load_workbook(name, namespace=namespace, fields=fields)
 
 
-def get_workbooks(limit=None, marker=None, sort_keys=None,
-                  sort_dirs=None, fields=None, **kwargs):
+def get_workbooks(
+    limit=None,
+    marker=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    **kwargs,
+):
     return IMPL.get_workbooks(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -121,11 +128,10 @@ def delete_workbooks(**kwargs):
 
 # Workflow definitions.
 
+
 def get_workflow_definition(identifier, namespace='', fields=()):
     return IMPL.get_workflow_definition(
-        identifier,
-        namespace=namespace,
-        fields=fields
+        identifier, namespace=namespace, fields=fields
     )
 
 
@@ -138,15 +144,21 @@ def load_workflow_definition(name, namespace='', fields=()):
     return IMPL.load_workflow_definition(name, namespace, fields=fields)
 
 
-def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
-                             sort_dirs=None, fields=None, **kwargs):
+def get_workflow_definitions(
+    limit=None,
+    marker=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    **kwargs,
+):
     return IMPL.get_workflow_definitions(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -172,6 +184,7 @@ def delete_workflow_definitions(**kwargs):
 
 # Dynamic actions.
 
+
 def get_dynamic_action_definition(identifier, namespace='', fields=()):
     return IMPL.get_dynamic_action_definition(identifier, fields, namespace)
 
@@ -188,15 +201,21 @@ def update_dynamic_action_definition(identifier, values, namespace=''):
     return IMPL.update_dynamic_action_definition(identifier, values, namespace)
 
 
-def get_dynamic_action_definitions(limit=None, marker=None, sort_keys=None,
-                                   sort_dirs=None, fields=None, **kwargs):
+def get_dynamic_action_definitions(
+    limit=None,
+    marker=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    **kwargs,
+):
     return IMPL.get_dynamic_action_definitions(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -209,6 +228,7 @@ def delete_dynamic_action_definitions(**kwargs):
 
 
 # Code sources.
+
 
 def get_code_source(identifier, namespace='', fields=()):
     return IMPL.get_code_source(identifier, fields, namespace=namespace)
@@ -226,15 +246,21 @@ def update_code_source(identifier, values, namespace=''):
     return IMPL.update_code_source(identifier, values, namespace=namespace)
 
 
-def get_code_sources(limit=None, marker=None, sort_keys=None,
-                     sort_dirs=None, fields=None, **kwargs):
+def get_code_sources(
+    limit=None,
+    marker=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    **kwargs,
+):
     return IMPL.get_code_sources(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -248,6 +274,7 @@ def delete_code_sources(**kwargs):
 
 # Action definitions.
 
+
 def get_action_definition_by_id(id, fields=()):
     return IMPL.get_action_definition_by_id(id, fields=fields)
 
@@ -259,9 +286,7 @@ def get_action_definition(name, fields=(), namespace=''):
 def load_action_definition(name, fields=(), namespace=''):
     """Unlike get_action_definition this method is allowed to return None."""
     action_def = IMPL.load_action_definition(
-        name,
-        fields=fields,
-        namespace=namespace
+        name, fields=fields, namespace=namespace
     )
 
     # If action definition was not found in the workflow namespace,
@@ -272,14 +297,15 @@ def load_action_definition(name, fields=(), namespace=''):
     return IMPL.load_action_definition(name, fields=fields, namespace='')
 
 
-def get_action_definitions(limit=None, marker=None, sort_keys=None,
-                           sort_dirs=None, **kwargs):
+def get_action_definitions(
+    limit=None, marker=None, sort_keys=None, sort_dirs=None, **kwargs
+):
     return IMPL.get_action_definitions(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -304,6 +330,7 @@ def delete_action_definitions(**kwargs):
 
 
 # Action executions.
+
 
 def get_action_execution(id, fields=(), insecure=False):
     return IMPL.get_action_execution(id, fields=fields, insecure=insecure)
@@ -344,6 +371,7 @@ def delete_action_executions(**kwargs):
 
 # Workflow executions.
 
+
 def get_workflow_execution(id, fields=()):
     return IMPL.get_workflow_execution(id, fields=fields)
 
@@ -353,14 +381,15 @@ def load_workflow_execution(name, fields=()):
     return IMPL.load_workflow_execution(name, fields=fields)
 
 
-def get_workflow_executions(limit=None, marker=None, sort_keys=None,
-                            sort_dirs=None, **kwargs):
+def get_workflow_executions(
+    limit=None, marker=None, sort_keys=None, sort_dirs=None, **kwargs
+):
     return IMPL.get_workflow_executions(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -390,6 +419,7 @@ def update_workflow_execution_state(**kwargs):
 
 # Tasks executions.
 
+
 def get_task_execution(id, fields=()):
     return IMPL.get_task_execution(id, fields=fields)
 
@@ -399,14 +429,15 @@ def load_task_execution(id, fields=()):
     return IMPL.load_task_execution(id, fields=fields)
 
 
-def get_task_executions(limit=None, marker=None, sort_keys=None,
-                        sort_dirs=None, **kwargs):
+def get_task_executions(
+    limit=None, marker=None, sort_keys=None, sort_dirs=None, **kwargs
+):
     return IMPL.get_task_executions(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -456,6 +487,7 @@ def update_task_execution_state(**kwargs):
 
 # Delayed calls.
 
+
 def get_delayed_calls_to_start(time, batch_size=None):
     return IMPL.get_delayed_calls_to_start(time, batch_size)
 
@@ -494,6 +526,7 @@ def delete_delayed_calls(**kwargs):
 
 # Scheduled jobs.
 
+
 def get_scheduled_jobs_to_start(time, batch_size=None):
     return IMPL.get_scheduled_jobs_to_start(time, batch_size)
 
@@ -528,6 +561,7 @@ def get_scheduled_jobs_count(**kwargs):
 
 # Cron triggers.
 
+
 def get_cron_trigger(identifier, fields=()):
     return IMPL.get_cron_trigger(identifier, fields=fields)
 
@@ -550,27 +584,22 @@ def get_next_cron_triggers(time):
 
 
 def get_expired_executions(expiration_time, limit=None, columns=()):
-    return IMPL.get_expired_executions(
-        expiration_time,
-        limit,
-        columns
-    )
+    return IMPL.get_expired_executions(expiration_time, limit, columns)
 
 
-def get_running_expired_sync_action_executions(expiration_time,
-                                               limit, session=None):
+def get_running_expired_sync_action_executions(
+    expiration_time, limit, session=None
+):
     return IMPL.get_running_expired_sync_action_executions(
-        expiration_time,
-        limit
+        expiration_time, limit
     )
 
 
-def get_superfluous_executions(max_finished_executions, limit=None,
-                               columns=()):
+def get_superfluous_executions(
+    max_finished_executions, limit=None, columns=()
+):
     return IMPL.get_superfluous_executions(
-        max_finished_executions,
-        limit,
-        columns
+        max_finished_executions, limit, columns
     )
 
 
@@ -579,8 +608,9 @@ def create_cron_trigger(values):
 
 
 def update_cron_trigger(identifier, values, query_filter=None):
-    return IMPL.update_cron_trigger(identifier, values,
-                                    query_filter=query_filter)
+    return IMPL.update_cron_trigger(
+        identifier, values, query_filter=query_filter
+    )
 
 
 def create_or_update_cron_trigger(identifier, values):
@@ -597,6 +627,7 @@ def delete_cron_triggers(**kwargs):
 
 # Environments.
 
+
 def get_environment(name, fields=()):
     return IMPL.get_environment(name, fields=fields)
 
@@ -606,14 +637,15 @@ def load_environment(name, fields=()):
     return IMPL.load_environment(name, fields=fields)
 
 
-def get_environments(limit=None, marker=None, sort_keys=None,
-                     sort_dirs=None, **kwargs):
+def get_environments(
+    limit=None, marker=None, sort_keys=None, sort_dirs=None, **kwargs
+):
     return IMPL.get_environments(
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -654,10 +686,7 @@ def get_resource_members(resource_id, res_type):
 
 def update_resource_member(resource_id, res_type, member_id, values):
     return IMPL.update_resource_member(
-        resource_id,
-        res_type,
-        member_id,
-        values
+        resource_id, res_type, member_id, values
     )
 
 
@@ -671,6 +700,7 @@ def delete_resource_members(**kwargs):
 
 # Event triggers.
 
+
 def get_event_trigger(id, insecure=False, fields=()):
     return IMPL.get_event_trigger(id, insecure, fields=fields)
 
@@ -679,8 +709,15 @@ def load_event_trigger(id, insecure=False, fields=()):
     return IMPL.load_event_trigger(id, insecure, fields=fields)
 
 
-def get_event_triggers(insecure=False, limit=None, marker=None, sort_keys=None,
-                       sort_dirs=None, fields=None, **kwargs):
+def get_event_triggers(
+    insecure=False,
+    limit=None,
+    marker=None,
+    sort_keys=None,
+    sort_dirs=None,
+    fields=None,
+    **kwargs,
+):
     return IMPL.get_event_triggers(
         insecure=insecure,
         limit=limit,
@@ -688,7 +725,7 @@ def get_event_triggers(insecure=False, limit=None, marker=None, sort_keys=None,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
         fields=fields,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -709,6 +746,7 @@ def delete_event_triggers(**kwargs):
 
 
 # Locks.
+
 
 def create_named_lock(name):
     return IMPL.create_named_lock(name)

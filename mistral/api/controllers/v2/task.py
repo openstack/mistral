@@ -47,7 +47,7 @@ STATE_TYPES = wtypes.Enum(
     states.RUNNING,
     states.SUCCESS,
     states.ERROR,
-    states.RUNNING_DELAYED
+    states.RUNNING_DELAYED,
 )
 
 
@@ -71,12 +71,11 @@ def _get_task_execution(id, fields=()):
         rest_utils.load_deferred_fields(task_ex, ['workflow_execution'])
         rest_utils.load_deferred_fields(
             task_ex.workflow_execution,
-            ['context', 'input', 'params', 'root_execution']
+            ['context', 'input', 'params', 'root_execution'],
         )
 
         rest_utils.load_deferred_fields(
-            task_ex.workflow_execution.root_execution,
-            ['params']
+            task_ex.workflow_execution.root_execution, ['params']
         )
 
         return _get_task_resource_with_result(task_ex, fields), task_ex
@@ -94,7 +93,7 @@ def get_published_global(task_ex, wf_ex=None):
         task_ex.in_context,
         data_flow.get_workflow_environment_dict(wf_ex),
         wf_ex.context,
-        wf_ex.input
+        wf_ex.input,
     )
 
     task_spec = spec_parser.get_task_spec(task_ex.spec)
@@ -119,18 +118,46 @@ def _task_with_published_global(task, task_ex):
 
 class TaskExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Executions, types.uuid, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, types.uuid, wtypes.text,
-                         types.uniquelist, types.jsontype, STATE_TYPES,
-                         wtypes.text, types.jsontype, types.jsontype,
-                         wtypes.text, wtypes.text)
-    def get_all(self, task_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='',
-                workflow_name=None, workflow_id=None, description=None,
-                tags=None, params=None, state=None,
-                state_info=None, input=None, output=None,
-                created_at=None, updated_at=None):
+    @wsme_pecan.wsexpose(
+        resources.Executions,
+        types.uuid,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        types.uuid,
+        wtypes.text,
+        types.uniquelist,
+        types.jsontype,
+        STATE_TYPES,
+        wtypes.text,
+        types.jsontype,
+        types.jsontype,
+        wtypes.text,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        task_execution_id,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        workflow_name=None,
+        workflow_id=None,
+        description=None,
+        tags=None,
+        params=None,
+        state=None,
+        state_info=None,
+        input=None,
+        output=None,
+        created_at=None,
+        updated_at=None,
+    ):
         """Return all executions that belong to the given task execution.
 
         :param task_execution_id: Task task execution ID.
@@ -180,13 +207,17 @@ class TaskExecutionsController(rest.RestController):
             input=input,
             output=output,
             updated_at=updated_at,
-            description=description
+            description=description,
         )
 
         LOG.debug(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,
-            filters
+            "sort_dirs=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters,
         )
 
         return rest_utils.get_all(
@@ -199,7 +230,7 @@ class TaskExecutionsController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
-            **filters
+            **filters,
         )
 
 
@@ -233,20 +264,50 @@ class TasksController(rest.RestController):
         return task
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, types.uuid,
-                         types.uuid, types.uniquelist, STATE_TYPES,
-                         wtypes.text, wtypes.text, types.jsontype,
-                         bool, wtypes.text, wtypes.text,
-                         bool, types.jsontype)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None,
-                workflow_name=None, workflow_id=None,
-                workflow_execution_id=None, tags=None, state=None,
-                state_info=None, result=None, published=None,
-                processed=None, created_at=None, updated_at=None,
-                reset=None, env=None):
+    @wsme_pecan.wsexpose(
+        resources.Tasks,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        types.uuid,
+        types.uuid,
+        types.uniquelist,
+        STATE_TYPES,
+        wtypes.text,
+        wtypes.text,
+        types.jsontype,
+        bool,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        types.jsontype,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        workflow_name=None,
+        workflow_id=None,
+        workflow_execution_id=None,
+        tags=None,
+        state=None,
+        state_info=None,
+        result=None,
+        published=None,
+        processed=None,
+        created_at=None,
+        updated_at=None,
+        reset=None,
+        env=None,
+    ):
         """Return all tasks.
 
         Where project_id is the same as the requester or
@@ -305,12 +366,17 @@ class TasksController(rest.RestController):
             published=published,
             processed=processed,
             reset=reset,
-            env=env
+            env=env,
         )
 
         LOG.debug(
             "Fetch tasks. marker=%s, limit=%s, sort_keys=%s, sort_dirs=%s,"
-            " filters=%s", marker, limit, sort_keys, sort_dirs, filters
+            " filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters,
         )
 
         return rest_utils.get_all(
@@ -323,7 +389,7 @@ class TasksController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
@@ -396,7 +462,7 @@ class TasksController(rest.RestController):
             task_ex.id,
             reset=reset,
             skip=(task.state == states.SKIPPED),
-            env=env
+            env=env,
         )
 
         @rest_utils.rest_retry_on_db_error
@@ -411,18 +477,50 @@ class TasksController(rest.RestController):
 
 class ExecutionTasksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Tasks, types.uuid, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, types.uuid,
-                         types.uniquelist, STATE_TYPES, wtypes.text,
-                         wtypes.text, types.jsontype, bool,
-                         wtypes.text, wtypes.text, bool, types.jsontype)
-    def get_all(self, workflow_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='',
-                name=None, workflow_name=None, workflow_id=None,
-                tags=None, state=None, state_info=None,
-                result=None, published=None, processed=None,
-                created_at=None, updated_at=None, reset=None, env=None):
+    @wsme_pecan.wsexpose(
+        resources.Tasks,
+        types.uuid,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        types.uuid,
+        types.uniquelist,
+        STATE_TYPES,
+        wtypes.text,
+        wtypes.text,
+        types.jsontype,
+        bool,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        types.jsontype,
+    )
+    def get_all(
+        self,
+        workflow_execution_id,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        workflow_name=None,
+        workflow_id=None,
+        tags=None,
+        state=None,
+        state_info=None,
+        result=None,
+        published=None,
+        processed=None,
+        created_at=None,
+        updated_at=None,
+        reset=None,
+        env=None,
+    ):
         """Return all tasks within the execution.
 
         Where project_id is the same as the requester or
@@ -470,8 +568,7 @@ class ExecutionTasksController(rest.RestController):
 
         with db_api.transaction():
             db_api.get_workflow_execution(
-                workflow_execution_id,
-                fields=(db_models.WorkflowExecution.id,)
+                workflow_execution_id, fields=(db_models.WorkflowExecution.id,)
             )
 
         filters = filter_utils.create_filters_from_request_params(
@@ -488,14 +585,18 @@ class ExecutionTasksController(rest.RestController):
             published=published,
             processed=processed,
             reset=reset,
-            env=env
+            env=env,
         )
 
         LOG.debug(
             "Fetch tasks. workflow_execution_id=%s, marker=%s, limit=%s, "
             "sort_keys=%s, sort_dirs=%s, filters=%s",
-            workflow_execution_id, marker, limit, sort_keys, sort_dirs,
-            filters
+            workflow_execution_id,
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters,
         )
 
         return rest_utils.get_all(
@@ -508,5 +609,5 @@ class ExecutionTasksController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
-            **filters
+            **filters,
         )

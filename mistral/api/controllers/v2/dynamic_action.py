@@ -39,9 +39,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @wsme_pecan.wsexpose(
-        resources.DynamicAction,
-        body=resources.DynamicAction,
-        status_code=201
+        resources.DynamicAction, body=resources.DynamicAction, status_code=201
     )
     def post(self, dyn_action):
         """Creates new dynamic action.
@@ -63,7 +61,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
 
         code_source = db_api.get_code_source(
             dyn_action.code_source_id or dyn_action.code_source_name,
-            namespace=dyn_action.namespace
+            namespace=dyn_action.namespace,
         )
 
         # TODO(rakhmerov): Ideally we also need to check if the specified
@@ -79,17 +77,14 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
                 'class_name': dyn_action.class_name,
                 'scope': dyn_action.scope or 'private',
                 'code_source_id': code_source.id,
-                'code_source_name': code_source.name
+                'code_source_name': code_source.name,
             }
         )
 
         return resources.DynamicAction.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
-    @wsme_pecan.wsexpose(
-        resources.DynamicAction,
-        body=resources.DynamicAction
-    )
+    @wsme_pecan.wsexpose(resources.DynamicAction, body=resources.DynamicAction)
     def put(self, dyn_action):
         """Update dynamic action.
 
@@ -114,7 +109,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         if dyn_action.code_source_id or dyn_action.code_source_name:
             code_source = db_api.get_code_source(
                 dyn_action.code_source_id or dyn_action.code_source_name,
-                namespace=dyn_action.namespace
+                namespace=dyn_action.namespace,
             )
 
             values['code_source_id'] = code_source.id
@@ -129,21 +124,43 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         )(
             dyn_action.id or dyn_action.name,
             values,
-            namespace=dyn_action.namespace
+            namespace=dyn_action.namespace,
         )
 
         return resources.DynamicAction.from_db_model(db_model)
 
-    @wsme_pecan.wsexpose(resources.DynamicActions, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text,
-                         resources.SCOPE_TYPES, types.uuid, wtypes.text,
-                         wtypes.text, bool, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None,
-                tags=None, scope=None,
-                project_id=None, created_at=None, updated_at=None,
-                all_projects=False, namespace=None):
+    @wsme_pecan.wsexpose(
+        resources.DynamicActions,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        resources.SCOPE_TYPES,
+        types.uuid,
+        wtypes.text,
+        wtypes.text,
+        bool,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        tags=None,
+        scope=None,
+        project_id=None,
+        created_at=None,
+        updated_at=None,
+        all_projects=False,
+        namespace=None,
+    ):
         """Return a list of Actions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -188,7 +205,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             tags=tags,
             updated_at=updated_at,
             project_id=project_id,
-            namespace=namespace
+            namespace=namespace,
         )
 
         LOG.debug(
@@ -200,7 +217,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             sort_dirs,
             fields,
             filters,
-            all_projects
+            all_projects,
         )
 
         return rest_utils.get_all(
@@ -214,12 +231,13 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             sort_dirs=sort_dirs,
             fields=fields,
             all_projects=all_projects,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.DynamicAction, wtypes.text,
-                         wtypes.text, types.uniquelist)
+    @wsme_pecan.wsexpose(
+        resources.DynamicAction, wtypes.text, wtypes.text, types.uniquelist
+    )
     def get(self, identifier, namespace='', fields=''):
         """Return the named action.
 
@@ -231,12 +249,11 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         LOG.debug(
             'Fetch dynamic action [identifier=%s, namespace=%s]',
             identifier,
-            namespace
+            namespace,
         )
 
         rest_utils.validate_fields(
-            fields,
-            resources.DynamicAction.get_fields()
+            fields, resources.DynamicAction.get_fields()
         )
 
         if fields and 'id' not in fields:
@@ -244,11 +261,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
 
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.get_dynamic_action_definition
-        )(
-            identifier=identifier,
-            namespace=namespace,
-            fields=fields
-        )
+        )(identifier=identifier, namespace=namespace, fields=fields)
 
         if fields:
             return resources.DynamicAction.from_tuples(zip(fields, db_model))
@@ -268,12 +281,9 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         LOG.debug(
             'Delete dynamic action [identifier=%s, namespace=%s]',
             identifier,
-            namespace
+            namespace,
         )
 
         rest_utils.rest_retry_on_db_error(
             db_api.delete_dynamic_action_definition
-        )(
-            identifier=identifier,
-            namespace=namespace
-        )
+        )(identifier=identifier, namespace=namespace)

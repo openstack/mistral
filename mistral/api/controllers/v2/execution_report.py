@@ -80,9 +80,7 @@ def analyse_task_execution(task_ex_id, stat, filters, cur_depth):
 
     for c_ex in child_executions:
         if isinstance(c_ex, db_models.ActionExecution):
-            entry.action_executions.append(
-                create_action_execution_entry(c_ex)
-            )
+            entry.action_executions.append(create_action_execution_entry(c_ex))
         else:
             entry.workflow_executions.append(
                 analyse_workflow_execution(c_ex.id, stat, filters, cur_depth)
@@ -110,10 +108,7 @@ def analyse_workflow_execution(wf_ex_id, stat, filters, cur_depth):
 
     for t_ex in task_execs:
         task_exec_entry = analyse_task_execution(
-            t_ex.id,
-            stat,
-            filters,
-            cur_depth + 1
+            t_ex.id, stat, filters, cur_depth + 1
         )
 
         if task_exec_entry:
@@ -136,10 +131,7 @@ def analyse_task_statistics_only(task_ex_id, stat, filters, cur_depth):
     for c_ex in child_executions:
         if not isinstance(c_ex, db_models.ActionExecution):
             analyse_execution_statistics_only(
-                c_ex.id,
-                stat,
-                filters,
-                cur_depth
+                c_ex.id, stat, filters, cur_depth
             )
 
 
@@ -156,12 +148,7 @@ def analyse_execution_statistics_only(wf_ex_id, stat, filters, cur_depth):
         task_execs = wf_ex.task_executions
 
     for t_ex in task_execs:
-        analyse_task_statistics_only(
-            t_ex.id,
-            stat,
-            filters,
-            cur_depth + 1
-        )
+        analyse_task_statistics_only(t_ex.id, stat, filters, cur_depth + 1)
 
 
 def calculate_estimated_left_time_for_exec(wf_ex, prev_wf_exs):
@@ -169,8 +156,9 @@ def calculate_estimated_left_time_for_exec(wf_ex, prev_wf_exs):
         return -1
 
     ex_runtime_sec = (datetime.now() - wf_ex.created_at).seconds
-    average_runtime_sec = sum((ex.updated_at - ex.created_at).seconds
-                              for ex in prev_wf_exs) / len(prev_wf_exs)
+    average_runtime_sec = sum(
+        (ex.updated_at - ex.created_at).seconds for ex in prev_wf_exs
+    ) / len(prev_wf_exs)
     estimated_time_sec = average_runtime_sec - ex_runtime_sec
 
     if estimated_time_sec < 0:
@@ -187,7 +175,7 @@ def estimate_time_for_execution(ex_id):
             prev_wf_exs = db_api.get_workflow_executions(
                 limit=ESTIMATED_TIME_QUERY_LIMIT,
                 workflow_id=wf_ex.workflow_id,
-                state=states.SUCCESS
+                state=states.SUCCESS,
             )
             return calculate_estimated_left_time_for_exec(wf_ex, prev_wf_exs)
 
@@ -204,28 +192,26 @@ def build_report(wf_ex_id, filters):
 
     if not filters['statistics_only']:
         report.root_workflow_execution = analyse_workflow_execution(
-            wf_ex_id,
-            stat,
-            filters,
-            0
+            wf_ex_id, stat, filters, 0
         )
     else:
-        analyse_execution_statistics_only(
-            wf_ex_id,
-            stat,
-            filters,
-            0
-        )
+        analyse_execution_statistics_only(wf_ex_id, stat, filters, 0)
 
     return report
 
 
 class ExecutionReportController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.ExecutionReport, types.uuid, bool, int,
-                         bool)
-    def get(self, workflow_execution_id, errors_only=False, max_depth=-1,
-            statistics_only=False):
+    @wsme_pecan.wsexpose(
+        resources.ExecutionReport, types.uuid, bool, int, bool
+    )
+    def get(
+        self,
+        workflow_execution_id,
+        errors_only=False,
+        max_depth=-1,
+        statistics_only=False,
+    ):
         """Return workflow execution report.
 
         :param workflow_execution_id: The ID of the workflow execution to
@@ -250,13 +236,13 @@ class ExecutionReportController(rest.RestController):
 
         LOG.info(
             "Fetch execution report [workflow_execution_id=%s]",
-            workflow_execution_id
+            workflow_execution_id,
         )
 
         filters = {
             'errors_only': errors_only,
             'max_depth': max_depth,
-            'statistics_only': statistics_only
+            'statistics_only': statistics_only,
         }
 
         return build_report(workflow_execution_id, filters)

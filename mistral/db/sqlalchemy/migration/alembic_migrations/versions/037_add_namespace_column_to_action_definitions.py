@@ -35,32 +35,36 @@ down_revision = '036'
 def upgrade():
     op.add_column(
         'action_definitions_v2',
-        sa.Column('namespace', sa.String(length=255), nullable=True)
+        sa.Column('namespace', sa.String(length=255), nullable=True),
     )
 
     inspect = reflection.Inspector.from_engine(op.get_bind())
 
     unique_constraints = [
-        unique_constraint['name'] for unique_constraint in
-        inspect.get_unique_constraints('action_definitions_v2')
+        unique_constraint['name']
+        for unique_constraint in inspect.get_unique_constraints(
+            'action_definitions_v2'
+        )
     ]
     if 'name' in unique_constraints:
         op.drop_index('name', table_name='action_definitions_v2')
 
     if 'action_definitions_v2_name_project_id_key' in unique_constraints:
-        op.drop_constraint('action_definitions_v2_name_project_id_key',
-                           table_name='action_definitions_v2')
+        op.drop_constraint(
+            'action_definitions_v2_name_project_id_key',
+            table_name='action_definitions_v2',
+        )
 
     op.create_unique_constraint(
-        None,
-        'action_definitions_v2',
-        ['name', 'namespace', 'project_id']
+        None, 'action_definitions_v2', ['name', 'namespace', 'project_id']
     )
 
     action_def = table('action_definitions_v2', column('namespace'))
     with sa.orm.Session(bind=op.get_bind()) as session:
         session.execute(
-            action_def.update().values(namespace='').where(
-                action_def.c.namespace is None))  # noqa
+            action_def.update()
+            .values(namespace='')
+            .where(action_def.c.namespace is None)
+        )  # noqa
 
         session.commit()

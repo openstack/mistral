@@ -24,11 +24,13 @@ from mistral.tests.unit import base
 
 
 class SendEmailActionTest(base.BaseTest):
-
     def setUp(self):
         super(SendEmailActionTest, self).setUp()
-        self.to_addrs = ["dz@example.com", "deg@example.com",
-                         "xyz@example.com"]
+        self.to_addrs = [
+            "dz@example.com",
+            "deg@example.com",
+            "xyz@example.com",
+        ]
         self.reply_to = ['reply-to@example.com']
         self.cc_addrs = ['copy@example.com']
         self.bcc_addrs = ['hidden_copy@example.com']
@@ -47,9 +49,14 @@ class SendEmailActionTest(base.BaseTest):
             socket,
             'getaddrinfo',
             return_value=[
-                (socket.AF_INET, socket.SOCK_STREAM, 6, '',
-                 ('93.184.216.34', 25))
-            ]
+                (
+                    socket.AF_INET,
+                    socket.SOCK_STREAM,
+                    6,
+                    '',
+                    ('93.184.216.34', 25),
+                )
+            ],
         )
         self.getaddrinfo = gai.start()
         self.addCleanup(gai.stop)
@@ -62,7 +69,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         action.run(self.ctx)
@@ -72,10 +79,8 @@ class SendEmailActionTest(base.BaseTest):
         sendmail = smtp.return_value.sendmail
 
         self.assertTrue(sendmail.called, "should call sendmail")
-        self.assertEqual(
-            self.from_addr, sendmail.call_args[1]['from_addr'])
-        self.assertEqual(
-            self.to_addrs, sendmail.call_args[1]['to_addrs'])
+        self.assertEqual(self.from_addr, sendmail.call_args[1]['from_addr'])
+        self.assertEqual(self.to_addrs, sendmail.call_args[1]['to_addrs'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
@@ -83,12 +88,11 @@ class SendEmailActionTest(base.BaseTest):
         self.assertEqual(self.to_addrs_str, message['to'])
         self.assertEqual(
             self.subject,
-            decode_header(message['subject'])[0][0].decode('utf-8')
+            decode_header(message['subject'])[0][0].decode('utf-8'),
         )
 
         self.assertEqual(
-            self.body,
-            base64.b64decode(message.get_payload()).decode('utf-8')
+            self.body, base64.b64decode(message.get_payload()).decode('utf-8')
         )
 
     @mock.patch('smtplib.SMTP')
@@ -103,7 +107,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         action.run(self.ctx)
@@ -113,10 +117,8 @@ class SendEmailActionTest(base.BaseTest):
         sendmail = smtp.return_value.sendmail
 
         self.assertTrue(sendmail.called, "should call sendmail")
-        self.assertEqual(
-            self.from_addr, sendmail.call_args[1]['from_addr'])
-        self.assertEqual(
-            to_addrs, sendmail.call_args[1]['to_addrs'])
+        self.assertEqual(self.from_addr, sendmail.call_args[1]['from_addr'])
+        self.assertEqual(to_addrs, sendmail.call_args[1]['to_addrs'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
@@ -134,7 +136,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         action.run(self.ctx)
@@ -144,10 +146,8 @@ class SendEmailActionTest(base.BaseTest):
         sendmail = smtp.return_value.sendmail
 
         self.assertTrue(sendmail.called, "should call sendmail")
-        self.assertEqual(
-            self.from_addr, sendmail.call_args[1]['from_addr'])
-        self.assertEqual(
-            to_addrs, sendmail.call_args[1]['to_addrs'])
+        self.assertEqual(self.from_addr, sendmail.call_args[1]['from_addr'])
+        self.assertEqual(to_addrs, sendmail.call_args[1]['to_addrs'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
@@ -164,7 +164,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         action.run(self.ctx)
@@ -174,8 +174,7 @@ class SendEmailActionTest(base.BaseTest):
         sendmail = smtp.return_value.sendmail
 
         self.assertTrue(sendmail.called, "should call sendmail")
-        self.assertEqual(
-            self.from_addr, sendmail.call_args[1]['from_addr'])
+        self.assertEqual(self.from_addr, sendmail.call_args[1]['from_addr'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
@@ -192,7 +191,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_password=None,
             subject=self.subject,
             body=self.body,
-            html_body=self.html_body
+            html_body=self.html_body,
         )
 
         action.run(self.ctx)
@@ -202,10 +201,8 @@ class SendEmailActionTest(base.BaseTest):
         sendmail = smtp.return_value.sendmail
 
         self.assertTrue(sendmail.called, "should call sendmail")
-        self.assertEqual(
-            self.from_addr, sendmail.call_args[1]['from_addr'])
-        self.assertEqual(
-            self.to_addrs, sendmail.call_args[1]['to_addrs'])
+        self.assertEqual(self.from_addr, sendmail.call_args[1]['from_addr'])
+        self.assertEqual(self.to_addrs, sendmail.call_args[1]['to_addrs'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
@@ -213,17 +210,15 @@ class SendEmailActionTest(base.BaseTest):
         self.assertEqual(self.to_addrs_str, message['to'])
         self.assertEqual(
             self.subject,
-            decode_header(message['subject'])[0][0].decode('utf-8')
+            decode_header(message['subject'])[0][0].decode('utf-8'),
         )
         body_payload = message.get_payload(0).get_payload()
         self.assertEqual(
-            self.body,
-            base64.b64decode(body_payload).decode('utf-8')
+            self.body, base64.b64decode(body_payload).decode('utf-8')
         )
         html_body_payload = message.get_payload(1).get_payload()
         self.assertEqual(
-            self.html_body,
-            base64.b64decode(html_body_payload).decode('utf-8')
+            self.html_body, base64.b64decode(html_body_payload).decode('utf-8')
         )
 
     @mock.patch('smtplib.SMTP')
@@ -236,15 +231,18 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=self.smtp_password,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         action.run(self.ctx)
 
         smtpmock = smtp.return_value
-        calls = [mock.call.ehlo(), mock.call.starttls(), mock.call.ehlo(),
-                 mock.call.login(self.from_addr,
-                                 self.smtp_password)]
+        calls = [
+            mock.call.ehlo(),
+            mock.call.starttls(),
+            mock.call.ehlo(),
+            mock.call.login(self.from_addr, self.smtp_password),
+        ]
 
         smtpmock.assert_has_calls(calls)
         self.assertTrue(smtpmock.sendmail.called, "should call sendmail")
@@ -260,7 +258,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
 
         try:
@@ -277,7 +275,7 @@ class SendEmailActionTest(base.BaseTest):
             smtp_server=self.smtp_server,
             smtp_password=None,
             subject=self.subject,
-            body=self.body
+            body=self.body,
         )
         params.update(kwargs)
 
@@ -302,7 +300,7 @@ class SendEmailActionTest(base.BaseTest):
         self.assertRaises(
             exc.ActionException,
             self._action(smtp_server='mail.example.com:smtp').run,
-            self.ctx
+            self.ctx,
         )
         smtp.assert_not_called()
 
@@ -316,7 +314,7 @@ class SendEmailActionTest(base.BaseTest):
             self.assertRaises(
                 exc.UrlNotAllowedException,
                 self._action(smtp_server='%s:22' % ip).run,
-                self.ctx
+                self.ctx,
             )
 
         smtp.assert_not_called()
@@ -335,9 +333,7 @@ class SendEmailActionTest(base.BaseTest):
     @mock.patch('smtplib.SMTP')
     def test_allowed_hosts(self, smtp):
         self.override_config(
-            'allowed_hosts',
-            ['mail.example.com'],
-            group='action_std_email'
+            'allowed_hosts', ['mail.example.com'], group='action_std_email'
         )
 
         self._action().run(self.ctx)
@@ -345,7 +341,7 @@ class SendEmailActionTest(base.BaseTest):
         self.assertRaises(
             exc.UrlNotAllowedException,
             self._action(smtp_server='other.example.com:25').run,
-            self.ctx
+            self.ctx,
         )
         smtp.assert_called_once_with('mail.example.com', 25, timeout=30)
 
@@ -356,7 +352,7 @@ class SendEmailActionTest(base.BaseTest):
         e = self.assertRaises(
             exc.ActionException,
             self._action(smtp_server='mail.example.com:2222').run,
-            self.ctx
+            self.ctx,
         )
 
         self.assertEqual('Failed to send an email message.', str(e))

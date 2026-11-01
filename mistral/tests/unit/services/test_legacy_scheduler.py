@@ -70,6 +70,7 @@ class LegacySchedulerTest(base.DbTestCase):
             """Re-raise a thread timeout if occurred"""
             if t.exception:
                 raise t.exception
+
         self.addCleanup(reraise_timeout, self.timeout_thread)
 
     def target_method(self, *args, **kwargs):
@@ -88,9 +89,10 @@ class LegacySchedulerTest(base.DbTestCase):
             'something',
             (object,),
             {
-                target_method_name:
-                    mock.MagicMock(side_effect=self.target_method)
-            }
+                target_method_name: mock.MagicMock(
+                    side_effect=self.target_method
+                )
+            },
         )
 
         job = sched_base.SchedulerJob(
@@ -98,7 +100,7 @@ class LegacySchedulerTest(base.DbTestCase):
             target_factory_func_name=TARGET_METHOD_PATH,
             func_name=target_method_name,
             func_args={'name': 'task', 'id': '123'},
-            key='my_job_key'
+            key='my_job_key',
         )
 
         self.scheduler.schedule(job)
@@ -106,9 +108,7 @@ class LegacySchedulerTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
 
         call = self._assert_single_item(
-            calls,
-            target_method_name=target_method_name,
-            key='my_job_key'
+            calls, target_method_name=target_method_name, key='my_job_key'
         )
         self.assertIn('name', call['method_arguments'])
 
@@ -128,7 +128,7 @@ class LegacySchedulerTest(base.DbTestCase):
             run_after=DELAY,
             func_name=TARGET_METHOD_PATH,
             func_args={'name': 'task', 'id': '321'},
-            key='my_job_key'
+            key='my_job_key',
         )
 
         self.scheduler.schedule(job)
@@ -136,9 +136,7 @@ class LegacySchedulerTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
 
         call = self._assert_single_item(
-            calls,
-            target_method_name=TARGET_METHOD_PATH,
-            key='my_job_key'
+            calls, target_method_name=TARGET_METHOD_PATH, key='my_job_key'
         )
         self.assertIn('name', call['method_arguments'])
 
@@ -162,7 +160,7 @@ class LegacySchedulerTest(base.DbTestCase):
         job = sched_base.SchedulerJob(
             run_after=DELAY,
             func_name=TARGET_METHOD_PATH,
-            func_args={'expected_project_id': default_project_id}
+            func_args={'expected_project_id': default_project_id},
         )
 
         self.scheduler.schedule(job)
@@ -175,7 +173,7 @@ class LegacySchedulerTest(base.DbTestCase):
         job = sched_base.SchedulerJob(
             run_after=DELAY,
             func_name=TARGET_METHOD_PATH,
-            func_args={'expected_project_id': second_project_id}
+            func_args={'expected_project_id': second_project_id},
         )
 
         self.scheduler.schedule(job)
@@ -193,29 +191,24 @@ class LegacySchedulerTest(base.DbTestCase):
             'something',
             (object,),
             {
-                target_method_name:
-                    mock.MagicMock(side_effect=self.target_method)
-            }
+                target_method_name: mock.MagicMock(
+                    side_effect=self.target_method
+                )
+            },
         )
 
         task_result = ml_actions.Result('data', 'error')
 
-        method_args = {
-            'name': 'task',
-            'id': '123',
-            'result': task_result
-        }
+        method_args = {'name': 'task', 'id': '123', 'result': task_result}
 
-        serializers = {
-            'result': 'mistral.workflow.utils.ResultSerializer'
-        }
+        serializers = {'result': 'mistral.workflow.utils.ResultSerializer'}
 
         job = sched_base.SchedulerJob(
             run_after=DELAY,
             target_factory_func_name=TARGET_METHOD_PATH,
             func_name=target_method_name,
             func_args=method_args,
-            func_arg_serializers=serializers
+            func_arg_serializers=serializers,
         )
 
         self.scheduler.schedule(job)
@@ -223,8 +216,7 @@ class LegacySchedulerTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
 
         call = self._assert_single_item(
-            calls,
-            target_method_name=target_method_name
+            calls, target_method_name=target_method_name
         )
         self.assertIn('name', call['method_arguments'])
 
@@ -289,15 +281,13 @@ class LegacySchedulerTest(base.DbTestCase):
         time.sleep(0.1)
 
         self.assertRaises(
-            exc.DBEntityNotFoundError,
-            db_api.get_delayed_call,
-            calls[0].id
+            exc.DBEntityNotFoundError, db_api.get_delayed_call, calls[0].id
         )
 
     @mock.patch(TARGET_METHOD_PATH)
     def test_processing_true_does_not_return_in_get_delayed_calls_to_start(
-            self,
-            method):
+        self, method
+    ):
         method.side_effect = self.target_method
 
         values = {
@@ -307,7 +297,7 @@ class LegacySchedulerTest(base.DbTestCase):
             'auth_context': None,
             'serializers': None,
             'method_arguments': None,
-            'processing': True
+            'processing': True,
         }
 
         call = db_api.create_delayed_call(values)
@@ -319,8 +309,8 @@ class LegacySchedulerTest(base.DbTestCase):
 
     @mock.patch.object(db_api, 'update_delayed_call')
     def test_scheduler_doesnt_handle_calls_the_failed_on_update(
-            self,
-            update_delayed_call):
+        self, update_delayed_call
+    ):
         def update_call_failed(id, values, query_filter):
             self.queue.put("item")
 
@@ -343,9 +333,7 @@ class LegacySchedulerTest(base.DbTestCase):
         time.sleep(1)
 
         update_delayed_call.assert_called_with(
-            id=calls[0].id,
-            values=mock.ANY,
-            query_filter=mock.ANY
+            id=calls[0].id, values=mock.ANY, query_filter=mock.ANY
         )
 
         # If the scheduler does handel calls that failed on update
@@ -358,8 +346,9 @@ class LegacySchedulerTest(base.DbTestCase):
 
         number_delayed_calls = 5
         processed_calls_at_time = []
-        real_delete_calls_method = \
+        real_delete_calls_method = (
             legacy_scheduler.LegacyScheduler.delete_calls
+        )
 
         @staticmethod
         def delete_calls_counter(delayed_calls):

@@ -22,68 +22,42 @@ rules = [
         name=EXECUTIONS % 'create',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Create a new execution.',
-        operations=[
-            {
-                'path': '/v2/executions',
-                'method': 'POST'
-            }
-        ]
+        operations=[{'path': '/v2/executions', 'method': 'POST'}],
     ),
     policy.DocumentedRuleDefault(
         name=EXECUTIONS % 'delete',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Delete the specified execution.',
         operations=[
-            {
-                'path': '/v2/executions/{execution_id}',
-                'method': 'DELETE'
-            }
-        ]
+            {'path': '/v2/executions/{execution_id}', 'method': 'DELETE'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=EXECUTIONS % 'get',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return the specified execution.',
         operations=[
-            {
-                'path': '/v2/executions/{execution_id}',
-                'method': 'GET'
-            }
-        ]
+            {'path': '/v2/executions/{execution_id}', 'method': 'GET'}
+        ],
     ),
     policy.DocumentedRuleDefault(
         name=EXECUTIONS % 'list',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Return all executions.',
-        operations=[
-            {
-                'path': '/v2/executions',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/executions', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=EXECUTIONS % 'list:all_projects',
         check_str=base.RULE_ADMIN_ONLY,
         description='Return all executions from all projects.',
-        operations=[
-            {
-                'path': '/v2/executions',
-                'method': 'GET'
-            }
-        ]
+        operations=[{'path': '/v2/executions', 'method': 'GET'}],
     ),
     policy.DocumentedRuleDefault(
         name=EXECUTIONS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update an execution.',
-        operations=[
-            {
-                'path': '/v2/executions',
-                'method': 'PUT'
-            }
-        ]
-    )
+        operations=[{'path': '/v2/executions', 'method': 'PUT'}],
+    ),
 ]
 
 

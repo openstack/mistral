@@ -27,12 +27,7 @@ def create_actions(definition, scope='private', namespace=''):
 
     for action_spec in action_list_spec.get_actions():
         db_actions.append(
-            create_action(
-                action_spec,
-                definition,
-                scope,
-                namespace
-            )
+            create_action(action_spec, definition, scope, namespace)
         )
 
     return db_actions
@@ -45,21 +40,21 @@ def update_actions(definition, scope='private', identifier=None, namespace=''):
     if identifier and len(actions) > 1:
         raise exc.InputException(
             "More than one actions are not supported for "
-            "update with identifier. [identifier: %s]" %
-            identifier
+            "update with identifier. [identifier: %s]" % identifier
         )
 
     db_actions = []
 
     for action_spec in action_list_spec.get_actions():
-        db_actions.append(update_action(
-            action_spec,
-            definition,
-            scope,
-            identifier=identifier,
-            namespace=namespace
-
-        ))
+        db_actions.append(
+            update_action(
+                action_spec,
+                definition,
+                scope,
+                identifier=identifier,
+                namespace=namespace,
+            )
+        )
 
     return db_actions
 
@@ -83,21 +78,20 @@ def create_action(action_spec, definition, scope, namespace):
     )
 
 
-def update_action(action_spec, definition, scope, identifier=None,
-                  namespace=''):
+def update_action(
+    action_spec, definition, scope, identifier=None, namespace=''
+):
     action = db_api.load_action_definition(action_spec.get_name())
 
     if action and action.is_system:
         raise exc.InvalidActionException(
-            "Attempt to modify a system action: %s" %
-            action.name
+            "Attempt to modify a system action: %s" % action.name
         )
 
     values = _get_action_values(action_spec, definition, scope, namespace)
 
     return db_api.update_action_definition(
-        identifier if identifier else values['name'],
-        values
+        identifier if identifier else values['name'], values
     )
 
 
@@ -106,8 +100,7 @@ def create_or_update_action(action_spec, definition, scope, namespace):
 
     if action and action.is_system:
         raise exc.InvalidActionException(
-            "Attempt to modify a system action: %s" %
-            action.name
+            "Attempt to modify a system action: %s" % action.name
         )
 
     values = _get_action_values(action_spec, definition, scope, namespace)
@@ -141,5 +134,5 @@ def _get_action_values(action_spec, definition, scope, namespace=''):
         'is_system': False,
         'input': ", ".join(input_list) if input_list else None,
         'scope': scope,
-        'namespace': namespace
+        'namespace': namespace,
     }

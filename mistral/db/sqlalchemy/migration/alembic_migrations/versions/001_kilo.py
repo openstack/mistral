@@ -44,7 +44,7 @@ def upgrade():
         sa.Column('spec', st.JsonEncoded(), nullable=True),
         sa.Column('tags', st.JsonEncoded(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name', 'project_id')
+        sa.UniqueConstraint('name', 'project_id'),
     )
     op.create_table(
         'tasks',
@@ -64,7 +64,7 @@ def upgrade():
         sa.Column('parameters', st.JsonEncoded(), nullable=True),
         sa.Column('output', st.JsonEncoded(), nullable=True),
         sa.Column('task_runtime_context', st.JsonEncoded(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
         'action_definitions_v2',
@@ -83,7 +83,7 @@ def upgrade():
         sa.Column('attributes', st.JsonEncoded(), nullable=True),
         sa.Column('is_system', sa.Boolean(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name', 'project_id')
+        sa.UniqueConstraint('name', 'project_id'),
     )
     op.create_table(
         'workflow_definitions_v2',
@@ -97,7 +97,7 @@ def upgrade():
         sa.Column('spec', st.JsonEncoded(), nullable=True),
         sa.Column('tags', st.JsonEncoded(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name', 'project_id')
+        sa.UniqueConstraint('name', 'project_id'),
     )
     op.create_table(
         'executions_v2',
@@ -128,12 +128,14 @@ def upgrade():
             'workflow_execution_id', sa.String(length=36), nullable=True
         ),
         sa.ForeignKeyConstraint(
-            ['task_execution_id'], ['executions_v2.id'],
+            ['task_execution_id'],
+            ['executions_v2.id'],
         ),
         sa.ForeignKeyConstraint(
-            ['workflow_execution_id'], ['executions_v2.id'],
+            ['workflow_execution_id'],
+            ['executions_v2.id'],
         ),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
         'workbooks',
@@ -148,7 +150,7 @@ def upgrade():
         sa.Column('project_id', sa.String(length=80), nullable=True),
         sa.Column('trust_id', sa.String(length=80), nullable=True),
         sa.PrimaryKeyConstraint('id', 'name'),
-        sa.UniqueConstraint('name')
+        sa.UniqueConstraint('name'),
     )
     op.create_table(
         'environments_v2',
@@ -161,7 +163,7 @@ def upgrade():
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('variables', st.JsonEncoded(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name', 'project_id')
+        sa.UniqueConstraint('name', 'project_id'),
     )
     op.create_table(
         'triggers',
@@ -173,22 +175,20 @@ def upgrade():
         sa.Column('next_execution_time', sa.DateTime(), nullable=False),
         sa.Column('workbook_name', sa.String(length=80), nullable=False),
         sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
+        sa.UniqueConstraint('name'),
     )
     op.create_table(
         'delayed_calls_v2',
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('updated_at', sa.DateTime(), nullable=True),
         sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column(
-            'factory_method_path', sa.String(length=200), nullable=True
-        ),
+        sa.Column('factory_method_path', sa.String(length=200), nullable=True),
         sa.Column('target_method_name', sa.String(length=80), nullable=False),
         sa.Column('method_arguments', st.JsonEncoded(), nullable=True),
         sa.Column('serializers', st.JsonEncoded(), nullable=True),
         sa.Column('auth_context', st.JsonEncoded(), nullable=True),
         sa.Column('execution_time', sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
         'workflow_executions',
@@ -199,7 +199,7 @@ def upgrade():
         sa.Column('task', sa.String(length=80), nullable=True),
         sa.Column('state', sa.String(length=20), nullable=True),
         sa.Column('context', st.JsonEncoded(), nullable=True),
-        sa.PrimaryKeyConstraint('id')
+        sa.PrimaryKeyConstraint('id'),
     )
     op.create_table(
         'cron_triggers_v2',
@@ -218,11 +218,12 @@ def upgrade():
         sa.Column('workflow_input_hash', sa.CHAR(length=64), nullable=True),
         sa.Column('trust_id', sa.String(length=80), nullable=True),
         sa.ForeignKeyConstraint(
-            ['workflow_id'], ['workflow_definitions_v2.id'],
+            ['workflow_id'],
+            ['workflow_definitions_v2.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name', 'project_id'),
         sa.UniqueConstraint(
             'workflow_input_hash', 'workflow_name', 'pattern', 'project_id'
-        )
+        ),
     )

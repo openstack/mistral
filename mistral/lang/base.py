@@ -34,9 +34,7 @@ ACTION_PATTERNS = {
     "yaql_expression": INLINE_YAQL_REGEXP,
     "jinja_expression": ANY_JINJA_REGEXP,
 }
-CMD_PTRN = re.compile(
-    "^({})".format("|".join(ACTION_PATTERNS.values()))
-)
+CMD_PTRN = re.compile("^({})".format("|".join(ACTION_PATTERNS.values())))
 
 EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
 _ALL_IN_BRACKETS = r"\[.*\]\s*"
@@ -48,8 +46,14 @@ _FALSE = "false"
 _NULL = "null"
 
 ALL = (
-    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, EXPRESSION,
-    _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
+    _ALL_IN_QUOTES,
+    _ALL_IN_APOSTROPHES,
+    EXPRESSION,
+    _ALL_IN_BRACKETS,
+    _TRUE,
+    _FALSE,
+    _NULL,
+    _DIGITS,
 )
 
 PARAMS_PTRN = re.compile(r"([-_\w]+)=(%s)" % "|".join(ALL))
@@ -185,26 +189,28 @@ class BaseSpec(object):
         schema['properties'] = utils.merge_dicts(
             schema.get('properties', {}),
             cls._meta_schema.get('properties', {}),
-            overwrite=False
+            overwrite=False,
         )
 
         if 'additionalProperties' in cls._meta_schema:
             schema.setdefault(
                 'additionalProperties',
-                cls._meta_schema['additionalProperties']
+                cls._meta_schema['additionalProperties'],
             )
 
         if includes and 'meta' in includes:
             schema['required'] = list(
-                set(schema.get('required', []) +
-                    cls._meta_schema.get('required', []))
+                set(
+                    schema.get('required', [])
+                    + cls._meta_schema.get('required', [])
+                )
             )
 
         if includes and 'definitions' in includes:
             schema['definitions'] = utils.merge_dicts(
                 schema.get('definitions', {}),
                 cls._definitions,
-                overwrite=False
+                overwrite=False,
             )
 
         cls._full_schema = schema
@@ -242,8 +248,11 @@ class BaseSpec(object):
             )
 
     def _error_location(self, e):
-        kind = re.sub(r'^(Direct|Reverse)(Workflow)?(?=.)', '',
-                      self.__class__.__name__[:-len('Spec')])
+        kind = re.sub(
+            r'^(Direct|Reverse)(Workflow)?(?=.)',
+            '',
+            self.__class__.__name__[: -len('Spec')],
+        )
         kind = re.sub(r'(?<!^)(?=[A-Z])', ' ', kind).lower()
 
         loc = ' in %s' % kind
@@ -359,9 +368,7 @@ class BaseListSpec(BaseSpec):
 
     _schema = {
         "type": "object",
-        "properties": {
-            "version": types.VERSION
-        },
+        "properties": {"version": types.VERSION},
         "additionalProperties": types.NONEMPTY_DICT,
         "required": ["version"],
     }
@@ -385,8 +392,7 @@ class BaseListSpec(BaseSpec):
 
         if len(self._data.keys()) < 2:
             raise exc.InvalidModelException(
-                'At least one item must be in the list [data=%s].' %
-                self._data
+                'At least one item must be in the list [data=%s].' % self._data
             )
 
     def get_items(self):

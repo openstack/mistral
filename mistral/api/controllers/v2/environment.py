@@ -35,13 +35,34 @@ LOG = logging.getLogger(__name__)
 
 class EnvironmentController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Environments, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, types.jsontype,
-                         resources.SCOPE_TYPES, wtypes.text, wtypes.text)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None, description=None,
-                variables=None, scope=None, created_at=None, updated_at=None):
+    @wsme_pecan.wsexpose(
+        resources.Environments,
+        types.uuid,
+        int,
+        types.uniquelist,
+        types.list,
+        types.uniquelist,
+        wtypes.text,
+        wtypes.text,
+        types.jsontype,
+        resources.SCOPE_TYPES,
+        wtypes.text,
+        wtypes.text,
+    )
+    def get_all(
+        self,
+        marker=None,
+        limit=None,
+        sort_keys='created_at',
+        sort_dirs='asc',
+        fields='',
+        name=None,
+        description=None,
+        variables=None,
+        scope=None,
+        created_at=None,
+        updated_at=None,
+    ):
         """Return all environments.
 
         Where project_id is the same as the requester or
@@ -80,12 +101,18 @@ class EnvironmentController(rest.RestController):
             updated_at=updated_at,
             description=description,
             variables=variables,
-            scope=scope
+            scope=scope,
         )
 
-        LOG.debug("Fetch environments. marker=%s, limit=%s, sort_keys=%s, "
-                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
-                  sort_dirs, filters)
+        LOG.debug(
+            "Fetch environments. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters,
+        )
 
         return rest_utils.get_all(
             resources.Environments,
@@ -97,7 +124,7 @@ class EnvironmentController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
-            **filters
+            **filters,
         )
 
     @rest_utils.wrap_wsme_controller_exception
@@ -128,9 +155,7 @@ class EnvironmentController(rest.RestController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
-        resources.Environment,
-        body=resources.Environment,
-        status_code=201
+        resources.Environment, body=resources.Environment, status_code=201
     )
     def post(self, env):
         """Create a new environment.
@@ -143,7 +168,7 @@ class EnvironmentController(rest.RestController):
 
         self._validate_environment(
             json.loads(wsme_pecan.pecan.request.body.decode()),
-            ['name', 'description', 'variables', 'scope']
+            ['name', 'description', 'variables', 'scope'],
         )
 
         if env.scope == 'public':
@@ -175,8 +200,7 @@ class EnvironmentController(rest.RestController):
         definition.pop('name')
 
         self._validate_environment(
-            definition,
-            ['description', 'variables', 'scope']
+            definition, ['description', 'variables', 'scope']
         )
 
         if env.scope == 'public':

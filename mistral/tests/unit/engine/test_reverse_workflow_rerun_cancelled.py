@@ -30,16 +30,15 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
-
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
         mock.MagicMock(
             side_effect=[
-                'Task 2',               # Mock task2 success.
-                'Task 3'                # Mock task3 success.
+                'Task 2',  # Mock task2 success.
+                'Task 3',  # Mock task3 success.
             ]
-        )
+        ),
     )
     def test_rerun_cancelled_task(self):
         wb_def = """
@@ -72,8 +71,7 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         self.await_task_running(wf1_t1_ex.id)
 
@@ -82,8 +80,7 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
 
             wf1_ex = self._assert_single_item(wf1_execs, name='wb1.wf1')
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
         wf1_t1_action_exs = db_api.get_action_executions(
             task_execution_id=wf1_t1_ex.id
@@ -94,8 +91,7 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Cancel action execution for task.
         self.engine.on_action_complete(
-            wf1_t1_action_exs[0].id,
-            ml_actions.Result(cancel=True)
+            wf1_t1_action_exs[0].id, ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(wf1_ex.id)
@@ -104,8 +100,7 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
             wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         self.await_task_cancelled(wf1_t1_ex.id)
@@ -114,8 +109,7 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
             wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
             wf1_t1_ex = self._assert_single_item(
-                wf1_ex.task_executions,
-                name='t1'
+                wf1_ex.task_executions, name='t1'
             )
 
         self.assertEqual(states.CANCELLED, wf1_ex.state)
@@ -148,13 +142,11 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
         # Order doesn't matter.
         self._assert_single_item(wf1_t1_action_exs, state=states.CANCELLED)
         running_execution = self._assert_single_item(
-            wf1_t1_action_exs,
-            state=states.RUNNING
+            wf1_t1_action_exs, state=states.RUNNING
         )
 
         self.engine.on_action_complete(
-            running_execution.id,
-            ml_actions.Result(data={'foo': 'bar'})
+            running_execution.id, ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflow to succeed.

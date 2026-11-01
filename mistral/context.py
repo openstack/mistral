@@ -41,19 +41,29 @@ ALLOWED_WITHOUT_AUTH = [
     '/info',
     '/v2/',
     '/workflowv2/',
-    '/workflowv2/v2/'
+    '/workflowv2/v2/',
 ]
 
 
 class MistralContext(oslo_context.RequestContext):
-
     FROM_DICT_EXTRA_KEYS = ['root_execution_id', 'execution_trust']
 
-    def __init__(self, auth_uri=None, auth_cacert=None, insecure=False,
-                 service_catalog=None, region_name=None, is_trust_scoped=False,
-                 redelivered=False, expires_at=None, trust_id=None,
-                 is_target=False, root_execution_id=None,
-                 execution_trust=False, **kwargs):
+    def __init__(
+        self,
+        auth_uri=None,
+        auth_cacert=None,
+        insecure=False,
+        service_catalog=None,
+        region_name=None,
+        is_trust_scoped=False,
+        redelivered=False,
+        expires_at=None,
+        trust_id=None,
+        is_target=False,
+        root_execution_id=None,
+        execution_trust=False,
+        **kwargs,
+    ):
         self.auth_uri = auth_uri
         self.auth_cacert = auth_cacert
         self.insecure = insecure
@@ -140,8 +150,9 @@ class MistralContext(oslo_context.RequestContext):
         token_info = env.get('keystone.token_info', {})
         if not kwargs['is_target']:
             kwargs['service_catalog'] = token_info.get('token', {})
-        kwargs['expires_at'] = (token_info['token']['expires_at']
-                                if token_info else None)
+        kwargs['expires_at'] = (
+            token_info['token']['expires_at'] if token_info else None
+        )
 
         context = super(MistralContext, cls).from_environ(env, **kwargs)
         context.is_admin = env.get(
@@ -184,9 +195,12 @@ def _extract_mistral_auth_params(headers):
         elif insecure_header == 'True':
             insecure = True
         else:
-            raise (exc.MistralException(
-                'X-Target-Insecure must be either "True", "False" or not '
-                'provided. The default is "False".'))
+            raise (
+                exc.MistralException(
+                    'X-Target-Insecure must be either "True", "False" or not '
+                    'provided. The default is "False".'
+                )
+            )
 
         params = {
             # TODO(akovi): Target cert not handled yet
@@ -198,26 +212,27 @@ def _extract_mistral_auth_params(headers):
             'user_id': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
             'region_name': headers.get('X-Target-Region-Name'),
-            'is_target': True
+            'is_target': True,
         }
         if not params['auth_token']:
-            raise (exc.MistralException(
-                'Target auth URI (X-Target-Auth-Uri) target auth token '
-                '(X-Target-Auth-Token) must be present'))
+            raise (
+                exc.MistralException(
+                    'Target auth URI (X-Target-Auth-Uri) target auth token '
+                    '(X-Target-Auth-Token) must be present'
+                )
+            )
 
         # It's possible that target service catalog is not provided, in this
         # case, Mistral needs to get target service catalog dynamically when
         # talking to target openstack deployment later on.
-        service_catalog = _extract_service_catalog_from_headers(
-            headers
-        )
+        service_catalog = _extract_service_catalog_from_headers(headers)
     else:
         params = {
             'auth_uri': CONF.keystone_authtoken.www_authenticate_uri,
             'auth_cacert': CONF.keystone_authtoken.cafile,
             'insecure': False,
             'region_name': headers.get('X-Region-Name'),
-            'is_target': False
+            'is_target': False,
         }
 
     params['service_catalog'] = service_catalog
@@ -226,11 +241,11 @@ def _extract_mistral_auth_params(headers):
 
 
 def _extract_service_catalog_from_headers(headers):
-    target_service_catalog_header = headers.get(
-        'X-Target-Service-Catalog')
+    target_service_catalog_header = headers.get('X-Target-Service-Catalog')
     if target_service_catalog_header:
         decoded_catalog = base64.b64decode(
-            target_service_catalog_header).decode()
+            target_service_catalog_header
+        ).decode()
         return jsonutils.loads(decoded_catalog)
     else:
         return None
@@ -263,7 +278,7 @@ class RpcContextSerializer(messaging.Serializer):
             ctx['trace_info'] = {
                 "hmac_key": pfr.hmac_key,
                 "base_id": pfr.get_base_id(),
-                "parent_id": pfr.get_id()
+                "parent_id": pfr.get_id(),
             }
 
         return ctx
@@ -305,7 +320,7 @@ class AuthHook(hooks.PecanHook):
             pecan.abort(
                 status_code=401,
                 detail=msg,
-                headers={'Server-Error-Message': msg, "WWW-Authenticate": msg}
+                headers={'Server-Error-Message': msg, "WWW-Authenticate": msg},
             )
 
 
