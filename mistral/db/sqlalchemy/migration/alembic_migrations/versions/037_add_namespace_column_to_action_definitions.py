@@ -64,7 +64,7 @@ def upgrade():
         session.execute(
             action_def.update()
             .values(namespace='')
-            .where(action_def.c.namespace is None)
-        )  # noqa
+            .where(action_def.c.namespace.is_(None))
+        )
 
         session.commit()
