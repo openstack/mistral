@@ -14,7 +14,7 @@ deprecations:
   - |
     Use of JSON policy files was deprecated by the ``oslo.policy`` library
     during the Victoria development cycle. As a result, this deprecation is
-    being noted in the Wallaby cycle with an anticipated future removal of support
-    by ``oslo.policy``. As such operators will need to convert to YAML policy
-    files. Please see the upgrade notes for details on migration of any
-    custom policy files.
+    being noted in the Wallaby cycle with an anticipated future removal of
+    support by ``oslo.policy``. As such operators will need to convert to YAML
+    policy files. Please see the upgrade notes for details on migration of
+    any custom policy files.

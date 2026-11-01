@@ -23,7 +23,7 @@ repos:
     rev: v2.0.0
     hooks:
       - id: doc8
-        files: ^doc/source/.*\.rst$
+        files: ^(README\.rst|doc/source/.*\.rst|api-ref/source/.*\.(rst|inc|yaml)|releasenotes/(notes/.*\.yaml|source/.*\.rst))$
   - repo: https://opendev.org/openstack/hacking
     rev: 8.1.0
     hooks:

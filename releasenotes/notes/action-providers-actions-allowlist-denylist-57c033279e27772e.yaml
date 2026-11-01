@@ -5,6 +5,7 @@ features:
     and ``[action_providers]/denylist`` that can be used to filter what action
     providers is loaded.
   - |
-    Added mutually exclusive config options ``[legacy_action_provider]/allowlist``
-    and ``[legacy_action_provider]/denylist`` that can be used to filter what
+    Added mutually exclusive config options
+    ``[legacy_action_provider]/allowlist`` and
+    ``[legacy_action_provider]/denylist`` that can be used to filter what
     actions is loaded by the legacy action provider.

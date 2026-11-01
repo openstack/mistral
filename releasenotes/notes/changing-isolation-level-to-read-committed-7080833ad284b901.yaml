@@ -7,8 +7,10 @@ fixes:
     Fix concurrency issues by using READ_COMMITTED
 
     This release note describes bugs:
-      * #1513456 - task stuck in RUNNING state when all action executions are finished regarding the problem and the fix.
-      * #1518012- WF execution stays in RUNNING although task and action executions are in SUCCESS.
+      * #1513456 - task stuck in RUNNING state when all action executions
+        are finished regarding the problem and the fix.
+      * #1518012- WF execution stays in RUNNING although task and action
+        executions are in SUCCESS.
 
     This fix does not require any action from Mistral users and
     does not have any implications other than the bug fix.
@@ -46,7 +48,8 @@ fixes:
         * ConnectionA selects from tableA in a transaction.
         * ConnectionB deletes all rows from tableB in a transaction.
         * ConnectionB commits.
-        * ConnectionA loops over the rows of tableA and fetches from tableB using the tableA_tableB_FK - ConnectionA will get rows from tableB.
+        * ConnectionA loops over the rows of tableA and fetches from tableB
+          using the tableA_tableB_FK - ConnectionA will get rows from tableB.
 
     - |
 
