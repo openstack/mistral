@@ -119,3 +119,14 @@ default = "mistral.scheduler.default_scheduler:DefaultScheduler"
 
 [tool.setuptools.packages.find]
 include = ["mistral*"]
+
+[tool.ruff]
+line-length = 79
+builtins = ["_"]
+extend-exclude = ["tools/cookiecutter-mistral-custom"]
+
+[tool.ruff.lint]
+ignore = ["E402", "E731"]
+
+[tool.ruff.format]
+quote-style = "preserve"
