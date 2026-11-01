@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Database migration 037 failed to set an empty namespace on existing
+    action definitions, leaving it ``NULL`` so they could not be found by
+    name. New migration 046 sets it to ``''``. Rows that already have a
+    same-named definition with an empty namespace in the same project are
+    left untouched, as updating them would violate the unique constraint.
+    When several definitions share a name and project with a ``NULL``
+    namespace, only one of them is updated, for the same reason.
