@@ -1,5 +1,5 @@
 ---
 fixes:
-  - Fixed jinja expression  error handling where 
-    invalid expression could prevent action or 
+  - Fixed jinja expression  error handling where
+    invalid expression could prevent action or
     task status to be correctly updated.
