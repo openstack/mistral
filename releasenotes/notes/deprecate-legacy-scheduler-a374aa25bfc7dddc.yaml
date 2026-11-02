@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    The ``legacy`` value of the ``[DEFAULT] scheduler_type`` option is
+    deprecated and will be removed in a future release. Use the ``default``
+    scheduler instead.
