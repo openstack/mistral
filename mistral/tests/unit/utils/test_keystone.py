@@ -27,13 +27,25 @@ class AdminClientTest(base.BaseTest):
     def setUp(self):
         super(AdminClientTest, self).setUp()
 
-        self.override_config('auth_type', 'password', 'keystone_authtoken')
-
-        # auth_url is registered by the auth plugin at runtime.
+        # The auth options are registered by the auth plugin loading
+        # machinery at runtime; mirror that here. Give the required
+        # auth-url option a default as well: the per-test overrides are
+        # restored on cleanup, and a later test of the same worker
+        # process parsing the config (e.g. the policy fixture of the API
+        # tests) would otherwise fail with RequiredOptError on the
+        # registered but valueless auth-url option.
+        ks_loading.register_auth_conf_options(cfg.CONF, 'keystone_authtoken')
         cfg.CONF.register_opts(
             ks_loading.get_auth_plugin_conf_options('password'),
             group='keystone_authtoken'
         )
+        cfg.CONF.set_default(
+            'auth_url',
+            'http://localhost/identity/v3',
+            'keystone_authtoken'
+        )
+
+        self.override_config('auth_type', 'password', 'keystone_authtoken')
 
     def test_client_for_trusts_uses_auth_url(self, m_loading, m_ks):
         self.override_config('auth_url', 'https://keystone.example/v3',
