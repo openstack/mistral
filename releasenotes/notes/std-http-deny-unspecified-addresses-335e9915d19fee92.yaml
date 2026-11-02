@@ -1,0 +1,15 @@
+---
+fixes:
+  - |
+    ``[action_std_http] denied_cidrs`` could be bypassed with addresses that
+    reach a denied host under another form, and these are now refused:
+
+    * the unspecified addresses ``0.0.0.0/8`` and ``::/128``, which Linux
+      connects to the local host, are added to the default deny-list.
+      Deployments that set ``denied_cidrs`` explicitly do not get the new
+      defaults and may add both ranges to their list;
+    * an IPv4-mapped IPv6 address such as ``::ffff:127.0.0.1`` is checked
+      through the IPv4 address it embeds;
+    * a NAT64 address of the well-known prefix ``64:ff9b::/96`` is checked
+      through the IPv4 address it embeds, which a NAT64 gateway connects
+      to: ``64:ff9b::a9fe:a9fe`` reaches ``169.254.169.254``.
