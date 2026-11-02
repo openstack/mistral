@@ -23,6 +23,10 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
+# RFC 6052 well-known prefix: a NAT64 gateway connects to the IPv4 address
+# held in the last 32 bits.
+NAT64_PREFIX = ipaddress.ip_network('64:ff9b::/96')
+
 
 def _denied_networks():
     # The whole deny-list is operator-controlled via
@@ -92,10 +96,20 @@ def validate_url(url):
 
     for info in addr_infos:
         address = ipaddress.ip_address(info[4][0])
+        candidates = [address]
 
-        for network in denied:
-            if address in network:
-                raise exc.UrlNotAllowedException(
-                    "URL host '%s' resolves to a blocked address (%s)."
-                    % (host, address)
-                )
+        # An IPv4-mapped IPv6 address (::ffff:127.0.0.1) reaches the
+        # embedded IPv4 host, so it must be matched against IPv4 CIDRs too.
+        if address.version == 6 and address.ipv4_mapped:
+            candidates.append(address.ipv4_mapped)
+
+        if address in NAT64_PREFIX:
+            candidates.append(ipaddress.IPv4Address(int(address) & 0xffffffff))
+
+        for candidate in candidates:
+            for network in denied:
+                if candidate in network:
+                    raise exc.UrlNotAllowedException(
+                        "URL host '%s' resolves to a blocked address (%s)."
+                        % (host, address)
+                    )

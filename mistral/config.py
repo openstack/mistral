@@ -753,17 +753,18 @@ action_std_http_opts = [
     ),
     cfg.ListOpt(
         'denied_cidrs',
-        default=['127.0.0.0/8', '::1/128', '169.254.0.0/16', 'fe80::/10'],
+        default=['127.0.0.0/8', '::1/128', '0.0.0.0/8', '::/128',
+                 '169.254.0.0/16', 'fe80::/10'],
         help=_('CIDR ranges that outbound std.http / webhook requests may '
-               'not target (SSRF mitigation). Defaults to loopback and '
-               'link-local, so the cloud metadata service (169.254.169.254) '
-               'and localhost are blocked out of the box. Operators can '
-               'widen it - e.g. append 10.0.0.0/8,172.16.0.0/12,'
-               '192.168.0.0/16 to also block RFC1918 internal networks - '
-               'or narrow it (even to an empty list) to re-enable those '
-               'targets. An empty list disables the address check '
-               '(the http/https scheme check and allowed_hosts still '
-               'apply).')
+               'not target (SSRF mitigation). Defaults to loopback, the '
+               'unspecified addresses (which Linux connects to the local '
+               'host) and link-local, so the cloud metadata service '
+               '(169.254.169.254) and localhost are blocked out of the box. '
+               'Operators can widen it - e.g. append 10.0.0.0/8,172.16.0.0/12,'
+               '192.168.0.0/16 to also block RFC1918 internal networks - or '
+               'narrow it (even to an empty list) to re-enable those targets. '
+               'An empty list disables the address check (the http/https '
+               'scheme check and allowed_hosts still apply).')
     ),
     cfg.IntOpt(
         'default_timeout',

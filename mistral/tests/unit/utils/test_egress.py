@@ -46,6 +46,46 @@ class EgressValidateUrlTest(base.BaseTest):
         )
 
     @mock.patch.object(socket, 'getaddrinfo')
+    def test_ipv4_mapped_loopback_is_blocked(self, gai):
+        gai.return_value = _addrinfo('::ffff:127.0.0.1')
+
+        self.assertRaises(
+            exc.UrlNotAllowedException,
+            egress.validate_url,
+            'http://[::ffff:127.0.0.1]/'
+        )
+
+    @mock.patch.object(socket, 'getaddrinfo')
+    def test_nat64_metadata_address_is_blocked(self, gai):
+        gai.return_value = _addrinfo('64:ff9b::a9fe:a9fe')
+
+        self.assertRaises(
+            exc.UrlNotAllowedException,
+            egress.validate_url,
+            'http://[64:ff9b::a9fe:a9fe]/'
+        )
+
+    @mock.patch.object(socket, 'getaddrinfo')
+    def test_nat64_public_address_is_allowed(self, gai):
+        gai.return_value = _addrinfo('64:ff9b::5db8:d822')
+
+        # Should not raise.
+        egress.validate_url('http://example.com/')
+
+    @mock.patch.object(socket, 'getaddrinfo')
+    def test_unspecified_addresses_are_blocked_by_default(self, gai):
+        # Linux connects 0.0.0.0 and :: to the local host.
+        for ip, url in (('0.0.0.0', 'http://0.0.0.0:8989/'),
+                        ('::', 'http://[::]:8989/')):
+            gai.return_value = _addrinfo(ip)
+
+            self.assertRaises(
+                exc.UrlNotAllowedException,
+                egress.validate_url,
+                url
+            )
+
+    @mock.patch.object(socket, 'getaddrinfo')
     def test_operator_can_re_enable_by_emptying_denied_cidrs(self, gai):
         # An operator that wants std.http to reach loopback / the metadata
         # service can clear the deny-list.
