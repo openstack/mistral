@@ -359,7 +359,7 @@ executor_opts = [
 
 scheduler_type_opt = cfg.StrOpt(
     'scheduler_type',
-    default='legacy',
+    default='default',
     choices=['legacy', 'default'],
     help=_('The name of the scheduler implementation used in the system.')
 )

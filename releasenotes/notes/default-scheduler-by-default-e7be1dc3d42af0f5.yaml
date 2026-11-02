@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    The default value of the ``[DEFAULT] scheduler_type`` option changed from
+    ``legacy`` to ``default``. The ``default`` scheduler stores its jobs in
+    the ``scheduled_jobs_v2`` table, while the ``legacy`` one uses
+    ``delayed_calls_v2``: jobs still pending in ``delayed_calls_v2`` are not
+    picked up by the ``default`` scheduler. Make sure no such jobs remain
+    before upgrading, or set ``scheduler_type = legacy`` explicitly to keep
+    the previous behaviour.
