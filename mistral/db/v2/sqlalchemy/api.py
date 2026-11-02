@@ -1052,7 +1052,20 @@ def create_or_update_action_definition(name, values, session=None):
 
 @b.session_aware()
 def delete_action_definition(identifier, namespace='', session=None):
-    a_def = get_action_definition(identifier, namespace=namespace)
+    a_def = _get_db_object_by_name_namespace_and_project(
+        models.ActionDefinition,
+        identifier,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not a_def:
+        a_def = get_action_definition(identifier, namespace=namespace)
+
+    # Like update_action_definition(), skipped without an authentication
+    # context.
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(a_def)
 
     session.delete(a_def)
 
