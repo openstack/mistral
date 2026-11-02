@@ -23,6 +23,7 @@ from unittest import mock
 import fixtures
 from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging
 from oslotest import base
 
 from mistral import context as auth_context
@@ -44,6 +45,12 @@ LOG = logging.getLogger(__name__)
 
 RESOURCES_PATH = 'tests/resources/'
 test_config.parse_args()
+
+# Make oslo.messaging register its options (they are registered upon the
+# first transport use) and then force every unit test to use the fake
+# in-process transport: a test must never attempt a real RPC connection.
+oslo_messaging.get_rpc_transport(CONF)
+CONF.set_default('transport_url', 'fake:/')
 
 
 def get_resource(resource_name):
