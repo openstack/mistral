@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -21,6 +23,7 @@ from mistral.utils import safe_yaml
 
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.utils import filter_utils
 from mistral_lib import utils as ml_utils
 
@@ -32,7 +35,7 @@ LOG = logging.getLogger(__name__)
 
 
 def env_(context):
-    return context['__env']
+    return copy.deepcopy(context['__env'])
 
 
 @db_utils.tx_cached(ignore_args='context')
@@ -75,14 +78,31 @@ def executions_(context, id=None, root_execution_id=None, state=None,
             filter_
         )
 
-    return db_api.get_workflow_executions(**filter_)
+    fields = [
+        f for f in db_models.WorkflowExecution.__table__.columns.keys()
+        if f != 'runtime_context'
+    ]
+
+    return [
+        _convert_wf_ex_row_to_user_model(row)
+        for row in db_api.get_workflow_executions(fields=fields, **filter_)
+    ]
+
+
+def _convert_wf_ex_row_to_user_model(row):
+    wf_ex = row._asdict()
+
+    ml_utils.datetime_to_str_in_dict(wf_ex, 'created_at')
+    ml_utils.datetime_to_str_in_dict(wf_ex, 'updated_at')
+
+    return wf_ex
 
 
 @db_utils.tx_cached(ignore_args='context')
 def execution_(context):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
-    return {
+    return copy.deepcopy({
         'id': wf_ex.id,
         'name': wf_ex.name,
         'spec': wf_ex.spec,
@@ -91,7 +111,7 @@ def execution_(context):
         'created_at': wf_ex.created_at.isoformat(' '),
         'updated_at': wf_ex.updated_at.isoformat(' '),
         'root_execution_id': wf_ex.root_execution_id
-    }
+    })
 
 
 def json_dump_(context, data):
@@ -240,7 +260,7 @@ def _convert_to_user_model(task_ex):
 
     # We don't use to_dict() db model method because not all fields
     # make sense for user.
-    return {
+    return copy.deepcopy({
         'id': task_ex.id,
         'name': task_ex.name,
         'spec': task_ex.spec,
@@ -253,7 +273,7 @@ def _convert_to_user_model(task_ex):
         'created_at': task_ex.created_at.isoformat(' '),
         'updated_at': task_ex.updated_at.isoformat(' ')
         if task_ex.updated_at is not None else None
-    }
+    })
 
 
 def uuid_(context=None):
@@ -263,7 +283,7 @@ def uuid_(context=None):
 def global_(context, var_name):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
-    return wf_ex.context.get(var_name)
+    return copy.deepcopy(wf_ex.context.get(var_name))
 
 
 def json_parse_(context, data):

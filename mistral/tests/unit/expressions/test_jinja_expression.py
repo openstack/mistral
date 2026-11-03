@@ -71,6 +71,10 @@ WF_EXECS = [
 ]
 
 
+def _ids(*wf_exs):
+    return [wf_ex['id'] for wf_ex in wf_exs]
+
+
 class JinjaEvaluatorTest(base.DbTestCase):
     def setUp(self):
         super(JinjaEvaluatorTest, self).setUp()
@@ -281,7 +285,39 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
             result = self._evaluator.evaluate('_|executions()', ctx)
 
-            self.assertEqual([created0, created1], result)
+            self.assertEqual(_ids(created0, created1), _ids(*result))
+
+            for wf_ex in result:
+                self.assertIs(dict, type(wf_ex))
+
+            self.assertEqual('RUNNING', result[1]['state'])
+            self.assertEqual('one', result[1]['root_execution_id'])
+            self.assertEqual({'image_id': '123123'}, result[1]['context'])
+            self.assertEqual('2016-12-01 15:01:00', result[1]['created_at'])
+
+    def test_executions_items_are_detached_from_db(self):
+        with db_api.transaction():
+            db_api.create_workflow_execution(
+                dict(WF_EXECS[1], root_execution_id=None)
+            )
+
+        ctx = {'__execution': {'id': 'some'}}
+
+        with db_api.transaction():
+            self._evaluator.evaluate(
+                'executions()[0].update({"state": "ERROR"})',
+                ctx
+            )
+            self._evaluator.evaluate(
+                'executions()[0].context.update({"image_id": "666"})',
+                ctx
+            )
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution('two')
+
+            self.assertEqual('RUNNING', wf_ex.state)
+            self.assertEqual({'image_id': '123123'}, wf_ex.context)
 
     def test_executions_id_filter(self):
         with db_api.transaction(read_only=True):
@@ -296,12 +332,12 @@ class JinjaEvaluatorTest(base.DbTestCase):
 
             result = self._evaluator.evaluate('_|executions("one")', ctx)
 
-            self.assertEqual([created0], result)
+            self.assertEqual(_ids(created0), _ids(*result))
 
             result = self._evaluator.evaluate(
                 'executions(root_execution_id="one") ', ctx
             )
-            self.assertEqual([created1], result)
+            self.assertEqual(_ids(created1), _ids(*result))
 
     def test_executions_state_filter(self):
         with db_api.transaction(read_only=True):
@@ -318,7 +354,7 @@ class JinjaEvaluatorTest(base.DbTestCase):
                 '_|executions(state="RUNNING")', ctx
             )
 
-            self.assertEqual([created1], result)
+            self.assertEqual(_ids(created1), _ids(*result))
 
             result = self._evaluator.evaluate(
                 '_|executions(id="one", state="RUNNING")', ctx
@@ -341,13 +377,13 @@ class JinjaEvaluatorTest(base.DbTestCase):
                 '_|executions(from_time="2000-01-01")', ctx
             )
 
-            self.assertEqual([created0, created1], result)
+            self.assertEqual(_ids(created0, created1), _ids(*result))
 
             result = self._evaluator.evaluate(
                 '_|executions(from_time="2016-12-01 15:01:00")', ctx
             )
 
-            self.assertEqual([created1], result)
+            self.assertEqual(_ids(created1), _ids(*result))
 
             result = self._evaluator.evaluate(
                 '_|executions(id="one", from_time="2016-12-01 15:01:00")', ctx
@@ -370,13 +406,13 @@ class JinjaEvaluatorTest(base.DbTestCase):
                 '_|executions(to_time="2020-01-01")', ctx
             )
 
-            self.assertEqual([created0, created1], result)
+            self.assertEqual(_ids(created0, created1), _ids(*result))
 
             result = self._evaluator.evaluate(
                 '_|executions(to_time="2016-12-01 15:01:00")', ctx
             )
 
-            self.assertEqual([created0], result)
+            self.assertEqual(_ids(created0), _ids(*result))
 
             result = self._evaluator.evaluate(
                 '_|executions(id="two", to_time="2016-12-01 15:01:00")', ctx

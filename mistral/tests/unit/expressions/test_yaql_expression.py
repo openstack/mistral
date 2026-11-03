@@ -19,6 +19,7 @@ from unittest import mock
 
 
 from mistral.config import cfg
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
@@ -200,6 +201,53 @@ class YaqlEvaluatorTest(base.BaseTest):
         ctx = {'__env': 'some'}
 
         self.assertEqual(ctx['__env'], self._evaluator.evaluate('env()', ctx))
+
+
+class YaqlExecutionsFunctionTest(base.DbTestCase):
+    def setUp(self):
+        super(YaqlExecutionsFunctionTest, self).setUp()
+
+        self._evaluator = expr.YAQLEvaluator()
+
+        with db_api.transaction():
+            db_api.create_workflow_execution({
+                'id': 'one',
+                'spec': {},
+                'state': 'RUNNING',
+                'context': {'image_id': '123123'},
+                'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
+            })
+
+        self.ctx = {'__execution': {'id': 'one'}}
+
+    def test_executions_returns_dicts(self):
+        with db_api.transaction():
+            result = self._evaluator.evaluate('executions()', self.ctx)
+
+            self.assertEqual(1, len(result))
+            self.assertIs(dict, type(result[0]))
+            self.assertEqual('one', result[0]['id'])
+            self.assertEqual('2016-12-01 15:00:00', result[0]['created_at'])
+
+            self.assertEqual(
+                'RUNNING',
+                self._evaluator.evaluate('executions()[0].state', self.ctx)
+            )
+
+    def test_executions_item_update_fails(self):
+        with db_api.transaction():
+            self.assertRaises(
+                exc.YaqlEvaluationException,
+                self._evaluator.evaluate,
+                'executions()[0].update({state => ERROR})',
+                self.ctx
+            )
+
+        with db_api.transaction():
+            self.assertEqual(
+                'RUNNING',
+                db_api.get_workflow_execution('one').state
+            )
 
 
 class InlineYAQLEvaluatorTest(base.BaseTest):

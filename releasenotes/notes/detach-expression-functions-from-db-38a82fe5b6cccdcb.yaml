@@ -1,0 +1,12 @@
+---
+security:
+  - |
+    The ``executions()`` expression function returned live database objects,
+    and ``execution()``, ``task()``, ``tasks()``, ``global()`` and ``env()``
+    returned data shared with them, so an expression such as
+    ``{{ executions()[0].update({...}) }}`` could modify executions of the
+    project. These functions now return detached copies.
+upgrade:
+  - |
+    ``executions()`` now returns plain dictionaries, with ``created_at`` and
+    ``updated_at`` as strings, like ``execution()`` and ``tasks()``.
