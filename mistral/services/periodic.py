@@ -94,16 +94,23 @@ def process_cron_triggers_v2(self, ctx):
                     trigger.name
                 )
 
+                triggered_by = {
+                    "type": "cron_trigger",
+                    "id": trigger.id,
+                }
+
                 description = {
                     "description": (
                         "Workflow execution created by cron"
                         " trigger '(%s)'." % trigger.id
                     ),
-                    "triggered_by": {
-                        "type": "cron_trigger",
-                        "id": trigger.id,
-                    }
+                    "triggered_by": triggered_by
                 }
+
+                wf_params = wf_service.strip_internal_workflow_params(
+                    trigger.workflow_params
+                )
+                wf_params['triggered_by'] = triggered_by
 
                 rpc.get_engine_client().start_workflow(
                     trigger.workflow.name,
@@ -111,9 +118,7 @@ def process_cron_triggers_v2(self, ctx):
                     None,
                     trigger.workflow_input,
                     description=json.dumps(description),
-                    **wf_service.strip_internal_workflow_params(
-                        trigger.workflow_params
-                    )
+                    **wf_params
                 )
         except Exception:
             # Log and continue to next cron trigger.

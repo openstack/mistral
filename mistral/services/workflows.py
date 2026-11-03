@@ -28,7 +28,12 @@ from stevedore import extension
 STD_WF_PATH = 'resources/workflows'
 LOG = logging.getLogger(__name__)
 
-INTERNAL_WF_PARAMS = ('task_execution_id', 'root_execution_id', 'index')
+INTERNAL_WF_PARAMS = (
+    'task_execution_id',
+    'root_execution_id',
+    'index',
+    'triggered_by'
+)
 
 
 def register_preinstalled_workflows(run_in_tx=True):

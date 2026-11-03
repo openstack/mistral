@@ -14,7 +14,6 @@
 
 import croniter
 import datetime
-import json
 import re
 
 from oslo_log import log as logging
@@ -280,23 +279,7 @@ def on_workflow_complete(wf_ex):
     if wf_ex.task_execution_id:
         return
 
-    if not wf_ex.description:
-        return
-
-    # NOTE(amorin) we suppose here that the description field is JSON.
-    # But, this is not always true.
-    try:
-        description = json.loads(wf_ex.description)
-    except ValueError as e:
-        LOG.debug(str(e))
-        return
-
-    if not isinstance(description, dict):
-        return
-
-    # NOTE(amorin) description can be changed by the end user, maybe we should
-    # not trust that value...
-    triggered = description.get('triggered_by')
+    triggered = (wf_ex.runtime_context or {}).get('triggered_by')
 
     if not triggered:
         return

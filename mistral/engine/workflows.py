@@ -382,6 +382,11 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if wf_def.workbook_name:
             values['runtime_context']['wb_name'] = wf_def.workbook_name
 
+        triggered_by = params.pop('triggered_by', None)
+
+        if triggered_by:
+            values['runtime_context']['triggered_by'] = triggered_by
+
         self.wf_ex = db_api.create_workflow_execution(values)
 
         LOG.info("Created workflow execution [workflow_name=%s, wf_ex_id=%s, "

@@ -255,21 +255,26 @@ class DefaultEventEngine(base.EventEngine):
         for t in triggers:
             LOG.info('Start to process event trigger: %s', t['id'])
 
+            triggered_by = {
+                "type": "event_trigger",
+                "id": t['id'],
+                "name": t['name']
+            }
+
             workflow_params = wf_service.strip_internal_workflow_params(
                 t.get('workflow_params')
             )
-            workflow_params.update({'event_params': event_params})
+            workflow_params.update({
+                'event_params': event_params,
+                'triggered_by': triggered_by
+            })
 
             description = {
                 "description": (
                     "Workflow execution created by event"
                     " trigger '(%s)'." % t['id']
                 ),
-                "triggered_by": {
-                    "type": "event_trigger",
-                    "id": t['id'],
-                    "name": t['name']
-                }
+                "triggered_by": triggered_by
             }
 
             try:

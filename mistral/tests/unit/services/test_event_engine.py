@@ -194,6 +194,14 @@ class EventEngineTest(base.DbTestCase):
                 },
                 kwargs['event_params']
             )
+            self.assertDictEqual(
+                {
+                    'type': 'event_trigger',
+                    'id': trigger.id,
+                    'name': trigger.name
+                },
+                kwargs['triggered_by']
+            )
 
     @mock.patch('mistral.messaging.start_listener')
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())

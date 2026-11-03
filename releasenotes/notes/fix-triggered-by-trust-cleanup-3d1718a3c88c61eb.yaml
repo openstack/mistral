@@ -1,0 +1,15 @@
+---
+security:
+  - |
+    The trigger that started an execution is now stored by the engine in the
+    execution runtime context instead of being read from the user-editable
+    description. A user could forge ``triggered_by`` in a description to
+    make Mistral delete the trust of a live cron or event trigger.
+upgrade:
+  - |
+    Executions started by a one-shot cron trigger and still running during
+    the upgrade will not delete the trigger trust on completion; remove it
+    from Keystone by hand if needed.
+  - |
+    ``triggered_by`` is now a reserved workflow param and is rejected when
+    creating an execution, a cron trigger or an event trigger.

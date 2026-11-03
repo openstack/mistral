@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import datetime
+import json
 from unittest import mock
 
 from oslo_config import cfg
@@ -85,6 +86,10 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         self.assertIn(
             t.id,
             start_wf_mock.mock_calls[0][2]['description']
+        )
+        self.assertEqual(
+            {'type': 'cron_trigger', 'id': t.id},
+            start_wf_mock.mock_calls[0][2]['triggered_by']
         )
 
         self._await(
@@ -251,3 +256,94 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             first_time,
             None
         )
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_oneshot_trigger_deletes_trust_on_completion(self, delete_trust):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
+        wf = workflows.create_workflows(WORKFLOW_LIST)[0]
+
+        t = triggers.create_cron_trigger(
+            'trigger-%s' % utils.generate_unicode_uuid(),
+            wf.name,
+            {},
+            {},
+            '* * * * * */1',
+            None,
+            1,
+            None
+        )
+
+        periodic.process_cron_triggers_v2(None, None)
+
+        auth_ctx.set_ctx(self.ctx)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 1)
+
+        wf_ex = db_api.get_workflow_executions()[0]
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(
+                {'type': 'cron_trigger', 'id': t.id},
+                wf_ex.runtime_context['triggered_by']
+            )
+            self.assertNotIn('triggered_by', wf_ex.params)
+
+        delete_trust.assert_called_once_with()
+
+
+class TriggeredByTrustCleanupTest(base.EngineTestCase):
+    def setUp(self):
+        super(TriggeredByTrustCleanupTest, self).setUp()
+
+        workflows.create_workflows(WORKFLOW_LIST)
+
+    def _run(self, **kwargs):
+        wf_ex = self.engine.start_workflow('my_wf', **kwargs)
+
+        self.await_workflow_success(wf_ex.id)
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_description_triggered_by_ignored(self, delete_trust):
+        description = {
+            'triggered_by': {'type': 'cron_trigger', 'id': 'missing'}
+        }
+
+        self._run(description=json.dumps(description))
+
+        delete_trust.assert_not_called()
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_deleted_cron_trigger_deletes_trust(self, delete_trust):
+        self._run(triggered_by={'type': 'cron_trigger', 'id': 'missing'})
+
+        delete_trust.assert_called_once_with()
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_deleted_event_trigger_deletes_trust(self, delete_trust):
+        self._run(triggered_by={'type': 'event_trigger', 'id': 'missing'})
+
+        delete_trust.assert_called_once_with()
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_existing_cron_trigger_keeps_trust(self, delete_trust):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
+        t = triggers.create_cron_trigger(
+            'trigger-%s' % utils.generate_unicode_uuid(),
+            'my_wf',
+            {},
+            {},
+            '0 0 1 1 *',
+            None,
+            None,
+            None
+        )
+
+        self._run(triggered_by={'type': 'cron_trigger', 'id': t.id})
+
+        delete_trust.assert_not_called()
