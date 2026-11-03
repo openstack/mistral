@@ -27,6 +27,7 @@ from mistral.rpc import clients as rpc
 from mistral.services import maintenance as maintenance_service
 from mistral.services import security
 from mistral.services import triggers
+from mistral.services import workflows as wf_service
 
 LOG = logging.getLogger(__name__)
 
@@ -110,7 +111,9 @@ def process_cron_triggers_v2(self, ctx):
                     None,
                     trigger.workflow_input,
                     description=json.dumps(description),
-                    **trigger.workflow_params
+                    **wf_service.strip_internal_workflow_params(
+                        trigger.workflow_params
+                    )
                 )
         except Exception:
             # Log and continue to next cron trigger.

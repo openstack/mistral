@@ -26,6 +26,7 @@ from mistral import exceptions as exc
 from mistral.lang import parser
 from mistral.rpc import clients as rpc
 from mistral.services import security
+from mistral.services import workflows as wf_service
 
 
 LOG = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             raise exc.InvalidModelException(str(e))
 
     validate_cron_trigger_input(pattern, first_time, count)
+    wf_service.validate_workflow_params(workflow_params)
 
     if first_time:
         next_time = first_time
@@ -168,6 +170,7 @@ def create_event_trigger(name, exchange, topic, event, workflow_id,
                          scope='private', workflow_input=None,
                          workflow_params=None):
     _validate_event(event)
+    wf_service.validate_workflow_params(workflow_params)
 
     with db_api.transaction():
         wf_def = db_api.get_workflow_definition_by_id(workflow_id)
@@ -238,6 +241,8 @@ def delete_event_trigger(event_trigger):
 
 
 def update_event_trigger(id, values):
+    wf_service.validate_workflow_params(values.get('workflow_params'))
+
     if values.get('event') is not None:
         _validate_event(values['event'])
 

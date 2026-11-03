@@ -29,6 +29,7 @@ from mistral.executors import base as exe
 from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
 from mistral.services import security
+from mistral.services import workflows as wf_service
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -406,7 +407,8 @@ class WorkflowAction(Action):
             wf_params['notify'] = parent_wf_ex.params['notify']
 
         for k, v in list(input_dict.items()):
-            if k not in wf_spec.get_input():
+            if (k not in wf_spec.get_input() and
+                    k not in wf_service.INTERNAL_WF_PARAMS):
                 wf_params[k] = v
                 del input_dict[k]
 

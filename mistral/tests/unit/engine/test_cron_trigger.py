@@ -105,6 +105,44 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             next_execution_time_after
         )
 
+    @mock.patch('mistral.rpc.clients.get_engine_client')
+    def test_start_workflow_strips_internal_params(self, get_engine_client):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
+        wf = workflows.create_workflows(WORKFLOW_LIST)[0]
+
+        t = triggers.create_cron_trigger(
+            'trigger-%s' % utils.generate_unicode_uuid(),
+            wf.name,
+            {},
+            {'env': {'k': 'v'}},
+            '* * * * * */1',
+            None,
+            None,
+            None
+        )
+
+        db_api.update_cron_trigger(
+            t.id,
+            {
+                'workflow_params': {
+                    'env': {'k': 'v'},
+                    'task_execution_id': 'foreign-task-id'
+                }
+            }
+        )
+
+        periodic.process_cron_triggers_v2(None, None)
+
+        start_wf = get_engine_client.return_value.start_workflow
+
+        start_wf.assert_called_once()
+
+        _, kwargs = start_wf.call_args
+
+        self.assertEqual({'k': 'v'}, kwargs['env'])
+        self.assertNotIn('task_execution_id', kwargs)
+
     def test_workflow_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
 

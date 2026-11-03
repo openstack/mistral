@@ -463,3 +463,36 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(0, len(db_api.get_workflow_executions()))
         self.assertEqual(0, len(db_api.get_task_executions()))
         self.assertEqual(0, len(db_api.get_action_executions()))
+
+    def test_subworkflow_internal_params_in_input(self):
+        wf_text = """
+        version: 2.0
+
+        parent:
+          tasks:
+            task1:
+              workflow: child
+              input:
+                task_execution_id: foreign-task-id
+                root_execution_id: foreign-root-id
+
+        child:
+          tasks:
+            task1:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('parent')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertIn('task_execution_id', wf_ex.state_info)
+
+            for ex in db_api.get_workflow_executions():
+                self.assertNotEqual('foreign-task-id', ex.task_execution_id)
+                self.assertNotEqual('foreign-root-id', ex.root_execution_id)

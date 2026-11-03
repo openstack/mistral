@@ -1,0 +1,9 @@
+---
+security:
+  - |
+    The engine-internal workflow params ``task_execution_id``,
+    ``root_execution_id`` and ``index`` are now rejected with HTTP 400 when
+    creating an execution, a cron trigger or an event trigger, and can no
+    longer be set through a sub-workflow input. A user knowing a task
+    execution UUID of another project could attach an execution to it and
+    have the engine update that task on completion.

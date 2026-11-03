@@ -28,6 +28,8 @@ from stevedore import extension
 STD_WF_PATH = 'resources/workflows'
 LOG = logging.getLogger(__name__)
 
+INTERNAL_WF_PARAMS = ('task_execution_id', 'root_execution_id', 'index')
+
 
 def register_preinstalled_workflows(run_in_tx=True):
 
@@ -182,6 +184,22 @@ def update_workflow_execution_env(wf_ex, env):
     wf_ex.params['env'] = utils.merge_dicts(wf_ex.params['env'], env)
 
     return wf_ex
+
+
+def validate_workflow_params(params):
+    forbidden = sorted(set(params or {}) & set(INTERNAL_WF_PARAMS))
+
+    if forbidden:
+        raise exc.InputException(
+            'Workflow params %s are reserved for internal use.' % forbidden
+        )
+
+
+def strip_internal_workflow_params(params):
+    return {
+        k: v for k, v in (params or {}).items()
+        if k not in INTERNAL_WF_PARAMS
+    }
 
 
 def get_workflow_definition_checksum(definition):

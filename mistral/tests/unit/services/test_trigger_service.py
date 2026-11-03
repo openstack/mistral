@@ -172,6 +172,41 @@ class TriggerServiceV2Test(base.DbTestCase):
         self.assertIn('Invalid input', str(exception))
         self.assertIn('some_wf', str(exception))
 
+    def test_trigger_create_with_internal_workflow_params(self):
+        exception = self.assertRaises(
+            exc.InputException,
+            t_s.create_cron_trigger,
+            'trigger-%s' % utils.generate_unicode_uuid(),
+            self.wf.name,
+            {},
+            {'task_execution_id': utils.generate_unicode_uuid()},
+            '*/5 * * * *',
+            None,
+            None,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        self.assertIn('task_execution_id', str(exception))
+
+    def test_event_trigger_with_internal_workflow_params(self):
+        self.assertRaises(
+            exc.InputException,
+            t_s.create_event_trigger,
+            'trigger',
+            'openstack',
+            'notification',
+            'compute.instance.create.start',
+            self.wf.id,
+            workflow_params={'root_execution_id': 'foo'}
+        )
+
+        self.assertRaises(
+            exc.InputException,
+            t_s.update_event_trigger,
+            utils.generate_unicode_uuid(),
+            {'workflow_params': {'index': 1}}
+        )
+
     def test_oneshot_trigger_create(self):
         trigger = t_s.create_cron_trigger(
             'trigger-%s' % utils.generate_unicode_uuid(),

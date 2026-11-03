@@ -330,6 +330,30 @@ class EventEngineTest(base.DbTestCase):
             e_engine.engine_client.start_workflow.call_args[0][0]
         )
 
+    @mock.patch.object(evt_eng.security, 'create_context', mock.Mock())
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_start_workflow_strips_internal_params(self):
+        e_engine = evt_eng.DefaultEventEngine()
+
+        t = copy.deepcopy(EVENT_TRIGGER)
+        t.update({
+            'id': 'trigger-id',
+            'workflow_namespace': '',
+            'trust_id': None,
+            'project_id': self.ctx.project_id,
+            'workflow_params': {
+                'env': {'k': 'v'},
+                'task_execution_id': 'foreign-task-id'
+            }
+        })
+
+        e_engine._start_workflow([t], {})
+
+        _, kwargs = e_engine.engine_client.start_workflow.call_args
+
+        self.assertEqual({'k': 'v'}, kwargs['env'])
+        self.assertNotIn('task_execution_id', kwargs)
+
 
 class NotificationsConverterTest(base.BaseTest):
     def test_convert(self):

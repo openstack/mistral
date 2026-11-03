@@ -657,6 +657,53 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_with_internal_params(self, start_wf_func):
+        for key in ('task_execution_id', 'root_execution_id', 'index'):
+            json_body = WF_EX_JSON_WITH_DESC.copy()
+            json_body['params'] = json.dumps(
+                {'env': {'k1': 'abc'}, key: uuidutils.generate_uuid()}
+            )
+
+            resp = self.app.post_json(
+                '/v2/executions',
+                json_body,
+                expect_errors=True
+            )
+
+            self.assertEqual(400, resp.status_int)
+            self.assertIn(key, resp.json['faultstring'])
+
+        start_wf_func.assert_not_called()
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_with_source_execution_internal_params(self, start_wf_func):
+        source_wf_ex = copy.deepcopy(WF_EX)
+        source_wf_ex.params = {
+            'env': {'k1': 'abc'},
+            'task_execution_id': uuidutils.generate_uuid(),
+            'root_execution_id': uuidutils.generate_uuid(),
+            'index': 3
+        }
+
+        start_wf_func.return_value = SOURCE_WF_EX.to_dict()
+
+        json_body = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
+        del json_body['params']
+
+        with mock.patch.object(db_api, 'get_workflow_execution',
+                               return_value=source_wf_ex):
+            resp = self.app.post_json('/v2/executions/', json_body)
+
+        self.assertEqual(201, resp.status_int)
+
+        _, kwargs = start_wf_func.call_args
+
+        self.assertEqual({'k1': 'abc'}, kwargs['env'])
+
+        for key in ('task_execution_id', 'root_execution_id', 'index'):
+            self.assertNotIn(key, kwargs)
+
     @mock.patch.object(
         rpc_clients.EngineClient,
         'start_workflow',

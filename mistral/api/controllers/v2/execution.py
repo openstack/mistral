@@ -260,6 +260,8 @@ class ExecutionsController(rest.RestController):
 
         exec_dict = wf_ex.to_dict()
 
+        wf_service.validate_workflow_params(exec_dict.get('params'))
+
         exec_id = exec_dict.get('id')
 
         if not exec_id:
@@ -318,7 +320,9 @@ class ExecutionsController(rest.RestController):
             result_exec_dict.get('id'),
             result_exec_dict.get('input'),
             description=result_exec_dict.get('description', ''),
-            **result_exec_dict.get('params') or {}
+            **wf_service.strip_internal_workflow_params(
+                result_exec_dict.get('params')
+            )
         )
 
         return resources.Execution.from_dict(result)

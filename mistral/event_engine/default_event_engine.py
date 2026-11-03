@@ -32,6 +32,7 @@ from mistral import messaging as mistral_messaging
 from mistral.rpc import clients as rpc
 from mistral.services import maintenance as maintenance_service
 from mistral.services import security
+from mistral.services import workflows as wf_service
 from mistral.utils import safe_yaml
 
 
@@ -254,7 +255,9 @@ class DefaultEventEngine(base.EventEngine):
         for t in triggers:
             LOG.info('Start to process event trigger: %s', t['id'])
 
-            workflow_params = t.get('workflow_params', {})
+            workflow_params = wf_service.strip_internal_workflow_params(
+                t.get('workflow_params')
+            )
             workflow_params.update({'event_params': event_params})
 
             description = {
