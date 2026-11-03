@@ -19,6 +19,7 @@ from oslo_config import cfg
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -47,6 +48,23 @@ workflows:
           - t3
       t3:
         action: std.echo output="Task 3"
+"""
+
+MUTATING_PUBLISH_WF = """
+---
+version: '2.0'
+wf:
+  vars:
+    my_dict: {a: 1}
+  tasks:
+    t1:
+      action: std.noop
+      on-success:
+        publish:
+          branch:
+            hacked: "{{ _.my_dict.update({'hacked': 1}) }}"
+          global:
+            g: 1
 """
 
 
@@ -92,3 +110,22 @@ class TaskPublishTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+    def test_publish_cannot_mutate_context(self):
+        wf_service.create_workflows(MUTATING_PUBLISH_WF)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='t1'
+            )
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertIn('is unsafe', task_ex.state_info)
+            self.assertEqual({'a': 1}, wf_ex.context['my_dict'])

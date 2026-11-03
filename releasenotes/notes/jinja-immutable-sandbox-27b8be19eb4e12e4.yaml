@@ -1,0 +1,17 @@
+---
+security:
+  - |
+    Jinja expressions are now evaluated in an immutable sandbox. Previously
+    an expression such as ``{{ _.my_var.update({...}) }}`` could modify the
+    workflow data it was reading, and the change could be persisted with the
+    next update of the workflow execution.
+upgrade:
+  - |
+    Jinja expressions calling a method that modifies a dict, a list or a set
+    in place (``update``, ``append``, ``pop``, ...) now fail, including on
+    values built in the expression itself, e.g.
+    ``{% set l = [] %}{{ l.append(1) }}``. Build new values instead, e.g.
+    ``{{ dict(_.my_dict, key='value') }}`` or ``{{ _.my_list + ['item'] }}``.
+    Setting ``[jinja] immutable_sandbox = False`` restores the previous
+    behavior; it is unsafe with untrusted workflows and will be removed in a
+    future release.

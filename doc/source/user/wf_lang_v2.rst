@@ -55,6 +55,11 @@ Mistral Workflow Language:
 -  Action `'base-input' attribute <#attributes>`__
 -  Action `'output' attribute <#attributes>`__
 
+Jinja2 expressions are evaluated in an immutable sandbox: methods that modify
+a dictionary, a list or a set in place (e.g. ``update``, ``append`` or
+``pop``) cannot be called. Build new values instead, e.g.
+``{{ dict(_.my_dict, key='value') }}`` or ``{{ _.my_list + ['item'] }}``.
+
 Mistral Workflow Language is fully based on YAML and knowledge of YAML is a
 plus for better understanding of the material in this specification. It also
 takes advantage of supported query languages to define expressions in workflow

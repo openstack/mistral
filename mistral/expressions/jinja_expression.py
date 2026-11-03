@@ -17,15 +17,18 @@ import re
 
 import jinja2
 from jinja2 import parser as jinja_parse
-from jinja2.sandbox import SandboxedEnvironment
+from jinja2 import sandbox
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
+from mistral.config import cfg
 from mistral import exceptions as exc
 from mistral.expressions import base
 
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 ANY_JINJA_REGEXP = "{{.*}}|{%.*%}"
 
@@ -34,7 +37,24 @@ JINJA_BLOCK_REGEXP = '({%(.*?)%})'
 
 JINJA_OPTS = {'undefined_to_none': False}
 
-_environment = SandboxedEnvironment(
+
+class _ImmutableSandboxedEnvironment(sandbox.ImmutableSandboxedEnvironment):
+    def is_safe_attribute(self, obj, attr, value):
+        if not CONF.jinja.immutable_sandbox:
+            return sandbox.SandboxedEnvironment.is_safe_attribute(
+                self, obj, attr, value
+            )
+
+        # Unbound methods, e.g. dict.update(_.my_dict, {...}).
+        if isinstance(obj, type) and obj in (dict, list, set):
+            obj = obj()
+
+        return super(_ImmutableSandboxedEnvironment, self).is_safe_attribute(
+            obj, attr, value
+        )
+
+
+_environment = _ImmutableSandboxedEnvironment(
     undefined=jinja2.StrictUndefined,
     trim_blocks=True,
     lstrip_blocks=True

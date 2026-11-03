@@ -52,6 +52,8 @@ wf:
 
 class StdFunctionsIsolationTest(base.EngineTestCase):
     def test_mutating_function_results_does_not_touch_db(self):
+        self.override_config('immutable_sandbox', False, 'jinja')
+
         wf_service.create_workflows(WF)
 
         wf_ex = self.engine.start_workflow('wf', env={'k': 'v'})

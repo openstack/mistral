@@ -814,6 +814,18 @@ expression_opts = [
     ),
 ]
 
+jinja_opts = [
+    cfg.BoolOpt(
+        'immutable_sandbox',
+        default=True,
+        help=_('Evaluate Jinja expressions in an immutable sandbox, where '
+               'methods modifying a dict, a list or a set in place (e.g. '
+               '"update", "append") cannot be called. Disabling it is unsafe '
+               'with untrusted workflows; the option will be removed in a '
+               'future release.')
+    ),
+]
+
 DEFAULT_DENIED_CIDRS = ['127.0.0.0/8', '::1/128', '0.0.0.0/8', '::/128',
                         '169.254.0.0/16', 'fe80::/10']
 
@@ -1077,6 +1089,7 @@ PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
 EXPRESSIONS_GROUP = "expressions"
+JINJA_GROUP = "jinja"
 ACTION_STD_HTTP_GROUP = 'action_std_http'
 ACTION_STD_SSH_GROUP = 'action_std_ssh'
 ACTION_STD_SLEEP_GROUP = 'action_std_sleep'
@@ -1119,6 +1132,7 @@ CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 CONF.register_opts(expression_opts, group=EXPRESSIONS_GROUP)
+CONF.register_opts(jinja_opts, group=JINJA_GROUP)
 CONF.register_opts(action_std_http_opts, group=ACTION_STD_HTTP_GROUP)
 CONF.register_opts(action_std_ssh_opts, group=ACTION_STD_SSH_GROUP)
 CONF.register_opts(action_std_sleep_opts, group=ACTION_STD_SLEEP_GROUP)
@@ -1170,6 +1184,7 @@ def list_opts():
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
         (EXPRESSIONS_GROUP, expression_opts),
+        (JINJA_GROUP, jinja_opts),
         (ACTION_STD_HTTP_GROUP, action_std_http_opts),
         (ACTION_STD_SSH_GROUP, action_std_ssh_opts),
         (ACTION_STD_SLEEP_GROUP, action_std_sleep_opts),

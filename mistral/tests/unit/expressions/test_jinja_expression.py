@@ -296,6 +296,8 @@ class JinjaEvaluatorTest(base.DbTestCase):
             self.assertEqual('2016-12-01 15:01:00', result[1]['created_at'])
 
     def test_executions_items_are_detached_from_db(self):
+        self.override_config('immutable_sandbox', False, 'jinja')
+
         with db_api.transaction():
             db_api.create_workflow_execution(
                 dict(WF_EXECS[1], root_execution_id=None)
@@ -553,3 +555,89 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
             '!! {{ _.nonexistent_variable }} !!',
             DATA
         )
+
+
+class ImmutableSandboxTest(base.BaseTest):
+    def setUp(self):
+        super(ImmutableSandboxTest, self).setUp()
+
+        self._evaluator = expr.InlineJinjaEvaluator()
+        self._data = {
+            'my_dict': {'a': 1},
+            'my_list': [1, 2],
+            '__env': {'key': 'value'}
+        }
+
+    def test_mutating_methods_rejected(self):
+        expressions = [
+            "{{ _.my_dict.update({'hacked': 1}) }}",
+            "{{ _.my_dict.pop('a') }}",
+            "{{ _.my_dict.setdefault('hacked', 1) }}",
+            "{{ _.my_dict.clear() }}",
+            "{{ _.my_list.append(3) }}",
+            "{{ _.my_list.extend([3]) }}",
+            "{{ _.my_list.pop() }}",
+            "{{ _.update({'hacked': 1}) }}",
+            "{{ __env.update({'hacked': 1}) }}",
+            "{{ _['__env'].update({'hacked': 1}) }}",
+            "{% set l = [] %}{{ l.append(1) }}",
+            "{{ dict.update(_.my_dict, {'hacked': 1}) }}",
+            "{{ dict.setdefault(_.my_dict, 'hacked', 1) }}",
+            "Value: {{ _.my_list.append(3) }}"
+        ]
+
+        for expression in expressions:
+            e = self.assertRaises(
+                exc.JinjaEvaluationException,
+                self._evaluator.evaluate,
+                expression,
+                self._data
+            )
+
+            self.assertIn('is unsafe', str(e))
+
+        self.assertEqual(
+            {
+                'my_dict': {'a': 1},
+                'my_list': [1, 2],
+                '__env': {'key': 'value'}
+            },
+            self._data
+        )
+
+    def test_read_and_build_still_work(self):
+        cases = [
+            ('{{ _.my_dict }}', {'a': 1}),
+            ("{{ _.my_dict.get('a') }}", 1),
+            ('{{ _.my_dict.keys() | list }}', ['a']),
+            ('{{ _.my_list.index(2) }}', 1),
+            ('{{ _.my_list | sort(reverse=true) }}', [2, 1]),
+            ('{{ dict(a=1) }}', {'a': 1}),
+            ('{{ dict(_.my_dict, b=2) }}', {'a': 1, 'b': 2}),
+            ("{{ dict.fromkeys(['a'], 1) }}", {'a': 1}),
+            ('{{ _.my_list + [3] }}', [1, 2, 3]),
+            ("{{ {'nested': _.my_dict} }}", {'nested': {'a': 1}}),
+            ('{{ _.my_list | map("string") | list }}', ['1', '2']),
+            ('{{ env() }}', {'key': 'value'})
+        ]
+
+        for expression, expected in cases:
+            self.assertEqual(
+                expected,
+                self._evaluator.evaluate(expression, self._data)
+            )
+
+        self.assertEqual({'a': 1}, self._data['my_dict'])
+        self.assertEqual([1, 2], self._data['my_list'])
+
+    def test_mutating_methods_allowed_when_disabled(self):
+        self.override_config('immutable_sandbox', False, 'jinja')
+
+        self._evaluator.evaluate(
+            "{{ _.my_dict.update({'b': 2}) }}",
+            self._data
+        )
+        self._evaluator.evaluate('{{ _.my_list.append(3) }}', self._data)
+
+        self.assertEqual({'a': 1, 'b': 2}, self._data['my_dict'])
+        self.assertEqual([1, 2, 3], self._data['my_list'])
