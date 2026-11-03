@@ -2,7 +2,7 @@
 How to write a Custom Action
 ============================
 
-1. Write a class inherited from mistral.actions.base.Action
+1. Write a class inherited from ``mistral_lib.actions.Action``
 
  .. code-block:: python
 
@@ -30,11 +30,10 @@ How to write a Custom Action
 3. Install the Python package containing the action. If this was added to
    Mistral itself it will need to be reinstalled.
 
-4. Run the following command so Mistral discovers the new action
-
- .. code-block:: console
-
-    $ mistral-db-manage --config-file <path-to-config> populate
+4. Restart Mistral services (API, engine and executor) so they load the
+   new action. Actions plugged in with the ``mistral.actions`` entry point are
+   discovered when a service starts, there is no need to populate the
+   database.
 
 5. Now you can call the action ``example.runner``
 
