@@ -76,7 +76,8 @@ def get_rpc_client_driver():
 
 
 def _wrap_exception_and_reraise(exception):
-    message = "%s: %s" % (exception.__class__.__name__, exception.args[0])
+    detail = exception.args[0] if exception.args else exception
+    message = "%s: %s" % (exception.__class__.__name__, detail)
 
     raise exc.MistralException(message)
 

@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed an ``IndexError`` raised while wrapping an exception that has no
+    arguments (for example some ``cinderclient`` exceptions) when the
+    executor sends an action result to the engine. The action execution
+    is now correctly moved to the ``ERROR`` state instead of staying
+    ``RUNNING``. See `bug 2122024
+    <https://bugs.launchpad.net/mistral/+bug/2122024>`_.
