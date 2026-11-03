@@ -556,6 +556,47 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
             DATA
         )
 
+    def test_bounded_repetition(self):
+        self.assertEqual('ababab', self._evaluator.evaluate("{{ 'ab' * 3 }}",
+                                                            {}))
+        self.assertEqual([0, 0], self._evaluator.evaluate('{{ [0] * 2 }}', {}))
+        self.assertEqual(12, self._evaluator.evaluate('{{ 3 * 4 }}', {}))
+
+        for expression in ("{{ 'a' * 10 ** 9 }}",
+                           "{{ 10 ** 9 * 'a' }}",
+                           '{{ [0] * 2000000000 }}',
+                           "{% set s = 'a' * 10 ** 9 %}{{ s }}"):
+            e = self.assertRaises(
+                exc.JinjaEvaluationException,
+                self._evaluator.evaluate,
+                expression,
+                {}
+            )
+
+            self.assertIn('Repetition result exceeds', str(e))
+
+    def test_bounded_integers(self):
+        self.assertEqual(1024, self._evaluator.evaluate('{{ 2 ** 10 }}', {}))
+        self.assertEqual(1, self._evaluator.evaluate('{{ 1 ** (10 ** 12) }}',
+                                                     {}))
+        self.assertEqual(0.01, self._evaluator.evaluate('{{ 10 ** -2 }}', {}))
+
+        self.assertEqual(10 ** 20, self._evaluator.evaluate(
+            '{{ 10 ** 10 * 10 ** 10 }}', {}
+        ))
+
+        for expression in ('{{ 10 ** (10 ** 10) }}',
+                           '{% set ns = namespace(x=2 ** 60000) %}'
+                           '{% set ns.x = ns.x * ns.x %}{{ ns.x }}'):
+            e = self.assertRaises(
+                exc.JinjaEvaluationException,
+                self._evaluator.evaluate,
+                expression,
+                {}
+            )
+
+            self.assertIn('Integer result exceeds', str(e))
+
 
 class ImmutableSandboxTest(base.BaseTest):
     def setUp(self):

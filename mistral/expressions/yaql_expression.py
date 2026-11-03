@@ -24,7 +24,9 @@ from yaml import representer
 import yaql
 from yaql.language import exceptions as yaql_exc
 from yaql.language import factory
+from yaql.language import specs
 from yaql.language import utils as yaql_utils
+from yaql.language import yaqltypes
 
 from mistral.config import cfg
 from mistral import exceptions as exc
@@ -73,7 +75,75 @@ def get_yaql_context(data_context):
     return new_ctx
 
 
+def _check_int_bits(bits):
+    if bits > base.MAX_INT_BITS:
+        raise exc.YaqlEvaluationException(
+            "Integer result exceeds %d bits" % base.MAX_INT_BITS
+        )
+
+
+@specs.parameter('left', yaqltypes.Integer())
+@specs.parameter('right', yaqltypes.Integer())
+@specs.name('#operator_*')
+def _bounded_int_multiplication(left, right):
+    _check_int_bits(left.bit_length() + right.bit_length())
+
+    return left * right
+
+
+def _bounded_repeat(seq, count):
+    limit = _YAQL_CONF.limit_iterators
+
+    # YAQL's memoryQuota check passes for list repetition.
+    if limit >= 0 and len(seq) * count > limit:
+        raise exc.YaqlEvaluationException(
+            "Repetition result exceeds %d items" % limit
+        )
+
+    return seq * count
+
+
+@specs.parameter('left', yaqltypes.Sequence())
+@specs.parameter('right', int)
+@specs.name('#operator_*')
+def _bounded_list_by_int(left, right):
+    return _bounded_repeat(left, right)
+
+
+@specs.parameter('left', int)
+@specs.parameter('right', yaqltypes.Sequence())
+@specs.name('#operator_*')
+def _bounded_int_by_list(left, right):
+    return _bounded_repeat(right, left)
+
+
+@specs.parameter('a', yaqltypes.Integer())
+@specs.parameter('b', yaqltypes.Integer())
+@specs.parameter('c', yaqltypes.Integer(nullable=True))
+@specs.name('pow')
+def _bounded_int_pow(a, b, c=None):
+    if c is None and abs(a) > 1:
+        _check_int_bits(a.bit_length() * b)
+
+    return pow(a, b, c)
+
+
+@specs.parameter('value', int)
+@specs.parameter('bits_number', int)
+@specs.name('shiftBitsLeft')
+def _bounded_shift_bits_left(value, bits_number):
+    if value:
+        _check_int_bits(value.bit_length() + bits_number)
+
+    return value << bits_number
+
+
 def _register_yaql_functions(yaql_ctx):
+    for func in (_bounded_int_multiplication, _bounded_list_by_int,
+                 _bounded_int_by_list, _bounded_int_pow,
+                 _bounded_shift_bits_left):
+        yaql_ctx.register_function(func)
+
     functions = base.get_custom_functions()
 
     for name in functions:

@@ -37,6 +37,8 @@ JINJA_BLOCK_REGEXP = '({%(.*?)%})'
 
 JINJA_OPTS = {'undefined_to_none': False}
 
+MAX_REPEAT_LENGTH = 10 ** 7
+
 
 class _ImmutableSandboxedEnvironment(sandbox.ImmutableSandboxedEnvironment):
     def is_safe_attribute(self, obj, attr, value):
@@ -54,7 +56,41 @@ class _ImmutableSandboxedEnvironment(sandbox.ImmutableSandboxedEnvironment):
         )
 
 
-_environment = _ImmutableSandboxedEnvironment(
+class _BoundedSandboxedEnvironment(_ImmutableSandboxedEnvironment):
+    intercepted_binops = frozenset(['*', '**'])
+
+    def call_binop(self, context, operator, left, right):
+        if operator == '*':
+            seq, count = (
+                (right, left) if isinstance(left, int) else (left, right)
+            )
+
+            if (isinstance(seq, (str, bytes, list, tuple)) and
+                    isinstance(count, int) and
+                    len(seq) * count > MAX_REPEAT_LENGTH):
+                raise sandbox.SecurityError(
+                    "Repetition result exceeds %d items" % MAX_REPEAT_LENGTH
+                )
+
+            if (isinstance(left, int) and isinstance(right, int) and
+                    left.bit_length() + right.bit_length() >
+                    base.MAX_INT_BITS):
+                raise sandbox.SecurityError(
+                    "Integer result exceeds %d bits" % base.MAX_INT_BITS
+                )
+        elif (isinstance(left, int) and isinstance(right, int) and
+                abs(left) > 1 and
+                left.bit_length() * right > base.MAX_INT_BITS):
+            raise sandbox.SecurityError(
+                "Integer result exceeds %d bits" % base.MAX_INT_BITS
+            )
+
+        return super(_BoundedSandboxedEnvironment, self).call_binop(
+            context, operator, left, right
+        )
+
+
+_environment = _BoundedSandboxedEnvironment(
     undefined=jinja2.StrictUndefined,
     trim_blocks=True,
     lstrip_blocks=True

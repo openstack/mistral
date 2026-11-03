@@ -18,6 +18,9 @@ import abc
 from stevedore import extension
 
 
+MAX_INT_BITS = 10 ** 5
+
+
 class Evaluator(object):
     """Expression evaluator interface.
 

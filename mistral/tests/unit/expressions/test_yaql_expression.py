@@ -355,3 +355,94 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         # The order may be different so we can't use "assertListEqual".
         self.assertTrue(my_list[0] == res[0] or my_list[1] == res[0])
         self.assertTrue(my_list[0] == res[1] or my_list[1] == res[1])
+
+    def _use_default_engine(self):
+        self.addCleanup(setattr, expr, 'YAQL_ENGINE', expr.YAQL_ENGINE)
+
+        expr.YAQL_ENGINE = None
+
+    def test_default_limit_iterators(self):
+        self._use_default_engine()
+
+        self.assertEqual(4950, self._evaluator.evaluate(
+            '<% range(0, 100).sum() %>', {}
+        ))
+
+        e = self.assertRaises(
+            exc.YaqlEvaluationException,
+            self._evaluator.evaluate,
+            '<% range(0, 10000000000).toList() %>',
+            {}
+        )
+
+        self.assertIn('Collection length exceeds 100000', str(e))
+
+        self.assertRaises(
+            exc.YaqlEvaluationException,
+            self._evaluator.evaluate,
+            '<% $.select($) %>',
+            list(range(100001))
+        )
+
+    def test_default_memory_quota(self):
+        self._use_default_engine()
+
+        self.assertEqual('aaa', self._evaluator.evaluate("<% 'a' * 3 %>", {}))
+
+        e = self.assertRaises(
+            exc.YaqlEvaluationException,
+            self._evaluator.evaluate,
+            "<% 'a' * 1000000000 %>",
+            {}
+        )
+
+        self.assertIn('Expression consumed too much memory', str(e))
+
+    def test_bounded_list_repetition(self):
+        self._use_default_engine()
+
+        self.assertEqual(
+            [1, 2, 1, 2],
+            self._evaluator.evaluate('<% [1, 2] * 2 %>', {})
+        )
+        self.assertEqual([1, 1], self._evaluator.evaluate('<% 2 * [1] %>', {}))
+
+        for expression in ('<% [1] * 100001 %>', '<% 100001 * [1] %>'):
+            e = self.assertRaises(
+                exc.YaqlEvaluationException,
+                self._evaluator.evaluate,
+                expression,
+                {}
+            )
+
+            self.assertIn('Repetition result exceeds 100000 items', str(e))
+
+    def test_bounded_integers(self):
+        cases = [
+            ('<% 3 * 4 %>', 12),
+            ('<% 2.5 * 2 %>', 5.0),
+            ("<% 'ab' * 2 %>", 'abab'),
+            ('<% pow(2, 10) %>', 1024),
+            ('<% pow(10, 10000000000, 7) %>', 4),
+            ('<% pow(1, 10000000000) %>', 1),
+            ('<% shiftBitsLeft(1, 10) %>', 1024)
+        ]
+
+        for expression, expected in cases:
+            self.assertEqual(
+                expected,
+                self._evaluator.evaluate(expression, {})
+            )
+
+        for expression in ('<% pow(2, 10000000000) %>',
+                           '<% pow(2, 10000000000, null) %>',
+                           '<% shiftBitsLeft(1, 10000000000) %>',
+                           '<% range(0, 30).reduce($1 * $1, 3) %>'):
+            e = self.assertRaises(
+                exc.YaqlEvaluationException,
+                self._evaluator.evaluate,
+                expression,
+                {}
+            )
+
+            self.assertIn('Integer result exceeds', str(e))

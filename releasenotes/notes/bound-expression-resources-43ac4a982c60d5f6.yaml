@@ -1,0 +1,23 @@
+---
+security:
+  - |
+    Workflow expressions now have default resource limits that block common
+    bombs such as ``<% range(0, 10000000000).sum() %>`` or
+    ``<% 'a' * 1000000000 %>``. Jinja refuses string or list repetition
+    above 10 million items, YAQL refuses list repetition above
+    ``[yaql] limit_iterators`` items, and both refuse integer products,
+    powers and left shifts above 100000 bits. This is not a complete
+    protection: CPU time and total memory are still not bounded, and other
+    string operations (padding, ``replace``, ``join``, ...) can still build
+    large values. ``[engine] memory_limit_mb`` or a container memory limit
+    remains the backstop.
+upgrade:
+  - |
+    ``[yaql] limit_iterators`` now defaults to ``100000`` and
+    ``[yaql] memory_quota`` to ``104857600`` bytes (100 MiB) instead of
+    ``-1``. A YAQL expression returning or iterating over a collection of
+    more than 100000 items (e.g. ``$.items``, ``$.items.first()``,
+    ``$.items.select(...)``), or handling any single value larger than
+    100 MiB (including a large action result read with ``task().result``),
+    now fails. Raise these options, or set them to ``-1``, for workflows
+    that legitimately process larger data.

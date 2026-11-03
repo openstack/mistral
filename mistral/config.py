@@ -976,21 +976,22 @@ action_std_email_opts = [
 yaql_opts = [
     cfg.IntOpt(
         'limit_iterators',
-        default=-1,
+        default=100000,
         min=-1,
         help=_('Limit iterators by the given number of elements. When set, '
                'each time any function declares its parameter to be iterator, '
                'that iterator is modified to not produce more than a given '
-               'number of items. If not set (or set to -1) the result data is '
-               'allowed to contain endless iterators that would cause errors '
-               'if the result where to be serialized.')
+               'number of items, and a larger collection makes the '
+               'expression fail. -1 disables the limit, which is unsafe with '
+               'untrusted workflows.')
     ),
     cfg.IntOpt(
         'memory_quota',
-        default=-1,
+        default=104857600,
         min=-1,
         help=_('The memory usage quota (in bytes) for all data produced by '
-               'the expression (or any part of it). -1 means no limitation.')
+               'the expression (or any part of it). -1 means no limitation, '
+               'which is unsafe with untrusted workflows.')
     ),
     cfg.BoolOpt(
         'convert_input_data',
