@@ -103,7 +103,7 @@ YAML example
             - wait_for_instance
 
         wait_for_instance:
-          action: nova.servers_find id={{ _.vm_id }} status='ACTIVE'
+          action: nova.servers_find id={{ _.vm_id }} status='ACTIVE'
           retry:
             delay: 5
             count: 15
@@ -185,10 +185,10 @@ workflow. In the example below there are two tasks of different types:
 ::
 
     action_based_task:
-      action: std.http url='openstack.org'
+      action: std.http url='openstack.org'
 
     workflow_based_task:
-      workflow: backup_vm_workflow vm_id=<% $.vm_id %>
+      workflow: backup_vm_workflow vm_id=<% $.vm_id %>
 
 Actions will be explained below in an individual paragraph but looking
 ahead it's worth saying that Mistral provides a lot of actions out of
@@ -288,7 +288,7 @@ Example of a static sub-workflow name:
 ::
 
     my_task:
-      workflow: name_of_my_workflow
+      workflow: name_of_my_workflow
 
 Example of a dynamic sub-workflow name:
 
@@ -352,16 +352,16 @@ YAML example
 ::
 
     my_task:
-      action: my_action
-      pause-before: true
-      wait-before: 2
-      wait-after: 4
-      fail-on: <% $.some_value < 4 %>
-      timeout: 30
-      retry:
-        count: 10
-        delay: 20
-        break-on: <% $.my_var = true %>
+      action: my_action
+      pause-before: true
+      wait-before: 2
+      wait-after: 4
+      fail-on: <% $.some_value < 4 %>
+      timeout: 30
+      retry:
+        count: 10
+        delay: 20
+        break-on: <% $.my_var = true %>
         continue-on: <% $.my_var = false %>
 
 **pause-before**
@@ -424,8 +424,8 @@ Retry policy can also be configured on a single line as:
 ::
 
     task1:
-      action: my_action
-      retry: count=10 delay=5 break-on=<% $.foo = 'bar' %>
+      action: my_action
+      retry: count=10 delay=5 break-on=<% $.foo = 'bar' %>
 
 All parameter values for any policy can be defined as YAQL/Jinja2 expressions.
 
@@ -452,24 +452,24 @@ Full syntax:
 ::
 
     my_task:
-      action: std.http
-      input:
-        url: http://mywebsite.org
-        method: GET
+      action: std.http
+      input:
+        url: http://mywebsite.org
+        method: GET
 
 Simplified syntax:
 
 ::
 
     my_task:
-      action: std.http url="http://mywebsite.org" method="GET"
+      action: std.http url="http://mywebsite.org" method="GET"
 
 Syntax with dynamic input parameter map:
 
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     example_workflow:
       input:
@@ -490,24 +490,24 @@ Full syntax:
 ::
 
     my_task:
-      workflow: some_nested_workflow
-      input:
-        param1: val1
-        param2: val2
+      workflow: some_nested_workflow
+      input:
+        param1: val1
+        param2: val2
 
 Simplified syntax:
 
 ::
 
     my_task:
-      workflow: some_nested_workflow param1='val1' param2='val2'
+      workflow: some_nested_workflow param1='val1' param2='val2'
 
 Syntax with dynamic input parameter map:
 
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     example_workflow:
       input:
@@ -542,36 +542,36 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     create_vm_and_send_email:
-      type: direct
+      type: direct
 
-      input:
-        - vm_name
-        - image_id
-        - flavor_id
+      input:
+        - vm_name
+        - image_id
+        - flavor_id
 
-      output:
-        result: <% $.vm_id %>
+      output:
+        result: <% $.vm_id %>
 
-      tasks:
-        create_vm:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
-          publish:
-            vm_id: <% task(create_vm).result.id %>
-          on-error:
-            - send_error_email
-          on-success:
-            - send_success_email
+      tasks:
+        create_vm:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+          publish:
+            vm_id: <% task(create_vm).result.id %>
+          on-error:
+            - send_error_email
+          on-success:
+            - send_success_email
 
-        send_error_email:
-          action: send_email to_addrs=['admin@mysite.org'] body='Failed to create a VM'
-          on-complete:
-            - fail
+        send_error_email:
+          action: send_email to_addrs=['admin@mysite.org'] body='Failed to create a VM'
+          on-complete:
+            - fail
 
-        send_success_email:
-          action: send_email to_addrs=['admin@mysite.org'] body='Vm is successfully created and its id <% $.vm_id %>'
+        send_success_email:
+          action: send_email to_addrs=['admin@mysite.org'] body='Vm is successfully created and its id <% $.vm_id %>'
 
 Direct workflow task attributes
 '''''''''''''''''''''''''''''''
@@ -696,9 +696,9 @@ are processed by Mistral.
 ::
 
     taskA:
-     action: my_action
-     on-success:
-       - taskB
+     action: my_action
+     on-success:
+       - taskB
        - taskC
      on-complete:
        - taskD
@@ -729,9 +729,9 @@ task 'create_vm' could also have a YAQL expression on transition to task
 ::
 
     create_vm:
-     ...
-     on-success:
-       - send_success_email: <% $.vm_id != null %>
+     ...
+     on-success:
+       - send_success_email: <% $.vm_id != null %>
 
 And this would tell Mistral to run 'send_success_email' task only if 'vm_id'
 variable published by task 'create_vm' is not empty. Expressions can also be
@@ -814,9 +814,9 @@ clauses have engine commands listed in them.
 ::
 
     taskA:
-     action: my_action
-     on-error:
-       - taskB
+     action: my_action
+     on-error:
+       - taskB
        - fail
        - taskC
      on-complete:
@@ -873,10 +873,10 @@ some task has completed.
 ::
 
     create_vm:
-      ...
-      on-success:
-        - register_vm_in_load_balancer
-        - register_vm_in_dns
+      ...
+      on-success:
+        - register_vm_in_load_balancer
+        - register_vm_in_dns
 
 In this case Mistral will run both "register_xxx" tasks simultaneously and this
 will lead to multiple independent workflow routes being processed in parallel.
@@ -892,23 +892,23 @@ Full Join (join: all)
 ::
 
     register_vm_in_load_balancer:
-      ...
-      on-success:
-        - wait_for_all_registrations
+      ...
+      on-success:
+        - wait_for_all_registrations
 
     register_vm_in_dns:
-      ...
-      on-success:
-        - wait_for_all_registrations
+      ...
+      on-success:
+        - wait_for_all_registrations
 
     try_to_do_something_without_registration:
-      ...
-      on-error:
-       - wait_for_all_registrations
+      ...
+      on-error:
+       - wait_for_all_registrations
 
     wait_for_all_registrations:
-      join: all
-      action: send_email
+      join: all
+      action: send_email
 
 When a task has property "join" assigned with value "all" the task will run
 only if all upstream tasks (ones that lead to this task) are completed and
@@ -921,23 +921,23 @@ Partial Join (join: 2)
 ::
 
     register_vm_in_load_balancer:
-      ...
-      on-success:
-        - wait_for_two_registrations
+      ...
+      on-success:
+        - wait_for_two_registrations
 
     register_vm_in_dns:
-      ...
-      on-success:
-        - wait_for_two_registrations
+      ...
+      on-success:
+        - wait_for_two_registrations
 
     register_vm_in_zabbix:
-      ...
-      on-success:
-        - wait_for_two_registrations
+      ...
+      on-success:
+        - wait_for_two_registrations
 
     wait_for_two_registrations:
-      join: 2
-      action: send_email
+      join: 2
+      action: send_email
 
 When a task has property "join" assigned with a numeric value then the task
 will run when at least this number of upstream tasks are completed and
@@ -977,37 +977,37 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     create_vm_and_send_email:
-      type: reverse
+      type: reverse
 
-      input:
-        - vm_name
-        - image_id
-        - flavor_id
+      input:
+        - vm_name
+        - image_id
+        - flavor_id
 
-      output:
-        result: <% $.vm_id %>
+      output:
+        result: <% $.vm_id %>
 
-      tasks:
-        create_vm:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
-          publish:
-            vm_id: <% task(create_vm).result.id %>
+      tasks:
+        create_vm:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+          publish:
+            vm_id: <% task(create_vm).result.id %>
 
-        search_for_ip:
-          action: nova.floating_ips_findall instance_id=null
-          publish:
-            vm_ip: <% task(search_for_ip).result[0].ip %>
+        search_for_ip:
+          action: nova.floating_ips_findall instance_id=null
+          publish:
+            vm_ip: <% task(search_for_ip).result[0].ip %>
 
-        associate_ip:
-          action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
-          requires: [search_for_ip]
+        associate_ip:
+          action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
+          requires: [search_for_ip]
 
-        send_email:
-          action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'
-          requires: [create_vm, associate_ip]
+        send_email:
+          action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'
+          requires: [create_vm, associate_ip]
 
 Reverse workflow task attributes
 ''''''''''''''''''''''''''''''''
@@ -1024,34 +1024,34 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     create_vms:
-      description: Creating multiple virtual servers using "with-items".
+      description: Creating multiple virtual servers using "with-items".
 
-      input:
-        - vm_names
-        - image_ref
-        - flavor_ref
+      input:
+        - vm_names
+        - image_ref
+        - flavor_ref
 
-      output:
-        vm_ids: <% $.vm_ids %>
+      output:
+        vm_ids: <% $.vm_ids %>
 
-      tasks:
-        create_servers:
-          with-items: vm_name in <% $.vm_names %>
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
-          publish:
-            vm_ids: <% task(create_servers).result.id %>
-          on-success:
-            - wait_for_servers
+      tasks:
+        create_servers:
+          with-items: vm_name in <% $.vm_names %>
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
+          publish:
+            vm_ids: <% task(create_servers).result.id %>
+          on-success:
+            - wait_for_servers
 
-        wait_for_servers:
-          with-items: vm_id in <% $.vm_ids %>
-          action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
-          retry:
-            delay: 5
-            count: <% $.vm_names.len() * 10 %>
+        wait_for_servers:
+          with-items: vm_id in <% $.vm_ids %>
+          action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
+          retry:
+            delay: 5
+            count: <% $.vm_names.len() * 10 %>
 
 Workflow "create_vms" in this example creates as many virtual servers as we
 provide in "vm_names" input parameter. E.g., if we specify
@@ -1067,10 +1067,10 @@ The most common form is:
 ::
 
     with-items:
-      - var1 in <% YAQL_expression_1 %> # or: var1 in <% Jinja2_expression_1 %>
-      - var2 in <% YAQL_expression_2 %> # or: var2 in <% Jinja2_expression_2 %>
-      ...
-      - varN in <% YAQL_expression_N %> # or: varN in <% Jinja2_expression_N %>
+      - var1 in <% YAQL_expression_1 %> # or: var1 in <% Jinja2_expression_1 %>
+      - var2 in <% YAQL_expression_2 %> # or: var2 in <% Jinja2_expression_2 %>
+      ...
+      - varN in <% YAQL_expression_N %> # or: varN in <% Jinja2_expression_N %>
 
 where collections expressed as YAQL_expression_1, YAQL_expression_2,
 YAQL_expression_N must have equal sizes. When a task gets started Mistral will
@@ -1160,7 +1160,7 @@ Example:
 ::
 
     http_task:
-      action: std.http url='google.com'
+      action: std.http url='google.com'
 
 std.mistral_http
 ''''''''''''''''
@@ -1206,16 +1206,16 @@ Example:
 ::
 
     send_email_task:
-      action: std.email
-      input:
-          to_addrs: [admin@mywebsite.org]
-          subject: Hello from Mistral :)
-          body: |
-            Cheers! (:_:)
-            -- Thanks, Mistral Team.
-          from_addr: mistral@openstack.org
-          smtp_server: smtp.google.com
-          smtp_password: SECRET
+      action: std.email
+      input:
+          to_addrs: [admin@mywebsite.org]
+          subject: Hello from Mistral :)
+          body: |
+            Cheers! (:_:)
+            -- Thanks, Mistral Team.
+          from_addr: mistral@openstack.org
+          smtp_server: smtp.google.com
+          smtp_password: SECRET
 
 The syntax of 'std.emal' action is pretty verbose. However, it can be
 significantly simplified using Ad-hoc actions. More about them
@@ -1340,52 +1340,52 @@ Example with *context*:
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     generate_uuid:
-      description: Generates a Universal Unique ID
+      description: Generates a Universal Unique ID
 
-      input:
-        - radix: 16
+      input:
+        - radix: 16
 
-      output:
-        uuid: <% $.generated_uuid %>
+      output:
+        uuid: <% $.generated_uuid %>
 
-      tasks:
-        generate_uuid_task:
-          action: std.js
-          input:
-            context: <% $ %>
-            script: |
-              return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r&0x3|0x8);
-                      return v.toString($.radix);
-              });
-          publish:
-            generated_uuid: <% task().result %>
+      tasks:
+        generate_uuid_task:
+          action: std.js
+          input:
+            context: <% $ %>
+            script: |
+              return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r&0x3|0x8);
+                      return v.toString($.radix);
+              });
+          publish:
+            generated_uuid: <% task().result %>
 
 Another example for getting the current date and time:
 
 ::
 
-      ---
-      version: '2.0'
+      ---
+      version: '2.0'
 
-      get_date_workflow:
-        description: Get the current date
+      get_date_workflow:
+        description: Get the current date
 
-        output:
-          current_date: <% $.current_date %>
+        output:
+          current_date: <% $.current_date %>
 
-        tasks:
-          get_date_task:
-            action: std.js
-            input:
-              script: |
-                var date = new Date();
-                return date; // returns "2015-07-12T10:32:12.460000" or use date.toLocaleDateString() for "Sunday, July 12, 2015"
-            publish:
-              current_date: <% task().result %>
+        tasks:
+          get_date_task:
+            action: std.js
+            input:
+              script: |
+                var date = new Date();
+                return date; // returns "2015-07-12T10:32:12.460000" or use date.toLocaleDateString() for "Sunday, July 12, 2015"
+            publish:
+              current_date: <% task().result %>
 
 Ad-hoc actions
 ^^^^^^^^^^^^^^
@@ -1401,23 +1401,23 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     error_email:
       input:
-        - execution_id
-      base: std.email
+        - execution_id
+      base: std.email
       base-input:
-        to_addrs: ['admin@mywebsite.org']
-        subject: 'Something went wrong with your Mistral workflow :('
-        body: |
-            Please take a look at Mistral Dashboard to find out what's wrong
-            with your workflow execution <% $.execution_id %>.
-            Everything's going to be alright!
-            -- Sincerely, Mistral Team.
-        from_addr: 'mistral@openstack.org'
-        smtp_server: 'smtp.google.com'
-        smtp_password: 'SECRET'
+        to_addrs: ['admin@mywebsite.org']
+        subject: 'Something went wrong with your Mistral workflow :('
+        body: |
+            Please take a look at Mistral Dashboard to find out what's wrong
+            with your workflow execution <% $.execution_id %>.
+            Everything's going to be alright!
+            -- Sincerely, Mistral Team.
+        from_addr: 'mistral@openstack.org'
+        smtp_server: 'smtp.google.com'
+        smtp_password: 'SECRET'
 
 Once this action is uploaded to Mistral any workflow will be able to use it as
 follows:
@@ -1425,10 +1425,10 @@ follows:
 ::
 
     my_workflow:
-      tasks:
-        ...
-        send_error_email:
-          action: error_email execution_id=<% execution().id %>
+      tasks:
+        ...
+        send_error_email:
+          action: error_email execution_id=<% execution().id %>
 
 Attributes
 ''''''''''
@@ -1483,43 +1483,43 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
 
-    name: my_workbook
+    name: my_workbook
 
-    description: My set of workflows and ad-hoc actions
+    description: My set of workflows and ad-hoc actions
 
     workflows:
-      local_workflow1:
-        type: direct
+      local_workflow1:
+        type: direct
 
-        tasks:
-          task1:
-            action: local_action str1='Hi' str2=' Mistral!'
-            on-complete:
-              - task2
+        tasks:
+          task1:
+            action: local_action str1='Hi' str2=' Mistral!'
+            on-complete:
+              - task2
 
-          task2:
-            action: global_action
-            ...
+          task2:
+            action: global_action
+            ...
 
-      local_workflow2:
-        type: reverse
+      local_workflow2:
+        type: reverse
 
-        tasks:
-          task1:
-            workflow: local_workflow1
+        tasks:
+          task1:
+            workflow: local_workflow1
 
-          task2:
-            workflow: global_workflow param1='val1' param2='val2'
-            requires: [task1]
-            ...
+          task2:
+            workflow: global_workflow param1='val1' param2='val2'
+            requires: [task1]
+            ...
     actions:
-      local_action:
-        input:
-          - str1
-          - str2
-        base: std.echo output="<% $.str1 %><% $.str2 %>"
+      local_action:
+        input:
+          - str1
+          - str2
+        base: std.echo output="<% $.str1 %><% $.str2 %>"
 
 **NOTE**: Even though names of objects inside workbooks change upon uploading
 Mistral allows referencing between those objects using local names declared in

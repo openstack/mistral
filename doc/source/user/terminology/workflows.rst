@@ -12,28 +12,28 @@ YAML example
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
     create_vm:
-      description: Simple workflow sample
-      type: direct
-      input: # Input parameter declarations
-        - vm_name
-        - image_ref
-        - flavor_ref
-      output: # Output definition
-        vm_id: <% $.vm_id %>
-      tasks:
-        create_server:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
-          publish:
-            vm_id: <% task().result.id %>
-          on-success:
-            - wait_for_instance
-        wait_for_instance:
-          action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
-          retry:
-            delay: 5
-            count: 15
+      description: Simple workflow sample
+      type: direct
+      input: # Input parameter declarations
+        - vm_name
+        - image_ref
+        - flavor_ref
+      output: # Output definition
+        vm_id: <% $.vm_id %>
+      tasks:
+        create_server:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
+          publish:
+            vm_id: <% task().result.id %>
+          on-success:
+            - wait_for_instance
+        wait_for_instance:
+          action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
+          retry:
+            delay: 5
+            count: 15
 
 Workflow types
 ^^^^^^^^^^^^^^
@@ -63,30 +63,30 @@ YAML example of direct workflow
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
     create_vm_and_send_email:
-      type: direct
-      input:
-        - vm_name
-        - image_id
-        - flavor_id
-      output:
-        result: <% $.vm_id %>
-      tasks:
-        create_vm:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
-          publish:
-            vm_id: <% task().result.id %>
-          on-error:
-            - send_error_email
-          on-success:
-            - send_success_email
-        send_error_email:
-          action: send_email to='admin@mysite.org' body='Failed to create a VM'
-          on-complete:
-            - fail
-        send_success_email:
-          action: send_email to='admin@mysite.org' body='Vm is successfully created and its id is <% $.vm_id %>'
+      type: direct
+      input:
+        - vm_name
+        - image_id
+        - flavor_id
+      output:
+        result: <% $.vm_id %>
+      tasks:
+        create_vm:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+          publish:
+            vm_id: <% task().result.id %>
+          on-error:
+            - send_error_email
+          on-success:
+            - send_success_email
+        send_error_email:
+          action: send_email to='admin@mysite.org' body='Failed to create a VM'
+          on-complete:
+            - fail
+        send_success_email:
+          action: send_email to='admin@mysite.org' body='Vm is successfully created and its id is <% $.vm_id %>'
 
 Reverse workflow
 ^^^^^^^^^^^^^^^^
@@ -111,30 +111,30 @@ YAML example of reverse workflow
 ::
 
     ---
-    version: '2.0'
+    version: '2.0'
     create_vm_and_send_email:
-      type: reverse
-      input:
-        - vm_name
-        - image_id
-        - flavor_id
-      output:
-        result: <% $.vm_id %>
-      tasks:
-        create_vm:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
-          publish:
-            vm_id: <% task().result.id %>
-        search_for_ip:
-          action: nova.floating_ips_findall instance_id=null
-          publish:
-            vm_ip: <% task().result[0].ip %>
-        associate_ip:
-          action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
-          requires: [search_for_ip]
-        send_email:
-          action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'
-          requires: [create_vm, associate_ip]
+      type: reverse
+      input:
+        - vm_name
+        - image_id
+        - flavor_id
+      output:
+        result: <% $.vm_id %>
+      tasks:
+        create_vm:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+          publish:
+            vm_id: <% task().result.id %>
+        search_for_ip:
+          action: nova.floating_ips_findall instance_id=null
+          publish:
+            vm_ip: <% task().result[0].ip %>
+        associate_ip:
+          action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
+          requires: [search_for_ip]
+        send_email:
+          action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'
+          requires: [create_vm, associate_ip]
 
 For more details about Mistral Workflow Language itself, please see
 :doc:`Mistral Workflow Language specification </user/wf_lang_v2>`
