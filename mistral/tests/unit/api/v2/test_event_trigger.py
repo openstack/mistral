@@ -200,7 +200,9 @@ class TestEventTriggerController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
     def test_put(self, mock_update, mock_rpc_client):
@@ -220,10 +222,63 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(1, client.update_event_trigger.call_count)
 
+        trigger_db = UPDATED_TRIGGER.to_dict()
+        trigger_db['workflow_namespace'] = None
+
         self.assertDictEqual(
-            UPDATED_TRIGGER.to_dict(),
+            trigger_db,
             client.update_event_trigger.call_args[0][0]
         )
+
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
+    @mock.patch('mistral.db.v2.api.update_event_trigger')
+    def test_put_invalid_workflow_input(self, mock_update, mock_rpc_client):
+        resp = self.app.put_json(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
+            {'workflow_input': '{"unexpected": "value"}'},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn('Invalid input', resp.json['faultstring'])
+        mock_update.assert_not_called()
+        mock_rpc_client.assert_not_called()
+
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_NOT_FOUND)
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
+    @mock.patch('mistral.db.v2.api.update_event_trigger')
+    def test_put_workflow_not_found(self, mock_update, mock_rpc_client):
+        resp = self.app.put_json(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
+            {'workflow_id': '123e4567-e89b-12d3-a456-426655440001'},
+            expect_errors=True
+        )
+
+        self.assertEqual(404, resp.status_int)
+        mock_update.assert_not_called()
+        mock_rpc_client.assert_not_called()
+
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
+    @mock.patch(
+        'mistral.db.v2.api.update_event_trigger',
+        mock.MagicMock(side_effect=exc.NotAllowedException())
+    )
+    def test_put_not_allowed(self, mock_rpc_client):
+        resp = self.app.put_json(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
+            {'name': 'new_name'},
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+        mock_rpc_client.assert_not_called()
 
     def test_put_field_not_allowed(self):
         resp = self.app.put_json(
@@ -266,6 +321,24 @@ class TestEventTriggerController(base.APITest):
             [],
             client.delete_event_trigger.call_args[0][1]
         )
+
+    @mock.patch.object(db_api, "get_event_trigger", MOCK_TRIGGER)
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
+    @mock.patch.object(security, "delete_trust")
+    @mock.patch.object(
+        db_api,
+        "delete_event_trigger",
+        mock.MagicMock(side_effect=exc.NotAllowedException())
+    )
+    def test_delete_not_allowed(self, mock_delete_trust, mock_rpc_client):
+        resp = self.app.delete(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae',
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+        mock_rpc_client.assert_not_called()
+        mock_delete_trust.assert_not_called()
 
     @mock.patch.object(db_api, "get_event_trigger", MOCK_NOT_FOUND)
     def test_delete_not_found(self):

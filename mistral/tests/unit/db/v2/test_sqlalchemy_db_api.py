@@ -3462,6 +3462,103 @@ class EventTriggerTest(SQLAlchemyTest):
             created.id
         )
 
+    def test_delete_event_trigger_not_found(self):
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.delete_event_trigger,
+            '09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
+        )
+
+    def _create_other_project_event_trigger(self, scope='public'):
+        values = copy.deepcopy(EVENT_TRIGGERS[0])
+        values['scope'] = scope
+
+        # Switch to another project.
+        auth_context.set_ctx(USER_CTX)
+
+        created = db_api.create_event_trigger(values)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        return created
+
+    def test_update_other_project_event_trigger(self):
+        created = self._create_other_project_event_trigger()
+
+        new_wf = db_api.create_workflow_definition({'name': 'my_wf1'})
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_event_trigger,
+            created.id,
+            {'workflow_id': new_wf.id, 'workflow_input': {'k': 'v'}}
+        )
+
+        fetched = db_api.get_event_trigger(created.id)
+
+        self.assertEqual(self.wf.id, fetched.workflow_id)
+        self.assertEqual({}, fetched.workflow_input)
+
+    def test_update_other_project_private_event_trigger(self):
+        created = self._create_other_project_event_trigger(scope='private')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.update_event_trigger,
+            created.id,
+            {'name': 'new_name'}
+        )
+
+    def test_update_other_project_event_trigger_by_admin(self):
+        created = self._create_other_project_event_trigger()
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.update_event_trigger(created.id, {'name': 'new_name'})
+
+        fetched = db_api.get_event_trigger(created.id)
+
+        self.assertEqual('new_name', fetched.name)
+
+    def test_delete_other_project_event_trigger(self):
+        created = self._create_other_project_event_trigger()
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_event_trigger,
+            created.id
+        )
+
+        self.assertIsNotNone(db_api.get_event_trigger(created.id))
+
+    def test_delete_other_project_private_event_trigger(self):
+        created = self._create_other_project_event_trigger(scope='private')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.delete_event_trigger,
+            created.id
+        )
+
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertIsNotNone(db_api.get_event_trigger(created.id))
+
+    def test_delete_other_project_event_trigger_by_admin(self):
+        created = self._create_other_project_event_trigger(scope='private')
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_event_trigger(created.id)
+
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_event_trigger,
+            created.id
+        )
+
 
 class LockTest(SQLAlchemyTest):
     def test_create_lock(self):

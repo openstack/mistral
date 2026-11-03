@@ -2295,6 +2295,8 @@ def create_event_trigger(values, session=None):
 def update_event_trigger(id, values, session=None):
     event_trigger = get_event_trigger(id)
 
+    m_dbutils.check_db_obj_access(event_trigger)
+
     event_trigger.update(values.copy())
 
     return event_trigger
@@ -2302,15 +2304,11 @@ def update_event_trigger(id, values, session=None):
 
 @b.session_aware()
 def delete_event_trigger(id, session=None):
-    # It's safe to use insecure query here because users can't access
-    # delayed calls.
-    count = b.model_query(models.EventTrigger).filter(
-        models.EventTrigger.id == id).delete()
+    event_trigger = get_event_trigger(id)
 
-    if count == 0:
-        raise exc.DBEntityNotFoundError(
-            "Event trigger not found [id=%s]." % id
-        )
+    m_dbutils.check_db_obj_access(event_trigger)
+
+    session.delete(event_trigger)
 
 
 @b.session_aware()

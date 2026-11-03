@@ -1,0 +1,7 @@
+---
+security:
+  - |
+    Updating or deleting an event trigger now requires the caller to own it
+    (or be an admin). Any user could update another project's public event
+    trigger and delete any event trigger whose id was known. Updates also
+    validate the workflow and its input, as on creation.

@@ -19,6 +19,8 @@ from unittest import mock
 from oslo_config import cfg
 from oslo_utils import timeutils
 
+from mistral import context as auth_context
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
 from mistral.services import periodic
@@ -286,3 +288,91 @@ class TriggerServiceV2Test(base.DbTestCase):
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
 
         self.assertEqual([t2_name, t1_name, t3_name], trigger_names)
+
+
+WORKFLOW_WITH_INPUT = """
+---
+version: '2.0'
+
+my_wf_with_input:
+  type: direct
+
+  input:
+    - param
+
+  tasks:
+    task1:
+      action: std.echo output=<% $.param %>
+"""
+
+
+@mock.patch.object(rpc, 'get_event_engine_client', mock.Mock())
+class EventTriggerServiceTest(base.DbTestCase):
+    def setUp(self):
+        super(EventTriggerServiceTest, self).setUp()
+
+        self.wf = workflows.create_workflows(WORKFLOW_LIST)[0]
+
+        self.trigger = t_s.create_event_trigger(
+            'trigger',
+            'openstack',
+            'notification',
+            'compute.instance.create.start',
+            self.wf.id
+        )
+
+    def test_event_trigger_update(self):
+        wf = workflows.create_workflows(WORKFLOW_WITH_INPUT)[0]
+
+        updated = t_s.update_event_trigger(
+            self.trigger.id,
+            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}}
+        )
+
+        self.assertEqual(wf.id, updated.workflow_id)
+        self.assertEqual({'param': 'value'}, updated.workflow_input)
+
+    def test_event_trigger_update_wrong_workflow_input(self):
+        self.assertRaises(
+            exc.InputException,
+            t_s.update_event_trigger,
+            self.trigger.id,
+            {'workflow_input': {'wrong_param': 'value'}}
+        )
+
+        wf = workflows.create_workflows(WORKFLOW_WITH_INPUT)[0]
+
+        self.assertRaises(
+            exc.InputException,
+            t_s.update_event_trigger,
+            self.trigger.id,
+            {'workflow_id': wf.id}
+        )
+
+        fetched = db_api.get_event_trigger(self.trigger.id)
+
+        self.assertEqual(self.wf.id, fetched.workflow_id)
+        self.assertEqual({}, fetched.workflow_input)
+
+    def test_event_trigger_update_other_project_workflow(self):
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        self.addCleanup(
+            cfg.CONF.set_default, 'auth_enable', False, group='pecan'
+        )
+
+        auth_context.set_ctx(base.get_context(default=False))
+
+        wf = workflows.create_workflows(WORKFLOW_WITH_INPUT)[0]
+
+        auth_context.set_ctx(self.ctx)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            t_s.update_event_trigger,
+            self.trigger.id,
+            {'workflow_id': wf.id, 'workflow_input': {'param': 'value'}}
+        )
+
+        fetched = db_api.get_event_trigger(self.trigger.id)
+
+        self.assertEqual(self.wf.id, fetched.workflow_id)

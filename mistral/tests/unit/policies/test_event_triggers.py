@@ -22,6 +22,19 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.tests.unit.api import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
+WF = models.WorkflowDefinition(
+    spec={
+        'version': '2.0',
+        'name': 'my_wf',
+        'tasks': {
+            'task1': {
+                'action': 'std.noop'
+            }
+        }
+    }
+)
+WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
+
 TRIGGER_ID = '09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
 TRUST_ID = 'b1a78338-285e-4303-96aa-addadc87f054'
 TRIGGER = {
@@ -46,6 +59,7 @@ trigger_values['workflow_params'] = json.loads(
 TRIGGER_DB = models.EventTrigger()
 TRIGGER_DB.update(trigger_values)
 
+MOCK_WF = mock.MagicMock(return_value=WF)
 MOCK_TRIGGER = mock.MagicMock(return_value=TRIGGER_DB)
 MOCK_TRIGGERS = mock.MagicMock(return_value=[TRIGGER_DB])
 MOCK_NONE = mock.MagicMock(return_value=None)
@@ -221,7 +235,9 @@ class TestEventTriggerPolicy(base.APITest):
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, 'get_workflow_definition_by_id', MOCK_WF)
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
     def test_event_trigger_update_allowed(self, mock_update,
@@ -261,7 +277,9 @@ class TestEventTriggerPolicy(base.APITest):
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
+    @mock.patch.object(db_api, 'get_workflow_definition_by_id', MOCK_WF)
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
     def test_event_trigger_update_public_allowed(self, mock_update,

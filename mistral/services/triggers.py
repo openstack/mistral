@@ -225,11 +225,32 @@ def delete_event_trigger(event_trigger):
 
 
 def update_event_trigger(id, values):
+    trig = db_api.get_event_trigger(id)
+
+    wf_def = db_api.get_workflow_definition_by_id(
+        values.get('workflow_id', trig.workflow_id)
+    )
+
+    wf_spec = parser.get_workflow_spec_by_definition_id(
+        wf_def.id,
+        wf_def.updated_at
+    )
+
+    eng_utils.validate_input(
+        wf_spec.get_input(),
+        values.get('workflow_input', trig.workflow_input),
+        wf_spec.get_name(),
+        wf_spec.__class__.__name__
+    )
+
     trig = db_api.update_event_trigger(id, values)
+
+    trig_dict = trig.to_dict()
+    trig_dict['workflow_namespace'] = wf_def.namespace
 
     # NOTE(kong): Send RPC message within the db transaction, rollback if
     # any error occurs.
-    rpc.get_event_engine_client().update_event_trigger(trig.to_dict())
+    rpc.get_event_engine_client().update_event_trigger(trig_dict)
 
     return trig
 
