@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The ``host`` option of the ``[engine]``, ``[executor]`` and
+    ``[event_engine]`` sections, and ``[event_engine]/listener_pool_name``,
+    now accept any string, as documented, instead of only valid hostnames
+    or IP addresses. Previously a value such as ``executor_pool`` prevented
+    Mistral from starting. See `bug 1912850
+    <https://bugs.launchpad.net/mistral/+bug/1912850>`_.
