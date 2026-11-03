@@ -18,6 +18,7 @@ AMQP messages based on oslo.messaging framework.
 """
 
 import abc
+import re
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -79,7 +80,10 @@ class NotificationEndpoint(object, metaclass=abc.ABCMeta):
         self.event_engine = event_engine
 
         self.filter_rule = oslo_messaging.NotificationFilter(
-            event_type='|'.join(self.event_types))
+            event_type=r'(?:%s)\Z' % '|'.join(
+                re.escape(e) for e in self.event_types
+            )
+        )
 
 
 def get_pool_name(exchange):

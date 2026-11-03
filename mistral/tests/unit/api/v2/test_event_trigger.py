@@ -200,6 +200,24 @@ class TestEventTriggerController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "create_event_trigger")
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
+    def test_post_invalid_event(self, mock_rpc_client, mock_create):
+        CREATE_TRIGGER = copy.deepcopy(TRIGGER)
+        CREATE_TRIGGER.pop('id')
+        CREATE_TRIGGER['event'] = '('
+
+        resp = self.app.post_json(
+            '/v2/event_triggers',
+            CREATE_TRIGGER,
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        mock_create.assert_not_called()
+        mock_rpc_client.assert_not_called()
+
     @mock.patch.object(db_api, 'get_event_trigger', MOCK_TRIGGER)
     @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)

@@ -289,6 +289,55 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         self.assertEqual([t2_name, t1_name, t3_name], trigger_names)
 
+    @mock.patch.object(rpc, 'get_event_engine_client')
+    def test_event_trigger_create_valid_event(self, mock_client):
+        for i, event in enumerate(['compute.instance.create.end',
+                                   'identity.project.created',
+                                   'compute_task.build_instances',
+                                   'dns.zone-create:v2']):
+            trig = t_s.create_event_trigger(
+                'trigger-%s' % i,
+                'openstack',
+                'notification',
+                event,
+                self.wf.id
+            )
+
+            self.assertEqual(event, trig.event)
+
+    @mock.patch.object(rpc, 'get_event_engine_client')
+    def test_event_trigger_create_invalid_event(self, mock_client):
+        for event in ['(', 'a|b', 'compute.*', '(a+)+$', '^x', 'a b',
+                      '', None]:
+            self.assertRaises(
+                exc.EventTriggerException,
+                t_s.create_event_trigger,
+                'trigger',
+                'openstack',
+                'notification',
+                event,
+                self.wf.id
+            )
+
+        mock_client.assert_not_called()
+
+    @mock.patch.object(rpc, 'get_event_engine_client')
+    def test_event_trigger_update_invalid_event(self, mock_client):
+        trig = t_s.create_event_trigger(
+            'trigger',
+            'openstack',
+            'notification',
+            'compute.instance.create.end',
+            self.wf.id
+        )
+
+        self.assertRaises(
+            exc.EventTriggerException,
+            t_s.update_event_trigger,
+            trig.id,
+            {'event': '('}
+        )
+
 
 WORKFLOW_WITH_INPUT = """
 ---

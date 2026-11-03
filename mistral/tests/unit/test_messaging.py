@@ -42,3 +42,36 @@ class StartListenerTest(base.BaseTest):
         self.assertEqual(messaging.get_pool_name('cinder'), kwargs['pool'])
         self.assertEqual(get_listener.return_value, result)
         result.start.assert_called_once_with()
+
+
+class NotificationEndpointTest(base.BaseTest):
+
+    def _match(self, event_types, event_type):
+        endpoint_cls = type(
+            'Endpoint',
+            (messaging.NotificationEndpoint,),
+            {'event_types': event_types}
+        )
+        rule = endpoint_cls(mock.Mock()).filter_rule
+
+        return rule.match({}, 'publisher', event_type, {}, {})
+
+    def test_filter_matches_exact_event(self):
+        events = ['compute.instance.create.end', 'image.upload']
+
+        self.assertTrue(self._match(events, 'compute.instance.create.end'))
+        self.assertTrue(self._match(events, 'image.upload'))
+
+    def test_filter_dot_is_not_a_wildcard(self):
+        events = ['compute.instance.create.end']
+
+        self.assertFalse(self._match(events, 'computeXinstance.create.end'))
+        self.assertFalse(
+            self._match(events, 'compute.instance.create.end.extra')
+        )
+        self.assertFalse(self._match(events, 'compute.instance.create.end\n'))
+
+    def test_filter_escapes_regex_metacharacters(self):
+        self.assertFalse(self._match(['(a+)+$'], 'aaaa'))
+        self.assertTrue(self._match(['(a+)+$'], '(a+)+$'))
+        self.assertFalse(self._match(['.*'], 'image.upload'))

@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    The ``event`` of an event trigger is now restricted to letters, digits
+    and ``_.:-``, and is escaped when building the notification filter. It
+    was compiled as a regular expression, so a user could prevent the event
+    engine from starting its listeners or burn its CPU with a backtracking
+    pattern.

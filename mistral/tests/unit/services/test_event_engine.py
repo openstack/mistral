@@ -115,6 +115,28 @@ class EventEngineTest(base.DbTestCase):
 
     @mock.patch('mistral.messaging.start_listener')
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_event_engine_start_with_regex_event(self, mock_start):
+        t = copy.deepcopy(EVENT_TRIGGER)
+        t['event'] = '('
+        db_api.create_event_trigger(t)
+
+        e_engine = evt_eng.DefaultEventEngine()
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
+
+        self.assertEqual(1, len(e_engine.exchange_topic_listener_map))
+
+        endpoint = mock_start.call_args[0][3][0]
+
+        self.assertTrue(
+            endpoint.filter_rule.match({}, 'pub', '(', {}, {})
+        )
+        self.assertFalse(
+            endpoint.filter_rule.match({}, 'pub', EVENT_TYPE, {}, {})
+        )
+
+    @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_public_trigger(self, mock_start):
         t = copy.deepcopy(EVENT_TRIGGER)
 

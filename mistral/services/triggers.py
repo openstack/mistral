@@ -15,6 +15,7 @@
 import croniter
 import datetime
 import json
+import re
 
 from oslo_log import log as logging
 from oslo_utils import timeutils
@@ -28,6 +29,8 @@ from mistral.services import security
 
 
 LOG = logging.getLogger(__name__)
+
+_EVENT_RE = re.compile(r'[A-Za-z0-9_.:-]+')
 
 
 def get_next_execution_time(pattern, start_time):
@@ -153,9 +156,19 @@ def delete_cron_trigger(identifier, trust_id=None, delete_trust=True):
     return modified_count
 
 
+def _validate_event(event):
+    if not isinstance(event, str) or not _EVENT_RE.fullmatch(event):
+        raise exc.EventTriggerException(
+            "Invalid event '%s': only letters, digits and '_.:-' are "
+            "allowed." % event
+        )
+
+
 def create_event_trigger(name, exchange, topic, event, workflow_id,
                          scope='private', workflow_input=None,
                          workflow_params=None):
+    _validate_event(event)
+
     with db_api.transaction():
         wf_def = db_api.get_workflow_definition_by_id(workflow_id)
 
@@ -225,6 +238,9 @@ def delete_event_trigger(event_trigger):
 
 
 def update_event_trigger(id, values):
+    if values.get('event') is not None:
+        _validate_event(values['event'])
+
     trig = db_api.get_event_trigger(id)
 
     wf_def = db_api.get_workflow_definition_by_id(
