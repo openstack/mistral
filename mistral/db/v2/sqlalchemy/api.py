@@ -535,18 +535,22 @@ def create_or_update_workbook(name, values, session=None):
 def delete_workbook(name, namespace=None, session=None):
     namespace = namespace or ''
 
-    count = _secure_query(models.Workbook).filter(
-        sa.and_(
-            models.Workbook.name == name,
-            models.Workbook.namespace == namespace
-        )
-    ).delete()
+    # If several projects have a workbook with the same name, delete the one
+    # of the current project, not a public one of another project.
+    wb = _get_db_object_by_name_namespace_and_project(
+        models.Workbook,
+        name,
+        namespace,
+        security.get_project_id()
+    )
 
-    if count == 0:
-        raise exc.DBEntityNotFoundError(
-            "Workbook not found [workbook_name=%s, namespace=%s]"
-            % (name, namespace)
-        )
+    if not wb:
+        wb = get_workbook(name, namespace=namespace)
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(wb)
+
+    session.delete(wb)
 
 
 @b.session_aware()
@@ -2058,13 +2062,21 @@ def create_or_update_environment(name, values, session=None):
 
 @b.session_aware()
 def delete_environment(name, session=None):
-    count = _secure_query(models.Environment).filter(
-        models.Environment.name == name).delete()
+    # If several projects have an environment with the same name, delete the
+    # one of the current project, not a public one of another project.
+    env = _get_db_object_by_name_and_project(
+        models.Environment,
+        name,
+        security.get_project_id()
+    )
 
-    if count == 0:
-        raise exc.DBEntityNotFoundError(
-            "Environment not found [name=%s]" % name
-        )
+    if not env:
+        env = get_environment(name)
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(env)
+
+    session.delete(env)
 
 
 @b.session_aware()

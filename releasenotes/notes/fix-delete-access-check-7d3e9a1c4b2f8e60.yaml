@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    Fixed a cross-project isolation flaw when deleting workbooks and
+    environments. A regular (non-admin) project member could delete a
+    **public** resource belonging to another project, because the deletion
+    looked the object up with a query that includes other projects' public
+    resources and performed no ownership check. Deletions now resolve the
+    object within the caller's own project and enforce
+    ``check_db_obj_access()``, consistently with workflow and action
+    definitions.

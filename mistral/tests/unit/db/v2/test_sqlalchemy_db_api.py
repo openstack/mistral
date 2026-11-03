@@ -473,6 +473,61 @@ class WorkbookTest(SQLAlchemyTest):
             created.namespace
         )
 
+    def test_delete_other_project_workbook(self):
+        # A public workbook owned by another project.
+        auth_context.set_ctx(USER_CTX)
+
+        created = db_api.create_workbook(WORKBOOKS[0])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_workbook,
+            created.name,
+            created.namespace
+        )
+
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_workbook(created.name, created.namespace)
+
+        self.assertEqual(created.id, fetched.id)
+
+    def test_delete_other_project_workbook_by_admin(self):
+        created = db_api.create_workbook(WORKBOOKS[0])
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_workbook(created.name, created.namespace)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_workbook,
+            created.name,
+            created.namespace
+        )
+
+    def test_delete_workbook_prefers_own_project(self):
+        # Same-named public workbook in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_workbook(WORKBOOKS[0])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_workbook(WORKBOOKS[0])
+
+        db_api.delete_workbook(mine.name, mine.namespace)
+
+        # Only the other project's public workbook is left.
+        fetched = db_api.get_workbooks()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(other.id, fetched[0].id)
+
     def test_workbooks_in_two_projects(self):
         created = db_api.create_workbook(WORKBOOKS[1])
         fetched = db_api.get_workbooks()
@@ -2993,6 +3048,59 @@ class EnvironmentTest(SQLAlchemyTest):
             db_api.get_environment,
             created.name
         )
+
+    def test_delete_other_project_environment(self):
+        # A public environment owned by another project.
+        auth_context.set_ctx(USER_CTX)
+
+        created = db_api.create_environment(ENVIRONMENTS[1])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_environment,
+            created.name
+        )
+
+        auth_context.set_ctx(USER_CTX)
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual(created.id, fetched.id)
+
+    def test_delete_other_project_environment_by_admin(self):
+        created = db_api.create_environment(ENVIRONMENTS[1])
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_environment(created.name)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_environment,
+            created.name
+        )
+
+    def test_delete_environment_prefers_own_project(self):
+        # Same-named public environment in another project.
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_environment(ENVIRONMENTS[1])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_environment(ENVIRONMENTS[1])
+
+        db_api.delete_environment(mine.name)
+
+        # Only the other project's public environment is left.
+        fetched = db_api.get_environments()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(other.id, fetched[0].id)
 
     def test_delete_environments(self):
         created0 = db_api.create_environment(ENVIRONMENTS[0])
