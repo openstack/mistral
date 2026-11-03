@@ -92,7 +92,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         cfg.CONF.set_default(
             'execution_field_size_limit_kb',
-            0,
+            1,
             group='engine'
         )
 
@@ -139,7 +139,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertEqual(
             'Field size limit exceeded'
-            ' [class=TaskExecution, field=input, size=1KB, limit=0KB]',
+            ' [class=TaskExecution, field=input, size=2KB, limit=1KB]',
             str(e)
         )
 
@@ -156,7 +156,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self.assertIn(
             "Field size limit exceeded"
-            " [class=TaskExecution, field=input, size=1KB, limit=0KB]",
+            " [class=TaskExecution, field=input, size=2KB, limit=1KB]",
             wf_ex.state_info
         )
 
@@ -176,7 +176,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertIn(
             'Field size limit exceeded'
-            ' [class=TaskExecution, field=output, size=1KB, limit=0KB]',
+            ' [class=TaskExecution, field=output, size=2KB, limit=1KB]',
             wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -207,7 +207,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertIn(
             'Field size limit exceeded'
-            ' [class=TaskExecution, field=published, size=1KB, limit=0KB]',
+            ' [class=TaskExecution, field=published, size=2KB, limit=1KB]',
             task_ex.state_info
         )
 
@@ -226,7 +226,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertIn(
             'Field size limit exceeded'
-            ' [class=TaskExecution, field=params, size=1KB, limit=0KB]',
+            ' [class=TaskExecution, field=params, size=2KB, limit=1KB]',
             str(e)
         )
 

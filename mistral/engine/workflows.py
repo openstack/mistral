@@ -531,20 +531,10 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
 
-        length_output_on_error = len(str(output_on_error).encode("utf-8"))
-        total_output_length = utils.get_number_of_chars_from_kilobytes(
-            cfg.CONF.engine.execution_field_size_limit_kb)
-
-        if length_output_on_error < total_output_length:
-            msg = utils.cut_by_char(
-                msg,
-                total_output_length - length_output_on_error
-            )
-        else:
-            msg = utils.cut_by_kb(
-                msg,
-                cfg.CONF.engine.execution_field_size_limit_kb
-            )
+        msg = db_models.cut_to_size_limit(
+            msg,
+            lambda m: utils.merge_dicts({'result': m}, output_on_error)
+        )
 
         self.wf_ex.output = utils.merge_dicts({'result': msg}, output_on_error)
 
@@ -560,10 +550,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
-        msg = utils.cut_by_kb(
-            msg,
-            cfg.CONF.engine.execution_field_size_limit_kb
-        )
+        msg = db_models.cut_to_size_limit(msg, lambda m: {'result': m})
 
         self.wf_ex.output = {'result': msg}
 

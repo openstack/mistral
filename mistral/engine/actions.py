@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import post_tx_queue
 from mistral.engine import utils as engine_utils
 from mistral.engine import workflow_handler as wf_handler
@@ -66,10 +67,7 @@ class Action(object, metaclass=abc.ABCMeta):
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
-        msg = utils.cut_by_kb(
-            msg,
-            cfg.CONF.engine.execution_field_size_limit_kb
-        )
+        msg = db_models.cut_to_size_limit(msg, lambda m: {'result': m})
 
         self.action_ex.state = states.ERROR
         self.action_ex.output = {'result': msg}
