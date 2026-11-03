@@ -1,0 +1,12 @@
+---
+security:
+  - |
+    A new ``[engine]/max_subworkflow_depth`` option limits how deep
+    sub-workflows can be nested below a root execution. A task that would
+    start a deeper sub-workflow fails. Without it, a self-recursive workflow
+    could exhaust engine, database and executor capacity. It defaults to 0
+    (unlimited).
+upgrade:
+  - |
+    ``subworkflow_depth`` is now a reserved workflow param and is rejected
+    when creating an execution, a cron trigger or an event trigger.

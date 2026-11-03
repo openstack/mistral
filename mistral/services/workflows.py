@@ -32,7 +32,8 @@ INTERNAL_WF_PARAMS = (
     'task_execution_id',
     'root_execution_id',
     'index',
-    'triggered_by'
+    'triggered_by',
+    'subworkflow_depth'
 )
 
 

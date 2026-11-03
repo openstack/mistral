@@ -496,3 +496,89 @@ class SubworkflowsTest(base.EngineTestCase):
             for ex in db_api.get_workflow_executions():
                 self.assertNotEqual('foreign-task-id', ex.task_execution_id)
                 self.assertNotEqual('foreign-root-id', ex.root_execution_id)
+
+    def _create_recursive_wf(self):
+        wf_text = """
+        version: 2.0
+
+        wf:
+          input:
+            - level: -1
+          tasks:
+            check:
+              action: std.noop
+              on-success:
+                - recurse: <% $.level != 0 %>
+            recurse:
+              workflow: wf
+              input:
+                level: <% $.level - 1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+    def test_subworkflow_depth_limit(self):
+        self.override_config('max_subworkflow_depth', 3, 'engine')
+
+        self._create_recursive_wf()
+
+        wf_ex = self.engine.start_workflow('wf', subworkflow_depth=-100)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            self.assertEqual(4, len(wf_execs))
+
+            for ex in wf_execs:
+                self.assertEqual(states.ERROR, ex.state)
+
+            deepest = [
+                ex for ex in wf_execs
+                if ex.params.get('subworkflow_depth') == 3
+            ]
+
+            self.assertEqual(1, len(deepest))
+
+            task_ex = self._assert_single_item(
+                deepest[0].task_executions,
+                name='recurse'
+            )
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIn(
+            "maximum sub-workflow depth (3) exceeded",
+            task_ex.state_info
+        )
+
+    def test_subworkflow_depth_within_limit(self):
+        self.override_config('max_subworkflow_depth', 3, 'engine')
+
+        self._create_recursive_wf()
+
+        wf_ex = self.engine.start_workflow('wf', wf_input={'level': 3})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
+
+            depths = sorted(
+                ex.params['subworkflow_depth'] for ex in wf_execs
+                if ex.task_execution_id
+            )
+
+        self.assertEqual(4, len(wf_execs))
+        self.assertEqual([1, 2, 3], depths)
+
+    def test_subworkflow_depth_limit_disabled(self):
+        self.override_config('max_subworkflow_depth', 0, 'engine')
+
+        self._create_recursive_wf()
+
+        wf_ex = self.engine.start_workflow('wf', wf_input={'level': 5})
+
+        self.await_workflow_success(wf_ex.id)
+
+        self.assertEqual(6, len(db_api.get_workflow_executions()))

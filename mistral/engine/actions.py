@@ -375,6 +375,22 @@ class WorkflowAction(Action):
         self.validate_input(input_dict)
 
         parent_wf_ex = self.task_ex.workflow_execution
+
+        depth = parent_wf_ex.params.get('subworkflow_depth', 0)
+
+        if not isinstance(depth, int) or depth < 0:
+            depth = 0
+
+        depth += 1
+
+        max_depth = cfg.CONF.engine.max_subworkflow_depth
+
+        if max_depth and depth > max_depth:
+            raise exc.WorkflowException(
+                "Failed to start sub-workflow '%s': maximum sub-workflow"
+                " depth (%s) exceeded." % (self.wf_name, max_depth)
+            )
+
         parent_wf_spec = spec_parser.get_workflow_spec_by_execution_id(
             parent_wf_ex.id
         )
@@ -411,6 +427,8 @@ class WorkflowAction(Action):
                     k not in wf_service.INTERNAL_WF_PARAMS):
                 wf_params[k] = v
                 del input_dict[k]
+
+        wf_params['subworkflow_depth'] = depth
 
         if cfg.CONF.engine.start_subworkflows_via_rpc:
             def _start_subworkflow():

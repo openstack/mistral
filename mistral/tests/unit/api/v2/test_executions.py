@@ -660,7 +660,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post_with_internal_params(self, start_wf_func):
         for key in ('task_execution_id', 'root_execution_id', 'index',
-                    'triggered_by'):
+                    'triggered_by', 'subworkflow_depth'):
             json_body = WF_EX_JSON_WITH_DESC.copy()
             json_body['params'] = json.dumps(
                 {'env': {'k1': 'abc'}, key: uuidutils.generate_uuid()}
@@ -685,7 +685,8 @@ class TestExecutionsController(base.APITest):
             'task_execution_id': uuidutils.generate_uuid(),
             'root_execution_id': uuidutils.generate_uuid(),
             'index': 3,
-            'triggered_by': {'type': 'cron_trigger', 'id': '123'}
+            'triggered_by': {'type': 'cron_trigger', 'id': '123'},
+            'subworkflow_depth': 3
         }
 
         start_wf_func.return_value = SOURCE_WF_EX.to_dict()
@@ -704,7 +705,7 @@ class TestExecutionsController(base.APITest):
         self.assertEqual({'k1': 'abc'}, kwargs['env'])
 
         for key in ('task_execution_id', 'root_execution_id', 'index',
-                    'triggered_by'):
+                    'triggered_by', 'subworkflow_depth'):
             self.assertNotIn(key, kwargs)
 
     @mock.patch.object(

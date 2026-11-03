@@ -340,6 +340,10 @@ Note: Typical use for the dynamic sub-workflow selection is when parts of a
 workflow can be customized. E.g. collect some weather data and then execute
 some custom workflow on it.
 
+Note: Sub-workflows can be nested (a workflow may even start itself) up to
+the depth set by the ``[engine]/max_subworkflow_depth`` configuration option
+(unlimited by default). A task that would start a deeper sub-workflow fails.
+
 
 Policies
 ''''''''

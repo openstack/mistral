@@ -345,6 +345,14 @@ engine_opts = [
                'workflow execution, e.g. in a loop. Above it, the task and '
                'the workflow fail, without running "on-error", so that '
                'a loop cannot go on through it. 0 means no limit.')
+    ),
+    cfg.IntOpt(
+        'max_subworkflow_depth',
+        default=0,
+        min=0,
+        help=_('Maximum nesting depth of sub-workflows below a root '
+               'workflow execution. A task that would start a deeper '
+               'sub-workflow fails. 0 means no limit.')
     )
 ]
 
