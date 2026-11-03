@@ -235,7 +235,7 @@ pecan_opts = [
 
 engine_opts = [
     cfg.StrOpt('engine', default='default', help='Mistral engine plugin'),
-    cfg.HostAddressOpt(
+    cfg.StrOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the engine node. This can be an opaque '
@@ -334,7 +334,7 @@ executor_opts = [
             'a separate server to run action executions.'
         )
     ),
-    cfg.HostAddressOpt(
+    cfg.StrOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the executor node. This can be an any string '
@@ -483,14 +483,14 @@ cron_trigger_opts = [
 ]
 
 event_engine_opts = [
-    cfg.HostAddressOpt(
+    cfg.StrOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the event engine node. This can be an opaque '
                'identifier. It is not necessarily a hostname, '
                'FQDN, or IP address.')
     ),
-    cfg.HostAddressOpt(
+    cfg.StrOpt(
         'listener_pool_name',
         default='events',
         help=_('Name of the event engine\'s listener pool. This can be an'
