@@ -97,10 +97,24 @@ directory.
     connection = mysql+pymysql://<user>:<password>@<database-host>:3306/mistral
 
 #. **If you are not using OpenStack, skip this item.**
-   Update ``mistral/actions/openstack/mapping.json`` file which contains all
-   allowed OpenStack actions, according to the specific client versions
-   of OpenStack projects in your deployment. Please find more detailed
-   information in ``tools/get_action_list.py`` script.
+   OpenStack actions are provided by the ``mistral-extra`` package, which
+   generates them from its ``mistral_extra/actions/openstack/mapping.json``
+   file. If the client versions of OpenStack projects in your deployment
+   need a different mapping, copy this file, adjust it and set the path to
+   your copy in Mistral config::
+
+    [DEFAULT]
+    openstack_actions_mapping_path = /etc/mistral/mapping.json
+
+   The ``tools/get_action_list.py`` script of the ``mistral-extra``
+   repository helps to build the list of actions for a given client.
+
+   Actions loaded by Mistral can also be restricted. The ``allowlist`` and
+   ``denylist`` options of the ``[action_providers]`` section filter action
+   providers, the same options of the ``[legacy_action_provider]`` section
+   filter actions plugged in with the ``mistral.actions`` entry point, and
+   ``load_action_generators = False`` in ``[legacy_action_provider]``
+   disables generated actions such as the OpenStack ones.
 
 #. Configure merge strategy feature if needed, It is needed to change default
    Mistral variable interaction behavior of replacing one variable with another
