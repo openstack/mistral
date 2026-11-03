@@ -22,6 +22,7 @@ import time
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_log import versionutils
 from oslo_utils import importutils
 from osprofiler import profiler
 
@@ -100,6 +101,12 @@ def _schedule_call(factory_method_path, target_method_name,
 
 class LegacyScheduler(sched_base.Scheduler):
     def __init__(self, conf):
+        versionutils.report_deprecated_feature(
+            LOG,
+            'The legacy scheduler is deprecated and will be removed in a '
+            'future release. Set scheduler_type to "default" instead.'
+        )
+
         self._stopped = False
         self._thread = threading.Thread(target=self._loop)
         self._thread.daemon = True

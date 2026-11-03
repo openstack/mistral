@@ -361,7 +361,11 @@ scheduler_type_opt = cfg.StrOpt(
     'scheduler_type',
     default='default',
     choices=['legacy', 'default'],
-    help=_('The name of the scheduler implementation used in the system.')
+    help=_(
+        'The name of the scheduler implementation used in the system. '
+        'The "legacy" scheduler is deprecated and will be removed in a '
+        'future release.'
+    )
 )
 
 scheduler_opts = [
