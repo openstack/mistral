@@ -14,8 +14,11 @@
 
 import copy
 import datetime
+import sys
 
 from mistral.db.v2.sqlalchemy import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
+from mistral import exceptions as exc
 from mistral.tests.unit import base as test_base
 from mistral_lib import utils
 
@@ -89,3 +92,44 @@ class DBModelTest(test_base.DbTestCase):
         del actual['created_at']
 
         self.assertDictEqual(expected, actual)
+
+    def test_field_size_limit_is_exact(self):
+        self.override_config('execution_field_size_limit_kb', 1, 'engine')
+
+        max_len = 1024 - sys.getsizeof(str({'r': ''}))
+
+        wf_ex = db_models.WorkflowExecution()
+
+        wf_ex.output = {'r': 'A' * max_len}
+
+        self.assertRaises(
+            exc.SizeLimitExceededException,
+            setattr,
+            wf_ex,
+            'output',
+            {'r': 'A' * (max_len + 1)}
+        )
+
+    def test_cut_to_size_limit(self):
+        self.override_config('execution_field_size_limit_kb', 1, 'engine')
+
+        msg = db_models.cut_to_size_limit(
+            'A\n' * 1024,
+            lambda m: {'result': m}
+        )
+
+        self.assertTrue(msg.endswith('...'))
+
+        wf_ex = db_models.WorkflowExecution()
+
+        wf_ex.output = {'result': msg}
+
+    def test_cut_to_size_limit_unlimited(self):
+        self.override_config('execution_field_size_limit_kb', -1, 'engine')
+
+        msg = 'A' * 4096
+
+        self.assertEqual(
+            msg,
+            db_models.cut_to_size_limit(msg, lambda m: {'result': m})
+        )

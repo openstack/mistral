@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The ``[engine]/execution_field_size_limit_kb`` check now compares the
+    exact field size against the limit. Previously the size was truncated
+    to whole kilobytes, so values up to almost 1 KB over the limit were
+    accepted. Error outputs that are truncated to fit the limit are now
+    cut so that the whole stored value fits. See `bug 1797136
+    <https://bugs.launchpad.net/mistral/+bug/1797136>`_.

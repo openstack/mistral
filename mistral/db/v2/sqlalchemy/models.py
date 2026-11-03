@@ -17,6 +17,7 @@
 import datetime
 import hashlib
 import json
+import math
 import sys
 
 from oslo_config import cfg
@@ -54,6 +55,25 @@ def _get_hash_function_by(column_name):
     return calc_hash
 
 
+def _get_size(value):
+    return sys.getsizeof(str(value))
+
+
+def cut_to_size_limit(msg, wrap):
+    """Truncates msg so that wrap(msg) fits into the field size limit."""
+    size_limit_kb = cfg.CONF.engine.execution_field_size_limit_kb
+
+    if size_limit_kb < 0:
+        return msg
+
+    excess = _get_size(wrap(msg)) - size_limit_kb * 1024
+
+    if excess <= 0:
+        return msg
+
+    return utils.cut_string(msg, max(len(msg) - excess - 3, 0))
+
+
 def validate_long_type_length(cls, field_name, value):
     """Makes sure the value does not exceeds the maximum size."""
     if value:
@@ -64,16 +84,16 @@ def validate_long_type_length(cls, field_name, value):
         if size_limit_kb < 0:
             return
 
-        size_kb = int(sys.getsizeof(str(value)) / 1024)
+        size = _get_size(value)
 
-        if size_kb > size_limit_kb:
+        if size > size_limit_kb * 1024:
             msg = (
                 "Field size limit exceeded"
                 " [class={}, field={}, size={}KB, limit={}KB]"
             ).format(
                 cls.__name__,
                 field_name,
-                size_kb,
+                math.ceil(size / 1024),
                 size_limit_kb
             )
 
