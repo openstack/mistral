@@ -102,7 +102,8 @@ The most important one is "Mistral-Action-Execution-Id" which contains an id
 of action execution that we need to calculate result for. Using that id a 3rd
 party can deliver a result back to Mistral once it's calculated. If a 3rd party
 is a computer system it can just call Mistral API via HTTP using header
-"Mistral-Callback-URL" which contains a base URL. However, a human can also do
+"Mistral-Callback-URL" which contains the path of the action execution
+resource, relative to the Mistral API endpoint. However, a human can also do
 it, the simplest way is just to use Mistral CLI.
 
 Of course, this is a practically meaningless example. It doesn't make sense to
@@ -132,17 +133,22 @@ Using CLI:
 
  .. code-block:: console
 
-  $ mistral action-execution-update <id> --state SUCCESS --output 3
+  $ mistral action-execution-update <id> --state SUCCESS --output '{"sum": 3}'
 
 This command will update "state" and "output" of action execution object with
 corresponding id. That way Mistral will know what the result of this action
 is and decide how to proceed with workflow execution.
 
-Using raw HTTP::
+Using raw HTTP, send a PUT request to the Mistral API endpoint (for example
+``http://<mistral-host>:8989``) followed by the value of
+"Mistral-Callback-URL", which is ``/v2/action_executions/<id>``::
 
-  POST <Mistral-Callback-URL>/v2/action-executions/<id>
+  PUT <Mistral-API-URL>/v2/action_executions/<id>
+  Content-Type: application/json
 
   {
     "state": "SUCCESS",
-    "output": 3
+    "output": {"sum": 3}
   }
+
+Note that "output" must be a JSON object.
