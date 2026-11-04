@@ -15,6 +15,9 @@
 from os import path
 
 import io
+import ipaddress
+import re
+import shlex
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -86,6 +89,30 @@ def _to_paramiko_private_key(private_key_filename,
     return None
 
 
+_HOSTNAME_RE = re.compile(
+    r'[A-Za-z0-9]([A-Za-z0-9_-]{0,61}[A-Za-z0-9])?'
+    r'(\.[A-Za-z0-9]([A-Za-z0-9_-]{0,61}[A-Za-z0-9])?)*'
+)
+
+
+def _validate_host_literal(host):
+    if isinstance(host, str):
+        try:
+            ip = ipaddress.ip_address(host)
+        except ValueError:
+            ip = None
+
+        if ip is not None:
+            if not getattr(ip, 'scope_id', None):
+                return
+        elif len(host) <= 253 and _HOSTNAME_RE.fullmatch(host):
+            return
+
+    raise exc.ActionException(
+        "Invalid host: it must be a hostname or an IP address."
+    )
+
+
 def _connect(host, username, password=None, pkey=None, proxy=None):
     LOG.debug('Creating SSH connection to %s', host)
 
@@ -138,6 +165,8 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
                                 private_key=None):
     LOG.debug('Creating SSH connection')
 
+    _validate_host_literal(host)
+
     private_key = _to_paramiko_private_key(private_key_filename,
                                            private_key,
                                            password)
@@ -185,7 +214,7 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
     )
 
     proxy = _proxy_ssh_client.get_transport().open_session()
-    proxy.exec_command("nc {0} 22".format(host))
+    proxy.exec_command("nc {0} 22".format(shlex.quote(host)))
 
     ssh_client = _connect(
         host,

