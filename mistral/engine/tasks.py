@@ -202,7 +202,12 @@ class Task(object, metaclass=abc.ABCMeta):
         runtime_context = self.task_ex.runtime_context
 
         if runtime_context:
+            triggered_by = runtime_context.get('triggered_by')
+
             runtime_context.clear()
+
+            if triggered_by:
+                runtime_context['triggered_by'] = triggered_by
 
     def get_policy_context(self, key):
         assert self.task_ex
@@ -289,12 +294,15 @@ class Task(object, metaclass=abc.ABCMeta):
                 if self.set_state(states.WAITING, msg) and new_pass:
                     self.task_ex.started_at = None
                     self.task_ex.finished_at = None
+                    self.task_ex.next_tasks = []
                     self.task_ex.processed = False
 
                     for key in ('wait_before_policy', 'wait_after_policy',
                                 'retry_task_policy', 'timeout_policy',
                                 policies._TIMED_OUT_KEY):
                         self.task_ex.runtime_context.pop(key, None)
+
+                    self.task_ex.runtime_context['new_pass'] = True
 
     def reset(self):
         self.reset_flag = True
@@ -711,6 +719,9 @@ class RegularTask(Task):
 
         self._update_inbound_context()
         self._update_triggered_by()
+
+        if self.rerun:
+            self.cleanup_runtime_context()
 
         if self.rerun or first_start:
             self._before_task_start()

@@ -120,6 +120,13 @@ def create_task(wf_cmd, first_run):
         task.set_state(states.WAITING, 'Task is waiting.')
 
         _schedule_refresh_task_state(task.task_ex.id)
+    elif (task.rerun and wf_cmd.triggered_by and
+            states.is_completed(task.task_ex.state)):
+        # Leave ERROR now so a parallel branch can't fail the workflow
+        # before the task is started.
+        task.set_state(states.RUNNING, None, processed=False)
+
+        task.task_ex.in_context = wf_cmd.ctx
 
     if first_run:
         task.create_new()

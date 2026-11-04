@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Rerunning a task no longer creates a new execution for a downstream
+    task that it had already triggered and that failed or was cancelled.
+    That execution is rerun instead, so the workflow can succeed.
+    See https://launchpad.net/bugs/1815190.

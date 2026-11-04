@@ -107,12 +107,12 @@ class RunExistingTask(WorkflowCommand):
     """Command to run an existing workflow task."""
 
     def __init__(self, wf_ex, wf_spec, task_ex, reset=True, triggered_by=None,
-                 handles_error=False, rerun=False):
+                 handles_error=False, rerun=False, ctx=None):
         super(RunExistingTask, self).__init__(
             wf_ex,
             wf_spec,
             spec_parser.get_task_spec(task_ex.spec),
-            task_ex.in_context,
+            task_ex.in_context if ctx is None else ctx,
             triggered_by=triggered_by,
             handles_error=handles_error
         )

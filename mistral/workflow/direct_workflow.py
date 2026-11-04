@@ -131,6 +131,7 @@ class DirectWorkflowController(base.WorkflowController):
         """
 
         cmds = []
+        reused_ids = set()
 
         ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
@@ -149,16 +150,39 @@ class DirectWorkflowController(base.WorkflowController):
                 }
             ]
 
-            cmd = commands.create_command(
-                t_n,
-                self.wf_ex,
-                self.wf_spec,
-                t_s,
-                ctx,
-                params=params,
-                triggered_by=triggered_by,
-                handles_error=(event_name == 'on-error')
-            )
+            failed_t_ex = None
+
+            if t_n not in commands.ENGINE_CMD_CLS:
+                failed_t_ex = self._find_failed_downstream_task_execution(
+                    task_ex,
+                    t_s,
+                    reused_ids
+                )
+
+            if failed_t_ex:
+                reused_ids.add(failed_t_ex.id)
+
+                cmd = commands.RunExistingTask(
+                    self.wf_ex,
+                    self.wf_spec,
+                    failed_t_ex,
+                    reset=True,
+                    triggered_by=triggered_by,
+                    handles_error=(event_name == 'on-error'),
+                    rerun=True,
+                    ctx=ctx
+                )
+            else:
+                cmd = commands.create_command(
+                    t_n,
+                    self.wf_ex,
+                    self.wf_spec,
+                    t_s,
+                    ctx,
+                    params=params,
+                    triggered_by=triggered_by,
+                    handles_error=(event_name == 'on-error')
+                )
 
             self._configure_if_join(cmd)
 
@@ -167,6 +191,39 @@ class DirectWorkflowController(base.WorkflowController):
         LOG.debug("Found commands: %s", cmds)
 
         return cmds
+
+    def _find_failed_downstream_task_execution(self, task_ex, task_spec,
+                                               exclude_ids):
+        """Finds a failed execution of task_spec triggered by task_ex.
+
+        It exists when task_ex was rerun after it had already triggered it.
+        """
+
+        if (task_spec.get_join() or
+                (task_ex.runtime_context or {}).get('new_pass')):
+            return None
+
+        t_name = task_spec.get_name()
+
+        if t_name not in [t[0] for t in task_ex.next_tasks or []]:
+            return None
+
+        t_execs = self._get_task_executions(
+            name=t_name,
+            state={'in': (states.ERROR, states.CANCELLED)}
+        )
+
+        # Prefer the unhandled failure over one from an earlier loop pass.
+        for t_ex in sorted(t_execs, key=lambda t: bool(t.error_handled)):
+            if t_ex.id in exclude_ids:
+                continue
+
+            triggers = t_ex.runtime_context.get('triggered_by') or []
+
+            if any(t['task_id'] == task_ex.id for t in triggers):
+                return t_ex
+
+        return None
 
     def _configure_if_join(self, cmd):
         if not isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
