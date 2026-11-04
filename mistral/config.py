@@ -679,10 +679,32 @@ action_logging_opts = [
             'body will be hidden in logs.'
         )
     ),
+    cfg.IntOpt(
+        'response_body_log_limit',
+        default=1024,
+        min=0,
+        help=(
+            'Maximum length of the HTTP action response body written to '
+            'the logs (at DEBUG level). Longer bodies are truncated. '
+            '0 disables truncation.'
+        )
+    ),
     cfg.ListOpt(
         'sensitive_headers',
-        default=[],
-        help='List of sensitive headers that should be hidden in logs.'
+        default=[
+            'Authorization',
+            'Proxy-Authorization',
+            'Cookie',
+            'Set-Cookie',
+            'X-Auth-Token',
+            'X-Subject-Token',
+            'X-Service-Token',
+            'X-Api-Key',
+        ],
+        help=(
+            'List of sensitive headers that should be hidden in logs. '
+            'Header names are matched case-insensitively.'
+        )
     )
 ]
 

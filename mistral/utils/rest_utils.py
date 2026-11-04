@@ -344,10 +344,13 @@ def load_deferred_fields(ex, fields):
 def clear_sensitive_headers(dirty_data):
     if not dirty_data:
         return dirty_data
+    sensitive = {
+        h.lower() for h in cfg.CONF.action_logging.sensitive_headers
+    }
     clean_data = dirty_data.copy()
-    for sensitive in cfg.CONF.action_logging.sensitive_headers:
-        if sensitive in clean_data:
-            del clean_data[sensitive]
+    for key in list(clean_data):
+        if str(key).lower() in sensitive:
+            del clean_data[key]
     return clean_data
 
 
@@ -358,6 +361,9 @@ def prepare_request_body_log(body):
 
 
 def prepare_response_body_log(body):
-    if not cfg.CONF.action_logging.hide_response_body:
-        return body
-    return 'Response body hidden due to action_logging configuration.'
+    if cfg.CONF.action_logging.hide_response_body:
+        return 'Response body hidden due to action_logging configuration.'
+    limit = cfg.CONF.action_logging.response_body_log_limit
+    if limit and body and len(body) > limit:
+        return '%s... (truncated, total length %d)' % (body[:limit], len(body))
+    return body

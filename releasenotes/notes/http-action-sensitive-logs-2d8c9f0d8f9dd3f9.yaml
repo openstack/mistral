@@ -1,0 +1,15 @@
+---
+security:
+  - |
+    ``std.http`` no longer logs credentials and full response bodies by
+    default. ``[action_logging] sensitive_headers`` now defaults to the usual
+    authentication headers and is matched case-insensitively, sensitive keys
+    of the ``json`` payload are masked, the raw request ``body`` is no
+    longer logged, and the response body is logged at
+    DEBUG only, truncated to the new ``[action_logging]
+    response_body_log_limit``.
+upgrade:
+  - |
+    Setting ``[action_logging] sensitive_headers`` replaces the new default
+    list (``Authorization``, ``X-Auth-Token``, ``Cookie``, ...). The
+    ``std.http`` response body moved from INFO to DEBUG.

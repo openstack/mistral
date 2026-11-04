@@ -191,14 +191,8 @@ class HTTPActionTest(base.BaseTest):
         self.assertIsNone(result['encoding'])
 
     @mock.patch.object(requests, 'request')
-    def test_http_action_hides_request_body_if_needed(self, mocked_method):
-        self.override_config(
-            'hide_request_body',
-            True,
-            group='action_logging'
-        )
-
-        sensitive_data = 'I actually love anime.'
+    def test_http_action_does_not_log_request_body(self, mocked_method):
+        sensitive_data = '{"password": "hunter2"}'
 
         action = std.HTTPAction(url=URL, method='POST', body=sensitive_data)
 
@@ -212,10 +206,35 @@ class HTTPActionTest(base.BaseTest):
 
         self.assertEqual(2, len(logs.output))  # Request and response loglines
 
-        log = logs.output[0]  # Request log
-        msg = "Request body hidden due to action_logging configuration."
-        self.assertNotIn(sensitive_data, log)
-        self.assertIn(msg, log)
+        self.assertNotIn('hunter2', logs.output[0])
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_request_json(self, mocked_method):
+        action = std.HTTPAction(
+            url=URL,
+            method='POST',
+            json={'user': 'admin', 'password': 'hunter2'}
+        )
+
+        mocked_method.return_value = get_fake_response(content='', code=201)
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock.Mock())
+
+        self.assertNotIn('hunter2', logs.output[0])
+        self.assertIn("'user': 'admin'", logs.output[0])
+
+        self.override_config('hide_request_body', True,
+                             group='action_logging')
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock.Mock())
+
+        self.assertNotIn('admin', logs.output[0])
+        self.assertEqual(
+            'hunter2',
+            mocked_method.call_args[1]['json']['password']
+        )
 
     @mock.patch.object(requests, 'request')
     def test_http_action_hides_request_headers_if_needed(self, mocked_method):
@@ -263,12 +282,60 @@ class HTTPActionTest(base.BaseTest):
         )
         mock_ctx = mock.Mock()
 
-        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+        with self.assertLogs(logger=ACTION_LOGGER, level='DEBUG') as logs:
             action.run(mock_ctx)
 
-        self.assertEqual(2, len(logs.output))  # Request and response loglines
-
-        log = logs.output[1]  # Response log
+        log = '\n'.join(logs.output)
         msg = "Response body hidden due to action_logging configuration."
         self.assertNotIn(sensitive_data, log)
         self.assertIn(msg, log)
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_logs_response_body_at_debug(self, mocked_method):
+        action = std.HTTPAction(url=URL, method='GET')
+
+        sensitive_data = 'I actually love anime.'
+
+        mocked_method.return_value = get_fake_response(
+            content=sensitive_data, code=200
+        )
+        mock_ctx = mock.Mock()
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock_ctx)
+
+        self.assertEqual(2, len(logs.output))
+        self.assertNotIn(sensitive_data, '\n'.join(logs.output))
+        self.assertIn('HTTP action response: 200', logs.output[1])
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='DEBUG') as logs:
+            action.run(mock_ctx)
+
+        self.assertIn(sensitive_data, '\n'.join(logs.output))
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_default_sensitive_headers(self, mocked_method):
+        headers = {
+            'authorization': 'Bearer 13e7aa3fc23e50bc1529dc136791d34d',
+            'X-Auth-Token': 'gAAAAABkeystonetoken',
+            'Accept': 'application/json'
+        }
+
+        action = std.HTTPAction(url=URL, method='GET', headers=headers)
+
+        mocked_method.return_value = get_fake_response(
+            content='', code=200
+        )
+        mock_ctx = mock.Mock()
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock_ctx)
+
+        log = logs.output[0]
+        self.assertNotIn(headers['authorization'], log)
+        self.assertNotIn(headers['X-Auth-Token'], log)
+        self.assertIn("headers={'Accept': 'application/json'}", log)
+        self.assertEqual(
+            headers['authorization'],
+            mocked_method.call_args[1]['headers']['authorization']
+        )

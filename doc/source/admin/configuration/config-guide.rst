@@ -273,7 +273,13 @@ directory.
    - **hide_response_body**
 
     If this value is set to *True* then HTTP action response
-    body will be hidden in logs. Default is *False*
+    body will be hidden in logs. Default is *False*. The response body is
+    only logged at DEBUG level.
+
+   - **response_body_log_limit**
+
+    Maximum length of the HTTP action response body written to the logs.
+    Longer bodies are truncated. *0* disables truncation. Default is *1024*.
 
    - **hide_request_body**
 
@@ -282,7 +288,10 @@ directory.
 
    - **sensitive_headers**
 
-    List of sensitive headers that should be hidden in logs. Default is empty.
+    List of sensitive headers that should be hidden in logs, matched
+    case-insensitively. Default is *Authorization, Proxy-Authorization,
+    Cookie, Set-Cookie, X-Auth-Token, X-Subject-Token, X-Service-Token,
+    X-Api-Key*. Setting this option replaces the default list.
 
 #. Configure event publishers. Event publishers are plugins that are
    optionally installed in the same virtual environment as Mistral.

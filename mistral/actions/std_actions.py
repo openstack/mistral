@@ -232,7 +232,8 @@ class HTTPAction(actions.Action):
 
         # Redact credentials so they never reach the logs: 'auth' holds an
         # HTTP Basic/Digest password or a bearer token, 'cookies' hold
-        # session secrets, and 'params' may carry tokens/API keys.
+        # session secrets, and 'params' may carry tokens/API keys. The raw
+        # 'body' is not logged at all.
         if isinstance(self.auth, tuple):
             safe_auth = (self.auth[0], '***') if len(self.auth) > 1 else '***'
         elif self.auth:
@@ -244,14 +245,15 @@ class HTTPAction(actions.Action):
 
         LOG.info(
             "Running HTTP action "
-            "[url=%s, method=%s, params=%s, body=%s, json=%s,"
+            "[url=%s, method=%s, params=%s, json=%s,"
             " headers=%s, cookies=%s, auth=%s, timeout=%s,"
             " allow_redirects=%s, proxies=%s, verify=%s]",
             self.url,
             self.method,
             redact.redact_sensitive(self.params),
-            rest_utils.prepare_request_body_log(self.body),
-            self.json,
+            rest_utils.prepare_request_body_log(
+                redact.redact_sensitive(self.json)
+            ),
             rest_utils.clear_sensitive_headers(self.headers),
             safe_cookies,
             safe_auth,
@@ -313,9 +315,9 @@ class HTTPAction(actions.Action):
                     "limit=%s bytes)." % (content_length, max_size)
                 )
 
-        LOG.info(
-            "HTTP action response:\n%s\n%s",
-            resp.status_code,
+        LOG.info("HTTP action response: %s", resp.status_code)
+        LOG.debug(
+            "HTTP action response body:\n%s",
             rest_utils.prepare_response_body_log(resp.content)
         )
 
