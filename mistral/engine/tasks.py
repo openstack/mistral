@@ -1071,14 +1071,23 @@ class WithItemsTask(RegularTask):
 
         accepted = _get_indexes(self._get_accepted_executions())
         unaccepted = _get_indexes(self._get_unaccepted_executions())
+        running = _get_indexes(
+            [x for x in self.task_ex.executions
+             if not states.is_completed(x.state)]
+        )
 
-        candidates = sorted(list(set(unaccepted) - set(accepted)))
+        busy = set(accepted) | set(running)
+
+        candidates = sorted(list(set(unaccepted) - busy))
 
         if candidates:
             indices = copy.copy(candidates)
 
             if max(candidates) < count - 1:
-                indices += list(range(max(candidates) + 1, count))
+                indices += [
+                    i for i in range(max(candidates) + 1, count)
+                    if i not in busy
+                ]
         else:
             i = self._get_next_start_index()
 

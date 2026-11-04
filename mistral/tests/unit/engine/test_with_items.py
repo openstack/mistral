@@ -1071,6 +1071,46 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(6, len(task1_execs))
         self._assert_multiple_items(task1_execs, 2, accepted=True)
 
+    def test_with_items_concurrency_retry_continue_on(self):
+        wf_text = """---
+        version: "2.0"
+
+        wf:
+          tasks:
+            task1:
+              with-items: i in <% range(0, 6) %>
+              action: std.echo output=<% $.i %>
+              concurrency: 2
+              retry:
+                count: 1
+                delay: 0
+                continue-on: <% task().result %>
+              publish:
+                result: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+            published = task1_ex.published
+            indexes = sorted(
+                ex.runtime_context['index'] for ex in task1_ex.executions
+            )
+
+        self.assertEqual(list(range(6)), published['result'])
+        self.assertEqual(sorted(list(range(6)) * 2), indexes)
+
     def test_with_items_env(self):
         wf_text = """---
         version: "2.0"

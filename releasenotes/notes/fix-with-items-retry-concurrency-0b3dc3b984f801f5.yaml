@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Fixed a retried "with-items" task with "concurrency" running some
+    items several times and skipping others, so that the task result
+    contained duplicated values. See `bug 1892043
+    <https://bugs.launchpad.net/mistral/+bug/1892043>`_.
