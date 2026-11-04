@@ -104,6 +104,38 @@ workflows:
 """
 
 
+WORKBOOK_TWO_BRANCHES_JOIN = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        on-complete:
+          - task2
+          - task3
+          - pause
+
+      task2:
+        action: std.echo output="Task 2"
+        on-success: task4
+
+      task3:
+        action: std.echo output="Task 3"
+        on-success: task4
+
+      task4:
+        action: std.echo output="Task 4"
+        join: 2
+"""
+
+
 WORKBOOK_TWO_START_TASKS = """
 ---
 version: '2.0'
@@ -229,6 +261,39 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         # We can see 3 tasks in execution.
         self.assertEqual(3, len(task_execs))
+
+    def test_resume_two_branches_join(self):
+        wb_service.create_workbook_v2(WORKBOOK_TWO_BRANCHES_JOIN)
+
+        wf_ex = self.engine.start_workflow('wb.wf1')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task2_ex = self._assert_single_item(task_execs, name='task2')
+        task3_ex = self._assert_single_item(task_execs, name='task3')
+
+        self.await_task_success(task2_ex.id)
+        self.await_task_success(task3_ex.id)
+
+        wf_ex = self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(4, len(task_execs))
+
+        task4_ex = self._assert_single_item(task_execs, name='task4')
+
+        self.assertEqual(states.SUCCESS, task4_ex.state)
 
     def test_resume_two_start_tasks(self):
         wb_service.create_workbook_v2(WORKBOOK_TWO_START_TASKS)
