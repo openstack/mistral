@@ -149,7 +149,11 @@ def acquire_lock(model, id, session=None):
 
 def _lock_entity(model, id):
     # Get entity by ID in "FOR UPDATE" mode and expect exactly one object.
-    return _secure_query(model).with_for_update().filter(model.id == id).one()
+    insecure = context.has_ctx() and context.ctx().is_admin
+
+    query = b.model_query(model) if insecure else _secure_query(model)
+
+    return query.with_for_update().filter(model.id == id).one()
 
 
 @b.session_aware()

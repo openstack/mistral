@@ -269,7 +269,9 @@ def continue_task(task_ex):
 
     try:
         with db_api.named_lock('continue-task-%s' % task_ex.id):
-            task.set_state(states.RUNNING, None)
+            if not task.set_state(states.RUNNING, None):
+                return
+
             task.run()
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution

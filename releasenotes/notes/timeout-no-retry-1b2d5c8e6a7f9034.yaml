@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    A task that hits its ``timeout`` policy is no longer retried by its
+    ``retry`` policy, and a retry iteration that was already scheduled
+    when the timeout fired no longer runs the task again. The timed out
+    task now stays in ERROR. See `bug 1767352
+    <https://bugs.launchpad.net/mistral/+bug/1767352>`_.
+upgrade:
+  - |
+    Workflows combining ``timeout`` and ``retry`` on a task no longer retry
+    it when the timeout fires: ``timeout`` now bounds the whole task,
+    including all its retry iterations. Raise the task ``timeout`` if
+    retries after a slow attempt are expected.

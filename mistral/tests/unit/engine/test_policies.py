@@ -20,6 +20,8 @@ from oslo_utils import importutils
 import requests
 
 from mistral.actions import std_actions
+from mistral import context as auth_context
+from mistral.db.sqlalchemy import base as db_base
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
@@ -31,6 +33,7 @@ from mistral.rpc import clients as rpc
 from mistral.scheduler import base as sched_base
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
+from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
@@ -1999,6 +2002,228 @@ class PoliciesTest(base.EngineTestCase):
 
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(task_execs))
+
+    def test_timeout_policy_with_retry(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.async_noop
+              timeout: 1
+              retry:
+                count: 3
+                delay: 0
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertIn('Task timed out', task_ex.state_info)
+            self.assertEqual(1, len(task_ex.action_executions))
+            self.assertNotIn('retry_task_policy', task_ex.runtime_context)
+
+    def test_timeout_policy_during_retry_delay(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.fail
+              timeout: 1
+              retry:
+                count: 3
+                delay: 3
+              on-error: task2
+
+            task2:
+              action: std.async_noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.await_task_error(task_ex.id, delay=0.2)
+
+        self._await(
+            lambda: not db_api.get_scheduled_jobs_count(
+                func_name=policies._CONTINUE_TASK_PATH
+            ),
+            delay=0.2
+        )
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertIn('Task timed out', task_ex.state_info)
+            self.assertEqual(1, len(task_ex.action_executions))
+
+    def test_retry_job_fires_after_timeout_while_paused(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.fail
+              retry:
+                count: 3
+                delay: 60
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex_id = wf_ex.task_executions[0].id
+
+        self.await_task_delayed(task_ex_id)
+
+        self.engine.pause_workflow(wf_ex.id)
+
+        self.await_workflow_paused(wf_ex.id)
+
+        @db_base.session_aware()
+        def _timeout_and_resume(session=None):
+            task_table = models.TaskExecution.__table__
+            wf_table = models.WorkflowExecution.__table__
+
+            session.execute(
+                task_table.update().where(
+                    task_table.c.id == task_ex_id
+                ).values(state=states.ERROR)
+            )
+            session.execute(
+                wf_table.update().where(
+                    wf_table.c.id == wf_ex.id
+                ).values(state=states.RUNNING)
+            )
+
+        acquire_lock = db_api.acquire_lock
+
+        def _acquire_lock(*args, **kwargs):
+            _timeout_and_resume()
+
+            return acquire_lock(*args, **kwargs)
+
+        with mock.patch.object(db_api, 'acquire_lock', _acquire_lock):
+            policies._continue_task(task_ex_id)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(1, len(task_ex.action_executions))
+
+    def test_timeout_policy_concurrent_update(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.async_noop
+              retry:
+                count: 3
+                delay: 60
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex_id = wf_ex.task_executions[0].id
+
+        self.await_task_running(task_ex_id)
+
+        retry_ctx = {'retry_task_policy': {'retry_no': 1}}
+
+        @db_base.session_aware()
+        def _concurrent_update(session=None):
+            table = models.TaskExecution.__table__
+
+            session.execute(
+                table.update().where(table.c.id == task_ex_id).values(
+                    state=states.RUNNING_DELAYED,
+                    runtime_context=retry_ctx
+                )
+            )
+
+        load = db_api.load_task_execution
+
+        def _load(*args, **kwargs):
+            task_ex = load(*args, **kwargs)
+
+            _concurrent_update()
+
+            return task_ex
+
+        with mock.patch.object(db_api, 'load_task_execution', _load):
+            policies._fail_task_if_incomplete(task_ex_id, 1)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(
+                {'retry_no': 1},
+                task_ex.runtime_context['retry_task_policy']
+            )
+            self.assertTrue(task_ex.runtime_context['timed_out'])
+
+    def test_timeout_policy_admin_other_project(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.async_noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex_id = wf_ex.task_executions[0].id
+
+        self.await_task_running(task_ex_id)
+
+        self.override_config('auth_enable', True, group='pecan')
+
+        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+
+        policies._fail_task_if_incomplete(task_ex_id, 1)
+
+        auth_context.set_ctx(self.ctx)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertIn('Task timed out', task_ex.state_info)
 
     def test_timeout_policy_from_var(self):
         wb_service.create_workbook_v2(TIMEOUT_FROM_VAR)

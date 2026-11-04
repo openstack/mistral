@@ -32,6 +32,7 @@ _COMPLETE_TASK_PATH = 'mistral.engine.policies._complete_task'
 _FAIL_IF_INCOMPLETE_TASK_PATH = (
     'mistral.engine.policies._fail_task_if_incomplete'
 )
+_TIMED_OUT_KEY = 'timed_out'
 
 
 def build_policies(policies_spec, wf_spec):
@@ -331,6 +332,9 @@ class RetryPolicy(base.TaskPolicy):
         if states.is_completed(task.wf_ex.state):
             return
 
+        if task.task_ex.runtime_context.get(_TIMED_OUT_KEY):
+            return
+
         policy_ctx = task.get_policy_context(ctx_key)
 
         retry_no = 0
@@ -531,7 +535,7 @@ def _continue_task(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)
 
-        if not task_ex:
+        if not task_ex or task_ex.state != states.RUNNING_DELAYED:
             return
 
         wf_ex = task_ex.workflow_execution
@@ -540,12 +544,13 @@ def _continue_task(task_ex_id):
             # Serializes with resume so a parked task is never missed.
             wf_ex = db_api.acquire_lock(models.WorkflowExecution, wf_ex.id)
 
+            # The lock reloaded the task too.
+            if task_ex.state != states.RUNNING_DELAYED:
+                return
+
         if not states.is_paused_or_completed(wf_ex.state):
             task_handler.continue_task(task_ex)
 
-            return
-
-        if states.is_completed(task_ex.state):
             return
 
         wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
@@ -578,7 +583,14 @@ def _fail_task_if_incomplete(task_ex_id, timeout):
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)
 
+        if states.is_completed(task_ex.state):
+            return
+
+        task_ex = db_api.acquire_lock(models.TaskExecution, task_ex_id)
+
         if not states.is_completed(task_ex.state):
             msg = 'Task timed out [timeout(s)=%s].' % timeout
+
+            task_ex.runtime_context[_TIMED_OUT_KEY] = True
 
             task_handler.complete_task(task_ex, states.ERROR, msg)
