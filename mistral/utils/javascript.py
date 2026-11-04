@@ -90,8 +90,18 @@ class PyMiniRacerEvaluator(JSEvaluator):
 
         js_ctx = _PY_MINI_RACER.MiniRacer()
 
+        limits = cfg.CONF.action_std_javascript
+        eval_kwargs = {}
+
+        if limits.timeout:
+            eval_kwargs['timeout'] = limits.timeout * 1000
+
+        if limits.max_memory_mb:
+            eval_kwargs['max_memory'] = limits.max_memory_mb * 1024 * 1024
+
         return js_ctx.eval(
-            '$ = {}; {}'.format(utils.to_json_str(ctx), script)
+            '$ = {}; {}'.format(utils.to_json_str(ctx), script),
+            **eval_kwargs
         )
 
 

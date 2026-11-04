@@ -895,6 +895,25 @@ action_std_sleep_opts = [
     ),
 ]
 
+action_std_javascript_opts = [
+    cfg.IntOpt(
+        'timeout',
+        default=30,
+        min=0,
+        help=_('Maximum execution time (seconds) of a std.javascript script '
+               'with py_mini_racer. 0 disables the limit.')
+    ),
+    cfg.IntOpt(
+        'max_memory_mb',
+        default=256,
+        min=0,
+        help=_('Memory limit (MiB) of a std.javascript script with '
+               'py_mini_racer. 0 disables the limit. Best-effort only: a '
+               'single large allocation can still abort the executor '
+               'process with a fatal V8 out-of-memory error.')
+    ),
+]
+
 action_std_email_opts = [
     cfg.IntOpt(
         'timeout',
@@ -1040,6 +1059,7 @@ ACTION_STD_HTTP_GROUP = 'action_std_http'
 ACTION_STD_SSH_GROUP = 'action_std_ssh'
 ACTION_STD_SLEEP_GROUP = 'action_std_sleep'
 ACTION_STD_EMAIL_GROUP = 'action_std_email'
+ACTION_STD_JAVASCRIPT_GROUP = 'action_std_javascript'
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -1081,6 +1101,10 @@ CONF.register_opts(action_std_http_opts, group=ACTION_STD_HTTP_GROUP)
 CONF.register_opts(action_std_ssh_opts, group=ACTION_STD_SSH_GROUP)
 CONF.register_opts(action_std_sleep_opts, group=ACTION_STD_SLEEP_GROUP)
 CONF.register_opts(action_std_email_opts, group=ACTION_STD_EMAIL_GROUP)
+CONF.register_opts(
+    action_std_javascript_opts,
+    group=ACTION_STD_JAVASCRIPT_GROUP
+)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -1128,6 +1152,7 @@ def list_opts():
         (ACTION_STD_SSH_GROUP, action_std_ssh_opts),
         (ACTION_STD_SLEEP_GROUP, action_std_sleep_opts),
         (ACTION_STD_EMAIL_GROUP, action_std_email_opts),
+        (ACTION_STD_JAVASCRIPT_GROUP, action_std_javascript_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),

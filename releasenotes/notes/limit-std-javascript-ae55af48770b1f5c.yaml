@@ -1,0 +1,10 @@
+---
+security:
+  - |
+    With ``py_mini_racer``, ``std.javascript`` ran scripts without any time
+    or memory limit. Scripts are now bounded by the new
+    ``[action_std_javascript] timeout`` (30s) and ``max_memory_mb`` (256)
+    options; ``0`` disables a limit. ``pyv8`` and ``v8eval`` do not enforce
+    them. ``max_memory_mb`` is best-effort: V8 runs inside the executor
+    process, and a single large allocation can still abort it with a fatal
+    out-of-memory error.
