@@ -1146,7 +1146,9 @@ class WithItemsTask(RegularTask):
 
         busy = set(accepted) | set(running)
 
-        candidates = sorted(list(set(unaccepted) - busy))
+        candidates = sorted(
+            i for i in set(unaccepted) - busy if i < count
+        )
 
         if candidates:
             indices = copy.copy(candidates)

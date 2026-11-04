@@ -126,6 +126,22 @@ workflows:
         action: std.echo output="Task 2"
 """
 
+WITH_ITEMS_WORKBOOK_ENV_ITEMS = """
+---
+version: '2.0'
+
+name: wb3
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      t1:
+        with-items: i in <% env().items %>
+        action: std.echo output="<% $.i %>"
+"""
+
 JOIN_WORKBOOK = """
 ---
 version: '2.0'
@@ -637,6 +653,60 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(1, len(task_2_action_exs))
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.MagicMock(
+            side_effect=[
+                'a',                    # Mock task1 success for initial run.
+                'b',                    # Mock task1 success for initial run.
+                exc.ActionException(),  # Mock task1 exception for initial run.
+                'a'                     # Mock task1 success for rerun.
+            ]
+        )
+    )
+    def test_rerun_with_items_less_items(self):
+        wb_service.create_workbook_v2(WITH_ITEMS_WORKBOOK_ENV_ITEMS)
+
+        wf_ex = self.engine.start_workflow(
+            'wb3.wf1',
+            env={'items': ['a', 'b', 'c']}
+        )
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_1_ex = self._assert_single_item(task_execs, name='t1')
+
+        self.engine.rerun_workflow(task_1_ex.id, env={'items': ['a']})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task_1_ex = self._assert_single_item(
+            task_execs,
+            name='t1',
+            state=states.SUCCESS
+        )
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id,
+            accepted=True
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(0, task_1_action_exs[0].runtime_context['index'])
 
     @mock.patch.object(
         std_actions.EchoAction,

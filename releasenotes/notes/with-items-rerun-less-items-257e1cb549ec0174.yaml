@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixed a rerun of a "with-items" task getting stuck in RUNNING when
+    its list of items became shorter than in the previous run, for
+    example after a rerun with a different environment.
