@@ -91,9 +91,7 @@ function configure_mistral {
     # Don't use the default 0.0.0.0 it's good only for ipv4
     iniset $MISTRAL_CONF_FILE api host $(ipv6_unquote $MISTRAL_SERVICE_HOST)
 
-    if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
-        setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
-    fi
+    setup_logging $MISTRAL_CONF_FILE
 
     # NOTE(tkajinam): This is required for IPv6 tests which attempts to access
     # to ::1
