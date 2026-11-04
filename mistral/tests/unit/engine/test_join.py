@@ -1298,3 +1298,92 @@ class JoinEngineTest(base.EngineTestCase):
         self._assert_single_item(t_execs, name='task1', state=states.SUCCESS)
         self._assert_single_item(t_execs, name='task2', state=states.SUCCESS)
         self._assert_single_item(t_execs, name='join_task', state=states.ERROR)
+
+    def test_join_in_cycle_completed_while_paused(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          vars:
+            cnt: 0
+
+          tasks:
+            init:
+              action: std.noop
+              on-success: task1
+
+            task1:
+              action: std.noop
+              publish:
+                cnt: <% $.cnt + 1 %>
+              on-success: join_task
+
+            join_task:
+              join: all
+              action: std.async_noop
+              on-success: [side, loop]
+
+            side:
+              action: std.noop
+
+            loop:
+              action: std.noop
+              on-success:
+                - task1: <% $.cnt < 2 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        def _complete_join_action():
+            def _running_action():
+                with db_api.transaction():
+                    t_ex = db_api.get_task_executions(name='join_task')
+
+                    return t_ex and [
+                        a.id for a in t_ex[0].action_executions
+                        if a.state == states.RUNNING
+                    ]
+
+            self._await(_running_action)
+
+            self.engine.on_action_complete(
+                _running_action()[0],
+                actions_base.Result(data='ok')
+            )
+
+        _complete_join_action()
+
+        self._await(
+            lambda: len(db_api.get_task_executions(name='side')) == 1
+        )
+
+        def _join_running_pass_2():
+            with db_api.transaction():
+                t_ex = db_api.get_task_executions(name='join_task')[0]
+
+                return len(t_ex.action_executions) == 2
+
+        self._await(_join_running_pass_2)
+
+        self.engine.pause_workflow(wf_ex.id)
+
+        self.await_workflow_paused(wf_ex.id)
+
+        _complete_join_action()
+
+        self._await(
+            lambda: db_api.get_task_executions(
+                name='join_task'
+            )[0].state == states.SUCCESS
+        )
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            sides = db_api.get_task_executions(name='side')
+
+            self.assertEqual(2, len(sides))

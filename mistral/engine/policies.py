@@ -25,6 +25,7 @@ from mistral.scheduler import base as sched_base
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral_lib import utils
 
 
 _CONTINUE_TASK_PATH = 'mistral.engine.policies._continue_task'
@@ -425,6 +426,10 @@ class TimeoutPolicy(base.TaskPolicy):
         if self.delay == 0:
             return
 
+        timeout_id = utils.generate_unicode_uuid()
+
+        task.set_runtime_context_value('timeout_policy', {'id': timeout_id})
+
         sched = sched_base.get_system_scheduler()
 
         job = sched_base.SchedulerJob(
@@ -432,7 +437,8 @@ class TimeoutPolicy(base.TaskPolicy):
             func_name=_FAIL_IF_INCOMPLETE_TASK_PATH,
             func_args={
                 'task_ex_id': task.get_id(),
-                'timeout': self.delay
+                'timeout': self.delay,
+                'timeout_id': timeout_id
             }
         )
 
@@ -577,7 +583,7 @@ def _complete_task(task_ex_id, state, state_info):
 
 @db_utils.retry_on_db_error
 @post_tx_queue.run
-def _fail_task_if_incomplete(task_ex_id, timeout):
+def _fail_task_if_incomplete(task_ex_id, timeout, timeout_id=None):
     from mistral.engine import task_handler
 
     with db_api.transaction():
@@ -587,6 +593,12 @@ def _fail_task_if_incomplete(task_ex_id, timeout):
             return
 
         task_ex = db_api.acquire_lock(models.TaskExecution, task_ex_id)
+
+        policy_ctx = task_ex.runtime_context.get('timeout_policy', {})
+
+        # A reused join task must ignore timers from its previous runs.
+        if timeout_id and policy_ctx.get('id') != timeout_id:
+            return
 
         if not states.is_completed(task_ex.state):
             msg = 'Task timed out [timeout(s)=%s].' % timeout

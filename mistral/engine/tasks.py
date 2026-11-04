@@ -284,7 +284,17 @@ class Task(object, metaclass=abc.ABCMeta):
                 )
             elif self.task_ex.state not in (states.WAITING, states.IDLE,
                                             states.RUNNING_DELAYED):
-                self.set_state(states.WAITING, msg)
+                new_pass = states.is_completed(self.task_ex.state)
+
+                if self.set_state(states.WAITING, msg) and new_pass:
+                    self.task_ex.started_at = None
+                    self.task_ex.finished_at = None
+                    self.task_ex.processed = False
+
+                    for key in ('wait_before_policy', 'wait_after_policy',
+                                'retry_task_policy', 'timeout_policy',
+                                policies._TIMED_OUT_KEY):
+                        self.task_ex.runtime_context.pop(key, None)
 
     def reset(self):
         self.reset_flag = True

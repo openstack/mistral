@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    A ``join`` task in a loop now applies its ``pause-before``,
+    ``wait-before``, ``wait-after`` and ``timeout`` policies on each pass, not
+    only on the first one. A ``timeout`` left over from a previous pass no
+    longer fails the next one. Its ``retry`` count is also reset on each pass,
+    and a pass that completes while the workflow is paused now runs its
+    transitions on resume.

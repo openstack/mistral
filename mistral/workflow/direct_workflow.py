@@ -568,12 +568,19 @@ class DirectWorkflowController(base.WorkflowController):
     def _prepare_task_executions_cache(self, task_spec):
         names = self._find_all_parent_task_names(task_spec)
 
-        t_execs_cache = {
-            t_ex.name: t_ex for t_ex in self._get_task_executions(
-                fields=('id', 'name', 'state', 'next_tasks'),
-                name={'in': names}
-            )
-        } if names else {}  # don't perform a db request if 'names' are empty
+        t_execs = self._get_task_executions(
+            fields=('id', 'name', 'state', 'next_tasks', 'created_at'),
+            name={'in': names}
+        ) if names else []  # don't perform a db request if 'names' are empty
+
+        # In a cycle a task has one execution per pass; keep the current one.
+        t_execs_cache = {}
+
+        for t_ex in sorted(
+            t_execs,
+            key=lambda t: (not states.is_completed(t.state), t.created_at)
+        ):
+            t_execs_cache[t_ex.name] = t_ex
 
         for name in names:
             if name not in t_execs_cache:
