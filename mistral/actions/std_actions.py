@@ -535,7 +535,8 @@ class SSHAction(actions.Action):
                 return results
 
             return result
-        except exc.ActionException:
+        except (exc.ActionException, exc.DataAccessException,
+                exc.UrlNotAllowedException):
             # A typed ActionException already carries a deliberate, safe
             # message. Let it reach the caller as-is.
             raise

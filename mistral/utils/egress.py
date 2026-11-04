@@ -28,21 +28,35 @@ CONF = cfg.CONF
 NAT64_PREFIX = ipaddress.ip_network('64:ff9b::/96')
 
 
-def _denied_networks():
+def validate_host(host, port, group):
+    """Validate a host against the [<group>] allowed_hosts / denied_cidrs.
+
+    :raises exc.UrlNotAllowedException: if the host is not permitted.
+    """
+    allowed_hosts = CONF[group].allowed_hosts
+
+    if allowed_hosts and host not in allowed_hosts:
+        raise exc.UrlNotAllowedException(
+            "Host '%s' is not in [%s] allowed_hosts." % (host, group)
+        )
+
+    _checked_addresses(host, port, group)
+
+
+def _denied_networks(group='action_std_http'):
     # The whole deny-list is operator-controlled via
-    # [action_std_http] denied_cidrs (which defaults to loopback and
+    # [<group>] denied_cidrs (which defaults to loopback and
     # link-local, so the cloud metadata service at 169.254.169.254 is
     # blocked out of the box). An operator can widen it (e.g. add RFC1918)
     # or narrow it - even to empty - to re-enable those targets.
     networks = []
 
-    for cidr in CONF.action_std_http.denied_cidrs:
+    for cidr in CONF[group].denied_cidrs:
         try:
             networks.append(ipaddress.ip_network(cidr, strict=False))
         except ValueError:
             LOG.warning(
-                "Ignoring invalid [action_std_http] denied_cidrs entry: %s",
-                cidr
+                "Ignoring invalid [%s] denied_cidrs entry: %s", group, cidr
             )
 
     return networks
@@ -84,15 +98,20 @@ def validate_url(url):
             "Host '%s' is not in [action_std_http] allowed_hosts." % host
         )
 
+    _checked_addresses(host, parsed.port)
+
+
+def _checked_addresses(host, port, group='action_std_http'):
+    """Resolve host, raise if any address is in denied_cidrs."""
     try:
-        addr_infos = socket.getaddrinfo(host, parsed.port)
+        addr_infos = socket.getaddrinfo(host, port)
     except socket.gaierror:
         # If we cannot resolve the host, the request would fail to connect
         # anyway, so there is no SSRF to block here. Fail open to avoid
         # breaking name resolution differences between hosts.
         return
 
-    denied = _denied_networks()
+    denied = _denied_networks(group)
 
     for info in addr_infos:
         address = ipaddress.ip_address(info[4][0])
@@ -110,6 +129,6 @@ def validate_url(url):
             for network in denied:
                 if candidate in network:
                     raise exc.UrlNotAllowedException(
-                        "URL host '%s' resolves to a blocked address (%s)."
+                        "Host '%s' resolves to a blocked address (%s)."
                         % (host, address)
                     )

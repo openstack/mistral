@@ -1239,9 +1239,10 @@ Input parameters:
 -  **username** - User name to authenticate on the host. *Required*.
 -  **password** - User password to authenticate on the host. *Optional*.
 -  **private_key_filename** - Private key file name which will be used for
-   authentication on remote host. All private keys should be on the executor
-   host in **<home-user-directory>/.ssh** directory or absolute path of
-   the key should be provided. The file needs to be accessible
+   authentication on remote host. The file is looked up in the
+   ``[action_std_ssh] private_key_dir`` directory of the executor host
+   (**<home-user-directory>/.ssh** by default); a path resolving outside
+   of it is rejected. The file needs to be accessible
    for the user account running the executor. *Optional*.
 -  **return_result_on_error** - Boolean, defaults to false (to keep backward
    behavior compatibility). If set to True, even if the remote command
@@ -1250,6 +1251,10 @@ Input parameters:
 
 **NOTE**: Authentication using key pairs is supported, key should be
 on Mistral Executor server machine.
+
+**NOTE**: Hosts resolving to an address in ``[action_std_ssh]
+denied_cidrs`` (loopback and link-local by default) are rejected. For
+std.ssh_proxied this applies to ``gateway_host``.
 
 Example with return_result_on_error=True:
 

@@ -26,9 +26,10 @@ from paramiko.ssh_exception import PasswordRequiredException
 from paramiko.ssh_exception import SSHException
 
 from mistral import exceptions as exc
+from mistral.utils import egress
 
 
-KEY_PATH = path.expanduser("~/.ssh/")
+SSH_PORT = 22
 LOG = logging.getLogger(__name__)
 
 
@@ -43,21 +44,27 @@ def _read_paramimko_stream(recv_func):
     return result.decode('utf-8')
 
 
+def _resolve_private_key_path(private_key_filename):
+    key_dir = path.realpath(
+        path.expanduser(cfg.CONF.action_std_ssh.private_key_dir)
+    )
+    key_path = path.realpath(path.join(key_dir, private_key_filename))
+
+    if path.commonpath([key_dir, key_path]) != key_dir:
+        raise exc.DataAccessException(
+            "Private key file must be located in the [action_std_ssh] "
+            "private_key_dir directory. Actual: %s" % private_key_filename
+        )
+
+    return key_path
+
+
 def _to_paramiko_private_key(private_key_filename,
                              private_key=None,
                              password=None):
 
     if private_key_filename:
-        if '../' in private_key_filename or '..\\' in private_key_filename:
-            raise exc.DataAccessException(
-                "Private key filename must not contain '..'. "
-                "Actual: %s" % private_key_filename
-            )
-
-        if private_key_filename.startswith('/'):
-            private_key_path = private_key_filename
-        else:
-            private_key_path = KEY_PATH + private_key_filename
+        private_key_path = _resolve_private_key_path(private_key_filename)
 
     exception = None
     for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
@@ -90,7 +97,9 @@ def _connect(host, username, password=None, pkey=None, proxy=None):
         username=username,
         password=password,
         pkey=pkey,
-        sock=proxy
+        sock=proxy,
+        look_for_keys=False,
+        allow_agent=False
     )
 
     return ssh_client
@@ -155,6 +164,8 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
         LOG.debug('Creating proxy using command: %s', proxy_command)
 
         proxy = paramiko.ProxyCommand(proxy_command)
+    else:
+        egress.validate_host(gateway_host, SSH_PORT, 'action_std_ssh')
 
     _proxy_ssh_client = paramiko.SSHClient()
     _proxy_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -168,7 +179,9 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
         gateway_host,
         username=gateway_username,
         pkey=private_key,
-        sock=proxy
+        sock=proxy,
+        look_for_keys=False,
+        allow_agent=False
     )
 
     proxy = _proxy_ssh_client.get_transport().open_session()
@@ -197,6 +210,8 @@ def execute_command(cmd, host, username, password=None,
                     private_key=None, get_stderr=False,
                     raise_when_error=True):
     LOG.debug('Creating SSH connection')
+
+    egress.validate_host(host, SSH_PORT, 'action_std_ssh')
 
     private_key = _to_paramiko_private_key(private_key_filename,
                                            private_key,

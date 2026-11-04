@@ -792,6 +792,9 @@ expression_opts = [
     ),
 ]
 
+DEFAULT_DENIED_CIDRS = ['127.0.0.0/8', '::1/128', '0.0.0.0/8', '::/128',
+                        '169.254.0.0/16', 'fe80::/10']
+
 action_std_http_opts = [
     cfg.ListOpt(
         'allowed_hosts',
@@ -803,8 +806,7 @@ action_std_http_opts = [
     ),
     cfg.ListOpt(
         'denied_cidrs',
-        default=['127.0.0.0/8', '::1/128', '0.0.0.0/8', '::/128',
-                 '169.254.0.0/16', 'fe80::/10'],
+        default=DEFAULT_DENIED_CIDRS,
         help=_('CIDR ranges that outbound std.http / webhook requests may '
                'not target (SSRF mitigation). Defaults to loopback, the '
                'unspecified addresses (which Linux connects to the local '
@@ -855,6 +857,30 @@ action_std_ssh_opts = [
                'entirely, so an ordinary user cannot run commands on the '
                'executor. Only add entries you fully trust and that do not '
                'take attacker-controllable arguments.')
+    ),
+    cfg.StrOpt(
+        'private_key_dir',
+        default='~/.ssh',
+        help=_('Directory holding the private keys that std.ssh and '
+               'std.ssh_proxied may load through private_key_filename. Any '
+               'path resolving outside of it (absolute, "..", symbolic '
+               'link) is rejected. Every key in it is usable by any '
+               'workflow.')
+    ),
+    cfg.ListOpt(
+        'allowed_hosts',
+        default=[],
+        help=_('Optional allow-list of hostnames that std.ssh and the '
+               'std.ssh_proxied gateway may connect to. If empty (the '
+               'default) any host is allowed except those blocked by '
+               'denied_cidrs.')
+    ),
+    cfg.ListOpt(
+        'denied_cidrs',
+        default=DEFAULT_DENIED_CIDRS,
+        help=_('CIDR ranges that std.ssh and the std.ssh_proxied gateway '
+               'may not connect to. Same defaults and semantics as '
+               '[action_std_http] denied_cidrs.')
     ),
 ]
 

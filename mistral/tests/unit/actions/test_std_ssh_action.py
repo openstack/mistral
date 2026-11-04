@@ -192,6 +192,18 @@ class SSHActionTest(base.BaseTest):
 
         self.assertIn('a deliberate, safe reason', str(exception))
 
+    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
+    def test_egress_and_key_errors_reach_caller(self, mocked_method):
+        action = std.SSHAction('ls', 'localhost', 'user')
+
+        for e in (exc.UrlNotAllowedException('blocked host'),
+                  exc.DataAccessException('outside key dir')):
+            mocked_method.side_effect = e
+
+            raised = self.assertRaises(type(e), action.run, None)
+
+            self.assertEqual(str(e), str(raised))
+
     def test_proxied_proxy_command_rejection_reaches_caller(self):
         # allowed_proxy_commands is empty by default, so proxy_command is
         # rejected. The specific reason must propagate to the caller

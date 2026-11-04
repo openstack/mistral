@@ -20,6 +20,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import fixtures
 from paramiko.ecdsakey import ECDSAKey
 from paramiko.ed25519key import Ed25519Key
 from paramiko.rsakey import RSAKey
@@ -27,6 +28,7 @@ from paramiko.ssh_exception import SSHException
 
 from mistral import exceptions as exc
 from mistral.tests.unit import base
+from mistral.utils import egress
 from mistral.utils import ssh_utils
 
 
@@ -118,34 +120,20 @@ class SSHUtilsTest(base.BaseTest):
         except (SSHException, OSError):
             pass
 
-    def test_to_paramiko_private_key_rejects_path_traversal(self):
-        """Files containing '..' are rejected with DataAccessException."""
-        for filename in ('../../../etc/passwd', 'foo..\\bar'):
-            self.assertRaises(
-                exc.DataAccessException,
-                ssh_utils._to_paramiko_private_key,
-                filename,
-            )
-
     def test_to_paramiko_private_key_rsa_from_file(self):
         """RSA key loaded from file via private_key_filename."""
-        key = RSAKey.generate(2048)
+        key_dir = self.useFixture(fixtures.TempDir()).path
+        self.override_config('private_key_dir', key_dir,
+                             group='action_std_ssh')
+        RSAKey.generate(2048).write_private_key_file(
+            os.path.join(key_dir, 'my_key')
+        )
 
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.pem', delete=False
-        ) as f:
-            key.write_private_key(f)
-            key_path = f.name
+        result = ssh_utils._to_paramiko_private_key(
+            private_key_filename='my_key',
+        )
 
-        try:
-            result = ssh_utils._to_paramiko_private_key(
-                private_key_filename=key_path,
-            )
-
-            self.assertIsNotNone(result)
-            self.assertIsInstance(result, RSAKey)
-        finally:
-            os.unlink(key_path)
+        self.assertIsInstance(result, RSAKey)
 
     def test_to_paramiko_private_key_no_key_returns_none(self):
         """When no key material is provided, None is returned."""
@@ -156,35 +144,176 @@ class SSHUtilsTest(base.BaseTest):
 
         self.assertIsNone(result)
 
-    def test_to_paramiko_private_key_absolute_path_used_as_is(self):
-        """Absolute filename is used without prepending KEY_PATH."""
+
+class SSHPrivateKeyPathTest(base.BaseTest):
+    def setUp(self):
+        super(SSHPrivateKeyPathTest, self).setUp()
+
+        self.tmp_dir = os.path.realpath(
+            self.useFixture(fixtures.TempDir()).path
+        )
+        self.key_dir = os.path.join(self.tmp_dir, 'keys')
+        os.mkdir(self.key_dir)
+
+        self.override_config('private_key_dir', self.key_dir,
+                             group='action_std_ssh')
+
+    def _assert_rejected(self, filename):
+        with mock.patch.object(RSAKey, 'from_private_key_file') as rsa_from:
+            self.assertRaises(
+                exc.DataAccessException,
+                ssh_utils._to_paramiko_private_key,
+                filename,
+            )
+
+            rsa_from.assert_not_called()
+
+    def _assert_loaded_from(self, filename, expected_path):
         with mock.patch.object(RSAKey, 'from_private_key_file') as rsa_from:
             rsa_from.return_value = mock.Mock()
 
             ssh_utils._to_paramiko_private_key(
-                private_key_filename='/absolute/path/to/key',
+                private_key_filename=filename,
             )
-
-            rsa_from.assert_called_once_with(
-                filename='/absolute/path/to/key',
-                password=None,
-            )
-
-    def test_to_paramiko_private_key_relative_path_prepends_ssh_dir(self):
-        """Relative filename is prepended with ~/.ssh/."""
-        with mock.patch.object(RSAKey, 'from_private_key_file') as rsa_from:
-            rsa_from.return_value = mock.Mock()
-
-            ssh_utils._to_paramiko_private_key(
-                private_key_filename='my_key',
-            )
-
-            expected_path = ssh_utils.KEY_PATH + 'my_key'
 
             rsa_from.assert_called_once_with(
                 filename=expected_path,
                 password=None,
             )
+
+    def test_plain_filename_is_resolved_in_key_dir(self):
+        self._assert_loaded_from(
+            'my_key',
+            os.path.join(self.key_dir, 'my_key')
+        )
+
+    def test_subdirectory_of_key_dir_is_allowed(self):
+        self._assert_loaded_from(
+            'project/my_key',
+            os.path.join(self.key_dir, 'project', 'my_key')
+        )
+
+    def test_absolute_path_inside_key_dir_is_allowed(self):
+        key_path = os.path.join(self.key_dir, 'my_key')
+
+        self._assert_loaded_from(key_path, key_path)
+
+    def test_absolute_path_outside_key_dir_is_rejected(self):
+        for filename in ('/etc/mistral/deploy_key',
+                         os.path.join(self.tmp_dir, 'other_key')):
+            self._assert_rejected(filename)
+
+    def test_path_traversal_is_rejected(self):
+        for filename in ('../../../etc/passwd', '../other_key',
+                         'project/../../other_key'):
+            self._assert_rejected(filename)
+
+    def test_prefix_sibling_directory_is_rejected(self):
+        os.mkdir(self.key_dir + '-other')
+
+        self._assert_rejected('../keys-other/my_key')
+        self._assert_rejected(self.key_dir + '-other/my_key')
+
+    def test_symlink_escaping_key_dir_is_rejected(self):
+        outside = os.path.join(self.tmp_dir, 'deploy_key')
+        open(outside, 'w').close()
+        os.symlink(outside, os.path.join(self.key_dir, 'link'))
+
+        self._assert_rejected('link')
+
+    def test_symlinked_key_dir_is_followed(self):
+        link_dir = os.path.join(self.tmp_dir, 'link_dir')
+        os.symlink(self.key_dir, link_dir)
+        self.override_config('private_key_dir', link_dir,
+                             group='action_std_ssh')
+
+        self._assert_loaded_from(
+            'my_key',
+            os.path.join(self.key_dir, 'my_key')
+        )
+
+    def test_default_key_dir_is_home_ssh(self):
+        self.override_config('private_key_dir', '~/.ssh',
+                             group='action_std_ssh')
+
+        self._assert_loaded_from(
+            'my_key',
+            os.path.join(
+                os.path.realpath(os.path.expanduser('~/.ssh')), 'my_key'
+            )
+        )
+
+
+@mock.patch.object(egress.socket, 'getaddrinfo',
+                   return_value=[(None, None, None, '', ('127.0.0.1', 22))])
+class SSHEgressTest(base.BaseTest):
+    @mock.patch('mistral.utils.ssh_utils._connect')
+    def test_execute_command_blocked_host(self, mock_connect, gai):
+        self.assertRaises(
+            exc.UrlNotAllowedException,
+            ssh_utils.execute_command,
+            'ls', 'localhost', 'user'
+        )
+
+        gai.assert_called_once_with('localhost', 22)
+        mock_connect.assert_not_called()
+
+    @mock.patch('paramiko.SSHClient')
+    def test_execute_command_via_gateway_blocked_gateway(self, mock_client,
+                                                         gai):
+        self.assertRaises(
+            exc.UrlNotAllowedException,
+            ssh_utils.execute_command_via_gateway,
+            'ls', 'target', 'user', None, 'localhost'
+        )
+
+        gai.assert_called_once_with('localhost', 22)
+        mock_client.assert_not_called()
+
+    @mock.patch.object(ssh_utils, '_cleanup')
+    @mock.patch.object(ssh_utils, '_execute_command', return_value=(0, 'ok'))
+    @mock.patch.object(ssh_utils, '_connect')
+    @mock.patch('paramiko.SSHClient')
+    def test_execute_command_via_gateway_host_not_resolved(self, mock_client,
+                                                           *args):
+        gai = args[-1]
+        gai.return_value = [(None, None, None, '', ('203.0.113.10', 22))]
+
+        ssh_utils.execute_command_via_gateway(
+            'ls', 'target', 'user', None, 'gateway'
+        )
+
+        gai.assert_called_once_with('gateway', 22)
+
+    @mock.patch('paramiko.ProxyCommand')
+    @mock.patch('paramiko.SSHClient')
+    def test_execute_command_via_gateway_proxy_command_skips_check(
+            self, mock_client, mock_proxy_cmd, gai):
+        self.override_config('allowed_proxy_commands', ['nc gateway 22'],
+                             group='action_std_ssh')
+
+        with mock.patch.object(ssh_utils, '_connect'), \
+                mock.patch.object(ssh_utils, '_cleanup'), \
+                mock.patch.object(ssh_utils, '_execute_command',
+                                  return_value=(0, 'ok')):
+            ssh_utils.execute_command_via_gateway(
+                'ls', 'target', 'user', None, 'localhost',
+                proxy_command='nc gateway 22'
+            )
+
+        gai.assert_not_called()
+
+    @mock.patch('mistral.utils.ssh_utils._execute_command')
+    @mock.patch('mistral.utils.ssh_utils._connect')
+    def test_execute_command_allowed_host(self, mock_connect, mock_exec,
+                                          gai):
+        gai.return_value = [(None, None, None, '', ('203.0.113.10', 22))]
+        mock_exec.return_value = (0, 'ok')
+
+        ret = ssh_utils.execute_command('ls', 'example.com', 'user')
+
+        self.assertEqual((0, 'ok'), ret)
+        mock_connect.assert_called_once()
 
 
 class SSHProxyCommandAllowlistTest(base.BaseTest):
@@ -249,3 +378,11 @@ class SSHProxyCommandAllowlistTest(base.BaseTest):
         # The exact allow-listed command reaches paramiko.
         mock_proxy_cmd.assert_called_once_with('nc gateway 22')
         self.assertEqual((0, 'ok'), ret)
+
+    @mock.patch('paramiko.SSHClient')
+    def test_connect_does_not_use_implicit_keys(self, mock_ssh_client):
+        ssh_utils._connect('host', 'user')
+
+        kwargs = mock_ssh_client.return_value.connect.call_args.kwargs
+        self.assertFalse(kwargs['look_for_keys'])
+        self.assertFalse(kwargs['allow_agent'])

@@ -1,0 +1,16 @@
+---
+security:
+  - |
+    ``std.ssh`` and ``std.ssh_proxied`` accepted any absolute
+    ``private_key_filename``, letting a workflow use any key readable by the
+    executor. Keys are now resolved inside the new ``[action_std_ssh]
+    private_key_dir`` (``~/.ssh`` by default), and the hosts the executor
+    connects to are checked against the new ``[action_std_ssh]
+    allowed_hosts`` and ``denied_cidrs`` options.
+upgrade:
+  - |
+    ``private_key_filename`` must now point inside ``[action_std_ssh]
+    private_key_dir``. SSH to loopback and link-local addresses is rejected
+    by default; adjust ``[action_std_ssh] denied_cidrs`` if needed.
+    The executor's SSH agent and default keys are no longer tried
+    implicitly; set ``private_key_filename`` (e.g. ``id_rsa``) explicitly.
