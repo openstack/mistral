@@ -31,6 +31,7 @@ class TestCodeSourcePolicy(base.APITest):
     - code_sources:delete
     - code_sources:get
     - code_sources:list
+    - code_sources:list:all_projects
     - code_sources:update
     """
 
@@ -140,5 +141,25 @@ class TestCodeSourcePolicy(base.APITest):
             FILE_CONTENT,
             headers={'Content-Type': 'text/plain'}
         )
+
+        self.assertEqual(200, resp.status_int)
+
+    def test_code_source_list_all_projects_not_allowed(self):
+        self.policy.change_policy_definition(
+            {"code_sources:list": "rule:admin_or_owner"}
+        )
+
+        resp = self.app.get(
+            '/v2/code_sources?all_projects=1',
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+
+    def test_code_source_list_all_projects_allowed(self):
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
+        resp = self.app.get('/v2/code_sources?all_projects=1')
 
         self.assertEqual(200, resp.status_int)

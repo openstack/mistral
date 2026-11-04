@@ -38,6 +38,7 @@ class TestDynamicActionPolicy(base.APITest):
     - dynamic_actions:delete
     - dynamic_actions:get
     - dynamic_actions:list
+    - dynamic_actions:list:all_projects
     - dynamic_actions:update
     """
 
@@ -211,6 +212,26 @@ class TestDynamicActionPolicy(base.APITest):
         self.addCleanup(setattr, self.ctx, 'is_admin', False)
 
         resp = self.app.get('/v2/dynamic_actions')
+
+        self.assertEqual(200, resp.status_int)
+
+    def test_dynamic_action_list_all_projects_not_allowed(self):
+        self.policy.change_policy_definition(
+            {"dynamic_actions:list": "rule:admin_or_owner"}
+        )
+
+        resp = self.app.get(
+            '/v2/dynamic_actions?all_projects=1',
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+
+    def test_dynamic_action_list_all_projects_allowed(self):
+        self.ctx.is_admin = True
+        self.addCleanup(setattr, self.ctx, 'is_admin', False)
+
+        resp = self.app.get('/v2/dynamic_actions?all_projects=1')
 
         self.assertEqual(200, resp.status_int)
 

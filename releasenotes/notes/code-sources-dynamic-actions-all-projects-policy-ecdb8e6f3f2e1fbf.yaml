@@ -1,0 +1,13 @@
+---
+security:
+  - |
+    Listing code sources or dynamic actions with ``all_projects=true`` now
+    requires the new ``code_sources:list:all_projects`` or
+    ``dynamic_actions:list:all_projects`` policy (admin only by default).
+    Previously any user allowed to list them could read the code of every
+    project.
+upgrade:
+  - |
+    Deployments that let non-admin users list code sources or dynamic
+    actions across projects must also grant the new ``list:all_projects``
+    policies.

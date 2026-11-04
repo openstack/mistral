@@ -66,6 +66,17 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=ACTIONS % 'list:all_projects',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Return all dynamic actions from all projects.',
+        operations=[
+            {
+                'path': BASE_PATH,
+                'method': 'GET'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=ACTIONS % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a dynamic action publicly available.',

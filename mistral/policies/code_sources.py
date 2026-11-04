@@ -66,6 +66,17 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=CODE_SOURCES % 'list:all_projects',
+        check_str=base.RULE_ADMIN_ONLY,
+        description='Return all code sources from all projects.',
+        operations=[
+            {
+                'path': BASE_PATH,
+                'method': 'GET'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=CODE_SOURCES % 'publicize',
         check_str=base.RULE_ADMIN_ONLY,
         description='Make a code source publicly available.',

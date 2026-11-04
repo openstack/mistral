@@ -156,6 +156,9 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
 
         acl.enforce('code_sources:list', context.ctx())
 
+        if all_projects:
+            acl.enforce('code_sources:list:all_projects', context.ctx())
+
         filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             name=name,
