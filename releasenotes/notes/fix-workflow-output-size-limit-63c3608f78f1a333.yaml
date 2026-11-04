@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    A workflow whose output exceeds ``[engine]/execution_field_size_limit_kb``
+    now ends in ERROR state with the size error in its output. Previously it
+    was marked as SUCCESS with an empty output. When ``output-on-error``
+    does not fit into the limit, it is dropped so that the error message
+    can still be stored. See `bug 1796592
+    <https://bugs.launchpad.net/mistral/+bug/1796592>`_.

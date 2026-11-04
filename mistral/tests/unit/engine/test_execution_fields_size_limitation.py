@@ -49,6 +49,32 @@ wf:
         p_var: '__TASK_PUBLISHED__'
 """
 
+WF_BIG_CONTEXT = """
+---
+version: '2.0'
+
+wf:
+  input:
+    - fail: false
+
+  tasks:
+    task1:
+      action: std.noop
+      publish:
+        out1: '__TASK_PUBLISHED__'
+      on-success: task2
+
+    task2:
+      action: std.noop
+      publish:
+        out2: '__TASK_PUBLISHED__'
+      on-success:
+        - task3: <% $.fail %>
+
+    task3:
+      action: std.fail
+"""
+
 
 class MyAction(actions_base.Action):
     def __init__(self, input, output_length, output_dict=False, error=False):
@@ -75,9 +101,9 @@ class MyAction(actions_base.Action):
         raise NotImplementedError
 
 
-def generate_workflow(tokens):
-    new_wf = WF
-    long_string = ''.join('A' for _ in range(1024))
+def generate_workflow(tokens, wf=WF, length=1024):
+    new_wf = wf
+    long_string = ''.join('A' for _ in range(length))
 
     for token in tokens:
         new_wf = new_wf.replace(token, long_string)
@@ -210,6 +236,52 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             ' [class=TaskExecution, field=published, size=2KB, limit=1KB]',
             task_ex.state_info
         )
+
+    def test_workflow_output_limit(self):
+        new_wf = generate_workflow(
+            ['__TASK_PUBLISHED__'],
+            wf=WF_BIG_CONTEXT,
+            length=600
+        )
+
+        wf_service.create_workflows(new_wf)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertIn(
+                'Field size limit exceeded [class=WorkflowExecution,'
+                ' field=output, size=2KB, limit=1KB]',
+                wf_ex.state_info
+            )
+            self.assertEqual(['result'], list(wf_ex.output))
+            self.assertIn(
+                'Failed to check and complete',
+                wf_ex.output['result']
+            )
+
+    def test_fail_workflow_output_on_error_limit(self):
+        new_wf = generate_workflow(
+            ['__TASK_PUBLISHED__'],
+            wf=WF_BIG_CONTEXT,
+            length=600
+        )
+
+        wf_service.create_workflows(new_wf)
+
+        wf_ex = self.engine.start_workflow('wf', wf_input={'fail': True})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(['result'], list(wf_ex.output))
+            self.assertIn('task3', wf_ex.output['result'])
 
     def test_workflow_params_limit(self):
         wf_service.create_workflows(WF)

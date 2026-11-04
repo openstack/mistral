@@ -496,6 +496,12 @@ class Workflow(object, metaclass=abc.ABCMeta):
             final_context
         )
 
+        db_models.validate_long_type_length(
+            db_models.WorkflowExecution,
+            'output',
+            output
+        )
+
         # Set workflow execution to success after output is evaluated.
         if not self.set_state(states.SUCCESS, msg):
             return
@@ -530,6 +536,19 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
+        try:
+            db_models.validate_long_type_length(
+                db_models.WorkflowExecution,
+                'output',
+                utils.merge_dicts({'result': '...'}, output_on_error)
+            )
+        except exc.SizeLimitExceededException:
+            LOG.warning(
+                "Dropping output-on-error of workflow execution %s, it does"
+                " not fit into the field size limit.", self.wf_ex.id
+            )
+
+            output_on_error = {}
 
         msg = db_models.cut_to_size_limit(
             msg,
