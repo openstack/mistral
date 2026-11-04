@@ -257,10 +257,6 @@ class DefaultEventEngine(base.EventEngine):
             workflow_params = t.get('workflow_params', {})
             workflow_params.update({'event_params': event_params})
 
-            # Setup context before schedule triggers.
-            ctx = security.create_context(t['trust_id'], t['project_id'])
-            auth_ctx.set_ctx(ctx)
-
             description = {
                 "description": (
                     "Workflow execution created by event"
@@ -274,6 +270,10 @@ class DefaultEventEngine(base.EventEngine):
             }
 
             try:
+                # Setup context before schedule triggers.
+                ctx = security.create_context(t['trust_id'], t['project_id'])
+                auth_ctx.set_ctx(ctx)
+
                 self.engine_client.start_workflow(
                     t['workflow_id'],
                     t['workflow_namespace'],
@@ -300,51 +300,59 @@ class DefaultEventEngine(base.EventEngine):
                 self.event_queue.task_done()
                 break
 
-            context = event.get('context')
-            event_type = event.get('event_type')
+            try:
+                self._process_event(event)
+            except Exception:
+                LOG.exception(
+                    "Failed to process event: %s", event.get('event_type')
+                )
+            finally:
+                self.event_queue.task_done()
 
-            # NOTE(kong): Use lock here to protect event_triggers_map
-            # variable from being updated outside the thread.
-            with self.lock:
-                if event_type in self.event_triggers_map:
-                    triggers = self.event_triggers_map[event_type]
+    def _process_event(self, event):
+        context = event.get('context')
+        event_type = event.get('event_type')
 
-                    # There may be more projects registered the same event.
-                    project_ids = [t['project_id'] for t in triggers]
+        # NOTE(kong): Use lock here to protect event_triggers_map
+        # variable from being updated outside the thread.
+        with self.lock:
+            if event_type in self.event_triggers_map:
+                triggers = self.event_triggers_map[event_type]
 
-                    any_public = any(
-                        [t['scope'] == 'public' for t in triggers]
+                # There may be more projects registered the same event.
+                project_ids = [t['project_id'] for t in triggers]
+
+                any_public = any(
+                    [t['scope'] == 'public' for t in triggers]
+                )
+
+                # Skip the event doesn't belong to any event trigger
+                # owner.
+                if (not any_public and CONF.pecan.auth_enable and
+                        context.get('project_id', '')
+                        not in project_ids):
+                    return
+
+                # Need to choose what trigger(s) should be called
+                # exactly.
+                triggers_to_call = []
+                for t in triggers:
+                    project_trigger = (
+                        t['project_id'] == context.get('project_id')
                     )
+                    public_trigger = t['scope'] == 'public'
+                    if project_trigger or public_trigger:
+                        triggers_to_call.append(t)
 
-                    # Skip the event doesn't belong to any event trigger
-                    # owner.
-                    if (not any_public and CONF.pecan.auth_enable and
-                            context.get('project_id', '')
-                            not in project_ids):
-                        self.event_queue.task_done()
-                        continue
+                LOG.debug('Start to handle event: %s, %d trigger(s) '
+                          'registered.', event_type, len(triggers))
 
-                    # Need to choose what trigger(s) should be called
-                    # exactly.
-                    triggers_to_call = []
-                    for t in triggers:
-                        project_trigger = (
-                            t['project_id'] == context.get('project_id')
-                        )
-                        public_trigger = t['scope'] == 'public'
-                        if project_trigger or public_trigger:
-                            triggers_to_call.append(t)
+                event_params = self.notification_converter.convert(
+                    event_type,
+                    event
+                )
 
-                    LOG.debug('Start to handle event: %s, %d trigger(s) '
-                              'registered.', event_type, len(triggers))
-
-                    event_params = self.notification_converter.convert(
-                        event_type,
-                        event
-                    )
-
-                    self._start_workflow(triggers_to_call, event_params)
-            self.event_queue.task_done()
+                self._start_workflow(triggers_to_call, event_params)
 
     def process_notification_event(self, notification):
         """Callback function by event handler.
