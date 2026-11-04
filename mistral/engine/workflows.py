@@ -215,12 +215,14 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         self._continue_workflow(cmds)
 
+        # Import the task_handler module here to avoid circular reference.
+        from mistral.engine import task_handler
+
+        task_handler.schedule_refresh_waiting_tasks(self.wf_ex)
+
         # If workflow execution is a subworkflow,
         # schedule update to the task execution.
         if self.wf_ex.task_execution_id:
-            # Import the task_handler module here to avoid circular reference.
-            from mistral.engine import task_handler
-
             task_handler.schedule_on_action_update(self.wf_ex)
 
     def prepare_input(self, input_dict):
@@ -574,8 +576,13 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if states.is_completed(self.wf_ex.state):
             return
 
+        paused = states.is_paused(self.wf_ex.state)
+
         if not self.set_state(states.CANCELLED, state_info=msg):
             return
+
+        if paused:
+            self._cancel_idle_tasks()
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
@@ -585,6 +592,23 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
+
+    def _cancel_idle_tasks(self):
+        from mistral.engine import task_handler
+
+        idle_task_execs = db_api.get_task_executions(
+            workflow_execution_id=self.wf_ex.id,
+            state=states.IDLE
+        )
+
+        for t_ex in idle_task_execs:
+            # Never started: its pending start_task RPC still runs it.
+            if not t_ex.started_at:
+                continue
+
+            task = task_handler.build_task_from_execution(self.wf_spec, t_ex)
+
+            task.set_state(states.CANCELLED, 'Workflow was cancelled.')
 
     def _send_result_to_parent_workflow(self):
         if self.wf_ex.state == states.SUCCESS:

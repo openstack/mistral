@@ -338,30 +338,31 @@ def check_affected_tasks(task_ex):
         task_ex.name
     )
 
-    def _schedule_if_needed(t_ex_id):
-        # NOTE(rakhmerov): we need to minimize the number of scheduled jobs
-        # that refresh state of "join" tasks. We'll check if corresponding
-        # jobs are already scheduled. Note that we must ignore scheduled jobs
-        # that are currently being processed because of a possible race with
-        # the transaction that deletes scheduled jobs, i.e. the job may still
-        # exist in DB (the deleting transaction didn't commit yet) but it has
-        # already been processed and the task state hasn't changed.
-        sched = sched_base.get_system_scheduler()
-
-        jobs_exist = sched.has_scheduled_jobs(
-            key=_get_refresh_state_job_key(t_ex_id),
-            processing=False
-        )
-
-        if not jobs_exist:
-            _schedule_refresh_task_state(t_ex_id)
-
     for t_ex in affected_task_execs:
         post_tx_queue.register_operation(
-            _schedule_if_needed,
+            _schedule_refresh_task_state_if_needed,
             args=[t_ex.id],
             in_tx=True
         )
+
+
+def _schedule_refresh_task_state_if_needed(t_ex_id):
+    # NOTE(rakhmerov): we need to minimize the number of scheduled jobs
+    # that refresh state of "join" tasks. We'll check if corresponding
+    # jobs are already scheduled. Note that we must ignore scheduled jobs
+    # that are currently being processed because of a possible race with
+    # the transaction that deletes scheduled jobs, i.e. the job may still
+    # exist in DB (the deleting transaction didn't commit yet) but it has
+    # already been processed and the task state hasn't changed.
+    sched = sched_base.get_system_scheduler()
+
+    jobs_exist = sched.has_scheduled_jobs(
+        key=_get_refresh_state_job_key(t_ex_id),
+        processing=False
+    )
+
+    if not jobs_exist:
+        _schedule_refresh_task_state(t_ex_id)
 
 
 def build_task_from_execution(wf_spec, task_ex):
@@ -479,7 +480,8 @@ def _refresh_task_state(task_ex_id):
 
         wf_ex = task_ex.workflow_execution
 
-        if states.is_completed(wf_ex.state):
+        # Resume refreshes WAITING tasks.
+        if states.is_paused_or_completed(wf_ex.state):
             return
 
         wf_spec = spec_parser.get_workflow_spec_by_execution_id(
@@ -525,6 +527,20 @@ def _refresh_task_state(task_ex_id):
                     'task_name=%s, state=%s]' %
                     (task_ex_id, task_ex.name, state)
                 )
+
+
+def schedule_refresh_waiting_tasks(wf_ex):
+    waiting_task_execs = db_api.get_task_executions(
+        workflow_execution_id=wf_ex.id,
+        state=states.WAITING
+    )
+
+    for t_ex in waiting_task_execs:
+        post_tx_queue.register_operation(
+            _schedule_refresh_task_state_if_needed,
+            args=[t_ex.id],
+            in_tx=True
+        )
 
 
 def _schedule_refresh_task_state(task_ex_id, delay=0):

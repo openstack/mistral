@@ -14,17 +14,21 @@
 
 from unittest import mock
 
+import fixtures
 from oslo_config import cfg
+from oslo_utils import importutils
 import requests
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
+from mistral.engine import task_handler
 from mistral.engine import tasks
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
+from mistral.scheduler import base as sched_base
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
@@ -1549,6 +1553,357 @@ class PoliciesTest(base.EngineTestCase):
             self.assertEqual(states.ERROR, action_exs[0].state)
             # Second is success
             self.assertEqual(states.SUCCESS, action_exs[1].state)
+
+    def _get_task_ex(self, wf_ex_id):
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+            return wf_ex.task_executions[0]
+
+    def _assert_task(self, task_ex_id, state, action_count):
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            self.assertEqual(state, task_ex.state)
+            self.assertEqual(action_count, len(task_ex.action_executions))
+
+    def _hold_delayed_jobs(self):
+        # Delayed policy jobs are kept here instead of being scheduled, so
+        # the test decides when a delay ends instead of the clock.
+        sched = sched_base.get_system_scheduler()
+        schedule = sched.schedule
+        has_scheduled_jobs = sched.has_scheduled_jobs
+        self.delayed_jobs = []
+
+        def _schedule(job):
+            if job.run_after and job.func_name in (
+                    policies._CONTINUE_TASK_PATH,
+                    task_handler._REFRESH_TASK_STATE_PATH):
+                self.delayed_jobs.append(job)
+            else:
+                schedule(job)
+
+        # The engine skips a join refresh when one is already pending, so
+        # held jobs must still count as scheduled.
+        def _has_scheduled_jobs(**filters):
+            if 'key' in filters and any(
+                    j.key == filters['key'] for j in self.delayed_jobs):
+                return True
+
+            return has_scheduled_jobs(**filters)
+
+        self.has_scheduled_jobs = mock.Mock(side_effect=_has_scheduled_jobs)
+
+        self.useFixture(fixtures.MockPatchObject(sched, 'schedule', _schedule))
+        self.useFixture(fixtures.MockPatchObject(
+            sched, 'has_scheduled_jobs', self.has_scheduled_jobs
+        ))
+
+    def _run_delayed_job(self, func_path):
+        self._await(lambda: self.delayed_jobs, delay=0.1)
+
+        job = self.delayed_jobs.pop(0)
+
+        self.assertEqual(func_path, job.func_name)
+
+        importutils.import_class(func_path)(**job.func_args)
+
+    def _fail_running_action(self, task_ex_id):
+        def _running_action():
+            with db_api.transaction():
+                for a_ex in db_api.get_task_execution(
+                        task_ex_id).action_executions:
+                    if a_ex.state == states.RUNNING:
+                        return a_ex.id
+
+        def _refresh_pending():
+            with db_api.transaction():
+                return db_api.get_scheduled_jobs_count(
+                    key=task_handler._get_refresh_state_job_key(task_ex_id)
+                )
+
+        self._await(lambda: _running_action() is not None, delay=0.1)
+
+        # Each joined branch queues its own refresh; a late one would rerun
+        # the task as soon as it is WAITING, skipping the retry delay.
+        self._await(lambda: not _refresh_pending(), delay=0.1)
+
+        self.engine.on_action_complete(
+            _running_action(),
+            ml_actions.Result(error='Fail')
+        )
+
+    def _start_join_task(self, wf_ex_id):
+        def _join_task_execs():
+            with db_api.transaction():
+                return db_api.get_task_executions(
+                    workflow_execution_id=wf_ex_id,
+                    name='join_task'
+                )
+
+        self._await(lambda: len(_join_task_execs()) == 1, delay=0.1)
+
+        task_ex = _join_task_execs()[0]
+
+        self._fail_running_action(task_ex.id)
+        self._assert_task(task_ex.id, states.WAITING, 1)
+
+        return task_ex
+
+    def test_retry_policy_paused_workflow(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.fail
+              retry:
+                count: 2
+                delay: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._get_task_ex(wf_ex.id)
+
+        self.await_task_delayed(task_ex.id, delay=0.1)
+
+        self.engine.pause_workflow(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+        self._assert_task(task_ex.id, states.IDLE, 1)
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+
+        self.await_workflow_error(wf_ex.id)
+        self._assert_task(task_ex.id, states.ERROR, 3)
+
+    def test_retry_policy_join_task_paused_workflow(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+            task2:
+              action: std.noop
+              on-success: join_task
+            join_task:
+              join: all
+              action: std.async_noop
+              retry:
+                count: 2
+                delay: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._start_join_task(wf_ex.id)
+
+        self.engine.pause_workflow(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
+
+        self._run_delayed_job(task_handler._REFRESH_TASK_STATE_PATH)
+        self._assert_task(task_ex.id, states.WAITING, 1)
+
+        # Resume refreshes the WAITING join task right away.
+        self.engine.resume_workflow(wf_ex.id)
+        self._fail_running_action(task_ex.id)
+
+        self._run_delayed_job(task_handler._REFRESH_TASK_STATE_PATH)
+        self._fail_running_action(task_ex.id)
+
+        self.await_workflow_error(wf_ex.id)
+        self._assert_task(task_ex.id, states.ERROR, 3)
+
+    def test_retry_policy_join_task_resumed_before_delay(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+            task2:
+              action: std.noop
+              on-success: join_task
+            join_task:
+              join: all
+              action: std.async_noop
+              retry:
+                count: 1
+                delay: 5
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._start_join_task(wf_ex.id)
+
+        self.engine.pause_workflow(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
+
+        self.has_scheduled_jobs.reset_mock()
+        self.engine.resume_workflow(wf_ex.id)
+
+        # Resume refreshes WAITING tasks after its transaction; this call
+        # means that refresh ran and found the held retry still pending.
+        self._await(lambda: self.has_scheduled_jobs.called, delay=0.1)
+        self._assert_task(task_ex.id, states.WAITING, 1)
+        self.assertEqual(1, len(self.delayed_jobs))
+
+        self._run_delayed_job(task_handler._REFRESH_TASK_STATE_PATH)
+        self._fail_running_action(task_ex.id)
+
+        self.await_workflow_error(wf_ex.id)
+        self._assert_task(task_ex.id, states.ERROR, 2)
+
+    def test_retry_policy_cancelled_workflow(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.fail
+              retry:
+                count: 2
+                delay: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._get_task_ex(wf_ex.id)
+
+        self.await_task_delayed(task_ex.id, delay=0.1)
+
+        self.engine.stop_workflow(wf_ex.id, states.CANCELLED)
+        self.await_workflow_cancelled(wf_ex.id)
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+
+        self._assert_task(task_ex.id, states.CANCELLED, 1)
+
+    def test_retry_policy_paused_then_cancelled_workflow(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.fail
+              retry:
+                count: 2
+                delay: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._get_task_ex(wf_ex.id)
+
+        self.await_task_delayed(task_ex.id, delay=0.1)
+
+        self.engine.pause_workflow(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+        self._assert_task(task_ex.id, states.IDLE, 1)
+
+        self.engine.stop_workflow(wf_ex.id, states.CANCELLED)
+        self.await_workflow_cancelled(wf_ex.id)
+
+        self._assert_task(task_ex.id, states.CANCELLED, 1)
+
+    def test_retry_policy_action_fails_after_cancel(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.async_noop
+              retry:
+                count: 2
+                delay: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._get_task_ex(wf_ex.id)
+
+        self.await_task_running(task_ex.id)
+
+        with db_api.transaction():
+            action_ex_id = db_api.get_task_execution(
+                task_ex.id
+            ).action_executions[0].id
+
+        self.engine.stop_workflow(wf_ex.id, states.CANCELLED)
+        self.await_workflow_cancelled(wf_ex.id)
+
+        self.engine.on_action_complete(
+            action_ex_id,
+            ml_actions.Result(error='Fail')
+        )
+
+        self.await_task_error(task_ex.id)
+        self._assert_task(task_ex.id, states.ERROR, 1)
+        self.assertEqual([], self.delayed_jobs)
+
+    def test_wait_before_policy_paused_workflow(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.noop
+              wait-before: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+        task_ex = self._get_task_ex(wf_ex.id)
+
+        self.await_task_delayed(task_ex.id, delay=0.1)
+
+        self.engine.pause_workflow(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+        self._assert_task(task_ex.id, states.IDLE, 0)
+
+        self.engine.resume_workflow(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
+
+        self._assert_task(task_ex.id, states.SUCCESS, 1)
 
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB % 2)

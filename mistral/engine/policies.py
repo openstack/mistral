@@ -15,10 +15,12 @@
 
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models
 from mistral.engine import base
 from mistral.engine import post_tx_queue
 from mistral.engine import workflow_handler as wf_handler
 from mistral import expressions
+from mistral.lang import parser as spec_parser
 from mistral.scheduler import base as sched_base
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
@@ -326,6 +328,9 @@ class RetryPolicy(base.TaskPolicy):
         if not states.is_completed(state) or states.is_cancelled(state):
             return
 
+        if states.is_completed(task.wf_ex.state):
+            return
+
         policy_ctx = task.get_policy_context(ctx_key)
 
         retry_no = 0
@@ -526,7 +531,32 @@ def _continue_task(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)
 
-        task_handler.continue_task(task_ex)
+        if not task_ex:
+            return
+
+        wf_ex = task_ex.workflow_execution
+
+        if states.is_paused(wf_ex.state):
+            # Serializes with resume so a parked task is never missed.
+            wf_ex = db_api.acquire_lock(models.WorkflowExecution, wf_ex.id)
+
+        if not states.is_paused_or_completed(wf_ex.state):
+            task_handler.continue_task(task_ex)
+
+            return
+
+        if states.is_completed(task_ex.state):
+            return
+
+        wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
+        task = task_handler.build_task_from_execution(wf_spec, task_ex)
+
+        if states.is_paused(wf_ex.state):
+            task.set_state(states.IDLE, 'Waiting for the workflow to resume.')
+        elif states.is_cancelled(wf_ex.state):
+            task.set_state(states.CANCELLED, 'Workflow was cancelled.')
+        else:
+            task.set_state(states.ERROR, 'Workflow has completed.')
 
 
 @db_utils.retry_on_db_error

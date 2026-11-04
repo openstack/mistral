@@ -143,6 +143,53 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.SUCCESS, task_1_ex.state)
 
+    def test_cancel_workflow_paused_by_pause_before(self):
+        workflow = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Echo"
+              pause-before: true
+        """
+
+        wf_service.create_workflows(workflow)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+        self.await_task_state(task_1_ex.id, states.IDLE)
+
+        self.engine.stop_workflow(
+            wf_ex.id,
+            states.CANCELLED,
+            "Cancelled by user."
+        )
+
+        self.await_workflow_cancelled(wf_ex.id)
+        self.await_task_cancelled(task_1_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual("Cancelled by user.", wf_ex.state_info)
+            self.assertEqual(
+                0,
+                db_api.get_incomplete_task_executions_count(
+                    workflow_execution_id=wf_ex.id
+                )
+            )
+
     def test_cancel_completed_workflow(self):
         workflow = """
         version: '2.0'

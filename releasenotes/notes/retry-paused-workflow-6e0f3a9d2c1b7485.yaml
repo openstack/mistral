@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    A task iteration delayed by the ``retry`` or ``wait-before`` policy no
+    longer runs while its workflow is paused. The task is put back in IDLE
+    state and runs again when the workflow is resumed. A ``join`` task
+    delayed by ``retry`` also waits for the resume. If the workflow is
+    cancelled or failed, the delayed task is cancelled or failed too instead
+    of running, and the retry policy no longer schedules new iterations.
+    Cancelling a paused workflow now also cancels the tasks it parked in
+    IDLE, including tasks stopped by ``pause-before``, so they no longer
+    block a later rerun of the workflow. See
+    `bug 1769012
+    <https://bugs.launchpad.net/mistral/+bug/1769012>`_.
