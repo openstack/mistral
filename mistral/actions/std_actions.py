@@ -39,6 +39,16 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
+def _check_wait(seconds):
+    max_seconds = CONF.action_std_sleep.max_seconds
+
+    if max_seconds and seconds > max_seconds:
+        raise exc.ActionException(
+            "Requested wait of %s seconds exceeds the maximum allowed "
+            "([action_std_sleep] max_seconds=%s)." % (seconds, max_seconds)
+        )
+
+
 class EchoAction(actions.Action):
     """Echo action.
 
@@ -66,6 +76,8 @@ class EchoAction(actions.Action):
             self.output,
             self._delay
         )
+
+        _check_wait(self._delay)
 
         time.sleep(self._delay)
 
@@ -624,6 +636,8 @@ class SleepAction(actions.Action):
 
     def run(self, context):
         LOG.info('Running sleep action [seconds=%s]', self._seconds)
+
+        _check_wait(self._seconds)
 
         time.sleep(self._seconds)
 

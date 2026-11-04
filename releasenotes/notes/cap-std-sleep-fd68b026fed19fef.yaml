@@ -1,0 +1,10 @@
+---
+security:
+  - |
+    ``std.sleep`` and the ``delay`` of ``std.echo`` held an executor thread
+    for an unbounded time. The wait is now limited by the new
+    ``[action_std_sleep] max_seconds`` option.
+upgrade:
+  - |
+    ``std.sleep`` or ``std.echo`` waits above ``[action_std_sleep]
+    max_seconds`` (3600 by default) now fail. ``0`` disables the limit.

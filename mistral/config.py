@@ -884,6 +884,17 @@ action_std_ssh_opts = [
     ),
 ]
 
+action_std_sleep_opts = [
+    cfg.IntOpt(
+        'max_seconds',
+        default=3600,
+        min=0,
+        help=_('Maximum wait (seconds) of std.sleep and of the std.echo '
+               'delay. The wait holds an executor thread; a larger value '
+               'makes the action fail. 0 disables the limit.')
+    ),
+]
+
 yaql_opts = [
     cfg.IntOpt(
         'limit_iterators',
@@ -1002,6 +1013,7 @@ YAQL_GROUP = "yaql"
 EXPRESSIONS_GROUP = "expressions"
 ACTION_STD_HTTP_GROUP = 'action_std_http'
 ACTION_STD_SSH_GROUP = 'action_std_ssh'
+ACTION_STD_SLEEP_GROUP = 'action_std_sleep'
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -1041,6 +1053,7 @@ CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 CONF.register_opts(expression_opts, group=EXPRESSIONS_GROUP)
 CONF.register_opts(action_std_http_opts, group=ACTION_STD_HTTP_GROUP)
 CONF.register_opts(action_std_ssh_opts, group=ACTION_STD_SSH_GROUP)
+CONF.register_opts(action_std_sleep_opts, group=ACTION_STD_SLEEP_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -1086,6 +1099,7 @@ def list_opts():
         (EXPRESSIONS_GROUP, expression_opts),
         (ACTION_STD_HTTP_GROUP, action_std_http_opts),
         (ACTION_STD_SSH_GROUP, action_std_ssh_opts),
+        (ACTION_STD_SLEEP_GROUP, action_std_sleep_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),
