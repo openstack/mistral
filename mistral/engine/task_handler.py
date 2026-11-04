@@ -269,10 +269,12 @@ def continue_task(task_ex):
 
     try:
         with db_api.named_lock('continue-task-%s' % task_ex.id):
+            first_start = task_ex.started_at is None
+
             if not task.set_state(states.RUNNING, None):
                 return
 
-            task.run()
+            task.run(first_start=first_start)
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
 
@@ -476,8 +478,7 @@ def _refresh_task_state(task_ex_id):
         if not task_ex:
             return
 
-        if (states.is_completed(task_ex.state)
-                or task_ex.state == states.RUNNING):
+        if task_ex.state != states.WAITING:
             return
 
         wf_ex = task_ex.workflow_execution
@@ -499,8 +500,7 @@ def _refresh_task_state(task_ex_id):
             # performance optimization because locking is pretty expensive.
             db_api.refresh(task_ex)
 
-            if (states.is_completed(task_ex.state)
-                    or task_ex.state == states.RUNNING):
+            if task_ex.state != states.WAITING:
                 return
 
             log_state = wf_ctrl.get_logical_task_state(task_ex)

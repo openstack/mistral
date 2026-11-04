@@ -282,7 +282,8 @@ class Task(object, metaclass=abc.ABCMeta):
                     state=states.WAITING,
                     state_info=msg
                 )
-            elif self.task_ex.state != states.WAITING:
+            elif self.task_ex.state not in (states.WAITING, states.IDLE,
+                                            states.RUNNING_DELAYED):
                 self.set_state(states.WAITING, msg)
 
     def reset(self):
@@ -613,15 +614,16 @@ class RegularTask(Task):
         self.update(action_ex.state)
 
     @profiler.trace('task-run')
-    def run(self, first_run=False):
+    def run(self, first_run=False, first_start=False):
         if first_run:
             self._run_new()
         else:
-            self._run_existing()
+            self._run_existing(first_start)
 
     @profiler.trace('task-run-new')
     def _run_new(self):
-        if self.waiting:
+        # RPC drops the waiting flag, so a join is recognized by its key.
+        if self.waiting or self.task_ex.unique_key:
             return
 
         if states.is_idle(self.task_ex.state):
@@ -684,7 +686,7 @@ class RegularTask(Task):
         self._create_task_execution(state=states.IDLE)
 
     @profiler.trace('task-run-existing')
-    def _run_existing(self):
+    def _run_existing(self, first_start=False):
         if self.waiting:
             return
 
@@ -697,15 +699,16 @@ class RegularTask(Task):
 
         self.set_state(states.RUNNING, None, processed=False)
 
-        if self.rerun:
+        self._update_inbound_context()
+        self._update_triggered_by()
+
+        if self.rerun or first_start:
             self._before_task_start()
 
             # Policies could possibly change task state.
             if self.task_ex.state != states.RUNNING:
                 return
 
-        self._update_inbound_context()
-        self._update_triggered_by()
         self._reset_actions()
         self._schedule_actions()
 

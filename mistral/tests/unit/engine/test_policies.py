@@ -2453,6 +2453,424 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertEqual(states.SUCCESS, next_task_ex.state)
 
+    def test_pause_before_policy_join_task(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.noop
+              on-success: join_task
+
+            join_task:
+              join: all
+              pause-before: true
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(states.IDLE, task_ex.state)
+            self.assertEqual(0, len(task_ex.executions))
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(states.SUCCESS, task_ex.state)
+            self.assertEqual(1, len(task_ex.executions))
+
+    def test_pause_before_policy_join_task_with_retry(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.noop
+              on-success: join_task
+
+            join_task:
+              join: all
+              pause-before: true
+              action: std.fail
+              retry:
+                count: 1
+                delay: 0
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(2, len(task_ex.executions))
+
+    def test_pause_before_policy_join_task_late_inbound_task(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.async_noop
+              on-success: join_task
+
+            join_task:
+              join: 1
+              pause-before: true
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task2_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task2'
+            )
+
+        def _no_refresh_job():
+            with db_api.transaction():
+                return not db_api.get_scheduled_jobs(
+                    func_name=task_handler._REFRESH_TASK_STATE_PATH
+                )
+
+        self.await_task_running(task2_ex.id)
+
+        task2_action_ex = db_api.get_action_executions(
+            task_execution_id=task2_ex.id
+        )[0]
+
+        self.has_scheduled_jobs.reset_mock()
+
+        self.engine.on_action_complete(task2_action_ex.id, ml_actions.Result())
+
+        self.await_task_success(task2_ex.id)
+        self._await(lambda: self.has_scheduled_jobs.called, delay=0.1)
+        self._await(_no_refresh_job, delay=0.1)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(states.PAUSED, wf_ex.state)
+            self.assertEqual(states.IDLE, task_ex.state)
+            self.assertEqual(0, len(task_ex.executions))
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+        self._await(_no_refresh_job, delay=0.1)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+
+            self.assertEqual(1, len(task_ex.executions))
+
+    def test_pause_before_policy_join_task_resume_rpc_order(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.async_noop
+              on-success: join_task
+
+            join_task:
+              join: 1
+              pause-before: true
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task2_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task2'
+            )
+            join_task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+        self.await_task_running(task2_ex.id)
+
+        task2_action_ex = db_api.get_action_executions(
+            task_execution_id=task2_ex.id
+        )[0]
+
+        self.engine.on_action_complete(task2_action_ex.id, ml_actions.Result())
+
+        self.await_task_success(task2_ex.id)
+
+        calls = []
+
+        with mock.patch.object(
+                rpc.EngineClient, 'start_task',
+                autospec=True,
+                side_effect=lambda _self, **kw: calls.append(kw)):
+            self.engine.resume_workflow(wf_ex.id)
+
+            self._await(lambda: len(calls) == 2, delay=0.05)
+
+        def _no_refresh_job():
+            with db_api.transaction():
+                return not db_api.get_scheduled_jobs_count(
+                    key=task_handler._get_refresh_state_job_key(
+                        join_task_ex.id
+                    )
+                )
+
+        self._await(_no_refresh_job)
+
+        for kw in sorted(calls, key=lambda c: not c['first_run']):
+            kw.pop('wf_spec', None)
+            self.engine.start_task(**kw)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(join_task_ex.id)
+
+            self.assertEqual(1, len(task_ex.executions))
+
+    def test_wait_before_policy_join_task(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.noop
+              on-success: join_task
+
+            join_task:
+              join: all
+              wait-before: 1
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(states.SUCCESS, task_ex.state)
+            self.assertEqual(
+                {'skip': True},
+                task_ex.runtime_context.get('wait_before_policy')
+            )
+            self.assertEqual(1, len(task_ex.executions))
+
+    def test_wait_before_policy_partial_join_task_not_rearmed(self):
+        self._hold_delayed_jobs()
+
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.async_noop
+              on-success: join_task
+
+            join_task:
+              join: 1
+              wait-before: 5
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task2_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task2'
+            )
+
+        self.await_task_running(task2_ex.id)
+
+        self._await(
+            lambda: len(db_api.get_task_executions(name='join_task')) == 1
+        )
+
+        join_task_ex = db_api.get_task_executions(name='join_task')[0]
+
+        self.await_task_delayed(join_task_ex.id)
+
+        with db_api.transaction():
+            task2_ex = db_api.get_task_execution(task2_ex.id)
+
+            action_ex_id = task2_ex.executions[0].id
+
+        self.has_scheduled_jobs.reset_mock()
+
+        self.engine.on_action_complete(action_ex_id, ml_actions.Result())
+
+        self.await_task_success(task2_ex.id)
+        self._await(lambda: self.has_scheduled_jobs.called, delay=0.1)
+
+        def _no_refresh_job():
+            with db_api.transaction():
+                return not db_api.get_scheduled_jobs_count(
+                    key=task_handler._get_refresh_state_job_key(
+                        join_task_ex.id
+                    )
+                )
+
+        self._await(_no_refresh_job)
+
+        with db_api.transaction():
+            join_task_ex = db_api.get_task_execution(join_task_ex.id)
+
+            self.assertEqual(states.RUNNING_DELAYED, join_task_ex.state)
+            self.assertEqual(0, len(join_task_ex.executions))
+
+        self.assertEqual(1, len(self.delayed_jobs))
+
+        self._run_delayed_job(policies._CONTINUE_TASK_PATH)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            join_task_ex = db_api.get_task_execution(join_task_ex.id)
+
+            self.assertEqual(states.SUCCESS, join_task_ex.state)
+            self.assertEqual(1, len(join_task_ex.executions))
+
+    def test_concurrency_policy_join_task_from_inbound_var(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              wait-before: 1
+              action: std.noop
+              publish:
+                concurrency: 2
+              on-success: join_task
+
+            join_task:
+              join: all
+              action: std.noop
+              with-items: i in <% range(0, 4) %>
+              concurrency: <% $.concurrency %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='join_task'
+            )
+
+            self.assertEqual(2, task_ex.runtime_context['concurrency'])
+
     def test_concurrency_is_in_runtime_context(self):
         wb_service.create_workbook_v2(CONCURRENCY_WB % 4)
 

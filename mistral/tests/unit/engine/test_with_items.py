@@ -841,6 +841,74 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual('With-items failed', result)
 
+    def test_with_items_concurrency_join_task(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.noop
+              on-success: join_task
+
+            join_task:
+              join: all
+              action: std.async_noop
+              with-items: i in <% range(0, 6) %>
+              concurrency: 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        def _get_join_task_ex():
+            return db_api.get_task_executions(
+                workflow_execution_id=wf_ex.id,
+                name='join_task',
+                state=states.RUNNING
+            )
+
+        self._await(lambda: _get_join_task_ex())
+
+        task_ex = _get_join_task_ex()[0]
+
+        self.assertEqual(2, self._get_running_actions_count(task_ex.id))
+
+        for i in range(6):
+            self._await(lambda: self._get_running_actions_count(task_ex.id))
+
+            self.assertGreaterEqual(
+                2,
+                self._get_running_actions_count(task_ex.id)
+            )
+
+            with db_api.transaction():
+                task_ex = db_api.get_task_execution(task_ex.id)
+
+                action_ex_id = [
+                    e.id for e in task_ex.executions
+                    if e.state == states.RUNNING
+                ][0]
+
+            self.engine.on_action_complete(
+                action_ex_id,
+                actions_base.Result(i)
+            )
+
+            self._await(
+                lambda: self._action_result_equals(
+                    action_ex_id,
+                    {'result': i}
+                )
+            )
+
+        self.await_workflow_success(wf_ex.id)
+
     def test_with_items_concurrency_3(self):
         wf_with_concurrency_3 = """---
         version: "2.0"

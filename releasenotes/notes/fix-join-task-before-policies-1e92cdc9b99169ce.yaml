@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Policies applied before a task starts (``pause-before``, ``wait-before``,
+    ``timeout`` and ``concurrency``) are now honored by ``join`` tasks. They
+    were previously ignored, so for example a ``join`` task with
+    ``with-items`` ran all its iterations at once. See `bug 1833273
+    <https://bugs.launchpad.net/mistral/+bug/1833273>`_ and `bug 1718754
+    <https://bugs.launchpad.net/mistral/+bug/1718754>`_.
