@@ -14,6 +14,9 @@
 
 import datetime
 import json
+
+from cryptography.hazmat.primitives.asymmetric import rsa
+import jwt
 import pecan
 import pecan.testing
 import requests
@@ -98,6 +101,20 @@ USER_CLAIMS = {
 }
 
 WWW_AUTHENTICATE_HEADER = {'WWW-Authenticate': 'unauthorized reason is ...'}
+
+PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+ATTACKER_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+
+def _sign(roles, key=PRIVATE_KEY, realm=REALM_NAME):
+    claims = {
+        "sub": "248289761001",
+        "aud": "openstack",
+        "iss": "http://localhost:8080/auth/realms/%s" % realm,
+        "realm_access": {"roles": roles}
+    }
+
+    return jwt.encode(claims, key, algorithm='RS256')
 
 
 class TestKeyCloakOIDCAuth(base.BaseTest):
@@ -246,6 +263,140 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
                 self.auth_handler.authenticate,
                 req
             )
+
+    def _authenticate_signed(self, token, headers=None):
+        req = self._build_request(token)
+
+        for name, value in (headers or {}).items():
+            req.headers[name] = value
+
+        with mock.patch.object(
+                keycloak.KeycloakAuthHandler,
+                'get_public_key',
+                return_value=PRIVATE_KEY.public_key()):
+            self.auth_handler.authenticate(req)
+
+        return req
+
+    def test_verified_token(self):
+        req = self._authenticate_signed(_sign(["role1", "admin"]))
+
+        self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
+        self.assertEqual(REALM_NAME, req.headers["X-Project-Id"])
+        self.assertEqual("role1,admin", req.headers["X-Roles"])
+        self.assertEqual("248289761001", req.headers["X-User-Id"])
+        self.assertTrue(req.environ["mistral.is_admin"])
+
+    def test_forged_token_cannot_set_admin(self):
+        req = self._build_request(_sign(["admin"], key=ATTACKER_KEY))
+
+        with mock.patch.object(
+                keycloak.KeycloakAuthHandler,
+                'get_public_key',
+                return_value=PRIVATE_KEY.public_key()):
+            self.assertRaises(
+                exc.UnauthorizedException,
+                self.auth_handler.authenticate,
+                req
+            )
+
+        self.assertNotIn("mistral.is_admin", req.environ)
+        self.assertNotIn("X-Roles", req.headers)
+        self.assertNotIn("X-Identity-Status", req.headers)
+
+    def test_admin_role_option(self):
+        self.override_config('admin_role', 'mistral-admin', 'keycloak_oidc')
+
+        req = self._authenticate_signed(_sign(["admin"]))
+
+        self.assertFalse(req.environ["mistral.is_admin"])
+
+        req = self._authenticate_signed(_sign(["mistral-admin"]))
+
+        self.assertTrue(req.environ["mistral.is_admin"])
+
+    def test_admin_role_disabled(self):
+        self.override_config('admin_role', '', 'keycloak_oidc')
+
+        req = self._authenticate_signed(_sign(["admin"]))
+
+        self.assertFalse(req.environ["mistral.is_admin"])
+
+    def test_admin_realm_option(self):
+        self.override_config('admin_realm', 'master', 'keycloak_oidc')
+
+        req = self._authenticate_signed(_sign(["admin"]))
+
+        self.assertFalse(req.environ["mistral.is_admin"])
+
+        req = self._authenticate_signed(_sign(["admin"], realm='master'))
+
+        self.assertTrue(req.environ["mistral.is_admin"])
+
+    def test_spoofed_identity_headers_removed(self):
+        req = self._authenticate_signed(
+            _sign(["role1"]),
+            headers={
+                "X-User-Id": "spoofed",
+                "X-User-Name": "spoofed",
+                "X-Tenant-Id": "spoofed",
+                "X-Service-Roles": "admin",
+                "X-Is-Admin-Project": "True"
+            }
+        )
+
+        self.assertEqual("248289761001", req.headers["X-User-Id"])
+        self.assertNotIn("X-User-Name", req.headers)
+        self.assertNotIn("X-Tenant-Id", req.headers)
+        self.assertNotIn("X-Service-Roles", req.headers)
+        self.assertNotIn("X-Is-Admin-Project", req.headers)
+        self.assertFalse(req.environ["mistral.is_admin"])
+
+    @mock.patch("requests.get")
+    def test_user_info_endpoint_sets_admin(self, mocked_get):
+        self.override_config(
+            'user_info_endpoint_url',
+            'https://127.0.0.1:9080',
+            'keycloak_oidc'
+        )
+
+        mocked_resp = mock.Mock()
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = USER_CLAIMS
+
+        mocked_get.return_value = mocked_resp
+
+        req = self._build_request(_sign(["admin"], key=ATTACKER_KEY))
+
+        self.auth_handler.authenticate(req)
+
+        self.assertEqual(1, mocked_get.call_count)
+        self.assertEqual("admin", req.headers["X-Roles"])
+        self.assertTrue(req.environ["mistral.is_admin"])
+
+    @mock.patch("requests.get")
+    def test_user_info_endpoint_rejects_token(self, mocked_get):
+        self.override_config(
+            'user_info_endpoint_url',
+            'https://127.0.0.1:9080',
+            'keycloak_oidc'
+        )
+
+        mocked_resp = mock.Mock()
+        mocked_resp.status_code = 401
+        mocked_resp.raise_for_status.side_effect = requests.HTTPError
+
+        mocked_get.return_value = mocked_resp
+
+        req = self._build_request(_sign(["admin"], key=ATTACKER_KEY))
+
+        self.assertRaises(
+            requests.HTTPError,
+            self.auth_handler.authenticate,
+            req
+        )
+
+        self.assertNotIn("mistral.is_admin", req.environ)
 
 
 class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
@@ -417,3 +568,38 @@ class TestKeyCloakOIDCAuthApp(base.DbTestCase):
 
                 # Second call of set_ctx ('after'), where we reset the context.
                 self.assertIsNone(calls[1][0][0])
+
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
+    def test_admin_role_not_granted_by_other_role(self):
+        self.override_config('admin_role', 'mistral-admin', 'keycloak_oidc')
+
+        headers = {'X-Auth-Token': _sign(["admin"])}
+
+        with mock.patch.object(
+                keycloak.KeycloakAuthHandler,
+                'get_public_key',
+                return_value=PRIVATE_KEY.public_key()):
+            with mock.patch("mistral.context.set_ctx") as mocked_set_cxt:
+                self.app.get('/v2/workflows/123', headers=headers)
+
+                ctx = mocked_set_cxt.call_args_list[0][0][0]
+
+                self.assertEqual(["admin"], ctx.roles)
+                self.assertFalse(ctx.is_admin)
+
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
+    def test_admin_role_granted(self):
+        self.override_config('admin_role', 'mistral-admin', 'keycloak_oidc')
+
+        headers = {'X-Auth-Token': _sign(["mistral-admin"])}
+
+        with mock.patch.object(
+                keycloak.KeycloakAuthHandler,
+                'get_public_key',
+                return_value=PRIVATE_KEY.public_key()):
+            with mock.patch("mistral.context.set_ctx") as mocked_set_cxt:
+                self.app.get('/v2/workflows/123', headers=headers)
+
+                ctx = mocked_set_cxt.call_args_list[0][0][0]
+
+                self.assertTrue(ctx.is_admin)

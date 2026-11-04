@@ -35,6 +35,25 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
+_IDENTITY_ENVIRON_KEYS = (
+    'HTTP_X_USER_ID', 'HTTP_X_USER', 'HTTP_X_USER_NAME',
+    'HTTP_X_USER_DOMAIN_ID', 'HTTP_X_USER_DOMAIN_NAME',
+    'HTTP_X_PROJECT_ID', 'HTTP_X_TENANT_ID', 'HTTP_X_TENANT',
+    'HTTP_X_PROJECT_NAME', 'HTTP_X_TENANT_NAME',
+    'HTTP_X_PROJECT_DOMAIN_ID', 'HTTP_X_PROJECT_DOMAIN_NAME',
+    'HTTP_X_DOMAIN_ID', 'HTTP_X_DOMAIN_NAME',
+    'HTTP_X_ROLES', 'HTTP_X_ROLE', 'HTTP_X_IS_ADMIN_PROJECT',
+    'HTTP_OPENSTACK_SYSTEM_SCOPE',
+)
+
+
+def _get_realm_name(claims):
+    # Format is "iss": "http://<host>:<port>/auth/realms/<realm_name>",
+    __, __, realm_name = claims['iss'].strip().rpartition('/realms/')
+
+    return realm_name
+
+
 class KeycloakAuthHandler(auth.AuthHandler):
     def authenticate(self, req):
         if 'X-Auth-Token' not in req.headers:
@@ -47,10 +66,10 @@ class KeycloakAuthHandler(auth.AuthHandler):
         access_token = req.headers.get('X-Auth-Token')
 
         try:
-            decoded = jwt.decode(
+            unverified = jwt.decode(
                 access_token,
                 algorithms=['RS256'],
-                verify=False
+                options={'verify_signature': False}
             )
         except Exception as e:
             msg = _("Token can't be decoded because of wrong format %s")\
@@ -59,15 +78,6 @@ class KeycloakAuthHandler(auth.AuthHandler):
             LOG.error(msg)
 
             raise exc.UnauthorizedException(message=msg)
-
-        # Get user realm from parsed token
-        # Format is "iss": "http://<host>:<port>/auth/realms/<realm_name>",
-        __, __, realm_name = decoded['iss'].strip().rpartition('/realms/')
-        audience = decoded.get('aud')
-
-        # Get roles from parsed token
-        roles = ','.join(decoded['realm_access']['roles']) \
-            if 'realm_access' in decoded else ''
 
         # NOTE(rakhmerov): There's a special endpoint for introspecting
         # access tokens described in OpenID Connect specification but it's
@@ -81,7 +91,10 @@ class KeycloakAuthHandler(auth.AuthHandler):
                 url=user_info_endpoint_url,
                 access_token=access_token
             )
+
+            claims = unverified
         else:
+            realm_name = _get_realm_name(unverified)
             public_key = self.get_public_key(realm_name)
 
             keycloak_iss = None
@@ -90,22 +103,40 @@ class KeycloakAuthHandler(auth.AuthHandler):
                 if CONF.keycloak_oidc.keycloak_iss:
                     keycloak_iss = CONF.keycloak_oidc.keycloak_iss % realm_name
 
-                jwt.decode(
+                claims = jwt.decode(
                     access_token,
                     public_key,
-                    audience=audience,
                     issuer=keycloak_iss,
                     algorithms=['RS256'],
-                    verify=True
+                    options={'verify_aud': False}
                 )
             except Exception:
                 LOG.exception('The request access token is invalid.')
 
                 raise exc.UnauthorizedException()
 
+        realm_name = _get_realm_name(claims)
+        roles = claims.get('realm_access', {}).get('roles', [])
+
+        admin_role = CONF.keycloak_oidc.admin_role
+        admin_realm = CONF.keycloak_oidc.admin_realm
+
+        for key in list(req.environ):
+            if (key in _IDENTITY_ENVIRON_KEYS or
+                    key.startswith('HTTP_X_SERVICE_')):
+                del req.environ[key]
+
+        req.environ['mistral.is_admin'] = bool(
+            admin_role and admin_role in roles and
+            (not admin_realm or admin_realm == realm_name)
+        )
+
         req.headers["X-Identity-Status"] = "Confirmed"
         req.headers["X-Project-Id"] = realm_name
-        req.headers["X-Roles"] = roles
+        req.headers["X-Roles"] = ','.join(roles)
+
+        if claims.get('sub'):
+            req.headers["X-User-Id"] = claims['sub']
 
     @staticmethod
     def get_system_ca_file():
@@ -135,7 +166,8 @@ class KeycloakAuthHandler(auth.AuthHandler):
     def get_public_key(self, realm_name):
         keycloak_key_url = (
             CONF.keycloak_oidc.auth_url +
-            CONF.keycloak_oidc.public_cert_url % realm_name
+            CONF.keycloak_oidc.public_cert_url %
+            parse.quote(realm_name, safe='')
         )
 
         response_json = self.send_request_to_auth_server(keycloak_key_url)

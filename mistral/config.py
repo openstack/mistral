@@ -748,6 +748,19 @@ keycloak_oidc_opts = [
         'keycloak_iss',
         help="Keycloak issuer(iss) url. "
              "Example: https://ip_add:port/auth/realms/%s"
+    ),
+    cfg.StrOpt(
+        'admin_role',
+        default='admin',
+        help=_('Realm role of a verified access token that grants Mistral '
+               'admin rights. If empty, no token grants admin rights.')
+    ),
+    cfg.StrOpt(
+        'admin_realm',
+        help=_('If set, admin_role grants Mistral admin rights only to '
+               'tokens issued by this realm. Set it when the Keycloak '
+               'server hosts realms managed by other parties, otherwise '
+               'an admin of any realm becomes a Mistral admin.')
     )
 ]
 

@@ -1,0 +1,14 @@
+---
+security:
+  - |
+    The Keycloak auth handler now takes the project, user and roles from the
+    token only once it is verified, and drops identity headers sent by the
+    client such as ``X-User-Id`` or ``X-Service-Roles``. Token verification
+    also works again with PyJWT 2.
+upgrade:
+  - |
+    Mistral admin rights for Keycloak users now come from the realm role set
+    in the new ``[keycloak_oidc] admin_role`` option (default ``admin``,
+    empty to disable). The new ``[keycloak_oidc] admin_realm`` option limits
+    this to one realm; set it when the Keycloak server hosts realms managed
+    by other parties. The user ID now comes from the token ``sub`` claim.

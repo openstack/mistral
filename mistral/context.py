@@ -138,7 +138,9 @@ class MistralContext(oslo_context.RequestContext):
                                 if token_info else None)
 
         context = super(MistralContext, cls).from_environ(env, **kwargs)
-        context.is_admin = True if 'admin' in context.roles else False
+        context.is_admin = env.get(
+            'mistral.is_admin', 'admin' in context.roles
+        )
 
         return context
 
