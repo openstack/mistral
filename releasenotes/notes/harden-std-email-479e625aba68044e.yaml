@@ -1,0 +1,14 @@
+---
+security:
+  - |
+    ``std.email`` had no SMTP socket timeout, so a silent peer held an
+    executor thread forever, and it returned connection errors to the
+    caller, making it a port scanner. It now uses ``[action_std_email]
+    timeout``, checks the SMTP server against ``[action_std_email]
+    allowed_hosts`` and ``denied_cidrs``, and only logs failure details.
+upgrade:
+  - |
+    ``std.email`` times out after 30 seconds by default and rejects SMTP
+    servers on loopback or link-local addresses; empty ``[action_std_email]
+    denied_cidrs`` to use a relay on the executor host. Failure messages no
+    longer include the SMTP error.

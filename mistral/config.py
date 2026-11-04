@@ -895,6 +895,31 @@ action_std_sleep_opts = [
     ),
 ]
 
+action_std_email_opts = [
+    cfg.IntOpt(
+        'timeout',
+        default=30,
+        min=0,
+        help=_('Socket timeout (seconds) of the std.email SMTP connection. '
+               '0 means no timeout (not recommended).')
+    ),
+    cfg.ListOpt(
+        'allowed_hosts',
+        default=[],
+        help=_('Optional allow-list of SMTP server hostnames that std.email '
+               'may connect to. If empty (the default) any host is allowed '
+               'except those blocked by denied_cidrs.')
+    ),
+    cfg.ListOpt(
+        'denied_cidrs',
+        default=DEFAULT_DENIED_CIDRS,
+        help=_('CIDR ranges that the std.email SMTP server may not resolve '
+               'to. Same defaults and semantics as [action_std_http] '
+               'denied_cidrs; empty it to allow an SMTP relay on the '
+               'executor host.')
+    ),
+]
+
 yaql_opts = [
     cfg.IntOpt(
         'limit_iterators',
@@ -1014,6 +1039,7 @@ EXPRESSIONS_GROUP = "expressions"
 ACTION_STD_HTTP_GROUP = 'action_std_http'
 ACTION_STD_SSH_GROUP = 'action_std_ssh'
 ACTION_STD_SLEEP_GROUP = 'action_std_sleep'
+ACTION_STD_EMAIL_GROUP = 'action_std_email'
 HEALTHCHECK_GROUP = 'healthcheck'
 KEYSTONE_GROUP = "keystone"
 
@@ -1054,6 +1080,7 @@ CONF.register_opts(expression_opts, group=EXPRESSIONS_GROUP)
 CONF.register_opts(action_std_http_opts, group=ACTION_STD_HTTP_GROUP)
 CONF.register_opts(action_std_ssh_opts, group=ACTION_STD_SSH_GROUP)
 CONF.register_opts(action_std_sleep_opts, group=ACTION_STD_SLEEP_GROUP)
+CONF.register_opts(action_std_email_opts, group=ACTION_STD_EMAIL_GROUP)
 CONF.register_opts(healthcheck_opts, group=HEALTHCHECK_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -1100,6 +1127,7 @@ def list_opts():
         (ACTION_STD_HTTP_GROUP, action_std_http_opts),
         (ACTION_STD_SSH_GROUP, action_std_ssh_opts),
         (ACTION_STD_SLEEP_GROUP, action_std_sleep_opts),
+        (ACTION_STD_EMAIL_GROUP, action_std_email_opts),
         (HEALTHCHECK_GROUP, healthcheck_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (ACTION_LOGGING_GROUP, action_logging_opts),

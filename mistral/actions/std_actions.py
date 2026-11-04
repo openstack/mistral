@@ -428,8 +428,17 @@ class SendEmailAction(actions.Action):
 
         rcpt = self.cc + self.bcc + self.to
 
+        host, port = self._parse_smtp_server()
+
+        egress.validate_host(host, port, 'action_std_email')
+
+        smtp_kwargs = {}
+
+        if CONF.action_std_email.timeout:
+            smtp_kwargs['timeout'] = CONF.action_std_email.timeout
+
         try:
-            s = smtplib.SMTP(self.smtp_server)
+            s = smtplib.SMTP(host, port, **smtp_kwargs)
 
             if self.password is not None:
                 # Sequence to request TLS connection and log in (RFC-2487).
@@ -441,9 +450,30 @@ class SendEmailAction(actions.Action):
             s.sendmail(from_addr=self.sender,
                        to_addrs=rcpt,
                        msg=message.as_string())
-        except (smtplib.SMTPException, IOError) as e:
-            raise exc.ActionException("Failed to send an email message: %s"
-                                      % e)
+        except (smtplib.SMTPException, IOError):
+            # Connection errors are not returned so the action cannot be
+            # used as a port scanner.
+            LOG.exception(
+                "Failed to send an email message for action execution: %s",
+                context.execution.action_execution_id
+            )
+            raise exc.ActionException("Failed to send an email message.")
+
+    def _parse_smtp_server(self):
+        # Mirrors smtplib: a single colon separates the port.
+        server = str(self.smtp_server)
+
+        if server.count(':') != 1:
+            return server, smtplib.SMTP_PORT
+
+        host, port = server.split(':')
+
+        try:
+            return host, int(port)
+        except ValueError:
+            raise exc.ActionException(
+                "Invalid smtp_server port: '%s'." % port
+            )
 
     def test(self, context):
         # Just logging the operation since this action is not supposed
