@@ -318,11 +318,11 @@ def _check_affected_tasks(task):
     # TODO(rakhmerov): this method should eventually move into
     # the class Task. The obvious signal is the only argument
     # that it takes.
-    if not task.is_completed():
-        return
+    if task.is_completed():
+        check_affected_tasks(task.task_ex)
 
-    task_ex = task.task_ex
 
+def check_affected_tasks(task_ex):
     wf_ex = task_ex.workflow_execution
 
     if states.is_completed(wf_ex.state):

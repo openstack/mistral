@@ -317,14 +317,24 @@ class Workflow(object, metaclass=abc.ABCMeta):
         # we need to mark all not processed tasks as processed
         # because workflow controller takes only completed tasks
         # with flag 'processed' equal to False.
-        for t_ex in self.wf_ex.task_executions:
-            if states.is_completed(t_ex.state) and not t_ex.processed:
-                t_ex.processed = True
+        unprocessed_task_execs = [
+            t_ex for t_ex in self.wf_ex.task_executions
+            if states.is_completed(t_ex.state) and not t_ex.processed
+        ]
+
+        for t_ex in unprocessed_task_execs:
+            t_ex.processed = True
 
         if cmds or self._get_backlog():
             dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
         else:
             self.check_and_complete()
+
+        # Joins unblocked by tasks completed while paused need a refresh.
+        from mistral.engine import task_handler
+
+        for t_ex in unprocessed_task_execs:
+            task_handler.check_affected_tasks(t_ex)
 
     @profiler.trace('workflow-lock')
     def lock(self):

@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixed a workflow staying RUNNING forever after resume when all the
+    inbound tasks of a "join" task completed while the workflow was paused.
+    See https://launchpad.net/bugs/1893506.
