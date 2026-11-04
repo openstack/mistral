@@ -291,6 +291,17 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_workflow_definition')
+    def test_get_with_invalid_fields(self, mocked_get):
+        resp = self.app.get(
+            '/v2/workflows/123?fields=bogus,name',
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn('bogus', resp.body.decode())
+        mocked_get.assert_not_called()
+
     @mock.patch.object(db_api, 'get_workflow_definition')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

@@ -93,6 +93,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         LOG.debug("Fetch workflow [identifier=%s]", identifier)
 
+        rest_utils.validate_fields(fields, resources.Workflow.get_fields())
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 

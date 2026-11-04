@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Single-object ``GET`` endpoints now reject unknown names in the
+    ``fields`` query parameter with ``400 Bad Request``, as list endpoints
+    already did. Unknown names shifted the returned values, so a request
+    such as ``?fields=bogus,name,trust_id`` exposed the hidden ``trust_id``
+    of a cron or event trigger under the ``name`` key.

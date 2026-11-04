@@ -153,6 +153,11 @@ class ActionExecutionsController(rest.RestController):
 
         LOG.debug("Fetch action_execution [id=%s]", id)
 
+        rest_utils.validate_fields(
+            fields,
+            resources.ActionExecution.get_fields()
+        )
+
         return _get_action_execution(id, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -477,5 +482,10 @@ class TasksActionExecutionController(rest.RestController):
         acl.enforce('action_executions:get', context.ctx())
 
         LOG.debug("Fetch action_execution [id=%s]", action_ex_id)
+
+        rest_utils.validate_fields(
+            fields,
+            resources.ActionExecution.get_fields()
+        )
 
         return _get_action_execution(action_ex_id, fields=fields)

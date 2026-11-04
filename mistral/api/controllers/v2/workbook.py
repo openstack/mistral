@@ -59,6 +59,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         LOG.debug("Fetch workbook [name=%s, namespace=%s]", name, namespace)
 
+        rest_utils.validate_fields(fields, resources.Workbook.get_fields())
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 

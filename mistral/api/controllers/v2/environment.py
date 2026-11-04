@@ -114,6 +114,8 @@ class EnvironmentController(rest.RestController):
 
         LOG.debug("Fetch environment [name=%s]", name)
 
+        rest_utils.validate_fields(fields, resources.Environment.get_fields())
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 

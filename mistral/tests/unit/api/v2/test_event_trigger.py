@@ -92,6 +92,18 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_event_trigger')
+    def test_get_with_invalid_fields(self, mocked_get):
+        resp = self.app.get(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
+            '?fields=bogus,name,trust_id',
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn('trust_id', resp.body.decode())
+        mocked_get.assert_not_called()
+
     @mock.patch.object(db_api, 'get_event_trigger')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

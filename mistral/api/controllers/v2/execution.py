@@ -111,6 +111,8 @@ class ExecutionsController(rest.RestController):
 
         LOG.debug("Fetch execution [id=%s]", id)
 
+        rest_utils.validate_fields(fields, resources.Execution.get_fields())
+
         wf_ex = _get_workflow_execution(id, fields=fields)
 
         if fields:

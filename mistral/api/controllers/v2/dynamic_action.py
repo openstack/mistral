@@ -233,6 +233,12 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             identifier,
             namespace
         )
+
+        rest_utils.validate_fields(
+            fields,
+            resources.DynamicAction.get_fields()
+        )
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 

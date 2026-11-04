@@ -41,6 +41,8 @@ class EventTriggersController(rest.RestController):
 
         LOG.debug('Fetch event trigger [id=%s]', id)
 
+        rest_utils.validate_fields(fields, resources.EventTrigger.get_fields())
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 

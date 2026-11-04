@@ -91,6 +91,51 @@ class TestCronTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_cron_trigger')
+    def test_get_with_fields_subset(self, mocked_get):
+        mocked_get.return_value = (
+            TRIGGER['id'],
+            TRIGGER['name'],
+            TRIGGER['pattern']
+        )
+        resp = self.app.get(
+            '/v2/cron_triggers/my_cron_trigger?fields=name,pattern'
+        )
+        expected = {
+            'id': TRIGGER['id'],
+            'name': TRIGGER['name'],
+            'pattern': TRIGGER['pattern'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+        mocked_get.assert_called_once_with(
+            'my_cron_trigger',
+            fields=['id', 'name', 'pattern']
+        )
+
+    @mock.patch('mistral.db.v2.api.get_cron_trigger')
+    def test_get_with_invalid_fields(self, mocked_get):
+        resp = self.app.get(
+            '/v2/cron_triggers/my_cron_trigger?fields=bogus,name,trust_id',
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn('bogus', resp.body.decode())
+        self.assertIn('trust_id', resp.body.decode())
+        mocked_get.assert_not_called()
+
+    @mock.patch('mistral.db.v2.api.get_cron_trigger')
+    def test_get_with_hidden_field(self, mocked_get):
+        resp = self.app.get(
+            '/v2/cron_triggers/my_cron_trigger?fields=trust_id',
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        mocked_get.assert_not_called()
+
     @mock.patch.object(db_api, 'get_cron_trigger')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

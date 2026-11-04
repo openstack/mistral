@@ -221,6 +221,8 @@ class TasksController(rest.RestController):
         acl.enforce('tasks:get', context.ctx())
         LOG.debug("Fetch task [id=%s]", id)
 
+        rest_utils.validate_fields(fields, resources.Task.get_fields())
+
         task, task_ex = _get_task_execution(id, ())
         task = _task_with_published_global(task, task_ex)
         if fields:

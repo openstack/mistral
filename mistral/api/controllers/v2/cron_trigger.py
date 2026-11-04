@@ -45,6 +45,8 @@ class CronTriggersController(rest.RestController):
 
         LOG.debug('Fetch cron trigger [identifier=%s]', identifier)
 
+        rest_utils.validate_fields(fields, resources.CronTrigger.get_fields())
+
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 
