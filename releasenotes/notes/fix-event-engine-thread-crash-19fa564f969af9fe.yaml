@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    The event engine no longer stops processing notifications when one of
+    them fails, for example when an expression from the event definitions
+    file cannot be evaluated against it. The error is now logged and the
+    notification is skipped. A failure to start the workflow of one event
+    trigger no longer prevents the other triggers of the same event from
+    running. See `bug 1857615
+    <https://bugs.launchpad.net/mistral/+bug/1857615>`_.

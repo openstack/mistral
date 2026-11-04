@@ -233,6 +233,81 @@ class EventEngineTest(base.DbTestCase):
                 kwargs['event_params']
             )
 
+    @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_process_event_queue_conversion_error(self, mock_start):
+        EVENT_TRIGGER['project_id'] = self.ctx.project_id
+        db_api.create_event_trigger(EVENT_TRIGGER)
+
+        e_engine = evt_eng.DefaultEventEngine()
+        e_engine.notification_converter.definitions = [
+            evt_eng.EventDefinition({
+                'event_types': EVENT_TYPE,
+                'properties': {'resource_id': '<% $.payload.instance_id %>'}
+            })
+        ]
+        e_engine.start()
+        self.addCleanup(e_engine.stop)
+
+        def _event(payload):
+            return {
+                'event_type': EVENT_TYPE,
+                'payload': payload,
+                'publisher': 'fake_publisher',
+                'timestamp': '',
+                'context': {
+                    'project_id': '%s' % self.ctx.project_id,
+                    'user_id': 'fake_user'
+                },
+            }
+
+        with mock.patch.object(e_engine, 'engine_client') as client_mock:
+            e_engine.event_queue.put(_event({}))
+            e_engine.event_queue.put(_event({'instance_id': '12345'}))
+
+            self._await(
+                lambda: client_mock.start_workflow.call_count == 1,
+                delay=0.1,
+                timeout=10
+            )
+
+            self.assertTrue(e_engine._thread.is_alive())
+
+            _, kwargs = client_mock.start_workflow.call_args
+
+            self.assertDictEqual(
+                {'resource_id': '12345'},
+                kwargs['event_params']
+            )
+
+    @mock.patch.object(evt_eng.security, 'create_context')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_start_workflow_trigger_context_error(self, mock_create_ctx):
+        mock_create_ctx.side_effect = [Exception('boom'), mock.Mock()]
+
+        e_engine = evt_eng.DefaultEventEngine()
+
+        triggers = []
+
+        for i in range(2):
+            t = copy.deepcopy(EVENT_TRIGGER)
+            t.update({
+                'id': 'trigger-%s' % i,
+                'workflow_id': 'wf-%s' % i,
+                'workflow_namespace': '',
+                'trust_id': None,
+                'project_id': self.ctx.project_id
+            })
+            triggers.append(t)
+
+        e_engine._start_workflow(triggers, {})
+
+        e_engine.engine_client.start_workflow.assert_called_once()
+        self.assertEqual(
+            'wf-1',
+            e_engine.engine_client.start_workflow.call_args[0][0]
+        )
+
 
 class NotificationsConverterTest(base.BaseTest):
     def test_convert(self):
