@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db.v2 import api as db_api
 from mistral.lang import parser as spec_parser
 from mistral.lang.v2 import workflows
 from mistral.workflow import states
@@ -128,6 +129,7 @@ class RunExistingTask(WorkflowCommand):
         d['task_ex_id'] = self.task_ex.id
         d['reset'] = self.reset
         d['unique_key'] = self.unique_key
+        d['rerun'] = self.rerun
 
         return d
 
@@ -318,6 +320,17 @@ def restore_command_from_dict(wf_ex, cmd_dict):
     cmd_name = cmd_dict['cmd_name']
 
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
+
+    if cmd_name == 'run_existing_task':
+        return RunExistingTask(
+            wf_ex,
+            wf_spec,
+            db_api.get_task_execution(cmd_dict['task_ex_id']),
+            reset=cmd_dict['reset'],
+            triggered_by=cmd_dict.get('triggered_by'),
+            rerun=cmd_dict.get('rerun', False)
+        )
+
     task_spec = wf_spec.get_tasks()[cmd_dict['task_name']]
     ctx = cmd_dict['ctx']
     params = {'msg': cmd_dict.get('msg')} if 'msg' in cmd_dict else None

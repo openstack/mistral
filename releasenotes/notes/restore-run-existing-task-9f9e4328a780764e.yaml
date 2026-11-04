@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixed resuming a workflow that was paused again while it was starting
+    an existing task, for example a task paused by "pause-before". The
+    task is now run instead of being duplicated by a new task execution.

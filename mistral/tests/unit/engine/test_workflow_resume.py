@@ -194,6 +194,39 @@ workflows:
 """
 
 
+WORKBOOK_PAUSE_TWICE = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    # Expected order:
+    # 1. task1 succeeds and sends: run task2, pause, pause (on-complete).
+    # 2. task2 is started and pause-before leaves it IDLE. The first pause
+    #    pauses the workflow, the second one goes to the backlog.
+    # 3. First resume: the backlog pause runs first and pauses the workflow
+    #    again, so the RunExistingTask for the IDLE task2 goes to the backlog.
+    # 4. Second resume: that RunExistingTask and the one built for IDLE
+    #    tasks point to the same task2, so it runs once.
+    tasks:
+      task1:
+        action: std.echo output="Task 1"
+        on-success:
+          - task2
+          - pause
+        on-complete:
+          - pause
+
+      task2:
+        action: std.echo output="Task 2"
+        pause-before: true
+"""
+
+
 class WorkflowResumeTest(base.EngineTestCase):
 
     def test_resume_reverse(self):
@@ -484,3 +517,54 @@ class WorkflowResumeTest(base.EngineTestCase):
             task_3_result = data_flow.get_task_execution_result(task_3_ex)
 
             self.assertEqual(updated_env['var2'], task_3_result)
+
+    def test_resume_idle_task_from_backlog(self):
+        wb_service.create_workbook_v2(WORKBOOK_PAUSE_TWICE)
+
+        wf_ex = self.engine.start_workflow('wb.wf1')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_2_ex = self._assert_single_item(task_execs, name='task2')
+
+        self.await_task_state(task_2_ex.id, states.IDLE)
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_paused(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            backlog = wf_ex.runtime_context['backlog_commands']
+
+        self.assertEqual(
+            ['run_existing_task'],
+            [c['cmd_name'] for c in backlog]
+        )
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
+
+        task_2_ex = self._assert_single_item(task_execs, name='task2')
+
+        self.assertEqual(states.SUCCESS, task_2_ex.state)
+
+        task_2_action_exs = db_api.get_action_executions(
+            task_execution_id=task_2_ex.id
+        )
+
+        self.assertEqual(1, len(task_2_action_exs))

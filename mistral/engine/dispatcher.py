@@ -122,8 +122,19 @@ def _poll_commands_from_backlog(wf_ex):
 
 @profiler.trace('dispatcher-dispatch-commands', hide_args=True)
 def dispatch_workflow_commands(wf_ex, wf_cmds):
+    task_ex_ids = {
+        c.task_ex.id for c in wf_cmds
+        if isinstance(c, commands.RunExistingTask)
+    }
+
+    backlog_cmds = [
+        c for c in _poll_commands_from_backlog(wf_ex)
+        if not (isinstance(c, commands.RunExistingTask) and
+                c.task_ex.id in task_ex_ids)
+    ]
+
     # Run commands from the backlog.
-    _process_commands(wf_ex, _poll_commands_from_backlog(wf_ex))
+    _process_commands(wf_ex, backlog_cmds)
 
     # Run new commands.
     _process_commands(wf_ex, wf_cmds)
