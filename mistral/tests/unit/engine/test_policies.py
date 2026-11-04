@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
 from unittest import mock
 
 import fixtures
@@ -2031,6 +2032,80 @@ class PoliciesTest(base.EngineTestCase):
             self.assertIn('Task timed out', task_ex.state_info)
             self.assertEqual(1, len(task_ex.action_executions))
             self.assertNotIn('retry_task_policy', task_ex.runtime_context)
+
+    def test_executor_timeout_before_timeout_policy_with_retry(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.sleep seconds=4
+              timeout: 1
+              retry:
+                count: 2
+                delay: 0
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        fail_if_incomplete = policies._fail_task_if_incomplete
+
+        def _late_fail_if_incomplete(*args, **kwargs):
+            time.sleep(1)
+
+            return fail_if_incomplete(*args, **kwargs)
+
+        self.useFixture(fixtures.MockPatchObject(
+            policies,
+            '_fail_task_if_incomplete',
+            _late_fail_if_incomplete
+        ))
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(1, len(task_ex.action_executions))
+
+    def test_late_timeout_policy_with_continue_on(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.noop
+              timeout: 2
+              retry:
+                count: 30
+                delay: 1
+                continue-on: <% true %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        fail_if_incomplete = policies._fail_task_if_incomplete
+
+        def _late_fail_if_incomplete(*args, **kwargs):
+            time.sleep(3)
+
+            return fail_if_incomplete(*args, **kwargs)
+
+        self.useFixture(fixtures.MockPatchObject(
+            policies,
+            '_fail_task_if_incomplete',
+            _late_fail_if_incomplete
+        ))
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf_ex.id)
 
     def test_timeout_policy_during_retry_delay(self):
         wf_text = """---

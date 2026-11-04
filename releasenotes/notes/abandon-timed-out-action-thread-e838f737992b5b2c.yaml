@@ -1,0 +1,13 @@
+---
+security:
+  - |
+    After an action timeout the default executor still waited for the action
+    thread to finish, so a never-ending action pinned an executor worker
+    forever. The timeout is now reported right away and the action thread is
+    abandoned; its late result is discarded.
+upgrade:
+  - |
+    An abandoned action thread keeps running until the action returns or the
+    executor process exits, and any side effects it still has happen after
+    the timeout was reported. Actions that never return leave threads behind
+    for the life of the executor process.

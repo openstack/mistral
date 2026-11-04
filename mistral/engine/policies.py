@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
+
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -365,6 +367,15 @@ class RetryPolicy(base.TaskPolicy):
         if not retries_remain or break_triggered or stop_continue_flag:
             return
 
+        # The executor may report a timeout before _fail_task_if_incomplete().
+        if _deadline_passed(task.task_ex):
+            task.task_ex.runtime_context[_TIMED_OUT_KEY] = True
+
+            if task.get_state() != states.ERROR:
+                task.set_state(states.ERROR, 'Task timed out.')
+
+            return
+
         task.invalidate_result()
 
         policy_ctx['retry_no'] = retry_no + 1
@@ -428,7 +439,10 @@ class TimeoutPolicy(base.TaskPolicy):
 
         timeout_id = utils.generate_unicode_uuid()
 
-        task.set_runtime_context_value('timeout_policy', {'id': timeout_id})
+        task.set_runtime_context_value(
+            'timeout_policy',
+            {'id': timeout_id, 'deadline': time.time() + self.delay}
+        )
 
         sched = sched_base.get_system_scheduler()
 
@@ -531,6 +545,14 @@ class FailOnPolicy(base.TaskPolicy):
 
         if self.fail_on:
             task.set_state(states.ERROR, "Failed by 'fail-on' policy")
+
+
+def _deadline_passed(task_ex):
+    deadline = task_ex.runtime_context.get('timeout_policy', {}).get(
+        'deadline'
+    )
+
+    return bool(deadline and time.time() >= deadline)
 
 
 @db_utils.retry_on_db_error

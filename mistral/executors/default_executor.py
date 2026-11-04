@@ -111,7 +111,8 @@ class DefaultExecutor(base.Executor):
             result_ptr = {}
             thread = ThreadWithException(
                 target=_thread_run_action,
-                args=[action.run, context.ctx(), action_ctx, result_ptr]
+                args=[action.run, context.ctx(), action_ctx, result_ptr],
+                daemon=True
             )
             thread.start()
             thread.join(timeout=timeout)
@@ -119,24 +120,11 @@ class DefaultExecutor(base.Executor):
             result = result_ptr.get('r')
 
             if thread.is_alive():
-                # The action is taking too long.
-                # There is no proper way to kill a thread, so we have two
-                # options:
-                # - Leave the thread alone without taking care
-                # - Wait for it to finish now (thread.join())
-                # amorin: I decided to wait for the thread to finish, it's a
-                # safer decision as we are giving "result" to our thread
-                # and we dont want another thread to overwrite this later
-                # if we don't wait
-                # We may block this mistral thread for an infinite time,
-                # but, it's the safest option I came to for now.
-                # Note: we were using eventlet here before, and eventlet
-                # allowed us to kill the greenthread
-                # Let's print a log message about this, so at least, we can
-                # identify that we are stuck from logs
-                LOG.warning("The action %s timed out, we are now waiting for "
-                            "the action thread to finish...", (action_ex_id))
-                thread.join()
+                # A thread cannot be killed, and joining it would pin this
+                # executor worker forever: abandon it.
+                LOG.warning("The action %s timed out after %s seconds, "
+                            "abandoning the action thread.",
+                            action_ex_id, timeout)
                 raise Exception("Timeout after %s seconds" % (timeout))
 
             # Note: it's made for backwards compatibility with already
