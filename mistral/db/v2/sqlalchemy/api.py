@@ -820,11 +820,18 @@ def update_code_source(identifier, values, namespace='', session=None):
 
 @b.session_aware()
 def delete_code_source(identifier, namespace='', session=None):
-    code_src = get_code_source(
+    code_src = _get_db_object_by_name_namespace_and_project(
+        models.CodeSource,
         identifier,
-        namespace=namespace,
-        session=session
+        namespace,
+        security.get_project_id()
     )
+
+    if not code_src:
+        code_src = get_code_source(identifier, namespace=namespace)
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(code_src)
 
     session.delete(code_src)
 
@@ -922,7 +929,21 @@ def get_dynamic_action_definitions(fields=None, session=None, **kwargs):
 
 @b.session_aware()
 def delete_dynamic_action_definition(identifier, namespace='', session=None):
-    action_def = get_dynamic_action_definition(identifier, namespace)
+    action_def = _get_db_object_by_name_namespace_and_project(
+        models.DynamicActionDefinition,
+        identifier,
+        namespace,
+        security.get_project_id()
+    )
+
+    if not action_def:
+        action_def = get_dynamic_action_definition(
+            identifier,
+            namespace=namespace
+        )
+
+    if context.has_ctx():
+        m_dbutils.check_db_obj_access(action_def)
 
     session.delete(action_def)
 

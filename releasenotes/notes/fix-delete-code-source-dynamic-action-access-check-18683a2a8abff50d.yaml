@@ -1,0 +1,11 @@
+---
+security:
+  - |
+    Deleting a code source or a dynamic action now checks that it belongs to
+    the caller's project. Previously, if the delete policy was relaxed from
+    its admin-only default, a user could delete another project's public
+    code source or dynamic action.
+fixes:
+  - |
+    Deleting a dynamic action in a non-default namespace no longer fails
+    with an internal error.

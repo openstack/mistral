@@ -2443,6 +2443,87 @@ class CodeSourceTest(SQLAlchemyTest):
 
         self.assertEqual('def f():\n    return 1\n', fetched.content)
 
+    def test_delete_code_source(self):
+        for attr in ('name', 'id'):
+            created = db_api.create_code_source(
+                copy.deepcopy(CODE_SOURCES[0])
+            )
+
+            db_api.delete_code_source(getattr(created, attr))
+
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.get_code_source,
+                created.id
+            )
+
+    def test_delete_code_source_in_namespace(self):
+        values = copy.deepcopy(CODE_SOURCES[0])
+        values['namespace'] = 'ns1'
+
+        created = db_api.create_code_source(values)
+
+        db_api.delete_code_source('cs1', namespace='ns1')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_code_source,
+            created.id
+        )
+
+    def test_delete_other_project_code_source(self):
+        created = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_code_source,
+            created.name
+        )
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_code_source,
+            created.id
+        )
+
+    def test_delete_other_project_code_source_by_admin(self):
+        created = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_code_source(created.name)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_code_source,
+            created.id
+        )
+
+    def test_delete_code_source_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        other = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
+
+        db_api.delete_code_source('cs1')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_code_source,
+            mine.id
+        )
+
+        fetched = db_api.get_code_source(other.id)
+
+        self.assertEqual(other.project_id, fetched.project_id)
+
 
 DYNAMIC_ACTIONS = [
     {
@@ -2461,10 +2542,11 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         db_api.delete_dynamic_action_definitions()
         db_api.delete_code_sources()
 
-    def _create_dyn_action(self):
+    def _create_dyn_action(self, namespace=''):
         code_src = db_api.create_code_source(copy.deepcopy(CODE_SOURCES[0]))
 
         values = copy.deepcopy(DYNAMIC_ACTIONS[0])
+        values['namespace'] = namespace
         values['code_source_id'] = code_src.id
         values['code_source_name'] = code_src.name
 
@@ -2497,6 +2579,84 @@ class DynamicActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_dynamic_action_definition(other.id)
 
         self.assertEqual('MyClass', fetched.class_name)
+
+    def test_delete_dynamic_action(self):
+        for attr in ('name', 'id'):
+            created = self._create_dyn_action()
+
+            db_api.delete_dynamic_action_definition(getattr(created, attr))
+
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.get_dynamic_action_definition,
+                created.id
+            )
+
+            db_api.delete_code_sources()
+
+    def test_delete_dynamic_action_in_namespace(self):
+        created = self._create_dyn_action(namespace='ns1')
+
+        db_api.delete_dynamic_action_definition('dyn1', namespace='ns1')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_dynamic_action_definition,
+            created.id
+        )
+
+    def test_delete_other_project_dynamic_action(self):
+        created = self._create_dyn_action()
+
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_dynamic_action_definition,
+            created.name
+        )
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.delete_dynamic_action_definition,
+            created.id
+        )
+
+    def test_delete_other_project_dynamic_action_by_admin(self):
+        created = self._create_dyn_action()
+
+        auth_context.set_ctx(ADM_CTX)
+
+        db_api.delete_dynamic_action_definition(created.name)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_dynamic_action_definition,
+            created.id
+        )
+
+    def test_delete_dynamic_action_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        other = self._create_dyn_action()
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        mine = self._create_dyn_action()
+
+        db_api.delete_dynamic_action_definition('dyn1')
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_dynamic_action_definition,
+            mine.id
+        )
+
+        fetched = db_api.get_dynamic_action_definition(other.id)
+
+        self.assertEqual(other.project_id, fetched.project_id)
 
 
 ENVIRONMENTS = [
