@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Looking up a workflow, workbook, ad-hoc action, environment, cron
+    trigger, code source or dynamic action by name now prefers the caller's
+    own object over a public or shared one of another project with the same
+    name. Previously the match was arbitrary, so a task or execution could
+    use another project's workflow, action or environment.

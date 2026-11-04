@@ -35,6 +35,14 @@ from mistral_lib import utils
 DEFAULT_CTX = test_base.get_context()
 USER_CTX = test_base.get_context(default=False)
 ADM_CTX = test_base.get_context(default=False, admin=True)
+THIRD_CTX = auth_context.MistralContext.from_dict({
+    'user_name': 'test-third',
+    'user': '7-7-7-7',
+    'tenant': '77-66-55',
+    'project_id': '77-66-55',
+    'project_name': 'test-third',
+    'is_admin': False
+})
 
 WORKBOOKS = [
     {
@@ -211,6 +219,38 @@ class WorkbookTest(SQLAlchemyTest):
 
         self.assertEqual(other.id, fetched.id)
         self.assertEqual('empty', fetched.definition)
+
+    def test_get_workbook_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        public = db_api.create_workbook(WORKBOOKS[0])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        values = copy.deepcopy(WORKBOOKS[0])
+        values['scope'] = 'private'
+
+        mine = db_api.create_workbook(values)
+
+        self.assertEqual(
+            mine.id,
+            db_api.get_workbook('my_workbook1', namespace='test').id
+        )
+        self.assertEqual(
+            mine.id,
+            db_api.load_workbook('my_workbook1', namespace='test').id
+        )
+
+        auth_context.set_ctx(THIRD_CTX)
+
+        self.assertEqual(
+            public.id,
+            db_api.get_workbook('my_workbook1', namespace='test').id
+        )
+        self.assertEqual(
+            public.id,
+            db_api.load_workbook('my_workbook1', namespace='test').id
+        )
 
     def test_create_or_update_workbook(self):
         name = WORKBOOKS[0]['name']
@@ -549,6 +589,55 @@ CRON_TRIGGER = {
 
 
 class WorkflowDefinitionTest(SQLAlchemyTest):
+    def test_get_workflow_definition_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        public = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        values = copy.deepcopy(WF_DEFINITIONS[0])
+        values['scope'] = 'private'
+
+        mine = db_api.create_workflow_definition(values)
+
+        self.assertEqual(
+            mine.id,
+            db_api.get_workflow_definition('my_wf1').id
+        )
+        self.assertEqual(
+            mine.id,
+            db_api.load_workflow_definition('my_wf1').id
+        )
+
+        auth_context.set_ctx(THIRD_CTX)
+
+        self.assertEqual(
+            public.id,
+            db_api.get_workflow_definition('my_wf1').id
+        )
+        self.assertEqual(
+            public.id,
+            db_api.load_workflow_definition('my_wf1').id
+        )
+
+    def test_load_workflow_definition_namespace_takes_precedence(self):
+        auth_context.set_ctx(USER_CTX)
+
+        values = copy.deepcopy(WF_DEFINITIONS[0])
+        values['namespace'] = 'ns1'
+
+        public = db_api.create_workflow_definition(values)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        self.assertEqual(
+            public.id,
+            db_api.load_workflow_definition('my_wf1', namespace='ns1').id
+        )
+
     def test_create_and_get_and_load_workflow_definition(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
@@ -1030,6 +1119,34 @@ class ActionDefinitionTest(SQLAlchemyTest):
         super(ActionDefinitionTest, self).setUp()
 
         db_api.delete_action_definitions()
+
+    def test_get_action_definition_prefers_own_project(self):
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+        values['scope'] = 'public'
+
+        auth_context.set_ctx(USER_CTX)
+
+        public = db_api.create_action_definition(values)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        values = copy.deepcopy(ACTION_DEFINITIONS[2])
+
+        mine = db_api.create_action_definition(values)
+
+        self.assertEqual(mine.id, db_api.get_action_definition('action3').id)
+        self.assertEqual(mine.id, db_api.load_action_definition('action3').id)
+
+        auth_context.set_ctx(THIRD_CTX)
+
+        self.assertEqual(
+            public.id,
+            db_api.get_action_definition('action3').id
+        )
+        self.assertEqual(
+            public.id,
+            db_api.load_action_definition('action3').id
+        )
 
     def test_create_and_get_and_load_action_definition(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -2214,6 +2331,30 @@ class CronTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(42, fetched.remaining_executions)
 
+    def test_get_cron_trigger_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        values = copy.deepcopy(CRON_TRIGGERS[0])
+        values['id'] = 'aaaaaaaa-1111-1111-1111-111111111111'
+        values['scope'] = 'public'
+
+        public = db_api.create_cron_trigger(values)
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        values = copy.deepcopy(CRON_TRIGGERS[0])
+        values['id'] = 'bbbbbbbb-2222-2222-2222-222222222222'
+
+        mine = db_api.create_cron_trigger(values)
+
+        self.assertEqual(mine.id, db_api.get_cron_trigger('trigger1').id)
+        self.assertEqual(mine.id, db_api.load_cron_trigger('trigger1').id)
+
+        auth_context.set_ctx(THIRD_CTX)
+
+        self.assertEqual(public.id, db_api.get_cron_trigger('trigger1').id)
+        self.assertEqual(public.id, db_api.load_cron_trigger('trigger1').id)
+
     def test_get_cron_triggers(self):
         created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
         created1 = db_api.create_cron_trigger(CRON_TRIGGERS[1])
@@ -2782,6 +2923,26 @@ class EnvironmentTest(SQLAlchemyTest):
 
         self.assertEqual(other.id, fetched.id)
         self.assertEqual('Test Environment #2', fetched.description)
+
+    def test_get_environment_prefers_own_project(self):
+        auth_context.set_ctx(USER_CTX)
+
+        public = db_api.create_environment(ENVIRONMENTS[1])
+
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        values = copy.deepcopy(ENVIRONMENTS[1])
+        values['scope'] = 'private'
+
+        mine = db_api.create_environment(values)
+
+        self.assertEqual(mine.id, db_api.get_environment('env2').id)
+        self.assertEqual(mine.id, db_api.load_environment('env2').id)
+
+        auth_context.set_ctx(THIRD_CTX)
+
+        self.assertEqual(public.id, db_api.get_environment('env2').id)
+        self.assertEqual(public.id, db_api.load_environment('env2').id)
 
     def test_create_or_update_environment(self):
         name = 'not-existing-id'

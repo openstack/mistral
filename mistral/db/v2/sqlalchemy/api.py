@@ -310,10 +310,20 @@ def _get_count(model, insecure=False, **filters):
     return query.count()
 
 
+def _first_in_own_project(model, query):
+    # A same-name public or shared object must not shadow the caller's own.
+    own_first = sa.case(
+        (model.project_id == security.get_project_id(), 0),
+        else_=1
+    )
+
+    return query.order_by(own_first).first()
+
+
 def _get_db_object_by_name(model, name, columns=()):
     query = _secure_query(model, *columns)
 
-    return query.filter_by(name=name).first()
+    return _first_in_own_project(model, query.filter_by(name=name))
 
 
 def _get_db_object_by_id(model, id, insecure=False, columns=()):
@@ -366,7 +376,7 @@ def _get_db_object_by_name_and_namespace_or_id(model, identifier,
         )
     )
 
-    return query.first()
+    return _first_in_own_project(model, query)
 
 
 def _get_db_object_by_name_and_namespace(model, name,
@@ -392,7 +402,7 @@ def _get_db_object_by_name_and_namespace(model, name,
         )
     )
 
-    return query.first()
+    return _first_in_own_project(model, query)
 
 
 def _get_db_object_by_name_namespace_and_project(model, name, namespace,
@@ -606,7 +616,7 @@ def load_workflow_definition(name, namespace='', fields=(), session=None):
     if order_by is not None:
         query = query.order_by(order_by)
 
-    return query.filter(filter_).first()
+    return _first_in_own_project(model, query.filter(filter_))
 
 
 @b.session_aware()
