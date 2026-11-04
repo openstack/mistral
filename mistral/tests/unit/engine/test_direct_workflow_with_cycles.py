@@ -224,3 +224,134 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         # takes longer hence it wins because of how DB queries work: they
         # order entities in ascending of creation time.
         self.assertTrue(wf_output['cnt'] == 2 or wf_output['cnt'] == 3)
+
+    def _start_loop(self, num_of_cycles):
+        wf_text = """
+        version: 2.0
+
+        wf:
+          input:
+            - num_of_cycles
+
+          vars:
+            counter: 0
+
+          tasks:
+            start:
+              on-success:
+                - increment
+
+            increment:
+              action: std.noop
+              publish:
+                counter: <% $.counter + 1 %>
+              on-success:
+                - increment: <% $.counter < $.num_of_cycles %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        return self.engine.start_workflow(
+            'wf',
+            wf_input={'num_of_cycles': num_of_cycles}
+        )
+
+    def test_max_task_executions_within_limit(self):
+        self.override_config('max_task_executions', 5, 'engine')
+
+        wf_ex = self._start_loop(5)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self._assert_multiple_items(
+                wf_ex.task_executions,
+                5,
+                name='increment'
+            )
+
+    def test_max_task_executions_exceeded(self):
+        self.override_config('max_task_executions', 5, 'engine')
+
+        wf_ex = self._start_loop(10)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t_execs = wf_ex.task_executions
+
+        self.assertEqual(7, len(t_execs))
+
+        failed = self._assert_single_item(t_execs, state=states.ERROR)
+
+        expected = (
+            "Task 'increment' ran too many times in this workflow "
+            "execution [limit=5]"
+        )
+
+        self.assertEqual(expected, failed.state_info)
+        self.assertEqual(expected, wf_ex.state_info)
+
+        self._assert_multiple_items(
+            t_execs,
+            5,
+            name='increment',
+            state=states.SUCCESS
+        )
+
+    def test_max_task_executions_infinite_loop(self):
+        self.override_config('max_task_executions', 3, 'engine')
+
+        wf_text = """
+        version: 2.0
+
+        wf:
+          tasks:
+            start:
+              on-complete:
+                - task1
+
+            task1:
+              action: std.fail
+              on-complete:
+                - task2
+
+            task2:
+              action: std.noop
+              on-complete:
+                - task1
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t_execs = wf_ex.task_executions
+
+        self.assertEqual(8, len(t_execs))
+        self.assertIn("Task 'task1' ran too many times", wf_ex.state_info)
+
+    def test_max_task_executions_unlimited(self):
+        self.override_config('max_task_executions', 0, 'engine')
+
+        wf_ex = self._start_loop(10)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self._assert_multiple_items(
+                wf_ex.task_executions,
+                10,
+                name='increment'
+            )

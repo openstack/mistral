@@ -1372,3 +1372,161 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task2_ex.state)
 
         self.assertEqual(1, mock_http_action.call_count)
+
+    def test_with_items_max_length_within_limit(self):
+        self.override_config('max_with_items_length', 3, 'engine')
+
+        wb_service.create_workbook_v2(WB)
+
+        wf_ex = self.engine.start_workflow('wb.wf', wf_input=WF_INPUT)
+
+        self.await_workflow_success(wf_ex.id)
+
+    def test_with_items_max_length_exceeded(self):
+        self.override_config('max_with_items_length', 2, 'engine')
+
+        wb_service.create_workbook_v2(WB)
+
+        wf_ex = self.engine.start_workflow('wb.wf', wf_input=WF_INPUT)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(0, len(task_ex.executions))
+
+        self.assertEqual(
+            'Too many with-items values [count=3, limit=2]',
+            task_ex.state_info
+        )
+        self.assertIn('Too many with-items values', wf_ex.state_info)
+
+    def test_with_items_max_length_exceeded_error_handled(self):
+        self.override_config('max_with_items_length', 2, 'engine')
+
+        wf_text = """---
+        version: "2.0"
+
+        wf:
+          tasks:
+            task1:
+              with-items: i in [1, 2, 3]
+              action: std.noop
+              on-error: task2
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task1_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1',
+                state=states.ERROR
+            )
+            self._assert_single_item(
+                wf_ex.task_executions,
+                name='task2',
+                state=states.SUCCESS
+            )
+
+        self.assertEqual(
+            'Too many with-items values [count=3, limit=2]',
+            task1_ex.state_info
+        )
+
+    def test_with_items_max_length_unlimited(self):
+        self.override_config('max_with_items_length', 0, 'engine')
+
+        wb_service.create_workbook_v2(WB)
+
+        wf_ex = self.engine.start_workflow('wb.wf', wf_input=WF_INPUT)
+
+        self.await_workflow_success(wf_ex.id)
+
+    def _run_with_items_concurrency(self, concurrency, expected):
+        wf_text = """---
+        version: "2.0"
+
+        wf:
+          tasks:
+            task1:
+              action: std.async_noop
+              with-items: i in [1, 2, 3, 4]
+              concurrency: %s
+        """ % concurrency
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex_id = wf_ex.task_executions[0].id
+
+        self.await_task_running(task_ex_id)
+
+        self.assertEqual(expected, self._get_running_actions_count(task_ex_id))
+
+        for i in range(4):
+            self._await(
+                lambda: self._get_running_actions_count(task_ex_id) ==
+                min(expected, 4 - i)
+            )
+
+            action_ex_id = self._get_incomplete_action(task_ex_id).id
+
+            self.engine.on_action_complete(
+                action_ex_id,
+                actions_base.Result(i)
+            )
+
+            self._await(
+                lambda: self._action_result_equals(
+                    action_ex_id,
+                    {'result': i}
+                )
+            )
+
+        self.await_workflow_success(wf_ex.id)
+
+    def test_with_items_max_concurrency_lowers_concurrency(self):
+        self.override_config('max_with_items_concurrency', 2, 'engine')
+
+        self._run_with_items_concurrency(3, 2)
+
+    def test_with_items_max_concurrency_without_concurrency(self):
+        self.override_config('max_with_items_concurrency', 2, 'engine')
+
+        self._run_with_items_concurrency(0, 2)
+
+    def test_with_items_max_concurrency_keeps_lower_concurrency(self):
+        self.override_config('max_with_items_concurrency', 2, 'engine')
+
+        self._run_with_items_concurrency(1, 1)
+
+    def test_with_items_max_concurrency_unlimited(self):
+        self.override_config('max_with_items_concurrency', 0, 'engine')
+
+        self._run_with_items_concurrency(3, 3)
+
+    def test_with_items_max_concurrency_unlimited_without_concurrency(self):
+        self.override_config('max_with_items_concurrency', 0, 'engine')
+
+        self._run_with_items_concurrency(0, 4)

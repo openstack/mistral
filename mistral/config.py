@@ -320,6 +320,31 @@ engine_opts = [
         default="replace",
         help=_('Merge strategy of data inside workflow execution. '
                '(replace, merge)')
+    ),
+    cfg.IntOpt(
+        'max_with_items_length',
+        default=0,
+        min=0,
+        help=_('Maximum number of items a with-items task can iterate '
+               'over. The task fails if the list is longer, which '
+               '"on-error" can handle. 0 means no limit.')
+    ),
+    cfg.IntOpt(
+        'max_with_items_concurrency',
+        default=0,
+        min=0,
+        help=_('Maximum number of actions a with-items task can run in '
+               'parallel. A higher or missing "concurrency" is lowered to '
+               'this value. 0 means no limit.')
+    ),
+    cfg.IntOpt(
+        'max_task_executions',
+        default=0,
+        min=0,
+        help=_('Maximum number of times the same task can run within one '
+               'workflow execution, e.g. in a loop. Above it, the task and '
+               'the workflow fail, without running "on-error", so that '
+               'a loop cannot go on through it. 0 means no limit.')
     )
 ]
 

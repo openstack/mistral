@@ -609,6 +609,9 @@ class RegularTask(Task):
             return
 
         if states.is_idle(self.task_ex.state):
+            if not self._check_executions_limit():
+                return
+
             # Set the RUNNING state and trigger all operations
             # related to the state change.
             self.set_state(
@@ -630,6 +633,31 @@ class RegularTask(Task):
                 return
 
             self._schedule_actions()
+
+    def _check_executions_limit(self):
+        limit = cfg.CONF.engine.max_task_executions
+
+        if not limit:
+            return True
+
+        count = db_api.get_task_executions_count(
+            workflow_execution_id=self.wf_ex.id,
+            name=self.task_ex.name
+        )
+
+        if count <= limit:
+            return True
+
+        msg = (
+            "Task '%s' ran too many times in this workflow execution "
+            "[limit=%s]" % (self.task_ex.name, limit)
+        )
+
+        self.set_state(states.ERROR, msg)
+
+        wf_handler.force_fail_workflow(self.wf_ex, msg)
+
+        return False
 
     @profiler.trace('task-create-new')
     def create_new(self):
@@ -889,6 +917,17 @@ class WithItemsTask(RegularTask):
         if self._is_new():
             action_count = len(next(iter(with_items_values.values())))
 
+            max_length = cfg.CONF.engine.max_with_items_length
+
+            if max_length and action_count > max_length:
+                self.complete(
+                    states.ERROR,
+                    "Too many with-items values [count=%s, limit=%s]" %
+                    (action_count, max_length)
+                )
+
+                return
+
             self._prepare_runtime_context(action_count)
 
         input_dicts = self._get_input_dicts(with_items_values)
@@ -1127,9 +1166,17 @@ class WithItemsTask(RegularTask):
         runtime_ctx = self.task_ex.runtime_context
 
         if not runtime_ctx.get(self._WITH_ITEMS):
+            concurrency = self._get_concurrency()
+            max_concurrency = cfg.CONF.engine.max_with_items_concurrency
+
+            if max_concurrency and (
+                    not concurrency or concurrency > max_concurrency):
+                concurrency = max_concurrency
+                runtime_ctx[self._CONCURRENCY] = concurrency
+
             # Prepare current indexes and parallel limitation.
             runtime_ctx[self._WITH_ITEMS] = {
-                self._CAPACITY: self._get_concurrency(),
+                self._CAPACITY: concurrency,
                 self._COUNT: action_count
             }
 
