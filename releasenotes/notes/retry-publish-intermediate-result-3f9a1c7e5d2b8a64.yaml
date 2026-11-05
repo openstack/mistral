@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    A task with a ``retry`` policy no longer fails when its ``publish``
+    clause can't be evaluated on an intermediate result that the retry
+    policy then discards (e.g. with ``continue-on``). The error is only
+    raised if the task actually completes with that result. See
+    `bug 1878167 <https://bugs.launchpad.net/mistral/+bug/1878167>`_.

@@ -1046,6 +1046,157 @@ class PoliciesTest(base.EngineTestCase):
             task_ex.runtime_context['retry_task_policy']
         )
 
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[
+            {'status': 'pending'},
+            {'status': 'done', 'value': 42}
+        ])
+    )
+    def test_retry_continue_on_publish_intermediate_result(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="mocked result"
+              retry:
+                count: 3
+                delay: 0
+                continue-on: <% task().result.status = 'pending' %>
+              publish:
+                value: <% task().result.value %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual({'value': 42}, task_ex.published)
+        self.assertEqual(
+            1,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
+    def test_retry_continue_on_publish_error_on_last_iteration(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              retry:
+                count: 2
+                delay: 0
+                continue-on: <% true %>
+              publish:
+                value: <% $.missing %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', task_ex.state_info)
+        self.assertEqual(
+            2,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
+    def test_retry_continue_on_published_var_publish_error(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              retry:
+                count: 2
+                delay: 0
+                continue-on: <% $.value > 0 %>
+              publish:
+                value: <% $.missing %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIn('expression=$.missing', task_ex.state_info)
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[
+            {'status': 'pending', 'value': 1},
+            {'status': 'done'},
+            {'status': 'done'},
+            {'status': 'done'}
+        ])
+    )
+    def test_retry_continue_on_stale_published_after_publish_error(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="mocked result"
+              retry:
+                count: 3
+                delay: 0
+                continue-on: <% $.status = 'pending' %>
+              publish:
+                status: <% task().result.status %>
+                value: <% task().result.value %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIn('expression=task().result.value', task_ex.state_info)
+        self.assertEqual({}, task_ex.published)
+        self.assertEqual(
+            1,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
     def test_retry_policy_one_line(self):
         retry_wb = """---
         version: '2.0'

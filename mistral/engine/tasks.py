@@ -380,7 +380,13 @@ class Task(object, metaclass=abc.ABCMeta):
 
         self._update_inbound_context()
 
-        data_flow.publish_variables(self.task_ex, self.task_spec)
+        publish_error = None
+
+        try:
+            data_flow.publish_variables(self.task_ex, self.task_spec)
+        except exc.EvaluationException as e:
+            publish_error = e
+            self.task_ex.published = {}
 
         if not self.task_spec.get_keep_result():
             # Destroy task result.
@@ -389,7 +395,17 @@ class Task(object, metaclass=abc.ABCMeta):
                     ex.output = {}
 
         if not states.is_skipped(state):
-            self._after_task_complete()
+            try:
+                self._after_task_complete()
+            except exc.MistralException:
+                if publish_error:
+                    raise publish_error
+
+                raise
+
+        # Retry may discard this result; only a final one fails on publish.
+        if publish_error and self.is_completed():
+            raise publish_error
 
         # Ignore DELAYED state.
         if self.task_ex.state == states.RUNNING_DELAYED:
