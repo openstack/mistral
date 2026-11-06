@@ -302,6 +302,26 @@ class TestWorkflowsController(base.APITest):
         self.assertIn('bogus', resp.body.decode())
         mocked_get.assert_not_called()
 
+    def test_get_with_derived_fields(self):
+        wf = db_api.create_workflow_definition({
+            'name': 'flow',
+            'definition': WF_DEFINITION_WITH_INPUT,
+            'spec': {'input': ['param1', {'param2': 2}]}
+        })
+
+        resp = self.app.get(
+            '/v2/workflows/%s?fields=input,interface,definition' % wf.id
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(wf.id, resp.json['id'])
+        self.assertEqual('param1, param2="2"', resp.json['input'])
+        self.assertEqual(
+            {'input': ['param1', {'param2': 2}], 'output': []},
+            json.loads(resp.json['interface'])
+        )
+        self.assertEqual(WF_DEFINITION_WITH_INPUT, resp.json['definition'])
+
     @mock.patch.object(db_api, 'get_workflow_definition')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [
@@ -813,6 +833,26 @@ class TestWorkflowsController(base.APITest):
             json.loads(resp_workflow_json['interface'])
 
         self.assertDictEqual(expected_dict, resp_workflow_json)
+
+    def test_get_all_with_derived_fields(self):
+        wf = db_api.create_workflow_definition({
+            'name': 'flow',
+            'definition': WF_DEFINITION_WITH_INPUT,
+            'spec': {'input': ['param1', {'param2': 2}]}
+        })
+
+        resp = self.app.get('/v2/workflows?fields=interface,definition')
+
+        self.assertEqual(200, resp.status_int)
+
+        resp_wf = resp.json['workflows'][0]
+
+        self.assertEqual(wf.id, resp_wf['id'])
+        self.assertEqual(
+            {'input': ['param1', {'param2': 2}], 'output': []},
+            json.loads(resp_wf['interface'])
+        )
+        self.assertEqual(WF_DEFINITION_WITH_INPUT, resp_wf['definition'])
 
     def test_get_all_with_invalid_field(self):
         resp = self.app.get(

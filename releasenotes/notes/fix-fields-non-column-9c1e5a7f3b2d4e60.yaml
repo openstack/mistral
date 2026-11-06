@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Requesting resource fields that are not database columns with the
+    ``fields`` query parameter (for example ``input`` or ``interface`` of a
+    workflow, or ``actions`` of a code source) no longer shifts the returned
+    values onto the wrong field names. Workflow ``input`` and ``interface``
+    are now computed when requested.

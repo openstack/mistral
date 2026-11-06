@@ -271,16 +271,21 @@ def _delete_all(model, **kwargs):
     query.delete(synchronize_session=False)
 
 
+def _field_columns(model, fields):
+    # Keep one value per requested name so callers can zip them together.
+    return tuple(
+        getattr(model, f) if hasattr(model, f) else sa.null().label(f)
+        for f in fields
+    )
+
+
 def _get_collection(model, insecure=False, limit=None, marker=None,
                     sort_keys=None, sort_dirs=None, fields=None, **filters):
     # Allow admin to retrieve all objects by overwriting insecure
     if context.has_ctx():
         insecure = context.ctx().is_admin or insecure
 
-    columns = (
-        tuple([getattr(model, f) for f in fields if hasattr(model, f)])
-        if fields else ()
-    )
+    columns = _field_columns(model, fields) if fields else ()
 
     query = (b.model_query(model, columns=columns) if insecure
              else _secure_query(model, *columns))
@@ -332,7 +337,7 @@ def _get_db_object_by_id(model, id, insecure=False, columns=()):
         insecure = context.ctx().is_admin or insecure
 
     columns = (
-        tuple([getattr(model, f) for f in columns if hasattr(model, f)])
+        _field_columns(model, columns)
         if columns and isinstance(columns, list) else columns
     )
 
@@ -353,7 +358,7 @@ def _get_db_object_by_name_and_namespace_or_id(model, identifier,
         insecure = context.ctx().is_admin or insecure
 
     columns = (
-        tuple([getattr(model, f) for f in columns if hasattr(model, f)])
+        _field_columns(model, columns)
         if columns and isinstance(columns, list) else columns
     )
     query = (
@@ -621,8 +626,7 @@ def load_workflow_definition(name, namespace='', fields=(), session=None):
 
 @b.session_aware()
 def get_workflow_definitions(fields=None, session=None, **kwargs):
-    if fields and 'input' in fields:
-        fields.remove('input')
+    if fields and {'input', 'interface'} & set(fields):
         fields.append('spec')
 
     return _get_collection(

@@ -98,6 +98,9 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         if fields and 'id' not in fields:
             fields.insert(0, 'id')
 
+        if fields and {'input', 'interface'} & set(fields):
+            fields.append('spec')
+
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
         db_model = r.call(

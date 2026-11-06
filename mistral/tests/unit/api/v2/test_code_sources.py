@@ -136,6 +136,23 @@ class TestCodeSourcesController(base.APITest):
         self.assertEqual(1, resp_json['version'])
         self.assertEqual(NAMESPACE, resp_json['namespace'])
 
+    def test_get_with_non_column_field(self):
+        mod_name = MODULE_NAME % 'getfields'
+
+        code_src_id = self._create_code_source(
+            mod_name,
+            FILE_CONTENT
+        ).json['id']
+
+        resp = self.app.get(
+            '/v2/code_sources/%s?fields=actions,content' % code_src_id
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(code_src_id, resp.json['id'])
+        self.assertEqual(FILE_CONTENT, resp.json['content'])
+        self.assertIsNone(resp.json.get('actions'))
+
     def test_get_all(self):
         mod_name = MODULE_NAME % 'getall'
         mod2_name = MODULE_NAME % '2getall'
