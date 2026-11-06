@@ -1,0 +1,9 @@
+---
+security:
+  - |
+    Timed-out action threads abandoned by the default executor were not
+    bounded, so a workflow could repeatedly run never-ending actions with a
+    short timeout and leak threads in the executor process. The new
+    ``[executor]/max_abandoned_action_threads`` option (default 64, 0 means
+    unlimited) caps them: once reached, the executor fails new actions until
+    some abandoned threads finish.

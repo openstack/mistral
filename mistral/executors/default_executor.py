@@ -13,7 +13,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import threading
+
 from mistral_lib import actions as mistral_lib
+from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
@@ -25,6 +28,11 @@ from mistral.services import action_heartbeat_sender
 from mistral.utils import ThreadWithException
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
+
+_abandoned_lock = threading.Lock()
+_abandoned_count = 0
 
 
 class DefaultExecutor(base.Executor):
@@ -85,8 +93,17 @@ class DefaultExecutor(base.Executor):
             # Run an action in a thread and keep track of the result
             # As we are running in a different thread, we need to set
             # our auth_context correctly
-            context.set_ctx(auth_ctx)
-            result['r'] = fn(action_ctx)
+            global _abandoned_count
+
+            try:
+                context.set_ctx(auth_ctx)
+                result['r'] = fn(action_ctx)
+            finally:
+                with _abandoned_lock:
+                    result['done'] = True
+
+                    if result.get('abandoned'):
+                        _abandoned_count -= 1
 
         if redelivered and not safe_rerun:
             msg = (
@@ -94,6 +111,19 @@ class DefaultExecutor(base.Executor):
                 "be re-run safely. The only safe thing to do is fail "
                 "it [action=%s]." % action
             )
+
+            return send_error_back(msg)
+
+        max_abandoned = CONF.executor.max_abandoned_action_threads
+
+        if max_abandoned and _abandoned_count >= max_abandoned:
+            msg = (
+                "Refusing to run the action: the executor has %s abandoned "
+                "timed-out action threads still running (limit: %s) "
+                "[action=%s, action_ex_id=%s]" %
+                (_abandoned_count, max_abandoned, action, action_ex_id)
+            )
+            LOG.error(msg)
 
             return send_error_back(msg)
 
@@ -122,6 +152,7 @@ class DefaultExecutor(base.Executor):
             if thread.is_alive():
                 # A thread cannot be killed, and joining it would pin this
                 # executor worker forever: abandon it.
+                self._abandon(result_ptr)
                 LOG.warning("The action %s timed out after %s seconds, "
                             "abandoning the action thread.",
                             action_ex_id, timeout)
@@ -177,3 +208,12 @@ class DefaultExecutor(base.Executor):
             LOG.exception(msg)
 
         return result
+
+    @staticmethod
+    def _abandon(result_ptr):
+        global _abandoned_count
+
+        with _abandoned_lock:
+            if not result_ptr.get('done'):
+                result_ptr['abandoned'] = True
+                _abandoned_count += 1

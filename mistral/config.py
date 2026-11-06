@@ -387,6 +387,17 @@ executor_opts = [
         'version',
         default='1.0',
         help=_('The version of the executor.')
+    ),
+    cfg.IntOpt(
+        'max_abandoned_action_threads',
+        default=64,
+        min=0,
+        help=_('Maximum number of timed-out action threads an executor '
+               'process keeps running in the background. A thread cannot '
+               'be killed, so an action that ignores its timeout keeps '
+               'running after the timeout is reported. Once this limit '
+               'is reached, the executor fails any new action until some '
+               'of those threads finish. 0 means unlimited.')
     )
 ]
 

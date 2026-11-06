@@ -62,6 +62,13 @@ class DefaultExecutorTimeoutTest(base.BaseTest):
 
         self.executor = d_exe.DefaultExecutor()
 
+        # Threads abandoned by other tests still update the shared counter.
+        self._await(
+            lambda: d_exe._abandoned_count == 0,
+            delay=0.05,
+            timeout=10
+        )
+
     def _blocking_action(self):
         action = BlockingAction()
 
@@ -117,3 +124,55 @@ class DefaultExecutorTimeoutTest(base.BaseTest):
 
         self.assertFalse(result.is_error())
         self.assertEqual('result', result.data)
+
+    def _abandon_action(self):
+        action, _release = self._blocking_action()
+
+        self.executor.run_action(action, None, False, {}, timeout=0.1)
+
+        return action, _release
+
+    def test_abandoned_threads_are_counted(self):
+        action, release = self._abandon_action()
+
+        self.assertEqual(1, d_exe._abandoned_count)
+
+        release()
+
+        self.assertFalse(action.thread.is_alive())
+        self.assertEqual(0, d_exe._abandoned_count)
+
+    def test_abandoned_threads_limit(self):
+        self.override_config('max_abandoned_action_threads', 1, 'executor')
+
+        _, release = self._abandon_action()
+
+        self.executor.run_action(FastAction(), 'ex-id', False, {}, timeout=5)
+
+        self.engine_client.on_action_complete.assert_called_once()
+        ex_id, result = self.engine_client.on_action_complete.call_args[0]
+
+        self.assertEqual('ex-id', ex_id)
+        self.assertTrue(result.is_error())
+        self.assertIn('abandoned timed-out action threads', result.error)
+
+        release()
+
+        result = self.executor.run_action(
+            FastAction(), None, False, {}, timeout=5
+        )
+
+        self.assertFalse(result.is_error())
+        self.assertEqual('result', result.data)
+
+    def test_abandoned_threads_unlimited(self):
+        self.override_config('max_abandoned_action_threads', 0, 'executor')
+
+        self._abandon_action()
+        self._abandon_action()
+
+        result = self.executor.run_action(
+            FastAction(), None, False, {}, timeout=5
+        )
+
+        self.assertFalse(result.is_error())
