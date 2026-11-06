@@ -640,8 +640,7 @@ class RegularTask(Task):
 
     @profiler.trace('task-run-new')
     def _run_new(self):
-        # RPC drops the waiting flag, so a join is recognized by its key.
-        if self.waiting or self.task_ex.unique_key:
+        if self.waiting:
             return
 
         if states.is_idle(self.task_ex.state):

@@ -394,7 +394,7 @@ def _build_task_after_rpc(wf_spec, task_ex, waiting, triggered_by, rerun,
         wf_spec.get_task(task_ex.name),
         task_ex.in_context,
         task_ex,
-        waiting=waiting == states.WAITING,
+        waiting=waiting,
         triggered_by=triggered_by,
         rerun=rerun
     )

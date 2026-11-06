@@ -1387,3 +1387,79 @@ class JoinEngineTest(base.EngineTestCase):
             sides = db_api.get_task_executions(name='side')
 
             self.assertEqual(2, len(sides))
+
+    def test_join_started_over_rpc_while_waiting(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              action: std.async_noop
+              on-success: join_task
+
+            join_task:
+              join: all
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self._await(
+            lambda: db_api.get_task_executions(
+                workflow_execution_id=wf_ex.id,
+                name='join_task',
+                state=states.WAITING
+            )
+        )
+
+        with db_api.transaction():
+            join_ex = db_api.get_task_executions(
+                workflow_execution_id=wf_ex.id,
+                name='join_task'
+            )[0]
+
+            db_api.update_task_execution_state(
+                id=join_ex.id,
+                cur_state=states.WAITING,
+                state=states.ERROR
+            )
+
+        self.engine.start_task(join_ex.id, False, True, None, True, True)
+
+        with db_api.transaction():
+            join_ex = db_api.get_task_execution(join_ex.id)
+
+            self.assertEqual(states.WAITING, join_ex.state)
+            self.assertEqual(0, len(join_ex.executions))
+
+            task2_ex = db_api.get_task_executions(
+                workflow_execution_id=wf_ex.id,
+                name='task2'
+            )[0]
+
+        self.await_task_running(task2_ex.id)
+
+        with db_api.transaction():
+            task2_ex = db_api.get_task_execution(task2_ex.id)
+
+            task2_action_id = task2_ex.executions[0].id
+
+        self.engine.on_action_complete(
+            task2_action_id,
+            actions_base.Result(data='ok')
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            join_ex = db_api.get_task_execution(join_ex.id)
+
+            self.assertEqual(states.SUCCESS, join_ex.state)
+            self.assertEqual(1, len(join_ex.executions))
