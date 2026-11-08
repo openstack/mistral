@@ -12,10 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from keystoneauth1 import exceptions as ks_exc
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral import context as auth_ctx
+from mistral import exceptions as exc
 from mistral.utils.openstack import keystone
 
 
@@ -45,13 +47,20 @@ def create_trust():
 
     trustee_id = keystone.client_for_admin().session.get_user_id()
 
-    return client.trusts.create(
-        trustor_user=ctx.user_id,
-        trustee_user=trustee_id,
-        impersonation=True,
-        role_names=ctx.roles,
-        project=ctx.project_id
-    )
+    try:
+        return client.trusts.create(
+            trustor_user=ctx.user_id,
+            trustee_user=trustee_id,
+            impersonation=True,
+            role_names=ctx.roles,
+            project=ctx.project_id
+        )
+    except ks_exc.Forbidden as e:
+        raise exc.NotAllowedException(
+            "Keystone refused to create a trust: %s. Note that a trust "
+            "cannot be created from a trust-scoped token unless that trust "
+            "has allow_redelegation enabled." % e
+        )
 
 
 def create_context(trust_id, project_id):
