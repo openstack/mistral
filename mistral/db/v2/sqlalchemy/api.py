@@ -2392,10 +2392,16 @@ def named_lock(name):
     # session is no longer valid and we can't use to try to delete the lock.
     # All we can do here is to let the exception bubble up so that the
     # transaction management code could rollback the transaction.
+    # Engine errors leave the session valid and callers may swallow them
+    # and commit, so the lock must be released in that case.
 
     lock_id = create_named_lock(name)
 
-    yield
+    try:
+        yield
+    except exc.MistralException:
+        delete_named_lock(lock_id, name)
+        raise
 
     delete_named_lock(lock_id, name)
 

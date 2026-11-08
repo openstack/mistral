@@ -461,6 +461,33 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
+    def test_wait_before_policy_failure_does_not_leak_named_lock(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf1:
+          tasks:
+            task1:
+              action: std.echo output=<% invalid_function() %>
+              wait-before: 1
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+            self.assertEqual(states.ERROR, task_ex.state)
+            self.assertEqual(
+                [],
+                [lock.name for lock in db_api.get_named_locks()]
+            )
+
     def test_wait_before_policy_zero_seconds(self):
         wb_service.create_workbook_v2(WAIT_BEFORE_WB % 0)
 

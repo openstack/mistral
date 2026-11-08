@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    A named lock is now released when an engine error is raised while it is
+    held. Previously, the lock row could stay in the ``named_locks`` table
+    when the error was handled by the caller, for example when a task with
+    a ``wait-before`` policy failed to evaluate its action input.
