@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Creating a cron trigger or an event trigger now returns HTTP 403 with a
+    clear message instead of HTTP 500 when Keystone refuses to create the
+    trust. This happens for example when the request uses a trust-scoped
+    token whose trust does not have ``allow_redelegation`` enabled. See
+    `bug 1721508 <https://bugs.launchpad.net/mistral/+bug/1721508>`_.

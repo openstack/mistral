@@ -14,6 +14,9 @@
 
 from unittest import mock
 
+from keystoneauth1 import exceptions as ks_exc
+
+from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit import base
 
@@ -37,3 +40,16 @@ class CreateTrustTest(base.BaseTest):
             role_names=['member'],
             project='proj-1',
         )
+
+    @mock.patch.object(security, 'keystone')
+    @mock.patch.object(security, 'auth_ctx')
+    def test_create_trust_forbidden(self, m_ctx, m_ks):
+        m_ctx.ctx.return_value = mock.Mock(
+            user_id='real-user', roles=['member'], project_id='proj-1')
+        m_ks.client.return_value.trusts.create.side_effect = \
+            ks_exc.Forbidden()
+
+        e = self.assertRaises(exc.NotAllowedException, security.create_trust)
+
+        self.assertEqual(403, e.http_code)
+        self.assertIn('allow_redelegation', str(e))

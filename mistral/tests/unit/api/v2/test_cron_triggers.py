@@ -16,6 +16,7 @@ import copy
 import json
 from unittest import mock
 
+from keystoneauth1 import exceptions as ks_exc
 import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
@@ -193,6 +194,23 @@ class TestCronTriggerController(base.APITest):
 
         self.assertEqual(1, delete_trust.call_count)
         self.assertEqual(409, resp.status_int)
+
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
+    @mock.patch.object(db_api, "create_cron_trigger")
+    @mock.patch.object(security, "keystone")
+    @mock.patch('mistral.auth.get_auth_handler', mock.Mock())
+    def test_post_trust_forbidden(self, keystone, create_mtd):
+        self.override_config('auth_enable', True, group='pecan')
+        keystone.client.return_value.trusts.create.side_effect = \
+            ks_exc.Forbidden()
+
+        resp = self.app.post_json(
+            '/v2/cron_triggers', TRIGGER, expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+        self.assertIn('allow_redelegation', resp.json['faultstring'])
+        create_mtd.assert_not_called()
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_DELETE)

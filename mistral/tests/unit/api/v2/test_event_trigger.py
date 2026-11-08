@@ -16,6 +16,7 @@ import copy
 import json
 from unittest import mock
 
+from keystoneauth1 import exceptions as ks_exc
 import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
@@ -127,6 +128,27 @@ class TestEventTriggerController(base.APITest):
         )
 
         self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
+    @mock.patch.object(db_api, "create_event_trigger")
+    @mock.patch.object(security, "keystone")
+    @mock.patch('mistral.auth.get_auth_handler', mock.Mock())
+    def test_post_trust_forbidden(self, keystone, create_mtd):
+        self.override_config('auth_enable', True, group='pecan')
+        keystone.client.return_value.trusts.create.side_effect = \
+            ks_exc.Forbidden()
+
+        trigger = copy.deepcopy(TRIGGER)
+        trigger.pop('id')
+
+        resp = self.app.post_json(
+            '/v2/event_triggers', trigger, expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+        self.assertIn('allow_redelegation', resp.json['faultstring'])
+        create_mtd.assert_not_called()
 
     @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
