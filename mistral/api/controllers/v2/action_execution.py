@@ -73,21 +73,7 @@ def _get_action_execution_resource(action_ex, fields=()):
 
 
 def _get_action_execution_resource_for_list(action_ex, fields=()):
-    # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
-    # TODO(nmakhotkin): Use db_model for this instead.
-
-    # field_task_name_needed = 'task_name' in fields
-    # if field_task_name_needed:
-    #     fields.remove('task_name')
-
-    res = resources.ActionExecution.from_db_model(action_ex, fields=fields)
-
-    # if not fields or field_task_name_needed:
-    #     task_name = (action_ex.task_execution.name
-    #                  if action_ex.task_execution else None)
-    #     setattr(res, 'task_name', task_name)
-
-    return res
+    return resources.ActionExecution.from_db_model(action_ex, fields=fields)
 
 
 def _get_action_executions(task_execution_id=None, marker=None, limit=None,
