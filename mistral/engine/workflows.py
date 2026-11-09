@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import dispatcher
@@ -32,6 +33,7 @@ from mistral.lang import parser as spec_parser
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
 from mistral.rpc import clients as rpc
+from mistral.services import security
 from mistral.services import triggers
 from mistral.services import workflows as wf_service
 from mistral.utils import wf_trace
@@ -387,6 +389,12 @@ class Workflow(object, metaclass=abc.ABCMeta):
         if triggered_by:
             values['runtime_context']['triggered_by'] = triggered_by
 
+        ctx = auth_ctx.ctx() if auth_ctx.has_ctx() else None
+
+        if ctx and ctx.execution_trust and not params.get(
+                'task_execution_id'):
+            values['runtime_context']['execution_trust_id'] = ctx.trust_id
+
         self.wf_ex = db_api.create_workflow_execution(values)
 
         LOG.info("Created workflow execution [workflow_name=%s, wf_ex_id=%s, "
@@ -453,6 +461,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
 
         if states.is_completed(state):
             triggers.on_workflow_complete(self.wf_ex)
+            security.on_workflow_complete(self.wf_ex)
 
         return True
 

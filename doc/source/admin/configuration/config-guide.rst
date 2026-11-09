@@ -57,6 +57,20 @@ directory.
     [pecan]
     auth_enable = False
 
+#. **If your workflows run longer than the Keystone token lifetime**, enable
+   trusts for workflow executions::
+
+    [engine]
+    use_trusts = True
+
+   Each execution started through the API then gets a Keystone trust from
+   the caller to the Mistral service user, and Mistral renews the token from
+   it before it expires. The trust is deleted when the execution completes,
+   including when it fails. If a failed execution is then rerun, it uses the
+   token of the user who asked for the rerun, and that token is not renewed.
+   This does not help a single action that runs longer than a token
+   lifetime, because the action keeps the token it started with.
+
 #. **If you are not using OpenStack, skip this item**. Register Mistral service
    and Mistral endpoints on Keystone::
 

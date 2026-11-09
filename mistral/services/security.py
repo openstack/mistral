@@ -12,9 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from datetime import timedelta
+
 from keystoneauth1 import exceptions as ks_exc
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import timeutils
 
 from mistral import context as auth_ctx
 from mistral import exceptions as exc
@@ -27,6 +30,7 @@ CONF = cfg.CONF
 # Make sure to import 'auth_enable' option before using it.
 # TODO(rakhmerov): Try to find a better solution.
 CONF.import_opt('auth_enable', 'mistral.config', group='pecan')
+CONF.import_opt('use_trusts', 'mistral.config', group='engine')
 
 
 DEFAULT_PROJECT_ID = "<default-project>"
@@ -74,10 +78,14 @@ def create_context(trust_id, project_id):
     if CONF.pecan.auth_enable:
         client = keystone.client_for_trusts(trust_id)
 
+        expires_at = None
+
         if client.session:
             # Method get_token is deprecated, using get_auth_headers.
             token = client.session.get_auth_headers().get('X-Auth-Token')
             user_id = client.session.get_user_id()
+            access = client.session.auth.get_access(client.session)
+            expires_at = access.expires.isoformat()
         else:
             token = client.auth_token
             user_id = client.user_id
@@ -88,6 +96,7 @@ def create_context(trust_id, project_id):
             auth_token=token,
             is_trust_scoped=True,
             trust_id=trust_id,
+            expires_at=expires_at,
         )
 
     return auth_ctx.MistralContext(
@@ -121,3 +130,70 @@ def add_trust_id(secure_object_values):
         secure_object_values.update({
             'trust_id': trust.id
         })
+
+
+def add_execution_trust():
+    if not (CONF.pecan.auth_enable and CONF.engine.use_trusts):
+        return
+
+    ctx = auth_ctx.ctx()
+
+    if ctx.trust_id:
+        return
+
+    try:
+        trust = create_trust()
+    except Exception as e:
+        LOG.warning(
+            "Failed to create a trust, the workflow execution will use the "
+            "caller's token and stop working when it expires: %s", e
+        )
+        return
+
+    ctx.trust_id = trust.id
+    ctx.is_trust_scoped = True
+    ctx.execution_trust = True
+
+
+def delete_execution_trust():
+    if not auth_ctx.has_ctx():
+        return
+
+    ctx = auth_ctx.ctx()
+
+    if ctx.execution_trust:
+        delete_trust(ctx.trust_id)
+        ctx.trust_id = None
+        ctx.is_trust_scoped = False
+        ctx.execution_trust = False
+
+
+def refresh_context(ctx, margin=timedelta(minutes=5)):
+    if not (CONF.pecan.auth_enable and ctx.trust_id and ctx.is_trust_scoped):
+        return ctx
+
+    if ctx.expires_at:
+        expires_at = timeutils.normalize_time(
+            timeutils.parse_isotime(ctx.expires_at)
+        )
+
+        if expires_at - margin > timeutils.utcnow():
+            return ctx
+
+    new_ctx = create_context(ctx.trust_id, ctx.project_id)
+
+    ctx.auth_token = new_ctx.auth_token
+    ctx.user_id = new_ctx.user_id
+    ctx.expires_at = new_ctx.expires_at
+    ctx.service_catalog = None
+
+    return ctx
+
+
+def on_workflow_complete(wf_ex):
+    trust_id = (wf_ex.runtime_context or {}).get('execution_trust_id')
+
+    if trust_id:
+        from mistral.engine import post_tx_queue
+
+        post_tx_queue.register_operation(delete_trust, args=[trust_id])

@@ -353,6 +353,14 @@ engine_opts = [
         help=_('Maximum nesting depth of sub-workflows below a root '
                'workflow execution. A task that would start a deeper '
                'sub-workflow fails. 0 means no limit.')
+    ),
+    cfg.BoolOpt(
+        'use_trusts',
+        default=False,
+        help=_('Run each workflow execution started through the API under '
+               'a Keystone trust, so that a token can be renewed when it '
+               'is about to expire. Enable it when workflows run longer '
+               'than the token lifetime. Requires authentication.')
     )
 ]
 
