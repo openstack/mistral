@@ -34,7 +34,6 @@ Request
   - fields: fields
   - name: action_execution_filter_name
   - workflow_name: action_execution_filter_workflow_name
-  - task_name: action_execution_filter_task_name
   - task_execution_id: action_execution_filter_task_execution_id
   - state: action_execution_filter_state
   - state_info: action_execution_filter_state_info

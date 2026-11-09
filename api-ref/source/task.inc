@@ -38,13 +38,10 @@ Request
   - tags: task_filter_tags
   - state: task_filter_state
   - state_info: task_filter_state_info
-  - result: task_filter_result
   - published: task_filter_published
   - processed: task_filter_processed
   - created_at: task_filter_created_at
   - updated_at: task_filter_updated_at
-  - reset: task_filter_reset
-  - env: task_filter_env
 
 Response
 --------

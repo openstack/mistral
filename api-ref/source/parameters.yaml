@@ -141,13 +141,6 @@ action_execution_filter_task_execution_id:
   required: false
   type: string
 
-action_execution_filter_task_name:
-  description: |
-    Filter by task name.
-  in: query
-  required: false
-  type: string
-
 action_execution_filter_updated_at:
   description: |
     Filter by last update date.
@@ -759,13 +752,6 @@ task_filter_created_at:
   required: false
   type: string
 
-task_filter_env:
-  description: |
-    Filter by task environment.
-  in: query
-  required: false
-  type: string
-
 task_filter_name:
   description: |
     Filter by task name.
@@ -783,20 +769,6 @@ task_filter_processed:
 task_filter_published:
   description: |
     Filter by task published variables.
-  in: query
-  required: false
-  type: string
-
-task_filter_reset:
-  description: |
-    Filter by reset flag.
-  in: query
-  required: false
-  type: boolean
-
-task_filter_result:
-  description: |
-    Filter by task result.
   in: query
   required: false
   type: string

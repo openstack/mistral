@@ -555,6 +555,19 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(1, len(resp.json['action_executions']))
         self.assertDictEqual(action_exec, resp.json['action_executions'][0])
 
+    def test_get_all_unsupported_filter(self):
+        for f in ('params={"a": 1}', 'task_name=task1'):
+            resp = self.app.get(
+                '/v2/action_executions?%s' % f, expect_errors=True
+            )
+
+            self.assertEqual(400, resp.status_int)
+            self.assertIn('Unsupported filter', resp.json['faultstring'])
+
+        resp = self.app.get('/v2/action_executions?name=std.noop')
+
+        self.assertEqual(200, resp.status_int)
+
     @mock.patch.object(db_api, 'get_action_executions')
     def test_get_all_operational_error(self, mocked_get_all):
         mocked_get_all.side_effect = [

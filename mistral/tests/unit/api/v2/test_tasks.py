@@ -207,6 +207,17 @@ class TestTasksController(base.APITest):
         self.assertEqual(1, len(resp.json['tasks']))
         self.assertDictEqual(TASK_WITHOUT_RESULT, resp.json['tasks'][0])
 
+    def test_get_all_unsupported_filter(self):
+        for f in ('result=x', 'reset=true', 'env={"a": 1}'):
+            resp = self.app.get('/v2/tasks?%s' % f, expect_errors=True)
+
+            self.assertEqual(400, resp.status_int)
+            self.assertIn('Unsupported filter', resp.json['faultstring'])
+
+        resp = self.app.get('/v2/tasks?name=task1')
+
+        self.assertEqual(200, resp.status_int)
+
     @mock.patch.object(db_api, 'get_task_executions')
     def test_get_all_operational_error(self, mocked_get_all):
         mocked_get_all.side_effect = [
