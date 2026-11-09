@@ -18,6 +18,7 @@ from sqlalchemy.ext import compiler
 from sqlalchemy.sql import expression
 
 from mistral.db.sqlalchemy import types as st
+from mistral import exceptions as exc
 
 
 class JsonKeyEquals(expression.ColumnElement):
@@ -77,7 +78,12 @@ def apply_filters(query, model, **filters):
     filter_dict = {}
 
     for key, value in filters.items():
-        column_attr = getattr(model, key)
+        column_attr = getattr(model, key, None)
+
+        if column_attr is None:
+            raise exc.InputException(
+                "Unsupported filter for %s: %s" % (model.__name__, key)
+            )
 
         if key == 'tags':
             continue

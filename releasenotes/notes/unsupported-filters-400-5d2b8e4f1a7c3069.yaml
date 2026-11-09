@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Listing action executions with the ``params`` or ``task_name`` filter,
+    or tasks with the ``result``, ``reset`` or ``env`` filter, now returns
+    400 with a clear message instead of 500. These fields are not stored on
+    the resource, so the filters never worked. They are removed from the
+    API reference.
