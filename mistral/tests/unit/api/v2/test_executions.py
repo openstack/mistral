@@ -36,6 +36,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
+from mistral.services import security
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
 from mistral.utils import rest_utils
@@ -510,6 +511,26 @@ class TestExecutionsController(base.APITest):
             json.loads(expected_json['input']),
             **kwargs
         )
+
+    @mock.patch.object(security, 'delete_trust')
+    @mock.patch.object(security, 'create_trust')
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_trust_deleted_when_start_fails(self, start_wf_func,
+                                                 m_create, m_delete):
+        self.override_config('auth_enable', True, group='pecan')
+        self.override_config('use_trusts', True, group='engine')
+        m_create.return_value = mock.Mock(id='trust-1')
+        start_wf_func.side_effect = exc.MistralException('boom')
+
+        with mock.patch('mistral.context.AuthHook.before'):
+            resp = self.app.post_json(
+                '/v2/executions', WF_EX_JSON_WITH_DESC.copy(),
+                expect_errors=True
+            )
+
+        self.assertEqual(500, resp.status_int)
+        m_create.assert_called_once_with()
+        m_delete.assert_called_once_with('trust-1')
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     @mock.patch.object(db_api, 'load_workflow_execution')

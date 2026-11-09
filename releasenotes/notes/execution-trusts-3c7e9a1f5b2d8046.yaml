@@ -1,0 +1,16 @@
+---
+features:
+  - |
+    A new ``[engine] use_trusts`` option, disabled by default, runs each
+    workflow execution started through the API under a Keystone trust.
+    Mistral renews the token from that trust before it expires, so a
+    workflow can run longer than the token lifetime. The trust is deleted
+    when the execution completes, including when it fails, so a failed
+    execution that is rerun uses the token of the user who asked for the
+    rerun, without renewal. If the trust cannot be created, for
+    example with a trust-scoped token, the execution uses the caller's token
+    as before.
+fixes:
+  - |
+    The token of a workflow started by a cron or event trigger is now
+    renewed from the trigger's trust before it expires.

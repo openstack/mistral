@@ -12,10 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 from unittest import mock
 
 from keystoneauth1 import exceptions as ks_exc
+from oslo_utils import timeutils
 
+from mistral import context
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit import base
@@ -53,3 +56,135 @@ class CreateTrustTest(base.BaseTest):
 
         self.assertEqual(403, e.http_code)
         self.assertIn('allow_redelegation', str(e))
+
+
+class ExecutionTrustTest(base.BaseTest):
+    def setUp(self):
+        super(ExecutionTrustTest, self).setUp()
+
+        self.override_config('auth_enable', True, group='pecan')
+        self.override_config('use_trusts', True, group='engine')
+
+        self.ctx = context.MistralContext(
+            user_id='user', project_id='proj', auth_token='token'
+        )
+        context.set_ctx(self.ctx)
+        self.addCleanup(context.set_ctx, None)
+
+    @mock.patch.object(security, 'create_trust')
+    def test_add_execution_trust(self, m_create):
+        m_create.return_value = mock.Mock(id='trust-1')
+
+        security.add_execution_trust()
+
+        self.assertEqual('trust-1', self.ctx.trust_id)
+        self.assertTrue(self.ctx.is_trust_scoped)
+        self.assertTrue(self.ctx.execution_trust)
+
+    @mock.patch.object(security, 'create_trust')
+    def test_add_execution_trust_disabled(self, m_create):
+        self.override_config('use_trusts', False, group='engine')
+
+        security.add_execution_trust()
+
+        m_create.assert_not_called()
+        self.assertIsNone(self.ctx.trust_id)
+
+    @mock.patch.object(security, 'create_trust')
+    def test_add_execution_trust_keeps_existing_trust(self, m_create):
+        self.ctx.trust_id = 'cron-trust'
+
+        security.add_execution_trust()
+
+        m_create.assert_not_called()
+        self.assertFalse(self.ctx.execution_trust)
+
+    @mock.patch.object(security, 'create_trust')
+    def test_add_execution_trust_failure_keeps_token(self, m_create):
+        m_create.side_effect = exc.NotAllowedException('no')
+
+        security.add_execution_trust()
+
+        self.assertIsNone(self.ctx.trust_id)
+        self.assertFalse(self.ctx.execution_trust)
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_delete_execution_trust(self, m_delete):
+        self.ctx.trust_id = 'trust-1'
+        self.ctx.is_trust_scoped = True
+        self.ctx.execution_trust = True
+
+        security.delete_execution_trust()
+
+        m_delete.assert_called_once_with('trust-1')
+        self.assertIsNone(self.ctx.trust_id)
+
+    @mock.patch.object(security, 'delete_trust')
+    def test_delete_execution_trust_ignores_other_trusts(self, m_delete):
+        self.ctx.trust_id = 'cron-trust'
+        self.ctx.is_trust_scoped = True
+
+        security.delete_execution_trust()
+
+        m_delete.assert_not_called()
+
+
+class RefreshContextTest(base.BaseTest):
+    def setUp(self):
+        super(RefreshContextTest, self).setUp()
+
+        self.override_config('auth_enable', True, group='pecan')
+
+    def _ctx(self, expires_in):
+        expires_at = timeutils.utcnow() + datetime.timedelta(
+            minutes=expires_in
+        )
+
+        return context.MistralContext(
+            user_id='user', project_id='proj', auth_token='old',
+            trust_id='trust-1', is_trust_scoped=True,
+            expires_at=expires_at.isoformat()
+        )
+
+    @mock.patch.object(security, 'create_context')
+    def test_valid_token_is_kept(self, m_create):
+        ctx = self._ctx(expires_in=30)
+
+        self.assertEqual('old', security.refresh_context(ctx).auth_token)
+        m_create.assert_not_called()
+
+    @mock.patch.object(security, 'create_context')
+    def test_expiring_token_is_renewed(self, m_create):
+        m_create.return_value = context.MistralContext(
+            user_id='trustee', auth_token='new', expires_at='2099-01-01'
+        )
+        ctx = self._ctx(expires_in=2)
+
+        ctx = security.refresh_context(ctx)
+
+        m_create.assert_called_once_with('trust-1', 'proj')
+        self.assertEqual('new', ctx.auth_token)
+        self.assertEqual('2099-01-01', ctx.expires_at)
+        self.assertEqual('trust-1', ctx.trust_id)
+
+    @mock.patch.object(security, 'create_context')
+    def test_no_trust_no_refresh(self, m_create):
+        ctx = self._ctx(expires_in=-10)
+        ctx.trust_id = None
+
+        self.assertEqual('old', security.refresh_context(ctx).auth_token)
+        m_create.assert_not_called()
+
+    @mock.patch.object(security, 'create_context')
+    def test_rpc_deserialize_refreshes(self, m_create):
+        m_create.return_value = context.MistralContext(
+            user_id='trustee', auth_token='new', expires_at='2099-01-01'
+        )
+        serializer = context.RpcContextSerializer()
+        ctx_dict = serializer.serialize_context(self._ctx(expires_in=1))
+
+        ctx = serializer.deserialize_context(ctx_dict)
+
+        self.assertEqual('new', ctx.auth_token)
+        self.assertEqual('new', context.ctx().auth_token)
+        context.set_ctx(None)

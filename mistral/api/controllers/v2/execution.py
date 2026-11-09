@@ -34,6 +34,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
+from mistral.services import security
 from mistral.services import workflows as wf_service
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
@@ -309,21 +310,27 @@ class ExecutionsController(rest.RestController):
                 " recommended."
             )
 
+        security.add_execution_trust()
+
         engine = rpc.get_engine_client()
 
-        result = engine.start_workflow(
-            result_exec_dict.get(
-                'workflow_id',
-                result_exec_dict.get('workflow_name')
-            ),
-            result_exec_dict.get('workflow_namespace', ''),
-            result_exec_dict.get('id'),
-            result_exec_dict.get('input'),
-            description=result_exec_dict.get('description', ''),
-            **wf_service.strip_internal_workflow_params(
-                result_exec_dict.get('params')
+        try:
+            result = engine.start_workflow(
+                result_exec_dict.get(
+                    'workflow_id',
+                    result_exec_dict.get('workflow_name')
+                ),
+                result_exec_dict.get('workflow_namespace', ''),
+                result_exec_dict.get('id'),
+                result_exec_dict.get('input'),
+                description=result_exec_dict.get('description', ''),
+                **wf_service.strip_internal_workflow_params(
+                    result_exec_dict.get('params')
+                )
             )
-        )
+        except Exception:
+            security.delete_execution_trust()
+            raise
 
         return resources.Execution.from_dict(result)
 

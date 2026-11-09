@@ -47,12 +47,13 @@ ALLOWED_WITHOUT_AUTH = [
 
 class MistralContext(oslo_context.RequestContext):
 
-    FROM_DICT_EXTRA_KEYS = ['root_execution_id']
+    FROM_DICT_EXTRA_KEYS = ['root_execution_id', 'execution_trust']
 
     def __init__(self, auth_uri=None, auth_cacert=None, insecure=False,
                  service_catalog=None, region_name=None, is_trust_scoped=False,
                  redelivered=False, expires_at=None, trust_id=None,
-                 is_target=False, root_execution_id=None, **kwargs):
+                 is_target=False, root_execution_id=None,
+                 execution_trust=False, **kwargs):
         self.auth_uri = auth_uri
         self.auth_cacert = auth_cacert
         self.insecure = insecure
@@ -64,6 +65,7 @@ class MistralContext(oslo_context.RequestContext):
         self.trust_id = trust_id
         self.is_target = is_target
         self.root_execution_id = root_execution_id
+        self.execution_trust = execution_trust
 
         # We still use Mistral thread local variable. Maybe could consider
         # using the variable provided by oslo_context in future.
@@ -103,6 +105,7 @@ class MistralContext(oslo_context.RequestContext):
                 'trust_id': self.trust_id,
                 'is_target': self.is_target,
                 'root_execution_id': self.root_execution_id,
+                'execution_trust': self.execution_trust,
             }
         )
 
@@ -124,6 +127,9 @@ class MistralContext(oslo_context.RequestContext):
         kwargs.setdefault('trust_id', values.get('trust_id'))
         kwargs.setdefault('is_target', values.get('is_target', False))
         kwargs.setdefault('root_execution_id', values.get('root_execution_id'))
+        kwargs.setdefault(
+            'execution_trust', values.get('execution_trust', False)
+        )
 
         return super(MistralContext, cls).from_dict(values, **kwargs)
 
@@ -269,6 +275,11 @@ class RpcContextSerializer(messaging.Serializer):
             profiler.init(**trace_info)
 
         ctx = MistralContext.from_dict(context)
+
+        if ctx.trust_id and ctx.is_trust_scoped:
+            from mistral.services import security
+
+            ctx = security.refresh_context(ctx)
 
         set_ctx(ctx)
 
