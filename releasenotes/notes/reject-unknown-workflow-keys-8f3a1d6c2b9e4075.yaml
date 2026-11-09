@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    Unknown keys at the top level of a workflow definition, such as a typo
+    like ``ttags``, are now rejected when a workflow is created, updated or
+    validated. They were silently ignored before. Existing workflows and
+    executions are not affected.

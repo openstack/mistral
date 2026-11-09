@@ -188,6 +188,12 @@ class BaseSpec(object):
             overwrite=False
         )
 
+        if 'additionalProperties' in cls._meta_schema:
+            schema.setdefault(
+                'additionalProperties',
+                cls._meta_schema['additionalProperties']
+            )
+
         if includes and 'meta' in includes:
             schema['required'] = list(
                 set(schema.get('required', []) +

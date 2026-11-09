@@ -458,6 +458,19 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
                 expect_error=expect_error
             )
 
+    def test_unknown_workflow_key(self):
+        exception = self._parse_dsl_spec(
+            add_tasks=True,
+            changes={'test': {'ttags': ['tag']}},
+            expect_error=True
+        )
+
+        self.assertEqual(
+            "Invalid DSL in workflow 'test': Additional properties are not "
+            "allowed ('ttags' was unexpected)",
+            str(exception)
+        )
+
     def test_invalid_task_error_message(self):
         exception = self._parse_dsl_spec(
             add_tasks=True,

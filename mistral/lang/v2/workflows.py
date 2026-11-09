@@ -42,15 +42,17 @@ class WorkflowSpec(base.BaseSpec):
 
     _meta_schema = {
         "type": "object",
-        "properties": {
-            "type": types.WORKFLOW_TYPE,
-            "task-defaults": types.NONEMPTY_DICT,
-            "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
-            "output": types.NONEMPTY_DICT,
-            "output-on-error": types.NONEMPTY_DICT,
-            "vars": types.NONEMPTY_DICT,
-            "tags": types.UNIQUE_STRING_LIST
-        },
+        "properties": dict(
+            base.BaseSpec._meta_schema['properties'],
+            **{
+                "type": types.WORKFLOW_TYPE,
+                "task-defaults": types.NONEMPTY_DICT,
+                "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
+                "output": types.NONEMPTY_DICT,
+                "output-on-error": types.NONEMPTY_DICT,
+                "vars": types.NONEMPTY_DICT
+            }
+        ),
         "required": ["tasks"],
         "additionalProperties": False
     }
