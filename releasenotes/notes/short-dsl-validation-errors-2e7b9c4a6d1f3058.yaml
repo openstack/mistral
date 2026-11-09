@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    DSL schema validation errors are now short and say where the problem is,
+    for example ``Invalid DSL in task 't1': Additional properties are not
+    allowed ('on-sucess' was unexpected)``. They no longer include the whole
+    JSON schema and the input, which could be thousands of lines.

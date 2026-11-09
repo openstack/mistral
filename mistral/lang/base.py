@@ -16,6 +16,7 @@
 import copy
 import json
 import jsonschema
+from oslo_log import log as logging
 from osprofiler import profiler
 import re
 
@@ -25,6 +26,8 @@ from mistral.expressions.jinja_expression import ANY_JINJA_REGEXP
 from mistral.expressions.yaql_expression import INLINE_YAQL_REGEXP
 from mistral.lang import types
 from mistral_lib import utils
+
+LOG = logging.getLogger(__name__)
 
 ACTION_PATTERNS = {
     "command": r"[\w\.]+[^=\(\s\"]*",
@@ -226,7 +229,26 @@ class BaseSpec(object):
         try:
             jsonschema.validate(self._data, self.get_schema())
         except jsonschema.ValidationError as e:
-            raise exc.InvalidModelException("Invalid DSL: %s" % e)
+            LOG.debug("DSL schema validation failed: %s", e)
+
+            raise exc.InvalidModelException(
+                "Invalid DSL%s: %s" % (self._error_location(e), e.message)
+            )
+
+    def _error_location(self, e):
+        kind = re.sub(r'^(Direct|Reverse)(Workflow)?(?=.)', '',
+                      self.__class__.__name__[:-len('Spec')])
+        kind = re.sub(r'(?<!^)(?=[A-Z])', ' ', kind).lower()
+
+        loc = ' in %s' % kind
+
+        if isinstance(self._data, dict) and self._data.get('name'):
+            loc += " '%s'" % self._data['name']
+
+        if e.absolute_path:
+            loc += ' at %s' % '.'.join(str(p) for p in e.absolute_path)
+
+        return loc
 
     def validate_semantics(self):
         """Validates semantics of specification object.

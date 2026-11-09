@@ -457,3 +457,31 @@ class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
                 changes=overlay,
                 expect_error=expect_error
             )
+
+    def test_invalid_task_error_message(self):
+        exception = self._parse_dsl_spec(
+            add_tasks=True,
+            changes={'test': {'tasks': {'echo': {'on-sucess': 'get'}}}},
+            expect_error=True
+        )
+
+        self.assertEqual(
+            "Invalid DSL in task 'echo': Additional properties are not "
+            "allowed ('on-sucess' was unexpected)",
+            str(exception)
+        )
+
+    def test_invalid_nested_value_error_message(self):
+        retry = {'count': 'abc', 'delay': 1}
+
+        exception = self._parse_dsl_spec(
+            add_tasks=True,
+            changes={'test': {'tasks': {'echo': {'retry': retry}}}},
+            expect_error=True
+        )
+
+        self.assertEqual(
+            "Invalid DSL in task 'echo' at retry.count: 'abc' is not valid "
+            "under any of the given schemas",
+            str(exception)
+        )
