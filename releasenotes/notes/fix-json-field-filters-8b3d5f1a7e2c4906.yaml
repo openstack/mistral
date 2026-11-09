@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Filtering executions on a JSON field such as ``input``, ``output``,
+    ``params`` or ``published`` now matches resources whose field contains
+    all the given keys with the given values. Previously, the filter only
+    matched when the whole field was equal to the given dictionary, so a
+    filter like ``input={"method": "GET"}`` returned nothing for a
+    ``std.http`` execution with other input keys.

@@ -1660,6 +1660,45 @@ class ActionExecutionTest(SQLAlchemyTest):
             self.assertEqual(1, len(fetched))
             self.assertEqual(created0, fetched[0])
 
+    def test_filter_action_executions_by_json_fields(self):
+        inputs = [
+            {'method': 'GET', 'url': 'http://a', 'n': 1, 'flag': True,
+             'nested': {'x': 1}, 'items': [1, 2]},
+            {'method': 'POST', 'url': 'http://a', 'n': 2, 'flag': False,
+             'nested': {'x': 2}, 'items': [1]},
+            {'method': 'GET', 'url': 'http://b', 'n': '1'},
+        ]
+        ids = [
+            db_api.create_action_execution(
+                dict(ACTION_EXECS[0], input=i, output={'idx': idx})
+            ).id
+            for idx, i in enumerate(inputs)
+        ]
+
+        def _filter(**kw):
+            filters = filter_utils.create_filters_from_request_params(**kw)
+            return sorted(
+                ids.index(ex.id)
+                for ex in db_api.get_action_executions(**filters)
+            )
+
+        self.assertEqual([0, 2], _filter(input={'method': 'GET'}))
+        self.assertEqual(
+            [0], _filter(input={'method': 'GET', 'url': 'http://a'})
+        )
+        self.assertEqual([0], _filter(input={'n': 1}))
+        self.assertEqual([2], _filter(input={'n': '1'}))
+        self.assertEqual([0], _filter(input={'flag': True}))
+        self.assertEqual([1], _filter(input={'flag': False}))
+        self.assertEqual([0], _filter(input={'nested': {'x': 1}}))
+        self.assertEqual([], _filter(input={'nested': {}}))
+        self.assertEqual([1], _filter(input={'items': [1]}))
+        self.assertEqual([], _filter(input={'items': 1}))
+        self.assertEqual([], _filter(input={'method': 'PUT'}))
+        self.assertEqual([], _filter(input={'missing': 'x'}))
+        self.assertEqual([0, 1, 2], _filter(input={}))
+        self.assertEqual([1], _filter(output={'idx': 1}))
+
     def test_delete_action_execution(self):
         with db_api.transaction():
             created = db_api.create_action_execution(ACTION_EXECS[0])

@@ -12,7 +12,65 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_serialization import jsonutils
 import sqlalchemy as sa
+from sqlalchemy.ext import compiler
+from sqlalchemy.sql import expression
+
+from mistral.db.sqlalchemy import types as st
+
+
+class JsonKeyEquals(expression.ColumnElement):
+    inherit_cache = False
+    type = sa.Boolean()
+
+    def __init__(self, column, key, value):
+        self.column = column
+        self.path = '$.' + jsonutils.dumps(key)
+        self.value = jsonutils.dumps(value)
+        self.wrapped = jsonutils.dumps({'v': value})
+
+
+@compiler.compiles(JsonKeyEquals)
+def _compile_json_key_equals(element, compiler, **kw):
+    raise NotImplementedError(
+        'JSON filters are not supported on %s' % compiler.dialect.name
+    )
+
+
+@compiler.compiles(JsonKeyEquals, 'mysql')
+@compiler.compiles(JsonKeyEquals, 'mariadb')
+def _compile_json_key_equals_mysql(element, compiler, **kw):
+    extracted = sa.func.json_extract(element.column, element.path)
+    value = sa.literal(element.value)
+
+    return compiler.process(
+        sa.and_(
+            sa.func.json_contains(extracted, value),
+            sa.func.json_contains(value, extracted)
+        ),
+        **kw
+    )
+
+
+@compiler.compiles(JsonKeyEquals, 'sqlite')
+def _compile_json_key_equals_sqlite(element, compiler, **kw):
+    wrapped = sa.literal(element.wrapped)
+
+    return compiler.process(
+        sa.and_(
+            sa.func.json_valid(element.column),
+            sa.func.json_extract(element.column, element.path) ==
+            sa.func.json_extract(wrapped, '$.v'),
+            sa.func.json_type(element.column, element.path) ==
+            sa.func.json_type(wrapped, '$.v')
+        ),
+        **kw
+    )
+
+
+def _is_json_column(column_attr):
+    return isinstance(getattr(column_attr, 'type', None), st.JsonEncoded)
 
 
 def apply_filters(query, model, **filters):
@@ -24,7 +82,11 @@ def apply_filters(query, model, **filters):
         if key == 'tags':
             continue
 
-        if isinstance(value, dict):
+        if (isinstance(value, dict) and isinstance(value.get('eq'), dict)
+                and _is_json_column(column_attr)):
+            for k, v in value['eq'].items():
+                query = query.filter(JsonKeyEquals(column_attr, k, v))
+        elif isinstance(value, dict):
             if 'in' in value:
                 query = query.filter(column_attr.in_(value['in']))
             elif 'nin' in value:
