@@ -19,6 +19,7 @@ import requests
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
+from mistral.utils import egress
 from mistral_lib import actions as mistral_lib_actions
 
 
@@ -305,3 +306,27 @@ class HTTPActionTest(base.BaseTest):
             headers['authorization'],
             mocked_method.call_args[1]['headers']['authorization'],
         )
+
+    @mock.patch.object(egress, 'validate_url')
+    @mock.patch.object(requests, 'request')
+    def test_http_action_hides_url_and_proxy_credentials(
+        self, mocked_method, _validate
+    ):
+        url = 'http://bob:urlpw@example.com/x?token=qtok'
+        proxies = {'http': 'http://alice:proxypw@proxy:3128'}
+
+        action = std.HTTPAction(url=url, method='GET', proxies=proxies)
+
+        mocked_method.return_value = get_fake_response(content='', code=200)
+
+        with self.assertLogs(logger=ACTION_LOGGER, level='INFO') as logs:
+            action.run(mock.Mock())
+
+        log = logs.output[0]
+        self.assertNotIn('urlpw', log)
+        self.assertNotIn('qtok', log)
+        self.assertNotIn('proxypw', log)
+        self.assertIn('bob:***@example.com', log)
+        self.assertIn('alice:***@proxy:3128', log)
+        self.assertEqual(url, mocked_method.call_args[0][1])
+        self.assertEqual(proxies, mocked_method.call_args[1]['proxies'])

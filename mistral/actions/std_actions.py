@@ -236,8 +236,8 @@ class HTTPAction(actions.Action):
 
         # Redact credentials so they never reach the logs: 'auth' holds an
         # HTTP Basic/Digest password or a bearer token, 'cookies' hold
-        # session secrets, and 'params' may carry tokens/API keys. The raw
-        # 'body' is not logged at all.
+        # session secrets, 'params', 'url' and 'proxies' may carry
+        # tokens/API keys or passwords. The raw 'body' is not logged at all.
         if isinstance(self.auth, tuple):
             safe_auth = (self.auth[0], '***') if len(self.auth) > 1 else '***'
         elif self.auth:
@@ -252,7 +252,7 @@ class HTTPAction(actions.Action):
             "[url=%s, method=%s, params=%s, json=%s,"
             " headers=%s, cookies=%s, auth=%s, timeout=%s,"
             " allow_redirects=%s, proxies=%s, verify=%s]",
-            self.url,
+            redact.redact_url(self.url),
             self.method,
             redact.redact_sensitive(self.params),
             rest_utils.prepare_request_body_log(
@@ -263,7 +263,7 @@ class HTTPAction(actions.Action):
             safe_auth,
             self.timeout,
             self.allow_redirects,
-            self.proxies,
+            redact.redact_proxies(self.proxies),
             self.verify,
         )
 

@@ -11,6 +11,7 @@
 #    limitations under the License.
 
 import re
+from urllib import parse
 
 MASK = '***'
 
@@ -51,3 +52,54 @@ def redact_sensitive(data):
         return tuple(redact_sensitive(v) for v in data)
 
     return data
+
+
+def redact_url(url):
+    """Return url with its userinfo password and sensitive query values masked.
+
+    A value that is not a URL but holds an '@', like a scheme-less proxy
+    'user:pass@host:3128', gets everything before the last '@' masked.
+    """
+
+    if not isinstance(url, str):
+        return url
+
+    if '://' not in url:
+        if '@' in url:
+            return '%s@%s' % (MASK, url.rpartition('@')[2])
+
+        return url
+
+    try:
+        parsed = parse.urlsplit(url)
+    except ValueError:
+        return MASK
+
+    netloc = parsed.netloc
+
+    if '@' in netloc:
+        userinfo, _sep, hostport = netloc.rpartition('@')
+        user, colon, _password = userinfo.partition(':')
+        userinfo = '%s:%s' % (user, MASK) if colon else MASK
+        netloc = '%s@%s' % (userinfo, hostport)
+
+    query = parse.urlencode(
+        [
+            (key, MASK if _SENSITIVE_KEY_RE.search(key) else value)
+            for key, value in parse.parse_qsl(
+                parsed.query, keep_blank_values=True
+            )
+        ],
+        safe='*',
+    )
+
+    return parsed._replace(netloc=netloc, query=query).geturl()
+
+
+def redact_proxies(proxies):
+    """Return a copy of a requests proxies dict with redacted URLs."""
+
+    if not isinstance(proxies, dict):
+        return redact_url(proxies)
+
+    return {key: redact_url(value) for key, value in proxies.items()}

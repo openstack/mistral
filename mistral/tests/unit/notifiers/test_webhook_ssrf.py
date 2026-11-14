@@ -18,6 +18,7 @@ from unittest import mock
 from mistral import exceptions as exc
 from mistral.notifiers.publishers import webhook
 from mistral.tests.unit import base
+from mistral.utils import egress
 
 
 class WebhookPublisherSsrfTest(base.BaseTest):
@@ -49,3 +50,23 @@ class WebhookPublisherSsrfTest(base.BaseTest):
 
         # The request must never be issued.
         post.assert_not_called()
+
+    @mock.patch.object(egress, 'validate_url')
+    @mock.patch('requests.post')
+    def test_publish_log_hides_url_credentials(self, post, _validate):
+        post.return_value = mock.Mock(status_code=200)
+
+        with self.assertLogs(webhook.LOG.logger.name, level='INFO') as logs:
+            webhook.WebhookPublisher().publish(
+                {},
+                'ex-id',
+                {'a': 1},
+                'event',
+                'ts',
+                url='http://bob:hookpw@example.com/hook?token=t0k',
+            )
+
+        log = '\n'.join(logs.output)
+        self.assertNotIn('hookpw', log)
+        self.assertNotIn('t0k', log)
+        self.assertIn('bob:***@example.com', log)

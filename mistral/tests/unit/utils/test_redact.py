@@ -64,3 +64,58 @@ class RedactSensitiveTest(base.BaseTest):
         self.assertEqual(42, redact.redact_sensitive(42))
         self.assertEqual('plain', redact.redact_sensitive('plain'))
         self.assertEqual([1, 2], redact.redact_sensitive([1, 2]))
+
+
+class RedactUrlTest(base.BaseTest):
+    def test_masks_password(self):
+        self.assertEqual(
+            'http://bob:***@example.com:8080/p?a=1',
+            redact.redact_url('http://bob:s3cr3t@example.com:8080/p?a=1'),
+        )
+
+    def test_masks_user_only_userinfo(self):
+        self.assertEqual(
+            'https://***@example.com/',
+            redact.redact_url('https://tok3n@example.com/'),
+        )
+
+    def test_masks_sensitive_query_values(self):
+        out = redact.redact_url(
+            'https://example.com/x?token=abc&page=2&api_key=k'
+        )
+
+        self.assertEqual(
+            'https://example.com/x?token=***&page=2&api_key=***', out
+        )
+
+    def test_url_without_credentials_is_unchanged(self):
+        url = 'http://example.com/path?page=2'
+
+        self.assertEqual(url, redact.redact_url(url))
+
+    def test_schemeless_proxy(self):
+        self.assertEqual(
+            '***@proxy:3128', redact.redact_url('bob:pw@proxy:3128')
+        )
+
+    def test_non_string_passes_through(self):
+        self.assertIsNone(redact.redact_url(None))
+
+    def test_proxies(self):
+        out = redact.redact_proxies(
+            {
+                'http': 'http://bob:pw@proxy:3128',
+                'https': 'http://proxy:3128',
+                'no_proxy': 'localhost',
+            }
+        )
+
+        self.assertEqual(
+            {
+                'http': 'http://bob:***@proxy:3128',
+                'https': 'http://proxy:3128',
+                'no_proxy': 'localhost',
+            },
+            out,
+        )
+        self.assertIsNone(redact.redact_proxies(None))

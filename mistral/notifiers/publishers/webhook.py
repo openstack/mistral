@@ -20,6 +20,7 @@ from oslo_log import log as logging
 
 from mistral.notifiers import base
 from mistral.utils import egress
+from mistral.utils import redact
 
 
 LOG = logging.getLogger(__name__)
@@ -42,7 +43,11 @@ class WebhookPublisher(base.NotificationPublisher):
             allow_redirects=False,
         )
 
-        LOG.info("Webook request url=%s code=%s", url, resp.status_code)
+        LOG.info(
+            "Webook request url=%s code=%s",
+            redact.redact_url(url),
+            resp.status_code,
+        )
 
         if resp.status_code not in [HTTPStatus.OK, HTTPStatus.CREATED]:
             raise Exception(resp.text)
